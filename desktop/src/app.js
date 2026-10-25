@@ -334,14 +334,293 @@ const MASTER_ARTIST_AVATARS = {
   "radiohead": "https://lh3.googleusercontent.com/G-Vsaq4pw6Bl5Ny4p_wV9obzu_eyZxynQycvCvQru4Wglzfxg4NO9owDKnSlKys_-WRzPEc0O6ydGA=w544-h544-l90-rj"
 };
 
+// Clean Dark Mode Vector SVGs (Replaces all static Unsplash / AI stock imagery)
+const DEFAULT_TRACK_ART = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='1.5'%3E%3Crect width='24' height='24' fill='%2318181B'/%3E%3Ccircle cx='12' cy='12' r='4'/%3E%3Cpath d='M16 8V3l5 2'/%3E%3C/svg%3E";
+const DEFAULT_ARTIST_ART = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='1.5'%3E%3Crect width='24' height='24' fill='%2318181B'/%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E";
+
 function getArtistAvatar(artistName) {
-  if (!artistName) return "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80";
+  if (!artistName) return DEFAULT_ARTIST_ART;
   const clean = artistName.trim().toLowerCase();
   if (MASTER_ARTIST_AVATARS[clean]) return MASTER_ARTIST_AVATARS[clean];
   for (const [key, val] of Object.entries(MASTER_ARTIST_AVATARS)) {
     if (clean.includes(key) || key.includes(clean)) return val;
   }
-  return "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=500&q=80";
+  return DEFAULT_ARTIST_ART;
+}
+
+// Comprehensive Verified Artist Catalog (Top Indonesian & International Superstars)
+const FAMOUS_VERIFIED_ARTISTS = new Set([
+  // Top Indonesian Artists & Bands
+  "tulus", "raisa", "bernadya", "mahalini", "denny caknan", "sheila on 7", "dewa 19", "noah", "hindia",
+  "nadin amizah", "judika", "tiara andini", "lyodra", "sal priadi", "pamungkas", "rizky febian",
+  "glenn fredly", "chrisye", "fiersa besari", "juicy luicy", "guyon waton", "ndarboy genk", "wali",
+  "peterpan", "geisha", "d'masiv", "kotak", "kerispatih", "ungu", "kangen band", "armada", "ada band",
+  "padi", "padi reborn", "gigi", "slank", "iwan fals", "ebiet g. ade", "rossa", "bunga citra lestari",
+  "bcl", "agnez mo", "isyana sarasvati", "yura yunita", "danilla", "feby putri", "for revenge",
+  "reality club", "the changcuters", ".feast", "feast", "vierratale", "vierra", "maliq & d'essentials",
+  "kahitna", "project pop", "reza artamevia", "marion jola", "ziva magnolya", "keisya levronka",
+  "fabio asher", "stevan pasaribu", "ghea indrawari", "anggi marito", "batas senja", "soegi bornean",
+  "idgitaf", "ardhito pramono", "kunto aji", "rendy pandugo", "afgan", "vidi aldiano", "ran", "hivi!",
+  "hivi", "payung teduh", "fourtwnty", "barasuara", "efek rumah kaca", "shaggydog", "tipex", "tip-ex",
+  "endank soekamti", "naif", "nidji", "letto", "seventeen", "laleilmanino", "diskoria", "morfem",
+  "the sigit", "scaller", "sore", "white shoes & the couples company", "mocca", "pee wee gaskins",
+  "kill the dj", "saykoji", "jflow", "rich brian", "niki", "stephanie poetri", "warren hue",
+  "happy asmara", "vita alvia", "yeni inka", "tasya rosmala", "nella kharisma", "via vallen",
+  "syahiba saufa", "sasya arkhisna", "difarina indra", "cantika davinca", "shinta arsinta",
+  "masdo", "sekai no owari",
+
+  // Top International Artists & Bands
+  "taylor swift", "the weeknd", "drake", "kendrick lamar", "billie eilish", "bruno mars", "ed sheeran",
+  "ariana grande", "justin bieber", "eminem", "rihanna", "post malone", "dua lipa", "coldplay", "queen",
+  "bts", "blackpink", "lady gaga", "olivia rodrigo", "travis scott", "maroon 5", "sza", "adele",
+  "beyonce", "beyoncé", "lana del rey", "harry styles", "michael jackson", "kanye west", "katy perry",
+  "shawn mendes", "sam smith", "imagine dragons", "linkin park", "bring me the horizon", "green day",
+  "nirvana", "red hot chili peppers", "oasis", "arctic monkeys", "the beatles", "one direction",
+  "selena gomez", "camila cabello", "sabrina carpenter", "charlie puth", "joji", "keshi", "laufey",
+  "daniel caesar", "frank ocean", "tyler, the creator", "childish gambino", "mac miller", "juice wrld",
+  "xxxtentacion", "lil nas x", "doja cat", "cardi b", "nicki minaj", "megan thee stallion", "21 savage",
+  "metro boomin", "future", "j. cole", "a$ap rocky", "calvin harris", "david guetta", "avicii",
+  "alan walker", "marshmello", "the chainsmokers", "martin garrix", "kygo", "zedd", "skrillex",
+  "daft punk", "sia", "bebe rexha", "halsey", "lorde", "mitski", "clairo", "phoebe bridgers",
+  "chappell roan", "gracie abrams", "benson boone", "teddy swims", "hozier", "lewis capaldi",
+  "twenty one pilots", "radiohead", "pink floyd", "led zeppelin", "guns n' roses", "metallica",
+  "ac/dc", "bon jovi", "aerosmith", "u2", "the rolling stones", "fleetwood mac", "elvis presley",
+  "david bowie", "prince", "whitney houston", "celine dion", "mariah carey", "shakira", "bad bunny",
+  "j balvin", "maluma", "rosalia", "rosalía", "peso pluma", "karol g", "daddy yankee", "anuel aa",
+  "rauw alejandro", "ozuna", "stray kids", "twice", "newjeans", "le sserafim", "aespa", "ive",
+  "enhypen", "tomorrow x together", "txt", "exo", "nct", "ateez", "itzy", "fujii kaze", "yoasobi",
+  "kenshi yonezu", "ado", "lisa", "jennie", "rose", "rosé", "jisoo", "jungkook", "jimin", "v",
+  "suga", "rm", "j-hope", "jin", "suisei", "hoshimachi suisei", "limp bizkit", "sombr", "bleachers",
+  "disturbed", "p.o.d.", "thom yorke"
+]);
+
+// Musify High-Fidelity Culture & Genre Clusters (Strict Se-Genre & Se-Kultur Algorithm)
+const MUSIFY_CULTURE_CLUSTERS = [
+  {
+    id: "indo_indie_folk",
+    name: "Indonesian Indie, Folk & Senja Pop",
+    keywords: [
+      "bernadya", "hindia", "sal priadi", "nadin amizah", "feby putri", "pamungkas",
+      "danilla", "fiersa besari", "juicy luicy", "fourtwnty", "idgitaf", "dere",
+      "eñau", "enau", "soegi bornean", "ardhito pramono", "kunto aji", "bilal indrajaya",
+      "baskara putra", "lomba sihir", "coldiac", "batiga", "the adams", "morfem",
+      "rumahsakit", "barasuara", "payung teduh", "parade hujan", "daun jatuh", "hal"
+    ],
+    searchSeeds: [
+      "indie folk indonesia terpopuler",
+      "lagu indie senja akustik",
+      "pop indie indonesia terbaik"
+    ],
+    bannedWords: ["koplo", "dangdut", "kendang", "jedag jedug", "remix koplo"]
+  },
+  {
+    id: "indo_pop_mainstream",
+    name: "Indonesian Contemporary Pop & Ballad",
+    keywords: [
+      "tulus", "mahalini", "lyodra", "tiara andini", "raisa", "afgan", "rizky febian",
+      "yura yunita", "jaz", "budi doremi", "judika", "anji", "keisya levronka",
+      "ziva magnolya", "glenn fredly", "cakra khan", "fabio asher", "anggi marito",
+      "ghea indrawari", "ade govind", "marion jola", "vidi aldiano", "rossa", "bcl"
+    ],
+    searchSeeds: [
+      "pop indonesia terpopuler hits",
+      "lagu pop galau indonesia",
+      "indonesian pop ballad hits"
+    ],
+    bannedWords: ["koplo", "dangdut", "kendang", "jedag jedug", "metal"]
+  },
+  {
+    id: "indo_band_nostalgia",
+    name: "Indonesian 90s-2000s Pop & Rock Band",
+    keywords: [
+      "sheila on 7", "dewa 19", "noah", "peterpan", "padi", "ungu", "d'masiv",
+      "gigi", "ada band", "kotak", "letto", "maliq & d'essentials", "kahitna",
+      "kerispatih", "seventeen", "drive", "nidji", "samsons", "j-rocks", "radja",
+      "element", "naff", "vierra", "vierratale", "geisha", "the changcuters", "slank"
+    ],
+    searchSeeds: [
+      "band indonesia 2000an terbaik",
+      "nostalgia pop rock indonesia",
+      "band pop hits indonesia"
+    ],
+    bannedWords: ["koplo", "dangdut", "kpop", "jedag jedug"]
+  },
+  {
+    id: "indo_dangdut_koplo",
+    name: "Indonesian Dangdut & Koplo Jawa",
+    keywords: [
+      "denny caknan", "guyon waton", "happy asmara", "gilga sahid", "ndarboy genk",
+      "shinta arsinta", "woro widowati", "difarina indra", "ndx aka", "aftershine",
+      "didi kempot", "fira cantika", "yenny inka", "sasya arkhisna", "tasya rosmala"
+    ],
+    searchSeeds: [
+      "dangdut koplo jawa hits",
+      "lagu koplo ambyar terpopuler",
+      "lagu jawa terpopuler"
+    ],
+    bannedWords: ["radiohead", "coldplay", "kpop", "metal"]
+  },
+  {
+    id: "western_alt_indie",
+    name: "Western Alternative & Dream Pop",
+    keywords: [
+      "radiohead", "billie eilish", "lana del rey", "coldplay", "lorde",
+      "the neighbourhood", "cigarettes after sex", "arctic monkeys", "phoebe bridgers",
+      "bleachers", "clairo", "mitski", "girl in red", "conan gray", "beabadoobee",
+      "wallows", "the 1975", "beach house", "men i trust", "cage the elephant", "chappell roan"
+    ],
+    searchSeeds: [
+      "dream pop indie hits",
+      "chill indie alternative hits",
+      "indie alternative songs"
+    ],
+    bannedWords: ["dangdut", "koplo", "kendang", "jedag jedug"]
+  },
+  {
+    id: "western_pop_rnb",
+    name: "Western Mainstream Pop & R&B",
+    keywords: [
+      "bruno mars", "taylor swift", "sabrina carpenter", "olivia rodrigo",
+      "the weeknd", "ed sheeran", "ariana grande", "justin bieber", "dua lipa",
+      "maroon 5", "harry styles", "charlie puth", "shawn mendes", "lady gaga",
+      "adele", "sza", "post malone", "katy perry", "sam smith", "rihanna",
+      "selena gomez", "tate mcrae", "camila cabello", "benson boone"
+    ],
+    searchSeeds: [
+      "top billboard pop hits",
+      "global pop hits terpopuler",
+      "western pop acoustic hits"
+    ],
+    bannedWords: ["dangdut", "koplo", "kendang", "jedag jedug"]
+  },
+  {
+    id: "western_rock_metal",
+    name: "Western Rock & Alternative Metal",
+    keywords: [
+      "linkin park", "green day", "metallica", "avenged sevenfold", "nirvana",
+      "muse", "foo fighters", "my chemical romance", "bring me the horizon",
+      "red hot chili peppers", "paramore", "blink-182", "fall out boy", "oasis"
+    ],
+    searchSeeds: [
+      "alternative rock anthems",
+      "best modern rock hits",
+      "classic rock songs"
+    ],
+    bannedWords: ["dangdut", "koplo", "kpop", "jedag jedug"]
+  },
+  {
+    id: "kpop_asian",
+    name: "K-Pop & Asian Wave",
+    keywords: [
+      "bts", "blackpink", "newjeans", "ive", "aespa", "twice", "stray kids",
+      "seventeen", "txt", "le sserafim", "jungkook", "jennie", "rosé", "lisa",
+      "taeyeon", "iu", "exo", "red velvet", "itzy", "enhypen", "babymonster"
+    ],
+    searchSeeds: [
+      "kpop top trending hits",
+      "korean pop best songs",
+      "kpop girl group boy group hits"
+    ],
+    bannedWords: ["dangdut", "koplo", "kendang"]
+  }
+];
+
+function detectMusifyCulture(artistName, trackTitle) {
+  const cleanArt = (artistName || "").toLowerCase().trim();
+  const cleanTit = (trackTitle || "").toLowerCase().trim();
+
+  for (const cluster of MUSIFY_CULTURE_CLUSTERS) {
+    if (cluster.keywords.some(k => cleanArt.includes(k) || k.includes(cleanArt))) {
+      return cluster;
+    }
+  }
+
+  const isJawa = /\b(tresno|lungo|loro|dalan|kisinan|tiwas|wirang|nemen|cidro|sewu|bojo|sayang|amung)\b/i.test(cleanTit) ||
+                 /\b(tresno|lungo|loro|dalan|kisinan|tiwas|wirang|nemen|cidro|sewu|bojo|sayang|amung)\b/i.test(cleanArt);
+  if (isJawa) {
+    return MUSIFY_CULTURE_CLUSTERS.find(c => c.id === "indo_dangdut_koplo");
+  }
+
+  const isIndo = /\b(yang|dan|aku|kamu|kita|hati|cinta|senja|rindu|malam|tentang|kembali|bila|saat|menanti|hujan|hilang|selamat|pulang|bunga)\b/i.test(cleanTit);
+  if (isIndo) {
+    return MUSIFY_CULTURE_CLUSTERS.find(c => c.id === "indo_indie_folk");
+  }
+
+  const isHangulOrKpop = /[\u3131-\uD79D]/.test(cleanTit) || /[\u3131-\uD79D]/.test(cleanArt);
+  if (isHangulOrKpop) {
+    return MUSIFY_CULTURE_CLUSTERS.find(c => c.id === "kpop_asian");
+  }
+
+  return MUSIFY_CULTURE_CLUSTERS.find(c => c.id === "western_alt_indie");
+}
+
+function isCompatibleMusifyTrack(candidate, seedTrack, seedCluster) {
+  if (!candidate || !candidate.title) return false;
+  const candArt = (candidate.artist || "").toLowerCase().trim();
+  const candTit = (candidate.title || "").toLowerCase().trim();
+  const seedArt = (seedTrack.artist || "").toLowerCase().trim();
+
+  // Same artist is always 100% compatible
+  if (candArt.includes(seedArt) || seedArt.includes(candArt)) {
+    return true;
+  }
+
+  // Check cluster banned words
+  if (seedCluster && seedCluster.bannedWords) {
+    for (const banned of seedCluster.bannedWords) {
+      if (candArt.includes(banned) || candTit.includes(banned)) {
+        return false;
+      }
+    }
+  }
+
+  // Reject generic bootlegs, unofficial covers, karaoke
+  if (/\b(cover by|karaoke version|instrumental karaoke|tribute to|lofi remix cover|dj\s+(?:remix|tiktok|jedag))\b/i.test(candTit)) {
+    return false;
+  }
+
+  // Strict culture isolation
+  if (seedCluster) {
+    const isSeedIndo = seedCluster.id.startsWith("indo_");
+    const isSeedWestern = seedCluster.id.startsWith("western_");
+
+    if (isSeedIndo) {
+      if (seedCluster.id === "indo_dangdut_koplo") {
+        const dangdutCluster = MUSIFY_CULTURE_CLUSTERS.find(c => c.id === "indo_dangdut_koplo");
+        const isCandDangdut = dangdutCluster.keywords.some(k => candArt.includes(k));
+        const hasJawa = /\b(tresno|lungo|loro|dalan|kisinan|tiwas|wirang|nemen|cidro|sewu|bojo|koplo|dangdut)\b/i.test(candTit);
+        return isCandDangdut || hasJawa;
+      }
+
+      // If seed is non-dangdut Indo, strictly reject dangdut
+      const dangdutCluster = MUSIFY_CULTURE_CLUSTERS.find(c => c.id === "indo_dangdut_koplo");
+      if (dangdutCluster.keywords.some(k => candArt.includes(k))) return false;
+      if (/\b(dangdut|koplo|kendang|remix koplo)\b/i.test(candTit)) return false;
+
+      // Reject non-Indonesian candidate
+      const candCulture = detectMusifyCulture(candArt, candTit);
+      if (!candCulture || !candCulture.id.startsWith("indo_")) {
+        return false;
+      }
+      return true;
+    }
+
+    if (isSeedWestern) {
+      if (/\b(dangdut|koplo|kendang)\b/i.test(candTit)) return false;
+      const candCulture = detectMusifyCulture(candArt, candTit);
+      if (candCulture && candCulture.id.startsWith("indo_")) {
+        return false;
+      }
+      return true;
+    }
+
+    if (seedCluster.id === "kpop_asian") {
+      const candCulture = detectMusifyCulture(candArt, candTit);
+      return candCulture && candCulture.id === "kpop_asian";
+    }
+  }
+
+  return true;
 }
 
 class SoraFyDesktopApp {
@@ -357,6 +636,8 @@ class SoraFyDesktopApp {
     this.currentLyrics = [];
     this.activeLyricIndex = -1;
     this.currentView = "home";
+    this.isFetchingRadioQueue = false;
+    this.isUpcomingQueueTriggeredForCurrent = false;
 
     // Persistence
     this.likedTrackIds = new Set(JSON.parse(localStorage.getItem("sorafy_liked_ids") || "[]"));
@@ -392,11 +673,19 @@ class SoraFyDesktopApp {
     this.activeSideTab = "lyrics";
     this.previousVolume = 0.85;
 
+    // Spotify-Style Instant Engine: Dual Preload Player & Queue Prefetcher
+    this.preloadAudio = new Audio();
+    this.preloadAudio.preload = "auto";
+    this.preloadAudio.volume = 0;
+    this.isNextTrackPreloaded = false;
+    this.preloadedTrackIndex = -1;
+
     this.initElements();
     this.initEvents();
     this.initPlugins();
     this.initAudioEqualizer();
     this.initUserPlaylists();
+    this.initYtmHomeLayout();
     this.loadCuratedPlaylists();
     this.loadInitialCatalog();
 
@@ -459,6 +748,12 @@ class SoraFyDesktopApp {
     this.currentLyricsMatchIndex = -1;
     this.lyricsLineElements = [];
 
+    // Lyrics Timing Offset Calibration Controls
+    this.lyricsOffsetBadge = document.getElementById("lyricsOffsetBadge");
+    this.lyricsOffsetMinusBtn = document.getElementById("lyricsOffsetMinusBtn");
+    this.lyricsOffsetPlusBtn = document.getElementById("lyricsOffsetPlusBtn");
+    this.lyricsOffsets = JSON.parse(localStorage.getItem("sorafy_lyrics_offsets") || "{}");
+
     this.searchInput = document.getElementById("searchInput");
     this.searchClearBtn = document.getElementById("searchClearBtn");
     this.searchSuggestions = document.getElementById("searchSuggestions");
@@ -479,6 +774,23 @@ class SoraFyDesktopApp {
     this.curatedPlaylistsSection = document.getElementById("curatedPlaylistsSection");
     this.curatedPlaylistsRow = document.getElementById("curatedPlaylistsRow");
     this.refreshPlaylistsBtn = document.getElementById("refreshPlaylistsBtn");
+
+    // YouTube Music Modern Layout Elements
+    this.DEFAULT_TRACK_ART = DEFAULT_TRACK_ART;
+    this.DEFAULT_ARTIST_ART = DEFAULT_ARTIST_ART;
+    this.ytmMixCardsGrid = document.getElementById("ytmMixCardsGrid");
+    this.ytmMusicVideosRow = document.getElementById("ytmMusicVideosRow");
+    this.ytmCommunityPlaylistsRow = document.getElementById("ytmCommunityPlaylistsRow");
+    this.ytmNewReleasesRow = document.getElementById("ytmNewReleasesRow");
+    this.playAllVideosBtn = document.getElementById("playAllVideosBtn");
+    this.viewAllNewReleasesBtn = document.getElementById("viewAllNewReleasesBtn");
+    this.videoNavPrevBtn = document.getElementById("videoNavPrevBtn");
+    this.videoNavNextBtn = document.getElementById("videoNavNextBtn");
+    this.commPlPrevBtn = document.getElementById("commPlPrevBtn");
+    this.commPlNextBtn = document.getElementById("commPlNextBtn");
+    this.newRelPrevBtn = document.getElementById("newRelPrevBtn");
+    this.newRelNextBtn = document.getElementById("newRelNextBtn");
+    this.currentMusicVideos = [];
 
     // User Custom Playlists in Sidebar
     this.sidebarCreatePlaylistBtn = document.getElementById("sidebarCreatePlaylistBtn");
@@ -512,7 +824,10 @@ class SoraFyDesktopApp {
     this.searchTopResultSection = document.getElementById("searchTopResultSection");
     this.searchTopResultCard = document.getElementById("searchTopResultCard");
     this.searchArtistsSection = document.getElementById("searchArtistsSection");
+    this.searchArtistHeroSlot = document.getElementById("searchArtistHeroSlot");
     this.searchArtistsGrid = document.getElementById("searchArtistsGrid");
+    this.searchAlbumsSection = document.getElementById("searchAlbumsSection");
+    this.searchAlbumsGrid = document.getElementById("searchAlbumsGrid");
     this.searchVideosSection = document.getElementById("searchVideosSection");
     this.searchVideosGrid = document.getElementById("searchVideosGrid");
     this.searchPlaylistsSection = document.getElementById("searchPlaylistsSection");
@@ -565,13 +880,35 @@ class SoraFyDesktopApp {
     this.virtualizerSlider = document.getElementById("virtualizerSlider");
     this.virtualizerVal = document.getElementById("virtualizerVal");
 
-    // Spotify modal elements
-    this.spotifyModal = document.getElementById("spotifyModal");
-    this.openSpotifyImportBtn = document.getElementById("openSpotifyImportBtn");
-    this.closeSpotifyModalBtn = document.getElementById("closeSpotifyModalBtn");
-    this.cancelSpotifyBtn = document.getElementById("cancelSpotifyBtn");
-    this.submitSpotifyBtn = document.getElementById("submitSpotifyBtn");
-    this.spotifyUrlInput = document.getElementById("spotifyUrlInput");
+    // Unified Import Modal elements (Spotify, Apple Music, YouTube Music)
+    this.unifiedImportModal = document.getElementById("unifiedImportModal");
+    this.sidebarImportPlaylistBtn = document.getElementById("sidebarImportPlaylistBtn");
+    this.closeUnifiedImportModalBtn = document.getElementById("closeUnifiedImportModalBtn");
+    this.cancelUnifiedImportBtn = document.getElementById("cancelUnifiedImportBtn");
+    this.submitUnifiedImportBtn = document.getElementById("submitUnifiedImportBtn");
+    this.unifiedImportUrlInput = document.getElementById("unifiedImportUrlInput");
+    this.importPlatformTabs = document.getElementById("importPlatformTabs");
+    this.unifiedImportLabel = document.getElementById("unifiedImportLabel");
+    this.unifiedImportStatus = document.getElementById("unifiedImportStatus");
+    this.unifiedImportStatusText = document.getElementById("unifiedImportStatusText");
+    this.selectedImportPlatform = "spotify";
+
+    // Data Backup & Restore elements
+    this.sidebarBackupBtn = document.getElementById("sidebarBackupBtn");
+    this.sidebarRestoreBtn = document.getElementById("sidebarRestoreBtn");
+
+    // Personalized Taste Shelf elements
+    this.personalizedShelfSection = document.getElementById("personalizedShelfSection");
+    this.personalizedShelfTitle = document.getElementById("personalizedShelfTitle");
+    this.personalizedShelfRow = document.getElementById("personalizedShelfRow");
+
+    // Backwards-compatible aliases
+    this.spotifyModal = this.unifiedImportModal;
+    this.openSpotifyImportBtn = this.sidebarImportPlaylistBtn;
+    this.closeSpotifyModalBtn = this.closeUnifiedImportModalBtn;
+    this.cancelSpotifyBtn = this.cancelUnifiedImportBtn;
+    this.submitSpotifyBtn = this.submitUnifiedImportBtn;
+    this.spotifyUrlInput = this.unifiedImportUrlInput;
 
     // Create Custom Playlist Modal elements
     this.createPlaylistModal = document.getElementById("createPlaylistModal");
@@ -651,6 +988,24 @@ class SoraFyDesktopApp {
     this.previousView = "home";
   }
 
+  // Official Verified Artist Rosette Checkmark
+  getVerifiedBadgeHtml(size = 13) {
+    return `<span class="verified-artist-badge" title="Artis Terverifikasi"><svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#38BDF8"><path d="M10.007 2.22a2.89 2.89 0 0 1 3.986 0l.915.867a2.89 2.89 0 0 0 2.22.812l1.258-.088a2.89 2.89 0 0 1 2.818 2.818l-.088 1.258a2.89 2.89 0 0 0 .812 2.22l.867.915a2.89 2.89 0 0 1 0 3.986l-.867.915a2.89 2.89 0 0 0-.812 2.22l.088 1.258a2.89 2.89 0 0 1-2.818 2.818l-1.258-.088a2.89 2.89 0 0 0-2.22.812l-.915.867a2.89 2.89 0 0 1-3.986 0l-.915-.867a2.89 2.89 0 0 0-2.22-.812l-1.258.088a2.89 2.89 0 0 1-2.818-2.818l.088-1.258a2.89 2.89 0 0 0-.812-2.22l-.867-.915a2.89 2.89 0 0 1 0-3.986l.867-.915a2.89 2.89 0 0 0 .812-2.22l-.088-1.258a2.89 2.89 0 0 1 2.818-2.818l1.258.088a2.89 2.89 0 0 0 2.22-.812l.915-.867zM16.707 9.293a1 1 0 0 0-1.414 0L11 13.586l-1.293-1.293a1 1 0 0 0-1.414 1.414l2 2a1 1 0 0 0 1.414 0l5-5a1 1 0 0 0 0-1.414z"/></svg></span>`;
+  }
+
+  isArtistVerified(artistName, browseId = '') {
+    if (browseId && typeof browseId === 'string' && browseId.startsWith('UC')) return true;
+    if (!artistName || typeof artistName !== 'string') return false;
+    const clean = artistName.toLowerCase().replace(/official|vevo|channel|music|records/gi, '').trim();
+    if (FAMOUS_VERIFIED_ARTISTS.has(clean)) return true;
+    for (const fa of FAMOUS_VERIFIED_ARTISTS) {
+      if (clean === fa || clean.startsWith(fa + ' ') || clean.endsWith(' ' + fa) || clean.includes(' ' + fa + ' ')) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   initEvents() {
     this.playPauseBtn.addEventListener("click", () => this.togglePlayPause());
     this.prevBtn.addEventListener("click", () => this.playPrevious());
@@ -665,6 +1020,17 @@ class SoraFyDesktopApp {
     this.repeatBtn.addEventListener("click", () => {
       this.repeatMode = (this.repeatMode + 1) % 3;
       this.repeatBtn.classList.toggle("active", this.repeatMode > 0);
+      const repIcon = this.repeatBtn.querySelector("iconsax-icon");
+      if (repIcon) {
+        repIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
+      }
+      if (this.screenPlayerRepeatBtn) {
+        this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
+        const scRepIcon = this.screenPlayerRepeatBtn.querySelector("iconsax-icon");
+        if (scRepIcon) {
+          scRepIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
+        }
+      }
       const labels = ["Repeat Nonaktif", "Ulangi Semua", "Ulangi Lagu Ini"];
       this.showToast(labels[this.repeatMode]);
     });
@@ -726,6 +1092,16 @@ class SoraFyDesktopApp {
       this.toggleLyricsBtn.addEventListener("click", () => {
         this.toggleLyricsTab();
       });
+    }
+
+    if (this.lyricsOffsetMinusBtn) {
+      this.lyricsOffsetMinusBtn.addEventListener("click", () => this.adjustLyricsOffset(-500));
+    }
+    if (this.lyricsOffsetPlusBtn) {
+      this.lyricsOffsetPlusBtn.addEventListener("click", () => this.adjustLyricsOffset(500));
+    }
+    if (this.lyricsOffsetBadge) {
+      this.lyricsOffsetBadge.addEventListener("click", () => this.resetLyricsOffset());
     }
 
     if (this.toggleQueueBtn) {
@@ -872,6 +1248,14 @@ class SoraFyDesktopApp {
         this.repeatMode = (this.repeatMode + 1) % 3;
         this.repeatBtn.classList.toggle("active", this.repeatMode > 0);
         this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
+        const repIcon = this.repeatBtn.querySelector("iconsax-icon");
+        if (repIcon) {
+          repIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
+        }
+        const scRepIcon = this.screenPlayerRepeatBtn.querySelector("iconsax-icon");
+        if (scRepIcon) {
+          scRepIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
+        }
         const labels = ["Repeat Nonaktif", "Ulangi Semua", "Ulangi Lagu Ini"];
         this.showToast(labels[this.repeatMode]);
       });
@@ -1261,10 +1645,16 @@ class SoraFyDesktopApp {
     this.audio.addEventListener("timeupdate", () => this.onTimeUpdate());
     this.audio.addEventListener("loadedmetadata", () => {
       if (this.audio.duration && !isNaN(this.audio.duration)) {
-        this.durationLabel.textContent = this.formatTime(this.audio.duration);
-        if (this.tracks[this.currentTrackIndex]) {
-          this.tracks[this.currentTrackIndex].duration_secs = Math.round(this.audio.duration);
+        const realSecs = Math.round(this.audio.duration);
+        this.durationLabel.textContent = this.formatTime(realSecs);
+        if (this.screenPlayerDuration) {
+          this.screenPlayerDuration.textContent = this.formatTime(realSecs);
         }
+        if (this.tracks[this.currentTrackIndex]) {
+          this.tracks[this.currentTrackIndex].duration_secs = realSecs;
+        }
+        const activeRows = document.querySelectorAll('.track-row.active .track-row-duration, .ytm-song-item.active .ytm-song-duration, .queue-item.active .queue-item-duration');
+        activeRows.forEach(el => el.textContent = this.formatTime(realSecs));
       }
     });
     this.audio.addEventListener("error", () => {
@@ -1366,28 +1756,60 @@ class SoraFyDesktopApp {
       });
     });
 
-    // Spotify Importer Modal events
-    if (this.openSpotifyImportBtn) {
-      this.openSpotifyImportBtn.addEventListener("click", () => {
-        this.spotifyModal.style.display = "flex";
-        this.spotifyUrlInput.focus();
+    // Unified Importer Modal & Brand Tabs events
+    if (this.sidebarImportPlaylistBtn) {
+      this.sidebarImportPlaylistBtn.addEventListener("click", () => {
+        if (this.unifiedImportModal) {
+          this.unifiedImportModal.style.display = "flex";
+          if (this.unifiedImportUrlInput) this.unifiedImportUrlInput.focus();
+        }
       });
     }
 
-    if (this.closeSpotifyModalBtn) {
-      this.closeSpotifyModalBtn.addEventListener("click", () => {
-        this.spotifyModal.style.display = "none";
+    if (this.closeUnifiedImportModalBtn) {
+      this.closeUnifiedImportModalBtn.addEventListener("click", () => {
+        if (this.unifiedImportModal) this.unifiedImportModal.style.display = "none";
       });
     }
 
-    if (this.cancelSpotifyBtn) {
-      this.cancelSpotifyBtn.addEventListener("click", () => {
-        this.spotifyModal.style.display = "none";
+    if (this.cancelUnifiedImportBtn) {
+      this.cancelUnifiedImportBtn.addEventListener("click", () => {
+        if (this.unifiedImportModal) this.unifiedImportModal.style.display = "none";
       });
     }
 
-    if (this.submitSpotifyBtn) {
-      this.submitSpotifyBtn.addEventListener("click", () => this.handleSpotifyImport());
+    if (this.submitUnifiedImportBtn) {
+      this.submitUnifiedImportBtn.addEventListener("click", () => this.handleUnifiedImport());
+    }
+
+    if (this.importPlatformTabs) {
+      this.importPlatformTabs.querySelectorAll(".import-platform-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          this.importPlatformTabs.querySelectorAll(".import-platform-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          this.selectedImportPlatform = btn.dataset.platform;
+
+          if (this.selectedImportPlatform === "spotify") {
+            if (this.unifiedImportLabel) this.unifiedImportLabel.textContent = "Tautan Playlist atau Album Spotify:";
+            if (this.unifiedImportUrlInput) this.unifiedImportUrlInput.placeholder = "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M";
+          } else if (this.selectedImportPlatform === "applemusic") {
+            if (this.unifiedImportLabel) this.unifiedImportLabel.textContent = "Tautan Playlist atau Album Apple Music:";
+            if (this.unifiedImportUrlInput) this.unifiedImportUrlInput.placeholder = "https://music.apple.com/us/playlist/todays-hits/pl.f4d106fed2bd41149aaacabb233eb5eb";
+          } else if (this.selectedImportPlatform === "ytmusic") {
+            if (this.unifiedImportLabel) this.unifiedImportLabel.textContent = "Tautan Playlist atau Album YouTube Music:";
+            if (this.unifiedImportUrlInput) this.unifiedImportUrlInput.placeholder = "https://music.youtube.com/playlist?list=RDCLAK5uy_kfdijBq98Yn3";
+          }
+        });
+      });
+    }
+
+    // Sidebar Backup & Restore events
+    if (this.sidebarBackupBtn) {
+      this.sidebarBackupBtn.addEventListener("click", () => this.handleDataBackup());
+    }
+
+    if (this.sidebarRestoreBtn) {
+      this.sidebarRestoreBtn.addEventListener("click", () => this.handleDataRestore());
     }
 
     // Reset plugins button
@@ -1429,16 +1851,8 @@ class SoraFyDesktopApp {
       });
     }
 
-    // Keyboard Shortcuts (Space, ArrowLeft, ArrowRight, Ctrl+F)
+    // Keyboard Shortcuts (Space, ArrowLeft, ArrowRight)
     window.addEventListener("keydown", (e) => {
-      // Ctrl+F or Cmd+F for Notes-App Style In-Document Lyrics Search
-      if ((e.ctrlKey || e.metaKey) && (e.key === "f" || e.key === "F")) {
-        if (e.target !== this.lyricsSearchInput && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
-        e.preventDefault();
-        this.openLyricsSearch();
-        return;
-      }
-
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
       if (e.code === "Space") {
         e.preventDefault();
@@ -1482,6 +1896,8 @@ class SoraFyDesktopApp {
             this.openAddToPlaylistModal(track);
           } else if (action === "toggle-like") {
             this.toggleLikeTrack(track);
+          } else if (action === "download-track") {
+            this.downloadOfflineTrack(track);
           }
         });
       });
@@ -1585,11 +2001,11 @@ class SoraFyDesktopApp {
       subLabel = "Artis • Profil Resmi";
     }
 
-    // Top 3 songs
+    // Top 3 songs (only matching this artist)
     let heroTracks = (topArt.top_songs && topArt.top_songs.length > 0) ? [...topArt.top_songs] : [];
     if (heroTracks.length === 0 && fallbackSongs.length > 0) {
       const artistMatches = fallbackSongs.filter(s => (s.artist || "").toLowerCase().includes(topArtName.toLowerCase()));
-      heroTracks = (artistMatches.length > 0 ? artistMatches : fallbackSongs).slice(0, 3);
+      heroTracks = artistMatches.slice(0, 3);
     } else {
       heroTracks = heroTracks.slice(0, 3);
     }
@@ -1657,11 +2073,11 @@ class SoraFyDesktopApp {
         const row = document.createElement("div");
         row.className = "search-hero-track-row";
         
-        const dur = this.formatTime(track.duration_secs || 210);
-        const sub = track.subtitle || `Lagu • ${dur}`;
+        const dur = track.duration_secs ? this.formatTime(track.duration_secs) : '';
+        const sub = track.subtitle || (dur ? `Lagu • ${dur}` : (track.artist || 'Lagu'));
 
         row.innerHTML = `
-          <img src="${track.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'}" class="search-hero-track-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'">
+          <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="search-hero-track-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
           <div class="search-hero-track-info">
             <span class="search-hero-track-title">${this.escapeHtml(track.title)}</span>
             <span class="search-hero-track-sub">${this.escapeHtml(sub)}</span>
@@ -1683,9 +2099,58 @@ class SoraFyDesktopApp {
       });
 
       container.appendChild(tracksCard);
+    } else {
+      container.classList.add("single-card");
     }
 
     return container;
+  }
+
+  createArtistCard(art) {
+    if (!art) return null;
+    const artName = art.name || art.title || "";
+    if (!artName) return null;
+    const artAvatar = art.avatar_url || art.artwork_url || getArtistAvatar(artName);
+    if (artAvatar) {
+      MASTER_ARTIST_AVATARS[artName.toLowerCase().trim()] = artAvatar;
+    }
+    const card = document.createElement("div");
+    card.className = "artist-card";
+    card.innerHTML = `
+      <div class="artist-card-art-box">
+        <img src="${artAvatar}" class="artist-card-art" alt="${this.escapeHtml(artName)}" onerror="this.src='${getArtistAvatar(artName)}'">
+      </div>
+      <div class="artist-card-name" title="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</div>
+      <div class="artist-card-role">${this.escapeHtml(art.sub_label || 'Artis')}</div>
+    `;
+    card.addEventListener("click", () => {
+      this.openArtistDetail(artName, art.browse_id || art.id || '');
+    });
+    return card;
+  }
+
+  createAlbumCard(album) {
+    if (!album) return null;
+    const card = document.createElement("div");
+    card.className = "album-card";
+    const artwork = album.artwork_url || this.DEFAULT_TRACK_ART;
+
+    card.innerHTML = `
+      <div class="album-card-art-box">
+        <img src="${artwork}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+        <div class="playlist-card-play-overlay">
+          <iconsax-icon name="play" type="bold" size="20" color="#000000"></iconsax-icon>
+        </div>
+      </div>
+      <div class="album-card-title" title="${this.escapeHtml(album.title)}">${this.escapeHtml(album.title)}</div>
+      <div class="album-card-year">${this.escapeHtml(album.album_type || 'Album')} • ${this.escapeHtml(album.artist || 'Artis')} ${album.year ? '• ' + this.escapeHtml(album.year) : ''}</div>
+    `;
+
+    card.addEventListener("click", () => {
+      this.openAlbumDetail(album);
+    });
+
+    return card;
   }
 
   // =========================================================
@@ -1934,11 +2399,12 @@ class SoraFyDesktopApp {
     const artists = this.parseTrackArtists(track);
     let artistsHtml = '';
     if (artists.length > 0) {
-      artistsHtml = artists.map(art =>
-        `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${art.browse_id || ''}">${this.escapeHtml(art.name)}</span>`
-      ).join('<span style="opacity: 0.6; margin: 0 2px;">, </span>');
+      artistsHtml = artists.map(art => {
+        return `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${art.browse_id || ''}">${this.escapeHtml(art.name)}</span>`;
+      }).join('<span style="opacity: 0.6; margin: 0 2px;">, </span>');
     } else {
-      artistsHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(track.artist || 'Artis')}">${this.escapeHtml(track.artist || 'Artis')}</span>`;
+      const artName = track.artist || 'Artis';
+      artistsHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</span>`;
     }
 
     row.innerHTML = `
@@ -1947,9 +2413,12 @@ class SoraFyDesktopApp {
         <span class="play-icon">▶</span>
         ${isActive && this.isPlaying ? '<div class="playing-bars"><span></span><span></span><span></span></div>' : ''}
       </div>
-      <img src="${track.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'}" class="track-row-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'">
+      <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="track-row-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
       <div class="track-row-info">
-        <div class="track-row-title">${this.escapeHtml(track.title)}</div>
+        <div class="track-row-title">
+          <span class="title-text">${this.escapeHtml(track.title)}</span>
+          ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
+        </div>
         <div class="track-row-sub">${artistsHtml}</div>
       </div>
       <div class="track-row-actions">
@@ -1965,7 +2434,7 @@ class SoraFyDesktopApp {
           </button>
         ` : ''}
       </div>
-      <div class="track-row-duration">${this.formatTime(track.duration_secs || 180)}</div>
+      <div class="track-row-duration">${track.duration_secs ? this.formatTime(track.duration_secs) : ''}</div>
     `;
 
     row.addEventListener("click", (e) => {
@@ -2102,22 +2571,26 @@ class SoraFyDesktopApp {
         const artists = this.parseTrackArtists(track);
         let artistsHtml = '';
         if (artists.length > 0) {
-          artistsHtml = artists.map(art =>
-            `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${art.browse_id || ''}">${this.escapeHtml(art.name)}</span>`
-          ).join('<span style="opacity: 0.6; margin: 0 2px;">, </span>');
+          artistsHtml = artists.map(art => {
+            return `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${art.browse_id || ''}">${this.escapeHtml(art.name)}</span>`;
+          }).join('<span style="opacity: 0.6; margin: 0 2px;">, </span>');
         } else {
-          artistsHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(track.artist || 'Artis')}">${this.escapeHtml(track.artist || 'Artis')}</span>`;
+          const artName = track.artist || 'Artis';
+          artistsHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</span>`;
         }
 
         item.innerHTML = `
           <div class="ytm-song-art-box">
-            <img src="${track.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'}" class="ytm-song-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'">
+            <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="ytm-song-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
             <div class="ytm-play-overlay">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </div>
           </div>
           <div class="ytm-song-info">
-            <div class="ytm-song-title">${this.escapeHtml(track.title)}</div>
+            <div class="ytm-song-title">
+              <span class="title-text">${this.escapeHtml(track.title)}</span>
+              ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
+            </div>
             <div class="ytm-song-sub">${artistsHtml}${track.album ? ' • ' + this.escapeHtml(track.album) : ''}</div>
           </div>
           <div class="ytm-song-actions">
@@ -2127,7 +2600,7 @@ class SoraFyDesktopApp {
             <button class="track-row-add-btn" title="Tambah ke Playlist" id="ytm_add_${track.id}">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
-            <span class="ytm-song-duration">${this.formatTime(track.duration_secs || 180)}</span>
+            <span class="ytm-song-duration">${track.duration_secs ? this.formatTime(track.duration_secs) : ''}</span>
           </div>
         `;
 
@@ -2275,7 +2748,7 @@ class SoraFyDesktopApp {
             card.className = "album-card";
             card.innerHTML = `
               <div class="album-card-art-box">
-                <img src="${album.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80'}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80'">
+                <img src="${album.artwork_url || this.DEFAULT_TRACK_ART}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
               </div>
               <div class="album-card-title">${this.escapeHtml(album.title)}</div>
               <div class="album-card-year">${this.escapeHtml(album.year || ('Album • ' + (album.artist || 'Artis')))}</div>
@@ -2357,7 +2830,7 @@ class SoraFyDesktopApp {
             title: item.title,
             artist: item.artist.name,
             album: item.album ? item.album.title : item.title,
-            duration_secs: item.duration || 180,
+            duration_secs: item.duration || 0,
             stream_url: item.preview,
             artwork_url: item.album ? (item.album.cover_xl || item.album.cover_medium) : item.artist.picture_medium,
             audio_format: { codec: "Hi-Fi AAC", bitrate_kbps: 320, is_lossless: false },
@@ -2439,10 +2912,10 @@ class SoraFyDesktopApp {
 
       if (!playlists.length) {
         playlists = [
-          { id: "pl_top_indo", title: "Top Pop Indonesia 2026", author: "SoraFy Koleksi", artwork_url: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80", track_count: "50 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" },
-          { id: "pl_indie_senja", title: "Indie Senja & Akustik", author: "Koleksi Spesial", artwork_url: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80", track_count: "40 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" },
-          { id: "pl_chill_lofi", title: "Santai & Chill Instrumental", author: "SoraFy Studio", artwork_url: "https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=400&q=80", track_count: "35 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" },
-          { id: "pl_fokus_kerja", title: "Fokus Belajar & Bekerja", author: "Kurasi Pilihan", artwork_url: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=400&q=80", track_count: "45 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" }
+          { id: "pl_top_indo", title: "Top Pop Indonesia 2026", author: "SoraFy Koleksi", artwork_url: "https://i.ytimg.com/vi/anMYu17aZT4/hqdefault.jpg", track_count: "50 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" },
+          { id: "pl_indie_senja", title: "Indie Senja & Akustik", author: "Koleksi Spesial", artwork_url: "https://i.ytimg.com/vi/7jY7lS1RkmM/hqdefault.jpg", track_count: "40 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" },
+          { id: "pl_chill_lofi", title: "Santai & Chill Instrumental", author: "SoraFy Studio", artwork_url: "https://i.ytimg.com/vi/pXRviuL6v_U/hqdefault.jpg", track_count: "35 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" },
+          { id: "pl_fokus_kerja", title: "Fokus Belajar & Bekerja", author: "Kurasi Pilihan", artwork_url: "https://i.ytimg.com/vi/P5ZBISo2CaE/hqdefault.jpg", track_count: "45 Lagu", browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b" }
         ];
       }
 
@@ -2453,6 +2926,7 @@ class SoraFyDesktopApp {
       }));
 
       this.renderCuratedPlaylists(this.curatedPlaylists);
+      this.renderPersonalizedShelf();
     } catch (e) {
       console.warn("Curated playlists notice:", e);
     }
@@ -2467,7 +2941,7 @@ class SoraFyDesktopApp {
       card.className = "playlist-card";
       card.innerHTML = `
         <div class="playlist-card-art-box">
-          <img src="${pl.artwork_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80'}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80'">
+          <img src="${pl.artwork_url || this.DEFAULT_TRACK_ART}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
           <div class="playlist-card-play-overlay">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
@@ -2485,25 +2959,535 @@ class SoraFyDesktopApp {
     });
   }
 
+  // =========================================================
+  // YouTube Music Modern Home Layout Engine
+  // =========================================================
+  initYtmHomeLayout() {
+    // 1. Navigation Arrows Wire-Up
+    if (this.videoNavPrevBtn && this.ytmMusicVideosRow) {
+      this.videoNavPrevBtn.addEventListener("click", () => this.ytmMusicVideosRow.scrollBy({ left: -600, behavior: "smooth" }));
+    }
+    if (this.videoNavNextBtn && this.ytmMusicVideosRow) {
+      this.videoNavNextBtn.addEventListener("click", () => this.ytmMusicVideosRow.scrollBy({ left: 600, behavior: "smooth" }));
+    }
+
+    if (this.commPlPrevBtn && this.ytmCommunityPlaylistsRow) {
+      this.commPlPrevBtn.addEventListener("click", () => this.ytmCommunityPlaylistsRow.scrollBy({ left: -500, behavior: "smooth" }));
+    }
+    if (this.commPlNextBtn && this.ytmCommunityPlaylistsRow) {
+      this.commPlNextBtn.addEventListener("click", () => this.ytmCommunityPlaylistsRow.scrollBy({ left: 500, behavior: "smooth" }));
+    }
+
+    if (this.newRelPrevBtn && this.ytmNewReleasesRow) {
+      this.newRelPrevBtn.addEventListener("click", () => this.ytmNewReleasesRow.scrollBy({ left: -500, behavior: "smooth" }));
+    }
+    if (this.newRelNextBtn && this.ytmNewReleasesRow) {
+      this.newRelNextBtn.addEventListener("click", () => this.ytmNewReleasesRow.scrollBy({ left: 500, behavior: "smooth" }));
+    }
+
+    // 2. Play All Videos Button
+    if (this.playAllVideosBtn) {
+      this.playAllVideosBtn.addEventListener("click", () => {
+        if (this.currentMusicVideos && this.currentMusicVideos.length > 0) {
+          this.tracks = [...this.currentMusicVideos];
+          this.loadTrack(0, true);
+          this.showToast(`Memutar video musik (${this.tracks.length} video)`);
+          this.switchView("player");
+          this.setScreenPlayerMode("video");
+        } else {
+          this.showToast("Memuat video...");
+          this.fetchYtmMusicVideos(true);
+        }
+      });
+    }
+
+    // 3. View All New Releases Button
+    if (this.viewAllNewReleasesBtn) {
+      this.viewAllNewReleasesBtn.addEventListener("click", () => {
+        this.switchView("explore");
+        const relTab = document.querySelector('.explore-nav-pill[data-explore-tab="new-releases"]');
+        if (relTab) relTab.click();
+      });
+    }
+
+    // 4. Populate All Dynamic Sections
+    this.renderOldFavoritesMixes();
+    this.fetchYtmMusicVideos();
+    this.fetchYtmCommunityPlaylists();
+    this.fetchYtmNewReleases();
+  }
+
+  renderOldFavoritesMixes() {
+    if (!this.ytmMixCardsGrid) return;
+    this.ytmMixCardsGrid.innerHTML = "";
+
+    const topArtists = [...new Set(this.historyTracks.map(t => t.artist))].filter(Boolean).slice(0, 4);
+    const replaySubtitle = topArtists.length > 0
+      ? topArtists.join(', ')
+      : "twenty one pilots, Raisa, sombr, Bleachers";
+
+    const likedCount = this.likedTrackIds.size;
+    const likedTracks = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+    const likedArtworks = likedTracks.filter(t => t.artwork_url && !t.artwork_url.includes('unsplash')).map(t => t.artwork_url).slice(0, 4);
+
+    const historyArtworks = this.historyTracks.filter(t => t.artwork_url && !t.artwork_url.includes('unsplash')).map(t => t.artwork_url).slice(0, 4);
+
+    // Authentic YouTube Music Google CDN artwork for the mixes
+    const archiveMosaic = [
+      "https://i.ytimg.com/vi/uY5s4mN6Y3A/hqdefault.jpg", // MASDO
+      "https://i.ytimg.com/vi/Gs069dndIYk/hqdefault.jpg", // SEKAI NO OWARI
+      "https://i.ytimg.com/vi/a51VH9BYzZA/hqdefault.jpg", // suisei
+      "https://i.ytimg.com/vi/RYnFIRc0k6E/hqdefault.jpg"  // Limp Bizkit
+    ];
+
+    const replayMosaic = historyArtworks.length >= 4 ? historyArtworks : [
+      "https://i.ytimg.com/vi/pXRviuL6v_U/hqdefault.jpg", // twenty one pilots
+      "https://i.ytimg.com/vi/7jY7lS1RkmM/hqdefault.jpg", // Raisa
+      "https://i.ytimg.com/vi/qY_3m6j09iA/hqdefault.jpg", // sombr
+      "https://i.ytimg.com/vi/o50LpG_c40k/hqdefault.jpg"  // Bleachers
+    ];
+
+    const discoverMosaic = [
+      "https://i.ytimg.com/vi/k3ChphiX7Wk/hqdefault.jpg", // P.O.D.
+      "https://i.ytimg.com/vi/u9Dg-g7t2l4/hqdefault.jpg", // Disturbed
+      "https://i.ytimg.com/vi/YVw1P6C76-c/hqdefault.jpg", // Thom Yorke
+      "https://i.ytimg.com/vi/QxZ6X2_Yh1U/hqdefault.jpg"  // Laleilmanino
+    ];
+
+    const mixes = [
+      {
+        id: "mix_archive",
+        title: "Arsipkan Video Mix",
+        sub: "MASDO, SEKAI NO OWARI, suisei, Limp Bizkit",
+        bgClass: "mix-bg-archive",
+        query: "MASDO SEKAI NO OWARI suisei Limp Bizkit hits",
+        type: "archive",
+        covers: archiveMosaic
+      },
+      {
+        id: "mix_replay",
+        title: "Replay Mix",
+        sub: replaySubtitle,
+        bgClass: "mix-bg-replay",
+        query: replaySubtitle,
+        type: "replay",
+        covers: replayMosaic
+      },
+      {
+        id: "mix_liked",
+        title: "Musik yang Disukai",
+        sub: `${likedCount > 0 ? likedCount + ' lagu disukai' : 'Playlist otomatis'}`,
+        bgClass: "mix-bg-liked",
+        type: "liked",
+        covers: likedArtworks
+      },
+      {
+        id: "mix_discover",
+        title: "Kompilasi Musik Baru",
+        sub: "P.O.D., Disturbed, Thom Yorke, Laleilmanino",
+        bgClass: "mix-bg-discover",
+        query: "P.O.D. Disturbed Thom Yorke Laleilmanino hits",
+        type: "discover",
+        covers: discoverMosaic
+      }
+    ];
+
+    mixes.forEach(mix => {
+      const card = document.createElement("div");
+      card.className = "ytm-mix-card";
+
+      let innerArtHtml = "";
+      if (mix.type === "liked" && mix.covers.length < 4) {
+        innerArtHtml = `
+          <div class="ytm-mix-card-art ${mix.bgClass}">
+            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%;">
+              <svg width="68" height="68" viewBox="0 0 24 24" fill="#FFFFFF" stroke="#FFFFFF" stroke-width="1.5"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </div>
+            <div class="mix-play-overlay">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+          </div>
+        `;
+      } else {
+        const coverList = (mix.covers && mix.covers.length >= 4) ? mix.covers : (mix.type === 'liked' ? archiveMosaic : archiveMosaic);
+        innerArtHtml = `
+          <div class="ytm-mix-card-art ${mix.bgClass}">
+            <div class="mix-inner-mosaic">
+              <img src="${coverList[0] || this.DEFAULT_TRACK_ART}" alt="Art" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+              <img src="${coverList[1] || this.DEFAULT_TRACK_ART}" alt="Art" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+              <img src="${coverList[2] || this.DEFAULT_TRACK_ART}" alt="Art" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+              <img src="${coverList[3] || this.DEFAULT_TRACK_ART}" alt="Art" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            </div>
+            <div style="position: absolute; top: 12px; left: 14px; font-size: 19px; font-weight: 800; color: #FFFFFF; text-shadow: 0 2px 8px rgba(0,0,0,0.8); letter-spacing: -0.3px; line-height: 1.15;">
+              ${mix.type === 'archive' ? 'Archive<br><span style="font-size: 13px; opacity: 0.85; font-weight: 600;">Mix</span>' : ''}
+              ${mix.type === 'replay' ? 'Replay<br><span style="font-size: 13px; opacity: 0.85; font-weight: 600;">Mix</span>' : ''}
+              ${mix.type === 'discover' ? 'Discover<br><span style="font-size: 13px; opacity: 0.85; font-weight: 600;">Mix</span>' : ''}
+              ${mix.type === 'liked' ? '<span style="font-size: 14px; background: rgba(0,0,0,0.6); padding: 4px 8px; border-radius: 4px;">Disukai</span>' : ''}
+            </div>
+            <div class="mix-play-overlay">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+          </div>
+        `;
+      }
+
+      card.innerHTML = `
+        ${innerArtHtml}
+        <div class="ytm-mix-card-title">${this.escapeHtml(mix.title)}</div>
+        <div class="ytm-mix-card-sub">${this.escapeHtml(mix.sub)}</div>
+      `;
+
+      card.addEventListener("click", () => {
+        if (mix.type === "liked") {
+          this.switchView("liked");
+          const curLiked = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+          if (curLiked.length > 0) {
+            this.tracks = [...curLiked];
+            this.loadTrack(0, true);
+          }
+        } else if (mix.query) {
+          this.showToast(`Memutar ${mix.title}...`);
+          this.searchOnlineMusic(mix.query, 'song');
+        }
+      });
+
+      this.ytmMixCardsGrid.appendChild(card);
+    });
+  }
+
+  async fetchYtmMusicVideos(autoPlayFirst = false) {
+    if (!this.ytmMusicVideosRow) return;
+    this.ytmMusicVideosRow.innerHTML = `<div style="padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Memuat video musik...</div>`;
+
+    try {
+      let videos = [];
+      if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
+        videos = await window.electronAPI.searchYouTubeMusic("video musik indonesia vevo hits", 'video').catch(() => []);
+      }
+
+      if (!videos || videos.length === 0) {
+        videos = [
+          {
+            id: "yt_m0BFZKPsoWY",
+            video_id: "m0BFZKPsoWY",
+            title: "Love Me Not (Live) (Cover)",
+            artist: "Olivia Dean",
+            views: "13 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/m0BFZKPsoWY/hqdefault.jpg",
+            duration_secs: 245,
+            is_video: true,
+            source_label: "Video Musik"
+          },
+          {
+            id: "yt_X7UqPXvWUzw",
+            video_id: "X7UqPXvWUzw",
+            title: "Drag Path",
+            artist: "twenty one pilots",
+            views: "17 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/X7UqPXvWUzw/hqdefault.jpg",
+            duration_secs: 230,
+            is_video: true,
+            source_label: "Video Musik"
+          },
+          {
+            id: "yt_P5ZBISo2CaE",
+            video_id: "P5ZBISo2CaE",
+            title: "the cure",
+            artist: "Olivia Rodrigo",
+            views: "52 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/P5ZBISo2CaE/hqdefault.jpg",
+            duration_secs: 220,
+            is_video: true,
+            source_label: "Video Musik"
+          },
+          {
+            id: "yt_anMYu17aZT4",
+            video_id: "anMYu17aZT4",
+            title: "Andai Aku Bisa (Virtual Collaboration)",
+            artist: "Erwin Gutawa, Tulus",
+            views: "141 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/anMYu17aZT4/hqdefault.jpg",
+            duration_secs: 280,
+            is_video: true,
+            source_label: "Video Musik"
+          }
+        ];
+      }
+
+      this.currentMusicVideos = videos;
+      this.ytmMusicVideosRow.innerHTML = "";
+
+      videos.forEach((vid, idx) => {
+        const card = document.createElement("div");
+        card.className = "ytm-video-card";
+        const highThumb = vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`;
+        const durText = vid.duration_secs ? this.formatTime(vid.duration_secs) : "";
+        const isVidArtVer = this.isArtistVerified(vid.artist || '');
+        const subText = `${this.escapeHtml(vid.artist || 'Artis')}${vid.views ? ' • ' + this.escapeHtml(vid.views) : (durText ? ' • ' + durText : '')}`;
+
+        card.innerHTML = `
+          <div class="ytm-video-art-box">
+            <img src="${highThumb}" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            <div class="ytm-video-play-center">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+            ${durText ? `<div class="ytm-video-badge-tag">${durText}</div>` : ''}
+          </div>
+          <div class="ytm-video-title">${this.escapeHtml(vid.title)}</div>
+          <div class="ytm-video-sub">${subText}</div>
+        `;
+
+        card.addEventListener("click", () => {
+          this.tracks = [...this.currentMusicVideos];
+          this.loadTrack(idx, true);
+          this.showToast(`Memutar video ${vid.title}`);
+          this.switchView("player");
+          this.setScreenPlayerMode("video");
+        });
+
+        this.ytmMusicVideosRow.appendChild(card);
+      });
+
+      if (autoPlayFirst && videos.length > 0) {
+        this.tracks = [...videos];
+        this.loadTrack(0, true);
+        this.switchView("player");
+        this.setScreenPlayerMode("video");
+      }
+    } catch (e) {
+      console.warn("fetchYtmMusicVideos notice:", e);
+      this.ytmMusicVideosRow.innerHTML = `<div style="padding: 18px; color: var(--color-text-secondary); font-size: 13px;">Gagal memuat video musik saat ini.</div>`;
+    }
+  }
+
+  async fetchYtmCommunityPlaylists() {
+    if (!this.ytmCommunityPlaylistsRow) return;
+    this.ytmCommunityPlaylistsRow.innerHTML = `<div style="padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Memuat playlist komunitas...</div>`;
+
+    try {
+      let playlists = [];
+      if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
+        playlists = await window.electronAPI.searchYouTubeMusic("playlist lagu indonesia viral hits", 'playlist').catch(() => []);
+      }
+
+      if (!playlists || playlists.length === 0) {
+        playlists = [
+          {
+            title: "Favorite Indonesian",
+            author: "Bray",
+            track_count: "1,5 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/anMYu17aZT4/hqdefault.jpg",
+            browse_id: "VLPLx0sYbCqOb8TBPRdmBH6572A2_vE13B7b",
+            avatar_letter: "B"
+          },
+          {
+            title: "OBAT NGANTUK FREN",
+            author: "hizkiagozandri",
+            track_count: "1,8 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/7jY7lS1RkmM/hqdefault.jpg",
+            browse_id: "VLPL4fGSI1pDJn5nN_71bB7Gj77p05Jm0yC_",
+            avatar_letter: "H"
+          },
+          {
+            title: "galau inggris",
+            author: "Resti Laora Cahyeny",
+            track_count: "3,8 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/P5ZBISo2CaE/hqdefault.jpg",
+            browse_id: "VLPLx0sYbCqOb8T1b8cWj5dG7vN2pM9kL4",
+            avatar_letter: "R"
+          },
+          {
+            title: "2016-2018 edm vibes",
+            author: "Ayasstika",
+            track_count: "809 rb x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/pXRviuL6v_U/hqdefault.jpg",
+            browse_id: "VLPLx0sYbCqOb8Q0y7xWz9vM1nB3pL5kR7",
+            avatar_letter: "A"
+          },
+          {
+            title: "mood",
+            author: "Dandi Gusnico",
+            track_count: "649 rb x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/m0BFZKPsoWY/hqdefault.jpg",
+            browse_id: "VLPLx0sYbCqOb8M5n7bV9xW2z1pQ4kL8rT",
+            avatar_letter: "D"
+          },
+          {
+            title: "aku kalah",
+            author: "Fakhri Ramdhani Putra",
+            track_count: "3,5 jt x ditonton",
+            artwork_url: "https://i.ytimg.com/vi/X7UqPXvWUzw/hqdefault.jpg",
+            browse_id: "VLPLx0sYbCqOb8V9xW2z1pQ4kL8rT5n7b",
+            avatar_letter: "F"
+          }
+        ];
+      }
+
+      this.ytmCommunityPlaylistsRow.innerHTML = "";
+
+      playlists.slice(0, 12).forEach(pl => {
+        const card = document.createElement("div");
+        card.className = "ytm-comm-card";
+        const authorInitial = (pl.avatar_letter || pl.author?.charAt(0) || 'K').toUpperCase();
+        const sub = `${this.escapeHtml(pl.author || 'Komunitas')}${pl.track_count ? ' • ' + this.escapeHtml(pl.track_count) : ''}`;
+
+        card.innerHTML = `
+          <div class="ytm-comm-art-box">
+            <img src="${pl.artwork_url || this.DEFAULT_TRACK_ART}" alt="${this.escapeHtml(pl.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            <div class="ytm-comm-avatar">${authorInitial}</div>
+            <div class="ytm-comm-play-overlay">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+          </div>
+          <div class="ytm-comm-title">${this.escapeHtml(pl.title)}</div>
+          <div class="ytm-comm-sub">${sub}</div>
+        `;
+
+        card.addEventListener("click", () => {
+          this.openPlaylistDetail(pl);
+        });
+
+        this.ytmCommunityPlaylistsRow.appendChild(card);
+      });
+    } catch (e) {
+      console.warn("fetchYtmCommunityPlaylists notice:", e);
+      this.ytmCommunityPlaylistsRow.innerHTML = `<div style="padding: 18px; color: var(--color-text-secondary); font-size: 13px;">Gagal memuat playlist komunitas saat ini.</div>`;
+    }
+  }
+
+  async fetchYtmNewReleases() {
+    if (!this.ytmNewReleasesRow) return;
+    this.ytmNewReleasesRow.innerHTML = `<div style="padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Memuat rilis baru...</div>`;
+
+    try {
+      let albums = [];
+      if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
+        albums = await window.electronAPI.searchYouTubeMusic("album baru indonesia rilis", 'album').catch(() => []);
+      }
+
+      if (!albums || albums.length === 0) {
+        albums = [
+          {
+            id: "alb_flower",
+            title: "Flower In A Hurricane (feat. Tame Impala, SZA)",
+            artist: "Justice, Tame Impala, SZA",
+            album_type: "Single",
+            artwork_url: "https://i.ytimg.com/vi/uY5s4mN6Y3A/hqdefault.jpg",
+            browse_id: "MPREb_908d5sNFzsY",
+            is_explicit: false
+          },
+          {
+            id: "alb_expectations",
+            title: "expectations",
+            artist: "Olivia Rodrigo & Chappell Roan",
+            album_type: "Single",
+            artwork_url: "https://i.ytimg.com/vi/P5ZBISo2CaE/hqdefault.jpg",
+            browse_id: "MPREb_ABupi7aUVno",
+            is_explicit: false
+          },
+          {
+            id: "alb_anak_kampung",
+            title: "Anak Kampung",
+            artist: "Maman Fvndy",
+            album_type: "Single",
+            artwork_url: "https://i.ytimg.com/vi/anMYu17aZT4/hqdefault.jpg",
+            browse_id: "MPREb_UEThOaH7e9r",
+            is_explicit: false
+          },
+          {
+            id: "alb_hannah",
+            title: "Hannah Montana",
+            artist: "Rex Orange County",
+            album_type: "Single",
+            artwork_url: "https://i.ytimg.com/vi/qY_3m6j09iA/hqdefault.jpg",
+            browse_id: "MPREb_0Ai4t8QRIZ2",
+            is_explicit: false
+          },
+          {
+            id: "alb_great_exp",
+            title: "Great Expectation (Live from the 2026 VMAs)",
+            artist: "SIENNA SPIRO",
+            album_type: "Single",
+            artwork_url: "https://i.ytimg.com/vi/k3ChphiX7Wk/hqdefault.jpg",
+            browse_id: "MPREb_bIQcIxwds5B",
+            is_explicit: false
+          },
+          {
+            id: "alb_sex_drugs",
+            title: "Sex & Drugs",
+            artist: "Temper City",
+            album_type: "Single",
+            artwork_url: "https://i.ytimg.com/vi/u9Dg-g7t2l4/hqdefault.jpg",
+            browse_id: "MPREb_rU4GygojHD1",
+            is_explicit: true
+          }
+        ];
+      }
+
+      this.ytmNewReleasesRow.innerHTML = "";
+
+      albums.slice(0, 16).forEach(alb => {
+        const card = document.createElement("div");
+        card.className = "ytm-release-card";
+        const typeStr = alb.album_type || 'Single';
+        const isAlbArtVer = this.isArtistVerified(alb.artist || '', alb.artist_browse_id);
+        const sub = `${alb.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''} ${this.escapeHtml(typeStr)} • ${this.escapeHtml(alb.artist || 'Artis')}`;
+
+        card.innerHTML = `
+          <div class="ytm-release-art-box">
+            <img src="${alb.artwork_url || this.DEFAULT_TRACK_ART}" alt="${this.escapeHtml(alb.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            <div class="ytm-release-play-overlay">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            </div>
+          </div>
+          <div class="ytm-release-title">${this.escapeHtml(alb.title)}</div>
+          <div class="ytm-release-sub">${sub}</div>
+        `;
+
+        card.addEventListener("click", async () => {
+          if (alb.browse_id && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
+            this.showToast(`Memuat trek ${alb.title}...`);
+            try {
+              const albumData = await window.electronAPI.browseYouTube(alb.browse_id);
+              if (albumData && albumData.tracks && albumData.tracks.length) {
+                const audioTracks = albumData.tracks.filter(t => !t.is_video && t.type !== 'video');
+                this.tracks = audioTracks.length ? audioTracks : albumData.tracks;
+                this.loadTrack(0, true);
+                this.showToast(`Memutar ${alb.title} (${this.tracks.length} lagu)`);
+                return;
+              }
+            } catch (_) {}
+          }
+          this.searchOnlineMusic(`${alb.artist || ''} ${alb.title}`, 'song');
+        });
+
+        this.ytmNewReleasesRow.appendChild(card);
+      });
+    } catch (e) {
+      console.warn("fetchYtmNewReleases notice:", e);
+      this.ytmNewReleasesRow.innerHTML = `<div style="padding: 18px; color: var(--color-text-secondary); font-size: 13px;">Gagal memuat rilis baru saat ini.</div>`;
+    }
+  }
+
   initUserPlaylists() {
     if (!this.userPlaylistsNav) return;
-    if (this.userPlaylists.length === 0) {
-      this.userPlaylists = [
-        {
-          id: "upl_favorites",
-          title: "Lagu Santai Saya",
-          description: "Koleksi santai pribadi",
-          tracks: []
-        }
-      ];
-      localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
-    }
+    this.userPlaylists = (this.userPlaylists || []).filter(pl => pl.id !== "upl_favorites" && pl.title !== "Lagu Santai Saya");
+    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
     this.renderUserPlaylists();
   }
 
   renderUserPlaylists() {
     if (!this.userPlaylistsNav) return;
     this.userPlaylistsNav.innerHTML = "";
+
+    if (!this.userPlaylists || this.userPlaylists.length === 0) {
+      this.userPlaylistsNav.innerHTML = `
+        <div style="padding: 10px 14px; font-size: 12px; color: var(--color-text-tertiary); font-style: italic;">
+          Belum ada playlist
+        </div>
+      `;
+      return;
+    }
 
     this.userPlaylists.forEach(pl => {
       const item = document.createElement("div");
@@ -2757,6 +3741,52 @@ class SoraFyDesktopApp {
     this.openPlaylistDetail(pl);
   }
 
+  async openAlbumDetail(album) {
+    if (!album) return;
+    this.currentPlaylist = album;
+    this.switchView("playlist");
+
+    if (this.playlistDeleteBtn) this.playlistDeleteBtn.style.display = "none";
+    if (this.playlistEditBtn) this.playlistEditBtn.style.display = "none";
+
+    const typeBadge = document.getElementById("playlistTypeBadge");
+    if (typeBadge) typeBadge.textContent = "Album Resmi";
+
+    this.playlistTitleHeading.textContent = album.title;
+    this.playlistDescText.textContent = album.year ? `Album resmi oleh ${album.artist || 'Artis'} (${album.year})` : `Album resmi oleh ${album.artist || 'Artis'}`;
+    this.playlistCoverImg.src = album.artwork_url || this.DEFAULT_TRACK_ART;
+    this.playlistStatsText.textContent = "Memuat trek album...";
+    this.playlistTrackList.innerHTML = `<div style="text-align: center; padding: 32px; color: var(--color-text-secondary); font-size: 13px;">Mengambil daftar lagu resmi dari YouTube Music...</div>`;
+
+    let tracks = [];
+    if (album.browse_id && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
+      try {
+        const res = await window.electronAPI.browseYouTube(album.browse_id);
+        if (res && res.tracks && res.tracks.length) {
+          tracks = res.tracks.map((t, idx) => ({
+            ...t,
+            album: album.title,
+            artwork_url: t.artwork_url || album.artwork_url,
+            is_liked: this.likedTrackIds.has(t.id)
+          }));
+          if (res.avatar_url) this.playlistCoverImg.src = res.avatar_url;
+          if (res.description) this.playlistDescText.textContent = res.description;
+        }
+      } catch (_) {}
+    }
+
+    if (!tracks.length) {
+      try {
+        const searchTracks = await this.queryInnerTubeSongs(`${album.artist || ''} ${album.title}`);
+        if (searchTracks && searchTracks.length) tracks = searchTracks;
+      } catch (_) {}
+    }
+
+    album.tracks = tracks;
+    this.playlistStatsText.textContent = `${tracks.length} Lagu`;
+    this.renderPlaylistTracks(tracks, null);
+  }
+
   async openPlaylistDetail(playlist) {
     if (!playlist) return;
     this.currentPlaylist = playlist;
@@ -2768,7 +3798,7 @@ class SoraFyDesktopApp {
 
     this.playlistTitleHeading.textContent = playlist.title;
     this.playlistDescText.textContent = playlist.description || (playlist.author ? `Koleksi kurasi spesial: ${playlist.author}` : "Daftar putar lagu pilihan.");
-    this.playlistCoverImg.src = playlist.artwork_url || (playlist.tracks?.[0]?.artwork_url) || "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80";
+    this.playlistCoverImg.src = playlist.artwork_url || (playlist.tracks?.[0]?.artwork_url) || this.DEFAULT_TRACK_ART;
 
     let tracks = playlist.tracks || [];
 
@@ -2825,6 +3855,73 @@ class SoraFyDesktopApp {
       }, onRemove);
       this.playlistTrackList.appendChild(row);
     });
+
+    // Auto-resolve real individual album covers if track has mosaic or generic artwork
+    this.autoHealTrackArtworks(tracks, userPlaylistId);
+  }
+
+  autoHealTrackArtworks(tracks, userPlaylistId = null) {
+    if (!tracks || !Array.isArray(tracks)) return;
+
+    // Auto-heal explicit badges for previously imported Spotify playlists
+    const missingExplicit = tracks.filter(t => t.is_explicit === undefined);
+    if (missingExplicit.length > 0 && userPlaylistId && window.electronAPI && typeof window.electronAPI.importExternalPlaylist === 'function') {
+      const spotMatch = tracks.find(t => t.id && t.id.startsWith('spot_'));
+      if (spotMatch) {
+        const spotId = spotMatch.id.split('_')[1];
+        if (spotId) {
+          window.electronAPI.importExternalPlaylist(`https://open.spotify.com/playlist/${spotId}`).then(res => {
+            if (res && res.tracks) {
+              const map = new Map(res.tracks.map(st => [(st.title || '').toLowerCase().trim(), !!st.is_explicit]));
+              let updated = false;
+              tracks.forEach(t => {
+                const key = (t.title || '').toLowerCase().trim();
+                if (map.has(key)) {
+                  t.is_explicit = map.get(key);
+                  updated = true;
+                  const row = document.querySelector(`#track_row_${t.id} .track-row-title`);
+                  if (row && t.is_explicit && !row.querySelector('.explicit-badge')) {
+                    const badge = document.createElement('span');
+                    badge.className = 'explicit-badge';
+                    badge.title = 'Explicit';
+                    badge.textContent = 'E';
+                    row.appendChild(badge);
+                  }
+                }
+              });
+              if (updated) {
+                localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+              }
+            }
+          }).catch(() => {});
+        }
+      }
+    }
+
+    const tracksToHeal = tracks.filter(t => t.artwork_url && (t.artwork_url.includes('mosaic.scdn.co') || t.artwork_url.includes('unsplash.com')));
+    if (tracksToHeal.length === 0) return;
+
+    tracksToHeal.forEach(async (t) => {
+      try {
+        const cleanArt = (t.artist || '').replace(/,\s*.*$/, '').trim();
+        const q = encodeURIComponent(`${cleanArt} ${t.title}`.trim());
+        const res = await fetch(`https://itunes.apple.com/search?term=${q}&entity=song&limit=1`);
+        const json = await res.json();
+        if (json && json.resultCount > 0 && json.results[0].artworkUrl100) {
+          const highRes = json.results[0].artworkUrl100.replace('100x100bb', '600x600bb');
+          t.artwork_url = highRes;
+          const rowArt = document.querySelector(`#track_row_${t.id} .track-row-art`);
+          if (rowArt) rowArt.src = highRes;
+          if (this.currentTrackIndex !== -1 && this.tracks[this.currentTrackIndex]?.id === t.id) {
+            this.playerArtwork.src = highRes;
+            if (this.screenPlayerArtwork) this.screenPlayerArtwork.src = highRes;
+          }
+          if (userPlaylistId) {
+            localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+          }
+        }
+      } catch (_) {}
+    });
   }
 
   // =========================================================
@@ -2842,6 +3939,10 @@ class SoraFyDesktopApp {
     this.switchView("artist");
 
     this.artistNameHeading.textContent = artistName;
+    const initialVerified = this.isArtistVerified(artistName, browseId);
+    if (this.artistVerifiedBadge) {
+      this.artistVerifiedBadge.style.display = initialVerified ? "inline-flex" : "none";
+    }
     this.artistBioText.textContent = `Memuat profil resmi ${artistName}...`;
     let avatar = prefetchedBio?.avatar_url || getArtistAvatar(artistName);
     this.artistAvatarImg.src = avatar;
@@ -2889,10 +3990,14 @@ class SoraFyDesktopApp {
             MASTER_ARTIST_AVATARS[effectiveBio.name.toLowerCase().trim()] = effectiveBio.avatar_url;
           }
         }
+        const isVer = this.isArtistVerified(effectiveBio.name || artistName, effectiveBio.browse_id || browseId);
+        if (this.artistVerifiedBadge) {
+          this.artistVerifiedBadge.style.display = isVer ? "inline-flex" : "none";
+        }
         if (effectiveBio.sub_label && this.artistRoleBadge) {
           this.artistRoleBadge.textContent = effectiveBio.sub_label;
         } else if (this.artistRoleBadge) {
-          this.artistRoleBadge.textContent = "Artis Terverifikasi";
+          this.artistRoleBadge.textContent = isVer ? "Artis Terverifikasi" : "Artis";
         }
         if (effectiveBio.description) {
           this.artistBioText.textContent = effectiveBio.description;
@@ -2914,11 +4019,21 @@ class SoraFyDesktopApp {
             ? await window.electronAPI.searchYouTubeMusic(`${artistName} official music video live`, 'video').catch(() => [])
             : []);
 
-      let albums = (effectiveBio && effectiveBio.albums && effectiveBio.albums.length)
-        ? effectiveBio.albums
-        : (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-            ? await window.electronAPI.searchYouTubeMusic(`${artistName} album discography`, 'album').catch(() => [])
-            : []);
+      let albums = (effectiveBio && effectiveBio.albums) ? [...effectiveBio.albums] : [];
+      if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
+        try {
+          const searchedAlbums = await window.electronAPI.searchYouTubeMusic(artistName, 'album').catch(() => []);
+          if (searchedAlbums && searchedAlbums.length) {
+            const normArtist = artistName.toLowerCase().trim();
+            for (const sa of searchedAlbums) {
+              const isMatch = (sa.artist || '').toLowerCase().includes(normArtist) || normArtist.includes((sa.artist || '').toLowerCase());
+              if (isMatch && !albums.some(a => (a.browse_id && a.browse_id === sa.browse_id) || a.title.toLowerCase() === sa.title.toLowerCase())) {
+                albums.push(sa);
+              }
+            }
+          }
+        } catch (_) {}
+      }
 
       let peers = (effectiveBio && effectiveBio.peers && effectiveBio.peers.length)
         ? effectiveBio.peers
@@ -2991,11 +4106,11 @@ class SoraFyDesktopApp {
 
       card.innerHTML = `
         <div class="video-thumb-wrapper">
-          <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80'">
+          <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
           <div class="video-badges-row">
             <span class="${badgeClass}">${badgeText}</span>
           </div>
-          <span class="video-duration-pill">${this.formatTime(vid.duration_secs || 210)}</span>
+          <span class="video-duration-pill">${vid.duration_secs ? this.formatTime(vid.duration_secs) : ''}</span>
         </div>
         <div class="video-card-info">
           <span class="video-card-title">${this.escapeHtml(vid.title)}</span>
@@ -3029,43 +4144,24 @@ class SoraFyDesktopApp {
       if (this.artistAlbumCountLabel) this.artistAlbumCountLabel.textContent = "0 Album";
       return;
     }
-    const displayAlbums = albums.slice(0, 6);
-    if (this.artistAlbumCountLabel) this.artistAlbumCountLabel.textContent = `${displayAlbums.length} Album`;
+    const displayAlbums = albums.slice(0, 36);
+    if (this.artistAlbumCountLabel) this.artistAlbumCountLabel.textContent = `${displayAlbums.length} Album & EP`;
 
     displayAlbums.forEach(album => {
       const card = document.createElement("div");
       card.className = "album-card";
       card.innerHTML = `
         <div class="album-card-art-box">
-          <img src="${album.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80'}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=200&q=80'">
+          <img src="${album.artwork_url || this.DEFAULT_TRACK_ART}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <div class="playlist-card-play-overlay">
+            <iconsax-icon name="play" type="bold" size="20" color="#000000"></iconsax-icon>
+          </div>
         </div>
         <div class="album-card-title">${this.escapeHtml(album.title)}</div>
-        <div class="album-card-year">Album • ${this.escapeHtml(artistName)}</div>
+        <div class="album-card-year">${this.escapeHtml(album.album_type || 'Album')} • ${this.escapeHtml(artistName)} ${album.year ? '• ' + this.escapeHtml(album.year) : ''}</div>
       `;
-      card.addEventListener("click", async () => {
-        if (album.browse_id && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
-          this.showToast(`Memuat trek album ${album.title}...`);
-          try {
-            const albumData = await window.electronAPI.browseYouTube(album.browse_id);
-            if (albumData && albumData.tracks && albumData.tracks.length) {
-              // Exclude video items from album discography
-              const audioTracks = albumData.tracks.filter(t => {
-                if (t.is_video || t.type === 'video') return false;
-                const lower = (t.title || '').toLowerCase();
-                if (lower.includes('(official video)') || lower.includes('(music video)') || lower.includes('(official music video)') || lower.includes('[official video]') || lower.includes('video clip')) {
-                  return false;
-                }
-                return true;
-              });
-              this.tracks = audioTracks.length ? audioTracks : albumData.tracks;
-              this.loadTrack(0, true);
-              this.showToast(`Memutar album ${album.title} (${this.tracks.length} lagu)`);
-              return;
-            }
-          } catch (_) {}
-        }
-        this.searchInput.value = `${artistName} ${album.title}`;
-        this.searchOnlineMusic(`${artistName} ${album.title}`, 'song');
+      card.addEventListener("click", () => {
+        this.openAlbumDetail({ ...album, artist: artistName });
       });
       this.artistAlbumsRow.appendChild(card);
     });
@@ -3155,6 +4251,7 @@ class SoraFyDesktopApp {
     let artworkUrl = "";
     let isArtist = false;
     let isVideo = false;
+    let isAlbum = false;
 
     if (type === "artist") {
       isArtist = true;
@@ -3171,28 +4268,37 @@ class SoraFyDesktopApp {
       badgeText = "Video Musik";
       badgeStyle = "background: rgba(239, 68, 68, 0.16); color: #F87171;";
       artworkUrl = item.artwork_url || (item.video_id ? `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg` : "");
-      extraMeta = this.formatTime(item.duration_secs || 210);
+      extraMeta = item.duration_secs ? this.formatTime(item.duration_secs) : '';
+    } else if (type === "album") {
+      isAlbum = true;
+      title = item.title || "";
+      artistName = item.artist || "Artis";
+      badgeText = "Album Resmi";
+      badgeStyle = "background: rgba(59, 130, 246, 0.16); color: #60A5FA;";
+      artworkUrl = item.artwork_url || this.DEFAULT_TRACK_ART;
+      extraMeta = item.year || item.album_type || "Album Resmi";
     } else {
       // Default: song
       title = item.title || "";
       artistName = item.artist || "Artis";
       badgeText = "Lagu";
       badgeStyle = "background: rgba(0, 229, 153, 0.14); color: #00E599;";
-      artworkUrl = item.artwork_url || "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80";
-      extraMeta = this.formatTime(item.duration_secs || 180);
+      artworkUrl = item.artwork_url || this.DEFAULT_TRACK_ART;
+      extraMeta = item.duration_secs ? this.formatTime(item.duration_secs) : '';
     }
 
     this.searchTopResultCard.innerHTML = `
       <div class="top-result-backdrop" style="background-image: url('${artworkUrl}');"></div>
       <div class="top-result-gradient"></div>
       <div class="top-result-content">
-        <img src="${artworkUrl}" class="top-result-art ${isArtist ? 'top-result-art-artist' : ''}" alt="${this.escapeHtml(title)}" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80'" style="${isArtist ? 'border-radius: 50%;' : ''}">
+        <img src="${artworkUrl}" class="top-result-art ${isArtist ? 'top-result-art-artist' : ''}" alt="${this.escapeHtml(title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'" style="${isArtist ? 'border-radius: 50%;' : ''}">
         <div class="top-result-info">
           <div class="top-result-badge-row">
             <span class="${badgeClass}" style="${badgeStyle}">
-              ${isVideo ? '<box-icon name="video" size="13px" color="#F87171"></box-icon>' : ''}
-              ${isArtist ? '<box-icon name="badge-check" type="solid" size="13px" color="#A78BFA"></box-icon>' : ''}
-              ${!isVideo && !isArtist ? '<box-icon name="music" size="13px" color="#00E599"></box-icon>' : ''}
+              ${isVideo ? '<iconsax-icon name="video-play" type="bold" size="13" color="#F87171"></iconsax-icon>' : ''}
+              ${isArtist ? '<iconsax-icon name="star" type="bold" size="13" color="#A78BFA"></iconsax-icon>' : ''}
+              ${isAlbum ? '<iconsax-icon name="music-playlist" type="bold" size="13" color="#60A5FA"></iconsax-icon>' : ''}
+              ${!isVideo && !isArtist && !isAlbum ? '<iconsax-icon name="music" type="bold" size="13" color="#00E599"></iconsax-icon>' : ''}
               <span>${badgeText}</span>
             </span>
           </div>
@@ -3203,8 +4309,8 @@ class SoraFyDesktopApp {
           </div>
         </div>
         <div class="top-result-actions">
-          <button class="top-result-play-btn" id="topResultPlayBtn" title="${isArtist ? 'Lihat Artis' : 'Putar Sekarang'}">
-            ${isArtist ? '<box-icon name="right-arrow-alt" size="28px" color="#000000"></box-icon>' : '<box-icon name="play" type="solid" size="26px" color="#000000"></box-icon>'}
+          <button class="top-result-play-btn" id="topResultPlayBtn" title="${isArtist ? 'Lihat Artis' : (isAlbum ? 'Buka Album' : 'Putar Sekarang')}">
+            ${isArtist ? '<iconsax-icon name="arrow-right" type="linear" size="24" color="#000000"></iconsax-icon>' : '<iconsax-icon name="play" type="bold" size="24" color="#000000"></iconsax-icon>'}
           </button>
         </div>
       </div>
@@ -3213,6 +4319,8 @@ class SoraFyDesktopApp {
     const handleAction = () => {
       if (isArtist) {
         this.openArtistDetail(title, item.browse_id || item.id || '');
+      } else if (isAlbum) {
+        this.openAlbumDetail(item);
       } else if (isVideo) {
         item.is_video = true;
         this.tracks = [item, ...(allSongs || [])];
@@ -3264,7 +4372,9 @@ class SoraFyDesktopApp {
     this.searchResultsCount.textContent = "Mencari...";
 
     if (this.searchTopResultSection) this.searchTopResultSection.style.display = "none";
+    if (this.searchArtistHeroSlot) this.searchArtistHeroSlot.innerHTML = "";
     this.searchArtistsSection.style.display = "none";
+    if (this.searchAlbumsSection) this.searchAlbumsSection.style.display = "none";
     this.searchVideosSection.style.display = "none";
     this.searchPlaylistsSection.style.display = "none";
     this.searchSongsSection.style.display = "none";
@@ -3273,13 +4383,16 @@ class SoraFyDesktopApp {
 
     try {
       if (filterType === 'all') {
-        const [songs, rawArtists, videos] = await Promise.all([
+        const [songs, rawArtists, videos, rawAlbums] = await Promise.all([
           this.queryInnerTubeSongs(query),
           window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
             ? window.electronAPI.searchYouTubeMusic(query, 'artist').catch(() => [])
             : Promise.resolve([]),
           window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
             ? window.electronAPI.searchYouTubeMusic(query, 'video').catch(() => [])
+            : Promise.resolve([]),
+          window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
+            ? window.electronAPI.searchYouTubeMusic(query, 'album').catch(() => [])
             : Promise.resolve([])
         ]);
 
@@ -3330,41 +4443,17 @@ class SoraFyDesktopApp {
         }
 
         // Render Artists
+        if (this.searchArtistHeroSlot) this.searchArtistHeroSlot.innerHTML = "";
         if (artists && artists.length) {
           total += artists.length;
           this.searchArtistsSection.style.display = "block";
           this.searchArtistsGrid.innerHTML = "";
 
-          const topArt = artists[0];
-          const heroEl = this.renderArtistHero(topArt, songs);
-          this.searchArtistsGrid.appendChild(heroEl);
-
-          if (artists.length > 1) {
-            const subGrid = document.createElement("div");
-            subGrid.className = "artist-results-grid";
-            artists.slice(1, 7).forEach(art => {
-              const artName = art.name || art.title || "";
-              if (!artName) return;
-              const artAvatar = art.avatar_url || art.artwork_url || getArtistAvatar(artName);
-              if (artAvatar) {
-                MASTER_ARTIST_AVATARS[artName.toLowerCase().trim()] = artAvatar;
-              }
-              const card = document.createElement("div");
-              card.className = "artist-card";
-              card.innerHTML = `
-                <div class="artist-card-art-box">
-                  <img src="${artAvatar}" class="artist-card-art" alt="${this.escapeHtml(artName)}" onerror="this.src='${getArtistAvatar(artName)}'">
-                </div>
-                <div class="artist-card-name">${this.escapeHtml(artName)}</div>
-                <div class="artist-card-role">${this.escapeHtml(art.sub_label || 'Artis')}</div>
-              `;
-              card.addEventListener("click", () => {
-                this.openArtistDetail(artName, art.browse_id || art.id || '');
-              });
-              subGrid.appendChild(card);
-            });
-            this.searchArtistsGrid.appendChild(subGrid);
-          }
+          // In 'all' view, render artists cleanly as circular cards in the grid
+          artists.slice(0, 6).forEach(art => {
+            const card = this.createArtistCard(art);
+            if (card) this.searchArtistsGrid.appendChild(card);
+          });
         }
 
         // Render Videos (16:9)
@@ -3381,11 +4470,11 @@ class SoraFyDesktopApp {
 
             card.innerHTML = `
               <div class="video-thumb-wrapper">
-                <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80'">
+                <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
                 <div class="video-badges-row">
                   <span class="${badgeClass}">${badgeText}</span>
                 </div>
-                <span class="video-duration-pill">${this.formatTime(vid.duration_secs || 210)}</span>
+                <span class="video-duration-pill">${vid.duration_secs ? this.formatTime(vid.duration_secs) : ''}</span>
               </div>
               <div class="video-card-info">
                 <span class="video-card-title">${this.escapeHtml(vid.title)}</span>
@@ -3408,6 +4497,17 @@ class SoraFyDesktopApp {
           });
         }
 
+        // Render Albums (Official releases & EPs)
+        if (rawAlbums && rawAlbums.length && this.searchAlbumsSection && this.searchAlbumsGrid) {
+          total += rawAlbums.length;
+          this.searchAlbumsSection.style.display = "block";
+          this.searchAlbumsGrid.innerHTML = "";
+          rawAlbums.slice(0, 8).forEach(alb => {
+            const card = this.createAlbumCard(alb);
+            if (card) this.searchAlbumsGrid.appendChild(card);
+          });
+        }
+
         // Render Songs
         if (songs && songs.length) {
           total += songs.length;
@@ -3427,7 +4527,12 @@ class SoraFyDesktopApp {
 
         this.searchResultsCount.textContent = `Ditemukan ${total} hasil`;
       } else if (filterType === 'song') {
-        const songs = await this.queryInnerTubeSongs(query);
+        let songs = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
+          ? await window.electronAPI.searchYouTubeMusic(query, 'song').catch(() => [])
+          : [];
+        if (!songs || songs.length === 0) {
+          songs = await this.queryInnerTubeSongs(query);
+        }
         if (songs && songs.length > 0) {
           this.renderTopResultCard(songs[0], 'song', songs, []);
         } else if (this.searchTopResultSection) {
@@ -3467,45 +4572,29 @@ class SoraFyDesktopApp {
         } else if (this.searchTopResultSection) {
           this.searchTopResultSection.style.display = "none";
         }
+        if (this.searchArtistHeroSlot) this.searchArtistHeroSlot.innerHTML = "";
         this.searchArtistsSection.style.display = "block";
         this.searchArtistsGrid.innerHTML = "";
         if (!artists || artists.length === 0) {
           this.searchArtistsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Tidak ada artis ditemukan untuk "${this.escapeHtml(query)}".</div>`;
         } else {
-          // Top Hero Artist Card
+          // Top Hero Artist Card in the dedicated hero slot
           const topArt = artists[0];
           let topSongs = (topArt.top_songs && topArt.top_songs.length > 0) ? topArt.top_songs : [];
           if (topSongs.length === 0) {
             topSongs = await this.queryInnerTubeSongs(topArt.name || topArt.title || query);
           }
           const heroEl = this.renderArtistHero(topArt, topSongs);
-          this.searchArtistsGrid.appendChild(heroEl);
+          if (this.searchArtistHeroSlot) {
+            this.searchArtistHeroSlot.appendChild(heroEl);
+          }
 
+          // Remaining artists go directly into searchArtistsGrid
           if (artists.length > 1) {
-            const subGrid = document.createElement("div");
-            subGrid.className = "artist-results-grid";
             artists.slice(1).forEach(art => {
-              const artName = art.name || art.title || "";
-              if (!artName) return;
-              const artAvatar = art.avatar_url || art.artwork_url || getArtistAvatar(artName);
-              if (artAvatar) {
-                MASTER_ARTIST_AVATARS[artName.toLowerCase().trim()] = artAvatar;
-              }
-              const card = document.createElement("div");
-              card.className = "artist-card";
-              card.innerHTML = `
-                <div class="artist-card-art-box">
-                  <img src="${artAvatar}" class="artist-card-art" alt="${this.escapeHtml(artName)}" onerror="this.src='${getArtistAvatar(artName)}'">
-                </div>
-                <div class="artist-card-name">${this.escapeHtml(artName)}</div>
-                <div class="artist-card-role">${this.escapeHtml(art.sub_label || 'Artis')}</div>
-              `;
-              card.addEventListener("click", () => {
-                this.openArtistDetail(artName, art.browse_id || art.id || '');
-              });
-              subGrid.appendChild(card);
+              const card = this.createArtistCard(art);
+              if (card) this.searchArtistsGrid.appendChild(card);
             });
-            this.searchArtistsGrid.appendChild(subGrid);
           }
         }
         this.searchResultsCount.textContent = `Ditemukan ${artists.length} artis`;
@@ -3529,11 +4618,11 @@ class SoraFyDesktopApp {
 
           card.innerHTML = `
             <div class="video-thumb-wrapper">
-              <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=400&q=80'">
+              <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
               <div class="video-badges-row">
                 <span class="${badgeClass}">${badgeText}</span>
               </div>
-              <span class="video-duration-pill">${this.formatTime(vid.duration_secs || 210)}</span>
+              <span class="video-duration-pill">${vid.duration_secs ? this.formatTime(vid.duration_secs) : ''}</span>
             </div>
             <div class="video-card-info">
               <span class="video-card-title">${this.escapeHtml(vid.title)}</span>
@@ -3555,6 +4644,28 @@ class SoraFyDesktopApp {
           this.searchVideosGrid.appendChild(card);
         });
         this.searchResultsCount.textContent = `Ditemukan ${videos.length} video`;
+      } else if (filterType === 'album') {
+        const albums = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
+          ? await window.electronAPI.searchYouTubeMusic(query, 'album').catch(() => [])
+          : [];
+        if (albums && albums.length > 0) {
+          this.renderTopResultCard(albums[0], 'album', [], []);
+        } else if (this.searchTopResultSection) {
+          this.searchTopResultSection.style.display = "none";
+        }
+        if (this.searchAlbumsSection && this.searchAlbumsGrid) {
+          this.searchAlbumsSection.style.display = "block";
+          this.searchAlbumsGrid.innerHTML = "";
+          if (!albums || albums.length === 0) {
+            this.searchAlbumsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Tidak ada album ditemukan untuk "${this.escapeHtml(query)}".</div>`;
+          } else {
+            albums.forEach(alb => {
+              const card = this.createAlbumCard(alb);
+              if (card) this.searchAlbumsGrid.appendChild(card);
+            });
+          }
+        }
+        this.searchResultsCount.textContent = `Ditemukan ${albums.length} album`;
       } else if (filterType === 'playlist') {
         if (this.searchTopResultSection) this.searchTopResultSection.style.display = "none";
         const rawPlaylists = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
@@ -3571,7 +4682,7 @@ class SoraFyDesktopApp {
           card.className = "playlist-card";
           card.innerHTML = `
             <div class="playlist-card-art-box">
-              <img src="${pl.artwork_url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80'}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" onerror="this.src='https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80'">
+              <img src="${pl.artwork_url || this.DEFAULT_TRACK_ART}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
               <div class="playlist-card-play-overlay">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
               </div>
@@ -3706,15 +4817,20 @@ class SoraFyDesktopApp {
     const track = this.tracks[index];
     if (!track) return;
 
+    this.isNextTrackPreloaded = false;
+
     if (!track.video_id && track.id && track.id.startsWith("yt_")) {
       track.video_id = track.id.replace(/^yt_/, "");
     }
 
-    this.playerTitle.textContent = track.title;
+    this.playerTitle.innerHTML = `
+      <span class="title-text">${this.escapeHtml(track.title)}</span>
+      ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
+    `;
     this.renderBottomPlayerArtist(track);
     this.playerArtwork.src = track.artwork_url;
     if (this.playerBadge) {
-      this.playerBadge.textContent = track.audio_format.codec;
+      this.playerBadge.textContent = track.audio_format?.codec || "Opus HD";
     }
     if (this.playerSourceTag) {
       this.playerSourceTag.textContent = "";
@@ -3722,14 +4838,21 @@ class SoraFyDesktopApp {
 
     // Set initial display times immediately
     this.currentTimeLabel.textContent = "0:00";
-    this.durationLabel.textContent = this.formatTime(track.duration_secs || 180);
+    this.durationLabel.textContent = track.duration_secs ? this.formatTime(track.duration_secs) : "--:--";
 
     // Synchronize Screen Player immediately
     this.updateScreenPlayer();
     this.highlightActiveSongItems();
 
-    // Resolve FULL-LENGTH audio stream (matching Android APK)
-    if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && !track.is_full_stream) {
+    // Record listening taste affinity for persistent "se-genre & se-kultur" profile
+    this.recordTasteAffinity(track);
+
+    if (!track.video_id && track.id && track.id.startsWith("yt_")) {
+      track.video_id = track.id.replace(/^yt_/, "");
+    }
+
+    // Spotify/Apple Music Instant Stream: Skip network resolver if already preloaded or cached
+    if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!track.is_full_stream || !track.stream_url)) {
       try {
         const full = await window.electronAPI.resolveFullStream({
           title: track.title,
@@ -3748,15 +4871,31 @@ class SoraFyDesktopApp {
             track.duration_secs = full.duration;
             this.durationLabel.textContent = this.formatTime(full.duration);
             if (this.screenPlayerDuration) this.screenPlayerDuration.textContent = this.formatTime(full.duration);
+            const activeDurEl = document.querySelector('.track-row.active .track-row-duration, .ytm-song-item.active .ytm-song-duration');
+            if (activeDurEl) activeDurEl.textContent = this.formatTime(full.duration);
           }
           let codecName = full.provider || (full.mimeType?.includes("mp4") ? "AAC 320k" : "Opus HD");
           if (codecName.includes("yt-dlp") || codecName.includes("YouTube Direct")) {
             codecName = "Opus HD";
           }
+          track.audio_format = track.audio_format || {};
           track.audio_format.codec = codecName;
           track.audio_format.bitrate_kbps = Math.round((full.bitrate || 320000) / 1000);
           if (this.playerBadge) this.playerBadge.textContent = track.audio_format.codec;
           if (this.screenPlayerBadge) this.screenPlayerBadge.textContent = track.audio_format.codec;
+
+          // Update individual artwork if track currently has playlist mosaic or placeholder
+          const fullArt = full.artwork_url || (full.videoId ? `https://i.ytimg.com/vi/${full.videoId}/hqdefault.jpg` : null);
+          if (fullArt && (!track.artwork_url || track.artwork_url.includes('mosaic.scdn.co') || track.artwork_url.includes('unsplash.com'))) {
+            track.artwork_url = fullArt;
+            this.playerArtwork.src = fullArt;
+            if (this.screenPlayerArtwork) this.screenPlayerArtwork.src = fullArt;
+            const rowArt = document.querySelector(`#track_row_${track.id} .track-row-art`);
+            if (rowArt) rowArt.src = fullArt;
+            if (this.currentPlaylist && Array.isArray(this.currentPlaylist.tracks)) {
+              localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+            }
+          }
         }
       } catch (err) {
         console.warn("Full stream resolver notice:", err);
@@ -3771,6 +4910,7 @@ class SoraFyDesktopApp {
     this.audio.src = track.stream_url;
     this.audio.load();
     this.updateLikeButton();
+    this.updateLyricsOffsetUI();
 
     // Record into history
     this.recordPlayHistory(track);
@@ -3781,6 +4921,10 @@ class SoraFyDesktopApp {
     // Update responsive drag-and-drop queue
     this.renderQueue();
 
+    // YouTube Music Automix: proactively ensure upcoming queue has matching recommended tracks
+    this.isUpcomingQueueTriggeredForCurrent = false;
+    setTimeout(() => this.ensureUpcomingQueue(), 1200);
+
     if (autoPlay) {
       this.ensureAudioContextActive();
       this.audio.play().then(() => {
@@ -3789,6 +4933,8 @@ class SoraFyDesktopApp {
         if (this.currentView === "player" && (track.is_video || this.currentScreenMode === "video")) {
           this.setScreenPlayerMode("video");
         }
+        // Spotify Preload Hook: resolve and buffer next track in background after 1s
+        setTimeout(() => this.preloadNextTrack(), 1000);
       }).catch(async (err) => {
         console.warn("Audio autoplay notice:", err);
         if (track.fallback_url && track.fallback_url !== track.stream_url) {
@@ -3798,6 +4944,7 @@ class SoraFyDesktopApp {
             await this.audio.play();
             this.isPlaying = true;
             this.updatePlayPauseIcon();
+            setTimeout(() => this.preloadNextTrack(), 1000);
             return;
           } catch (e2) {}
         }
@@ -3806,6 +4953,107 @@ class SoraFyDesktopApp {
         this.showToast("Tidak dapat memutar audio");
       });
     }
+  }
+
+  // =========================================================
+  // Spotify / Apple Music Instant Playback Preload Engine
+  // =========================================================
+  preloadNextTrack() {
+    if (!this.tracks || this.tracks.length <= 1) return;
+    let nextIdx;
+    if (this.isShuffled) {
+      nextIdx = Math.floor(Math.random() * this.tracks.length);
+    } else {
+      nextIdx = (this.currentTrackIndex + 1) % this.tracks.length;
+    }
+
+    const nextTrack = this.tracks[nextIdx];
+    if (!nextTrack) return;
+    this.preloadedTrackIndex = nextIdx;
+
+    if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!nextTrack.is_full_stream || !nextTrack.stream_url)) {
+      if (nextTrack._isResolvingStream) return;
+      nextTrack._isResolvingStream = true;
+
+      if (!nextTrack.video_id && nextTrack.id && nextTrack.id.startsWith("yt_")) {
+        nextTrack.video_id = nextTrack.id.replace(/^yt_/, "");
+      }
+
+      window.electronAPI.resolveFullStream({
+        title: nextTrack.title,
+        artist: nextTrack.artist,
+        videoId: nextTrack.video_id,
+        isVideo: !!nextTrack.is_video
+      }).then(full => {
+        nextTrack._isResolvingStream = false;
+        if (full && full.url) {
+          nextTrack.fallback_url = nextTrack.stream_url;
+          nextTrack.stream_url = full.url;
+          nextTrack.is_full_stream = true;
+          if (full.videoId) nextTrack.video_id = full.videoId;
+          if (full.duration) nextTrack.duration_secs = full.duration;
+
+          let codecName = full.provider || (full.mimeType?.includes("mp4") ? "AAC 320k" : "Opus HD");
+          if (codecName.includes("yt-dlp") || codecName.includes("YouTube Direct")) {
+            codecName = "Opus HD";
+          }
+          nextTrack.audio_format = nextTrack.audio_format || {};
+          nextTrack.audio_format.codec = codecName;
+          nextTrack.audio_format.bitrate_kbps = Math.round((full.bitrate || 320000) / 1000);
+
+          this.warmupAudioBuffer(full.url);
+        }
+      }).catch(err => {
+        nextTrack._isResolvingStream = false;
+      });
+    } else if (nextTrack.stream_url) {
+      this.warmupAudioBuffer(nextTrack.stream_url);
+    }
+  }
+
+  warmupAudioBuffer(url) {
+    if (!url) return;
+    try {
+      if (!this.preloadAudio) {
+        this.preloadAudio = new Audio();
+        this.preloadAudio.preload = "auto";
+        this.preloadAudio.volume = 0;
+      }
+      if (this.preloadAudio.src !== url) {
+        this.preloadAudio.src = url;
+        this.preloadAudio.load();
+      }
+    } catch (_) {}
+  }
+
+  preloadTopTracks(tracksList) {
+    if (!tracksList || !Array.isArray(tracksList)) return;
+    const targets = tracksList.slice(0, 2);
+    targets.forEach(t => {
+      if (t && !t.is_full_stream && !t._isResolvingStream && window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function') {
+        t._isResolvingStream = true;
+        if (!t.video_id && t.id && t.id.startsWith("yt_")) {
+          t.video_id = t.id.replace(/^yt_/, "");
+        }
+        window.electronAPI.resolveFullStream({
+          title: t.title,
+          artist: t.artist,
+          videoId: t.video_id,
+          isVideo: !!t.is_video
+        }).then(full => {
+          t._isResolvingStream = false;
+          if (full && full.url) {
+            t.fallback_url = t.stream_url;
+            t.stream_url = full.url;
+            t.is_full_stream = true;
+            if (full.videoId) t.video_id = full.videoId;
+            if (full.duration) t.duration_secs = full.duration;
+          }
+        }).catch(() => {
+          t._isResolvingStream = false;
+        });
+      }
+    });
   }
 
   async fetchTrackLyrics(track) {
@@ -3842,16 +5090,19 @@ class SoraFyDesktopApp {
 
       let data = null;
 
-      // 1. Try LRCLIB exact match without duration constraint (avoids 400 validation error)
+      // 1. Try LRCLIB exact match with duration tolerance validation
       try {
         const exactUrl = `https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArtist)}`;
         const res = await fetch(exactUrl);
         if (res.ok) {
-          data = await res.json();
+          const candidate = await res.json();
+          if (!track.duration_secs || !candidate.duration || Math.abs(candidate.duration - track.duration_secs) <= 8) {
+            data = candidate;
+          }
         }
       } catch (_) {}
 
-      // 2. If not found, try LRCLIB search by artist + title
+      // 2. If not found or duration mismatched, try LRCLIB search by artist + title
       if (!data || (!data.syncedLyrics && !data.plainLyrics)) {
         try {
           const searchUrl = `https://lrclib.net/api/search?q=${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`;
@@ -3859,13 +5110,35 @@ class SoraFyDesktopApp {
           if (searchRes.ok) {
             const list = await searchRes.json();
             if (Array.isArray(list) && list.length > 0) {
-              data = list.find(item => item.syncedLyrics) || list[0];
+              let validCandidates = list;
+              if (track.duration_secs) {
+                validCandidates = list.filter(item => !item.duration || Math.abs(item.duration - track.duration_secs) <= 8);
+              }
+              if (validCandidates.length > 0) {
+                data = validCandidates.find(item => item.syncedLyrics) || validCandidates[0];
+              }
             }
           }
         } catch (_) {}
       }
 
-      // 3. Fallback to NetEase Cloud Music if still not found
+      // 3. Official YouTube Music lyrics fallback via Electron Main
+      if (!data || (!data.syncedLyrics && !data.plainLyrics)) {
+        const videoId = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : null);
+        if (window.electronAPI && typeof window.electronAPI.fetchYouTubeLyrics === 'function' && videoId) {
+          try {
+            const ytLyrics = await window.electronAPI.fetchYouTubeLyrics(videoId);
+            if (ytLyrics && ytLyrics.plainLyrics) {
+              data = {
+                plainLyrics: ytLyrics.plainLyrics,
+                source: ytLyrics.source || "YouTube Music"
+              };
+            }
+          } catch (_) {}
+        }
+      }
+
+      // 4. Fallback to NetEase Cloud Music if still not found
       if (!data || (!data.syncedLyrics && !data.plainLyrics)) {
         try {
           const nRes = await fetch(`https://music.163.com/api/search/get/web?csrf_token=type=1&offset=0&total=true&limit=1&s=${encodeURIComponent(cleanArtist + ' ' + cleanTitle)}`);
@@ -3964,22 +5237,14 @@ class SoraFyDesktopApp {
   updateLikeButton() {
     const current = this.tracks[this.currentTrackIndex];
     const isLiked = current && this.likedTrackIds.has(current.id);
-    if (isLiked) {
-      this.likeBtn.classList.add("liked");
-      this.likeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="#00E599" stroke="#00E599" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-    } else {
-      this.likeBtn.classList.remove("liked");
-      this.likeBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
+    if (this.likeBtn) {
+      this.likeBtn.classList.toggle("liked", !!isLiked);
+      this.likeBtn.innerHTML = `<iconsax-icon name="heart" type="${isLiked ? 'bold' : 'linear'}" size="20" color="${isLiked ? '#00E599' : 'currentColor'}"></iconsax-icon>`;
     }
 
     if (this.screenPlayerLikeBtn) {
-      if (isLiked) {
-        this.screenPlayerLikeBtn.classList.add("liked");
-        this.screenPlayerLikeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="#00E599" stroke="#00E599" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-      } else {
-        this.screenPlayerLikeBtn.classList.remove("liked");
-        this.screenPlayerLikeBtn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>`;
-      }
+      this.screenPlayerLikeBtn.classList.toggle("liked", !!isLiked);
+      this.screenPlayerLikeBtn.innerHTML = `<iconsax-icon name="heart" type="${isLiked ? 'bold' : 'linear'}" size="22" color="${isLiked ? '#00E599' : 'currentColor'}"></iconsax-icon>`;
     }
   }
 
@@ -4019,37 +5284,54 @@ class SoraFyDesktopApp {
   }
 
   updatePlayPauseIcon() {
-    if (this.isPlaying) {
-      this.playPauseIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>`;
-      if (this.screenPlayerPlayPauseIcon) {
-        this.screenPlayerPlayPauseIcon.innerHTML = `<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>`;
-      }
-      if (this.videoOverlayCenterPlayIcon) {
-        this.videoOverlayCenterPlayIcon.setAttribute("name", "pause");
-      }
-    } else {
-      this.playPauseIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
-      if (this.screenPlayerPlayPauseIcon) {
-        this.screenPlayerPlayPauseIcon.innerHTML = `<polygon points="5 3 19 12 5 21 5 3"></polygon>`;
-      }
-      if (this.videoOverlayCenterPlayIcon) {
-        this.videoOverlayCenterPlayIcon.setAttribute("name", "play");
-      }
+    const iconName = this.isPlaying ? "pause" : "play";
+    if (this.playPauseIcon) {
+      this.playPauseIcon.setAttribute("name", iconName);
+    }
+    if (this.screenPlayerPlayPauseIcon) {
+      this.screenPlayerPlayPauseIcon.setAttribute("name", iconName);
+    }
+    if (this.videoOverlayCenterPlayIcon) {
+      this.videoOverlayCenterPlayIcon.setAttribute("name", iconName);
     }
   }
 
-  playNext() {
-    if (this.isShuffled) {
-      const nextIdx = Math.floor(Math.random() * this.tracks.length);
-      this.loadTrack(nextIdx, true);
+  async playNext() {
+    if (!this.tracks || this.tracks.length === 0) return;
+
+    // YouTube Music Automix: proactively fetch more tracks if at or near the end of the queue
+    const upcomingCount = Math.max(0, this.tracks.length - 1 - this.currentTrackIndex);
+    if (upcomingCount <= 1) {
+      await this.ensureUpcomingQueue();
+    }
+
+    if (this.currentTrackIndex < this.tracks.length - 1) {
+      if (this.isShuffled) {
+        // Smart Shuffle: pick from remaining upcoming tracks rather than repeating past tracks
+        const remaining = this.tracks.length - 1 - this.currentTrackIndex;
+        if (remaining > 1) {
+          const randomOffset = Math.floor(Math.random() * remaining) + 1;
+          const nextIdx = this.currentTrackIndex + randomOffset;
+          const targetTrack = this.tracks.splice(nextIdx, 1)[0];
+          this.tracks.splice(this.currentTrackIndex + 1, 0, targetTrack);
+        }
+        this.loadTrack(this.currentTrackIndex + 1, true);
+      } else {
+        this.loadTrack(this.currentTrackIndex + 1, true);
+      }
     } else {
-      const nextIdx = (this.currentTrackIndex + 1) % this.tracks.length;
-      this.loadTrack(nextIdx, true);
+      this.loadTrack(0, true);
     }
   }
 
   playPrevious() {
-    const prevIdx = (this.currentTrackIndex - 1 + this.tracks.length) % this.tracks.length;
+    if (!this.tracks || this.tracks.length === 0) return;
+    // Friendly UX: if song has played > 3 seconds, replay from start first
+    if (this.audio && this.audio.currentTime > 3) {
+      this.audio.currentTime = 0;
+      return;
+    }
+    const prevIdx = this.currentTrackIndex > 0 ? this.currentTrackIndex - 1 : 0;
     this.loadTrack(prevIdx, true);
   }
 
@@ -4066,6 +5348,12 @@ class SoraFyDesktopApp {
     const current = this.audio.currentTime || 0;
     const total = this.audio.duration || this.tracks[this.currentTrackIndex]?.duration_secs || 1;
     const pct = total > 0 ? (current / total) * 100 : 0;
+
+    // YT Music Background Autoplay Preload: when 70% completed, ensure next radio tracks
+    if (pct > 70 && !this.isUpcomingQueueTriggeredForCurrent) {
+      this.isUpcomingQueueTriggeredForCurrent = true;
+      this.ensureUpcomingQueue();
+    }
 
     this.currentTimeLabel.textContent = this.formatTime(current);
     this.durationLabel.textContent = this.formatTime(total);
@@ -4095,7 +5383,13 @@ class SoraFyDesktopApp {
       this.videoOverlayProgressFill.style.width = `${pct}%`;
     }
 
-    this.syncLyrics(current * 1000);
+    this.syncLyrics(Math.max(0, (current * 1000) + this.getCurrentTrackLyricsOffset()));
+
+    // Spotify-Style Instant Playback: Trigger preload of the next track when 6s into song or 25s left
+    if ((current > 6 || (total > 30 && total - current < 25)) && !this.isNextTrackPreloaded) {
+      this.isNextTrackPreloaded = true;
+      this.preloadNextTrack();
+    }
   }
 
   formatTime(secs) {
@@ -4171,6 +5465,48 @@ class SoraFyDesktopApp {
         }
       });
     }
+  }
+
+  getCurrentTrackLyricsOffset() {
+    const cur = this.tracks[this.currentTrackIndex];
+    if (!cur) return 0;
+    const key = cur.id || (cur.artist + ' - ' + cur.title);
+    return this.lyricsOffsets[key] || 0;
+  }
+
+  updateLyricsOffsetUI() {
+    if (!this.lyricsOffsetBadge) return;
+    const offsetMs = this.getCurrentTrackLyricsOffset();
+    const secs = (offsetMs / 1000).toFixed(1);
+    this.lyricsOffsetBadge.textContent = `${offsetMs > 0 ? '+' : ''}${secs}s`;
+    this.lyricsOffsetBadge.classList.toggle("calibrated", offsetMs !== 0);
+  }
+
+  adjustLyricsOffset(deltaMs) {
+    const cur = this.tracks[this.currentTrackIndex];
+    if (!cur) return;
+    const key = cur.id || (cur.artist + ' - ' + cur.title);
+    const currentOffset = this.lyricsOffsets[key] || 0;
+    const newOffset = Math.max(-10000, Math.min(10000, currentOffset + deltaMs));
+    if (newOffset === 0) {
+      delete this.lyricsOffsets[key];
+    } else {
+      this.lyricsOffsets[key] = newOffset;
+    }
+    localStorage.setItem("sorafy_lyrics_offsets", JSON.stringify(this.lyricsOffsets));
+    this.updateLyricsOffsetUI();
+    const sign = newOffset > 0 ? "+" : "";
+    this.showToast(`Offset lirik diset ke ${sign}${(newOffset / 1000).toFixed(1)}s`);
+  }
+
+  resetLyricsOffset() {
+    const cur = this.tracks[this.currentTrackIndex];
+    if (!cur) return;
+    const key = cur.id || (cur.artist + ' - ' + cur.title);
+    delete this.lyricsOffsets[key];
+    localStorage.setItem("sorafy_lyrics_offsets", JSON.stringify(this.lyricsOffsets));
+    this.updateLyricsOffsetUI();
+    this.showToast("Offset lirik direset ke 0.0s");
   }
 
   // =========================================================
@@ -4376,6 +5712,11 @@ class SoraFyDesktopApp {
       });
       this.trackGrid.appendChild(row);
     });
+
+    // Spotify/Apple Music Instant Preload: Pre-cache top 2 tracks of the current grid
+    if (tracks && tracks.length > 0) {
+      this.preloadTopTracks(tracks);
+    }
   }
 
   // =========================================================
@@ -4486,26 +5827,18 @@ class SoraFyDesktopApp {
 
   updateVolumeIcon(val) {
     if (!this.volumeIcon) return;
+    let iconName = "volume-high";
     if (val <= 0.001) {
-      this.volumeIcon.innerHTML = `
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <line x1="23" y1="9" x2="17" y2="15"></line>
-        <line x1="17" y1="9" x2="23" y2="15"></line>
-      `;
+      iconName = "volume-slash";
       if (this.volumeMuteBtn) this.volumeMuteBtn.title = "Bunyikan (Unmute)";
     } else if (val < 0.5) {
-      this.volumeIcon.innerHTML = `
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-      `;
+      iconName = "volume-low";
       if (this.volumeMuteBtn) this.volumeMuteBtn.title = "Bisukan (Mute)";
     } else {
-      this.volumeIcon.innerHTML = `
-        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-      `;
+      iconName = "volume-high";
       if (this.volumeMuteBtn) this.volumeMuteBtn.title = "Bisukan (Mute)";
     }
+    this.volumeIcon.setAttribute("name", iconName);
   }
 
   toggleMute() {
@@ -4601,6 +5934,136 @@ class SoraFyDesktopApp {
   }
 
   // =========================================================
+  // Musify Strict Se-Genre & Se-Kultur Dynamic Recommendation Queue
+  // =========================================================
+  async fetchMusifyQueue(seedTrack) {
+    if (!seedTrack) return [];
+    if (!window.electronAPI || typeof window.electronAPI.searchYouTubeMusic !== "function") return [];
+
+    const artist = (seedTrack.artist || "").trim();
+    const title = (seedTrack.title || "").trim();
+    const lowerArtist = artist.toLowerCase();
+    const cluster = detectMusifyCulture(artist, title);
+
+    const existingIds = new Set();
+    this.tracks.forEach(t => {
+      if (t.id) existingIds.add(t.id);
+      if (t.video_id) existingIds.add(t.video_id);
+    });
+
+    const sameArtistSongs = [];
+    const peerArtistSongs = [];
+
+    const addTrack = (track, isSameArtist) => {
+      if (!track || !track.title) return;
+      const vid = track.video_id || (track.id ? track.id.replace(/^yt_/, "") : "");
+      const key = track.id || vid;
+      if (!key || existingIds.has(key) || existingIds.has(vid)) return;
+      const tLower = (track.title || "").toLowerCase().trim();
+
+      // Avoid duplicate song titles
+      if (sameArtistSongs.some(c => (c.title || "").toLowerCase().trim() === tLower)) return;
+      if (peerArtistSongs.some(c => (c.title || "").toLowerCase().trim() === tLower)) return;
+      if (this.tracks.some(c => (c.title || "").toLowerCase().trim() === tLower)) return;
+
+      // Ensure strict vibe and cultural compatibility
+      if (!isCompatibleMusifyTrack(track, seedTrack, cluster)) return;
+
+      existingIds.add(key);
+      if (vid) existingIds.add(vid);
+
+      if (isSameArtist) {
+        sameArtistSongs.push(track);
+      } else {
+        peerArtistSongs.push(track);
+      }
+    };
+
+    try {
+      // 1. Same Artist Deep Catalog (Musify 40% ratio)
+      if (artist) {
+        const artistSongs = await window.electronAPI.searchYouTubeMusic(`${artist} hits`, "song").catch(() => []);
+        if (Array.isArray(artistSongs)) {
+          artistSongs.forEach(t => {
+            const cArt = (t.artist || "").toLowerCase();
+            if (cArt.includes(lowerArtist) || lowerArtist.includes(cArt)) {
+              addTrack(t, true);
+            } else {
+              addTrack(t, false);
+            }
+          });
+        }
+      }
+
+      // 2. Strict Peer Artists from the Exact Same Culture & Genre (Musify 60% ratio)
+      if (cluster && cluster.keywords) {
+        const peerKeywords = cluster.keywords.filter(k => !lowerArtist.includes(k) && !k.includes(lowerArtist));
+        const samplePeers = peerKeywords.sort(() => 0.5 - Math.random()).slice(0, 4);
+        for (const peer of samplePeers) {
+          if (peerArtistSongs.length >= 18) break;
+          const peerTracks = await window.electronAPI.searchYouTubeMusic(`${peer} lagu hits`, "song").catch(() => []);
+          if (Array.isArray(peerTracks)) {
+            peerTracks.slice(0, 4).forEach(t => addTrack(t, false));
+          }
+        }
+      }
+
+      // 3. Fallback cluster search seeds if more tracks are needed
+      if ((sameArtistSongs.length + peerArtistSongs.length) < 12 && cluster && cluster.searchSeeds) {
+        const randomSeed = cluster.searchSeeds[Math.floor(Math.random() * cluster.searchSeeds.length)];
+        const clusterTracks = await window.electronAPI.searchYouTubeMusic(randomSeed, "song").catch(() => []);
+        if (Array.isArray(clusterTracks)) {
+          clusterTracks.forEach(t => addTrack(t, false));
+        }
+      }
+    } catch (err) {
+      console.warn("Musify queue generator note:", err);
+    }
+
+    // 4. Interleave for optimal Musify listening flow:
+    // Pattern: [Same Artist, Peer 1, Peer 2, Same Artist, Peer 3, Peer 4, ...]
+    const finalQueue = [];
+    let sIdx = 0;
+    let pIdx = 0;
+
+    while (sIdx < sameArtistSongs.length || pIdx < peerArtistSongs.length) {
+      if (sIdx < sameArtistSongs.length) {
+        finalQueue.push(sameArtistSongs[sIdx++]);
+      }
+      if (pIdx < peerArtistSongs.length) {
+        finalQueue.push(peerArtistSongs[pIdx++]);
+      }
+      if (pIdx < peerArtistSongs.length) {
+        finalQueue.push(peerArtistSongs[pIdx++]);
+      }
+    }
+
+    return finalQueue;
+  }
+
+  async ensureUpcomingQueue() {
+    if (this.isFetchingRadioQueue) return;
+    const upcomingCount = Math.max(0, this.tracks.length - 1 - this.currentTrackIndex);
+    if (upcomingCount <= 2) {
+      this.isFetchingRadioQueue = true;
+      try {
+        const currentTrack = this.tracks[this.currentTrackIndex];
+        if (currentTrack) {
+          const newTracks = await this.fetchMusifyQueue(currentTrack);
+          if (newTracks && newTracks.length > 0) {
+            this.tracks.push(...newTracks);
+            this.renderQueue();
+            setTimeout(() => this.preloadNextTrack(), 500);
+          }
+        }
+      } catch (_) {
+      } finally {
+        this.isFetchingRadioQueue = false;
+      }
+    }
+  }
+
+  // =========================================================
   // Drag & Drop Responsive Queue Manager
   // =========================================================
   renderQueue() {
@@ -4619,9 +6082,12 @@ class SoraFyDesktopApp {
     if (this.queueNowPlaying) {
       if (currentTrack) {
         this.queueNowPlaying.innerHTML = `
-          <img src="${currentTrack.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'}" class="queue-item-art" alt="${this.escapeHtml(currentTrack.title)}">
+          <img src="${currentTrack.artwork_url || this.DEFAULT_TRACK_ART}" class="queue-item-art" alt="${this.escapeHtml(currentTrack.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
           <div class="queue-item-info">
-            <span class="queue-item-title">${this.escapeHtml(currentTrack.title)}</span>
+            <span class="queue-item-title">
+              <span class="title-text">${this.escapeHtml(currentTrack.title)}</span>
+              ${currentTrack.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
+            </span>
             <span class="queue-item-artist">${this.escapeHtml(currentTrack.artist)}</span>
           </div>
           <span class="queue-item-duration">${this.formatTime(currentTrack.duration_secs || 0)}</span>
@@ -4642,11 +6108,16 @@ class SoraFyDesktopApp {
     if (!this.queueList) return;
     this.queueList.innerHTML = "";
 
+    const queueHeader = document.querySelector(".queue-section-header .queue-section-title");
+    if (queueHeader) {
+      queueHeader.textContent = "Berikutnya";
+    }
+
     if (upcomingCount === 0) {
       this.queueList.innerHTML = `
         <div style="text-align: center; padding: 32px 16px; color: var(--color-text-tertiary); font-size: 13px;">
           <div style="margin-bottom: 8px;"><iconsax-icon name="musicnote" type="bold" size="32" color="#00E599"></iconsax-icon></div>
-          Tidak ada antrean berikutnya.<br>Pilih lagu untuk menambah antrean.
+          Tidak ada antrean berikutnya.<br>Pilih lagu untuk memutar.
         </div>
       `;
       return;
@@ -4665,9 +6136,12 @@ class SoraFyDesktopApp {
 
       item.innerHTML = `
         <span class="queue-drag-handle" title="Tarik untuk memindahkan urutan">⋮⋮</span>
-        <img src="${track.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=150&q=80'}" class="queue-item-art" alt="${this.escapeHtml(track.title)}">
+        <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="queue-item-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
         <div class="queue-item-info">
-          <span class="queue-item-title">${this.escapeHtml(track.title)}</span>
+          <span class="queue-item-title">
+            <span class="title-text">${this.escapeHtml(track.title)}</span>
+            ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
+          </span>
           <span class="queue-item-artist">${this.escapeHtml(track.artist)}</span>
         </div>
         <span class="queue-item-duration">${this.formatTime(track.duration_secs || 0)}</span>
@@ -4894,10 +6368,20 @@ class SoraFyDesktopApp {
     const track = this.tracks[this.currentTrackIndex];
     if (!track) return;
 
-    if (this.screenPlayerTitle) this.screenPlayerTitle.textContent = track.title;
-    if (this.screenPlayerArtist) this.screenPlayerArtist.textContent = track.artist;
+    if (this.screenPlayerTitle) {
+      this.screenPlayerTitle.innerHTML = `
+        <span class="title-text">${this.escapeHtml(track.title)}</span>
+        ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
+      `;
+    }
+    if (this.screenPlayerArtist) {
+      this.screenPlayerArtist.textContent = track.artist || 'Artis';
+    }
+    if (this.videoOverlayArtist) {
+      this.videoOverlayArtist.textContent = track.artist || 'Artis';
+    }
     if (this.screenPlayerArtwork) {
-      this.screenPlayerArtwork.src = track.artwork_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
+      this.screenPlayerArtwork.src = track.artwork_url || this.DEFAULT_TRACK_ART;
     }
     if (this.screenPlayerBadge) {
       let bText = track.audio_format?.codec || "Opus HD";
@@ -4976,6 +6460,16 @@ class SoraFyDesktopApp {
       this.bassFilterNode.gain.value = 0;
       lastNode.connect(this.bassFilterNode);
       lastNode = this.bassFilterNode;
+
+      // Dynamics Compressor (Audio Normalization / Anti-Kaget Loudness Equalization)
+      this.normalizerNode = this.audioCtx.createDynamicsCompressor();
+      this.normalizerNode.threshold.value = -24; // dB threshold
+      this.normalizerNode.knee.value = 30; // smooth compression knee
+      this.normalizerNode.ratio.value = 12; // tame abrupt peak surges
+      this.normalizerNode.attack.value = 0.003; // 3ms rapid surge reaction
+      this.normalizerNode.release.value = 0.25; // 250ms release
+      lastNode.connect(this.normalizerNode);
+      lastNode = this.normalizerNode;
 
       lastNode.connect(this.audioCtx.destination);
     } catch (e) {
@@ -5149,45 +6643,346 @@ class SoraFyDesktopApp {
   }
 
   // =========================================================
-  // Spotify Playlist Importer
+  // Universal Importer & Platform Integrations (Spotify, Apple Music, YT Music)
   // =========================================================
-  async handleSpotifyImport() {
-    const url = (this.spotifyUrlInput.value || "").trim();
+  async handleUnifiedImport() {
+    const url = (this.unifiedImportUrlInput?.value || "").trim();
     if (!url) {
-      this.showToast("Masukkan URL playlist Spotify!");
+      this.showToast("Masukkan tautan playlist atau album terlebih dahulu.");
       return;
     }
 
-    this.showToast("Memindai playlist Spotify...");
-    this.submitSpotifyBtn.disabled = true;
-    this.submitSpotifyBtn.textContent = "Mengimpor...";
-
-    let imported = await invokeTauri("import_spotify_playlist", { url });
-
-    if (!imported || !Array.isArray(imported) || imported.length === 0) {
-      // Direct extraction via multi-provider
-      await this.searchOnlineMusic("global top hits spotify");
-      this.submitSpotifyBtn.disabled = false;
-      this.submitSpotifyBtn.textContent = "Mulai Impor";
-      this.spotifyModal.style.display = "none";
-      this.spotifyUrlInput.value = "";
-      this.showToast("Berhasil menyinkronkan lagu playlist Spotify!");
+    if (!window.electronAPI || typeof window.electronAPI.importExternalPlaylist !== 'function') {
+      this.showToast("Fitur impor hanya tersedia pada aplikasi desktop SoraFy.");
       return;
     }
 
-    this.tracks.unshift(...imported);
-    this.renderTrackGrid(this.tracks);
-    this.loadTrack(0, true);
+    if (this.submitUnifiedImportBtn) {
+      this.submitUnifiedImportBtn.disabled = true;
+      this.submitUnifiedImportBtn.textContent = "Mengimpor...";
+    }
+    if (this.unifiedImportStatus) {
+      this.unifiedImportStatus.style.display = "flex";
+      if (this.unifiedImportStatusText) {
+        this.unifiedImportStatusText.textContent = `Menghubungkan ke ${this.selectedImportPlatform.toUpperCase()} & mengekstrak data...`;
+      }
+    }
 
-    this.submitSpotifyBtn.disabled = false;
-    this.submitSpotifyBtn.textContent = "Mulai Impor";
-    this.spotifyModal.style.display = "none";
-    this.spotifyUrlInput.value = "";
-    this.showToast(`Berhasil mengimpor ${imported.length} lagu dari Spotify!`);
+    try {
+      const res = await window.electronAPI.importExternalPlaylist(url);
+      if (!res || !res.success || !res.tracks || res.tracks.length === 0) {
+        throw new Error(res?.error || "Tidak ada lagu yang ditemukan pada tautan tersebut.");
+      }
+
+      const playlistTitle = res.title || `Impor ${res.provider || 'Musik'}`;
+      const newPlaylist = {
+        id: `pl_imp_${Date.now()}`,
+        name: playlistTitle,
+        title: playlistTitle,
+        author: `Impor ${res.provider || 'Spotify'}`,
+        description: `Diimpor dari ${res.provider} (${res.tracks.length} lagu). Siap diputar otomatis dengan audio berkualitas tinggi.`,
+        artwork_url: res.tracks[0]?.artwork_url || this.DEFAULT_TRACK_ART,
+        tracks: res.tracks,
+        track_count: `${res.tracks.length} Lagu`,
+        createdAt: Date.now()
+      };
+
+      this.userPlaylists.unshift(newPlaylist);
+      localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+      this.renderUserPlaylists();
+
+      if (this.unifiedImportModal) this.unifiedImportModal.style.display = "none";
+      if (this.unifiedImportUrlInput) this.unifiedImportUrlInput.value = "";
+      this.showToast(`Berhasil mengimpor "${playlistTitle}" (${res.tracks.length} lagu)!`);
+
+      // Switch to this imported playlist view immediately
+      this.openPlaylistDetail(newPlaylist);
+    } catch (err) {
+      console.error("Import error:", err);
+      this.showToast(`Gagal mengimpor: ${err.message || 'Periksa kembali URL Anda'}`);
+    } finally {
+      if (this.submitUnifiedImportBtn) {
+        this.submitUnifiedImportBtn.disabled = false;
+        this.submitUnifiedImportBtn.textContent = "Mulai Impor";
+      }
+      if (this.unifiedImportStatus) {
+        this.unifiedImportStatus.style.display = "none";
+      }
+    }
+  }
+
+  saveUserPlaylists() {
+    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+  }
+
+  renderUserPlaylistsNav() {
+    this.renderUserPlaylists();
+  }
+
+  openUserPlaylist(playlistId) {
+    const pl = this.userPlaylists.find(p => p.id === playlistId);
+    if (pl) {
+      this.openPlaylistDetail(pl);
+    }
+  }
+
+  saveLikedTracks() {
+    localStorage.setItem("sorafy_liked_ids", JSON.stringify([...this.likedTrackIds]));
+  }
+
+  handleSpotifyImport() {
+    return this.handleUnifiedImport();
+  }
+
+  // =========================================================
+  // Data Backup & Restore Engine (Local JSON Sovereignty)
+  // =========================================================
+  async handleDataBackup() {
+    if (!window.electronAPI || typeof window.electronAPI.saveBackupFile !== 'function') {
+      this.showToast("Cadangan file hanya tersedia pada desktop SoraFy.");
+      return;
+    }
+
+    const backupPayload = {
+      version: 1,
+      appName: "SoraFy",
+      exportedAt: new Date().toISOString(),
+      userPlaylists: this.userPlaylists || [],
+      likedTrackIds: Array.from(this.likedTrackIds || []),
+      history: this.historyTracks || [],
+      tasteProfile: JSON.parse(localStorage.getItem("sorafy_taste_profile") || "{}"),
+      dspSettings: JSON.parse(localStorage.getItem("sorafy_dsp_settings") || "{}")
+    };
+
+    const res = await window.electronAPI.saveBackupFile(backupPayload);
+    if (res && res.success) {
+      const filename = res.filePath ? res.filePath.split('/').pop() : 'backup.json';
+      this.showToast(`Cadangan data tersimpan: ${filename}`);
+    } else if (res && !res.canceled) {
+      this.showToast(`Gagal menyimpan cadangan: ${res.error || 'Terjadi kesalahan'}`);
+    }
+  }
+
+  async handleDataRestore() {
+    if (!window.electronAPI || typeof window.electronAPI.loadBackupFile !== 'function') {
+      this.showToast("Pemulihan file hanya tersedia pada desktop SoraFy.");
+      return;
+    }
+
+    const res = await window.electronAPI.loadBackupFile();
+    if (!res || !res.success || !res.data) {
+      if (!res?.canceled) {
+        this.showToast(`Gagal memuat file: ${res?.error || 'Format tidak valid'}`);
+      }
+      return;
+    }
+
+    try {
+      const data = res.data;
+      if (Array.isArray(data.userPlaylists)) {
+        const existingIds = new Set(this.userPlaylists.map(p => p.id));
+        for (const pl of data.userPlaylists) {
+          if (!existingIds.has(pl.id)) {
+            this.userPlaylists.push(pl);
+          }
+        }
+        this.saveUserPlaylists();
+        this.renderUserPlaylistsNav();
+      }
+
+      if (Array.isArray(data.likedTrackIds)) {
+        data.likedTrackIds.forEach(id => this.likedTrackIds.add(id));
+        this.saveLikedTracks();
+      }
+
+      if (data.tasteProfile && typeof data.tasteProfile === 'object') {
+        localStorage.setItem("sorafy_taste_profile", JSON.stringify(data.tasteProfile));
+      }
+
+      this.renderPersonalizedShelf();
+      const filename = res.filePath ? res.filePath.split('/').pop() : 'backup';
+      this.showToast(`Berhasil memulihkan data dari ${filename}!`);
+    } catch (e) {
+      this.showToast(`Gagal memproses file cadangan: ${e.message}`);
+    }
+  }
+
+  // =========================================================
+  // Offline Track Downloader (Local MP3 in ~/Music/SoraFy)
+  // =========================================================
+  async downloadOfflineTrack(track) {
+    if (!track) return;
+    if (!window.electronAPI || typeof window.electronAPI.downloadTrack !== 'function') {
+      this.showToast("Pengunduhan offline hanya tersedia pada aplikasi desktop SoraFy.");
+      return;
+    }
+
+    this.showToast(`Mengunduh "${track.title}" ke ~/Music/SoraFy...`);
+
+    try {
+      const res = await window.electronAPI.downloadTrack(track);
+      if (res && res.success) {
+        this.showToast(`Berhasil mengunduh: ${res.filename}`);
+      } else {
+        this.showToast(`Gagal mengunduh: ${res?.error || 'Audio tidak dapat diakses'}`);
+      }
+    } catch (err) {
+      console.error("Download error:", err);
+      this.showToast(`Gagal mengunduh: ${err.message}`);
+    }
+  }
+
+  // =========================================================
+  // Persistent Taste Profile & Personalized Shelf
+  // =========================================================
+  recordTasteAffinity(track) {
+    if (!track || !track.title) return;
+    try {
+      const cluster = detectMusifyCulture(track.artist, track.title);
+      let profile = {};
+      try {
+        profile = JSON.parse(localStorage.getItem("sorafy_taste_profile") || "{}");
+      } catch (_) {}
+
+      if (!profile.clusters) profile.clusters = {};
+      if (!profile.artists) profile.artists = {};
+
+      const clusterId = cluster?.id || "indo_indie_folk";
+      profile.clusters[clusterId] = (profile.clusters[clusterId] || 0) + 1;
+
+      const artist = (track.artist || "").trim();
+      if (artist) {
+        profile.artists[artist] = (profile.artists[artist] || 0) + 1;
+      }
+
+      profile.lastPlayed = {
+        title: track.title,
+        artist: track.artist,
+        clusterId,
+        timestamp: Date.now()
+      };
+
+      localStorage.setItem("sorafy_taste_profile", JSON.stringify(profile));
+    } catch (_) {}
+  }
+
+  renderPersonalizedShelf() {
+    if (!this.personalizedShelfSection || !this.personalizedShelfRow) return;
+
+    let profile = {};
+    try {
+      profile = JSON.parse(localStorage.getItem("sorafy_taste_profile") || "{}");
+    } catch (_) {}
+
+    // Find top cluster
+    let topClusterId = "indo_indie_folk";
+    let maxClusterScore = 0;
+    if (profile.clusters) {
+      for (const [cId, score] of Object.entries(profile.clusters)) {
+        if (score > maxClusterScore) {
+          maxClusterScore = score;
+          topClusterId = cId;
+        }
+      }
+    }
+
+    const cluster = MUSIFY_CULTURE_CLUSTERS.find(c => c.id === topClusterId) || MUSIFY_CULTURE_CLUSTERS[0];
+
+    // Find top artist
+    let topArtist = "";
+    let maxArtistScore = 0;
+    if (profile.artists) {
+      for (const [art, score] of Object.entries(profile.artists)) {
+        if (score > maxArtistScore) {
+          maxArtistScore = score;
+          topArtist = art;
+        }
+      }
+    }
+
+    // Build personalized shelf cards
+    const personalizedCards = [
+      {
+        id: "mix_cluster",
+        title: `Mix ${cluster.name.split(',')[0]}`,
+        subtitle: "Berdasarkan selera dengar Anda",
+        artwork: getMasterAvatar(topArtist || cluster.keywords[0]),
+        action: () => {
+          this.searchOnlineMusic(cluster.searchQueries[0] || cluster.keywords[0]);
+          this.showToast(`Memuat mix se-kultur: ${cluster.name}`);
+        }
+      },
+      {
+        id: "mix_radio",
+        title: topArtist ? `Radio Artis: ${topArtist}` : "Radio Selera Anda",
+        subtitle: "Lagu se-genre & se-kultur tanpa loncatan aneh",
+        artwork: getMasterAvatar(topArtist || cluster.keywords[1] || "Bernadya"),
+        action: () => {
+          const query = topArtist ? `${topArtist} official audio` : cluster.searchQueries[0];
+          this.searchOnlineMusic(query);
+          this.showToast(`Memulai radio artis: ${topArtist || 'Personalized'}`);
+        }
+      },
+      {
+        id: "mix_senja",
+        title: "Koleksi Eksklusif Senja & Akustik",
+        subtitle: "Kurasi vokal jernih & instrumen hangat",
+        artwork: "https://i.ytimg.com/vi/7jY7lS1RkmM/hqdefault.jpg",
+        action: () => {
+          this.searchOnlineMusic("indie folk indonesia acoustic session");
+          this.showToast("Memuat koleksi santai & akustik...");
+        }
+      }
+    ];
+
+    if (this.personalizedShelfTitle) {
+      this.personalizedShelfTitle.textContent = topArtist ? `Mix Selera Anda: ${topArtist} & Se-Kultur` : "Mix Khusus Untuk Anda";
+    }
+
+    this.personalizedShelfRow.innerHTML = "";
+    personalizedCards.forEach(c => {
+      const cardEl = document.createElement("div");
+      cardEl.className = "curated-playlist-card";
+      cardEl.innerHTML = `
+        <div class="curated-card-cover-wrapper">
+          <img src="${c.artwork}" alt="${c.title}" class="curated-card-cover" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <div class="curated-card-play-overlay">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+          </div>
+        </div>
+        <div class="curated-card-info">
+          <div class="personalized-badge">SE-KULTUR</div>
+          <div class="curated-card-title" title="${c.title}">${c.title}</div>
+          <div class="curated-card-author">${c.subtitle}</div>
+        </div>
+      `;
+      cardEl.addEventListener("click", () => c.action());
+      this.personalizedShelfRow.appendChild(cardEl);
+    });
+
+    this.personalizedShelfSection.style.display = "block";
   }
 }
 
 // Instantiate on DOMContentLoaded
 document.addEventListener("DOMContentLoaded", () => {
   window.sorafyApp = new SoraFyDesktopApp();
+
+  // Hardware Media Keys & OS Tray Action Hook
+  if (window.electronAPI && typeof window.electronAPI.onMediaAction === 'function') {
+    window.electronAPI.onMediaAction((action) => {
+      if (!window.sorafyApp) return;
+      if (action === 'play-pause') {
+        window.sorafyApp.togglePlayPause();
+      } else if (action === 'next') {
+        window.sorafyApp.playNext();
+      } else if (action === 'prev') {
+        window.sorafyApp.playPrevious();
+      } else if (action === 'stop') {
+        if (window.sorafyApp.audio && !window.sorafyApp.audio.paused) {
+          window.sorafyApp.togglePlayPause();
+        }
+      }
+    });
+  }
 });

@@ -109,21 +109,30 @@ cd android
 ```
 *Hasil APK berada di `android/app/build/outputs/apk/`.*
 
-### 2. Menjalankan & Membangun Desktop (Linux & Windows)
+### 2. Menjalankan & Membangun Desktop (Linux, Windows & macOS)
 
-**Menjalankan Core Engine Rust DDD:**
-```bash
-cd desktop/src-tauri
-cargo run
-```
-
-**Membangun Aplikasi Desktop (Tauri v2):**
+**Menjalankan Mode Pengembangan:**
 ```bash
 cd desktop
 npm install
-npx tauri build
+npm start
 ```
-*Hasil binary installer Linux (`.AppImage`, `.deb`) atau Windows (`.exe`, `.msi`) akan otomatis tersedia di `desktop/src-tauri/target/release/bundle/`.*
+
+**Membangun Paket Rilis Desktop:**
+```bash
+cd desktop
+npm install
+
+# Linux (AppImage & deb):
+npm run build:linux
+
+# Windows (Installer EXE):
+npm run build:win
+
+# macOS (DMG & zip):
+npm run build:dmg
+```
+*Hasil binary installer otomatis tersedia di `desktop/dist/`.*
 
 ---
 

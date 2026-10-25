@@ -2,12 +2,13 @@
   "name": "sorafy",
   "version": "1.0.0",
   "description": "SoraFy - High-fidelity cross-platform music streaming (macOS, Linux & Windows)",
+  "homepage": "https://github.com/rafliadipratama/sorafy",
   "main": "electron-main.js",
   "scripts": {
     "start": "electron .",
     "build:mac": "electron-builder --mac",
     "build:dmg": "electron-builder --mac dmg",
-    "build:linux": "electron-builder --linux AppImage deb",
+    "build:linux": "electron-builder --linux AppImage",
     "build:win": "electron-builder --win nsis",
     "dist": "electron-builder",
     "tauri": "tauri",
@@ -56,13 +57,18 @@
       }
     },
     "linux": {
+      "icon": "src-tauri/icons/icon.png",
+      "executableName": "sorafy",
       "target": [
-        "AppImage",
-        "deb"
+        "AppImage"
       ],
       "category": "Audio"
     },
+    "deb": {
+      "maintainer": "Rafli Adi Pratama <rafliadipratama@gmail.com>"
+    },
     "win": {
+      "icon": "src-tauri/icons/icon.ico",
       "target": [
         "nsis",
         "portable"
@@ -79,7 +85,10 @@
     "rust",
     "electron"
   ],
-  "author": "Rafli Adi Pratama",
+  "author": {
+    "name": "Rafli Adi Pratama",
+    "email": "rafliadipratama@gmail.com"
+  },
   "license": "GPL-3.0",
   "devDependencies": {
     "@tauri-apps/cli": "^2.0.0",
