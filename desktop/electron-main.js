@@ -5,6 +5,7 @@ const https = require('https');
 const { execFile } = require('child_process');
 const fs = require('fs');
 const os = require('os');
+const net = require('net');
 const des = require('des.js');
 
 // Disable incompatible Vulkan on Linux Wayland to guarantee silky smooth rendering
@@ -1323,6 +1324,173 @@ let mainWindow = null;
 let appTray = null;
 let isQuitting = false;
 
+// Persistent Settings Hub
+const DEFAULT_SETTINGS = {
+  closeToTray: true,
+  notifications: true,
+  discordRpc: true,
+  audioQuality: 'high',
+  volumeNormalization: false,
+  crossfadeDuration: 0
+};
+
+function getSettingsPath() {
+  try {
+    return path.join(app.getPath('userData'), 'settings.json');
+  } catch (_) {
+    return path.join(os.homedir(), '.config', 'sorafy', 'settings.json');
+  }
+}
+
+function loadAppSettings() {
+  try {
+    const sPath = getSettingsPath();
+    if (fs.existsSync(sPath)) {
+      const raw = fs.readFileSync(sPath, 'utf-8');
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    }
+  } catch (_) {}
+  return { ...DEFAULT_SETTINGS };
+}
+
+function saveAppSettings(newSettings) {
+  try {
+    const sPath = getSettingsPath();
+    const dir = path.dirname(sPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const current = loadAppSettings();
+    const merged = { ...current, ...newSettings };
+    fs.writeFileSync(sPath, JSON.stringify(merged, null, 2), 'utf-8');
+    return merged;
+  } catch (err) {
+    console.warn('Save settings note:', err);
+    return DEFAULT_SETTINGS;
+  }
+}
+
+// Zero-dependency Native Discord Rich Presence (IPC Socket)
+class DiscordRpcClient {
+  constructor(clientId = '1343717202353160232') {
+    this.clientId = clientId;
+    this.socket = null;
+    this.isConnected = false;
+    this.currentActivity = null;
+    this.reconnectTimer = null;
+  }
+
+  getSocketPath(id = 0) {
+    if (process.platform === 'win32') {
+      return `\\\\?\\pipe\\discord-ipc-${id}`;
+    }
+    const env = process.env;
+    const prefix = env.XDG_RUNTIME_DIR || env.TMPDIR || env.TMP || env.TEMP || '/tmp';
+    return path.join(prefix, `discord-ipc-${id}`);
+  }
+
+  connect() {
+    if (this.socket || this.isConnected) return;
+    const tryConnect = (idx) => {
+      if (idx > 3) {
+        this.scheduleReconnect(30000);
+        return;
+      }
+      try {
+        const sockPath = this.getSocketPath(idx);
+        const sock = net.connect(sockPath);
+
+        sock.once('connect', () => {
+          this.socket = sock;
+          this.isConnected = true;
+          this.sendHandshake();
+          if (this.currentActivity) {
+            this.sendActivity(this.currentActivity);
+          }
+        });
+
+        sock.on('error', () => {
+          sock.destroy();
+          if (!this.isConnected) {
+            tryConnect(idx + 1);
+          }
+        });
+
+        sock.on('close', () => {
+          this.socket = null;
+          this.isConnected = false;
+          this.scheduleReconnect(15000);
+        });
+      } catch (_) {
+        tryConnect(idx + 1);
+      }
+    };
+
+    tryConnect(0);
+  }
+
+  scheduleReconnect(delayMs = 15000) {
+    clearTimeout(this.reconnectTimer);
+    this.reconnectTimer = setTimeout(() => {
+      const settings = loadAppSettings();
+      if (settings.discordRpc !== false) {
+        this.connect();
+      }
+    }, delayMs);
+  }
+
+  send(op, data) {
+    if (!this.socket || !this.isConnected) return;
+    try {
+      const payload = JSON.stringify(data);
+      const len = Buffer.byteLength(payload);
+      const packet = Buffer.alloc(8 + len);
+      packet.writeInt32LE(op, 0);
+      packet.writeInt32LE(len, 4);
+      packet.write(payload, 8, len, 'utf-8');
+      this.socket.write(packet);
+    } catch (_) {}
+  }
+
+  sendHandshake() {
+    this.send(0, { v: 1, client_id: this.clientId });
+  }
+
+  setActivity(activity) {
+    this.currentActivity = activity;
+    if (!this.isConnected) {
+      this.connect();
+      return;
+    }
+    const nonce = Math.random().toString(36).substring(2);
+    this.send(1, {
+      cmd: 'SET_ACTIVITY',
+      args: {
+        pid: process.pid,
+        activity: activity || null
+      },
+      nonce
+    });
+  }
+
+  clearActivity() {
+    this.currentActivity = null;
+    this.setActivity(null);
+  }
+
+  disconnect() {
+    clearTimeout(this.reconnectTimer);
+    if (this.socket) {
+      try {
+        this.clearActivity();
+        this.socket.destroy();
+      } catch (_) {}
+      this.socket = null;
+      this.isConnected = false;
+    }
+  }
+}
+
+const discordRpc = new DiscordRpcClient();
+
 function createTray() {
   const iconPath = path.join(__dirname, 'src/assets/logo.png');
   try {
@@ -1407,13 +1575,19 @@ function createWindow() {
   win.loadFile(path.join(__dirname, 'src/index.html'));
   win.setMenuBarVisibility(false);
 
-  win.on('close', () => {
-    isQuitting = true;
+  win.on('close', (e) => {
+    if (!isQuitting) {
+      const settings = loadAppSettings();
+      if (settings.closeToTray !== false) {
+        e.preventDefault();
+        win.hide();
+        return false;
+      }
+    }
   });
 
   win.on('closed', () => {
     mainWindow = null;
-    app.quit();
   });
 }
 
@@ -2015,6 +2189,122 @@ ipcMain.handle('load-backup-file', async () => {
   }
 });
 
+// IPC Handlers: App Settings Hub
+ipcMain.handle('get-app-settings', () => {
+  return loadAppSettings();
+});
+
+ipcMain.handle('save-app-settings', (_event, newSettings) => {
+  const updated = saveAppSettings(newSettings);
+  if (updated.discordRpc === false) {
+    discordRpc.disconnect();
+  } else {
+    discordRpc.connect();
+  }
+  return updated;
+});
+
+// IPC Handler: Clear Storage & Cache
+ipcMain.handle('clear-app-cache', async () => {
+  try {
+    if (session && session.defaultSession) {
+      await session.defaultSession.clearCache();
+      await session.defaultSession.clearStorageData({
+        storages: ['appcache', 'serviceworkers', 'cachestorage']
+      });
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC Handler: Check For Updates via GitHub Releases
+ipcMain.handle('check-for-updates', async () => {
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.github.com',
+      path: '/repos/rafliadipratama/sorafy/releases/latest',
+      headers: {
+        'User-Agent': 'SoraFy-Desktop-App',
+        'Accept': 'application/vnd.github.v3+json'
+      },
+      timeout: 6000
+    };
+
+    https.get(options, (res) => {
+      let data = '';
+      res.on('data', chunk => { data += chunk; });
+      res.on('end', () => {
+        try {
+          if (res.statusCode === 200) {
+            const release = JSON.parse(data);
+            const latestTag = (release.tag_name || '').replace(/^v/, '');
+            const currentVer = app.getVersion();
+            const hasUpdate = latestTag && latestTag !== currentVer;
+            resolve({
+              success: true,
+              hasUpdate,
+              currentVersion: currentVer,
+              latestVersion: latestTag || currentVer,
+              releaseName: release.name || release.tag_name,
+              releaseNotes: release.body || '',
+              htmlUrl: release.html_url || 'https://github.com/rafliadipratama/sorafy/releases'
+            });
+          } else {
+            resolve({ success: false, error: `Status ${res.statusCode}` });
+          }
+        } catch (e) {
+          resolve({ success: false, error: e.message });
+        }
+      });
+    }).on('error', (err) => {
+      resolve({ success: false, error: err.message });
+    });
+  });
+});
+
+// IPC Handler: Desktop Notification
+ipcMain.on('show-track-notification', (_event, track) => {
+  if (!track || !track.title) return;
+  const settings = loadAppSettings();
+  if (settings.notifications === false) return;
+
+  if (mainWindow && !mainWindow.isFocused()) {
+    try {
+      const { Notification } = require('electron');
+      if (Notification.isSupported()) {
+        const notif = new Notification({
+          title: track.title,
+          subtitle: track.artist || 'SoraFy',
+          body: track.artist ? `${track.artist} • ${track.album || 'SoraFy'}` : 'SoraFy Music',
+          icon: path.join(__dirname, 'src/assets/logo.png'),
+          silent: true
+        });
+        notif.on('click', () => {
+          if (mainWindow) {
+            mainWindow.show();
+            mainWindow.focus();
+          }
+        });
+        notif.show();
+      }
+    } catch (_) {}
+  }
+});
+
+// IPC Handler: Discord Rich Presence
+ipcMain.on('update-discord-presence', (_event, presence) => {
+  const settings = loadAppSettings();
+  if (settings.discordRpc !== false) {
+    discordRpc.setActivity(presence);
+  }
+});
+
+ipcMain.on('clear-discord-presence', () => {
+  discordRpc.clearActivity();
+});
+
 app.whenReady().then(() => {
   if (session && session.defaultSession) {
     const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
@@ -2086,6 +2376,12 @@ app.whenReady().then(() => {
     console.warn('Global media shortcuts note:', err.message);
   }
 
+  // Connect Discord RPC if enabled
+  const initialSettings = loadAppSettings();
+  if (initialSettings.discordRpc !== false) {
+    discordRpc.connect();
+  }
+
   app.on('activate', () => {
     if (mainWindow) {
       mainWindow.show();
@@ -2098,6 +2394,7 @@ app.whenReady().then(() => {
 
 app.on('before-quit', () => {
   isQuitting = true;
+  discordRpc.disconnect();
   saveStreamCache();
   globalShortcut.unregisterAll();
   if (localAudioProxy) {
@@ -2114,8 +2411,11 @@ app.on('before-quit', () => {
 });
 
 app.on('window-all-closed', () => {
-  isQuitting = true;
-  app.quit();
+  if (process.platform === 'darwin') return;
+  const settings = loadAppSettings();
+  if (settings.closeToTray === false || isQuitting) {
+    app.quit();
+  }
 });
 
 app.on('will-quit', () => {

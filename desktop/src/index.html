@@ -44,6 +44,10 @@
           <iconsax-icon name="setting-4" type="linear" size="20" color="currentColor"></iconsax-icon>
           Equalizer DSP
         </div>
+        <div class="nav-item" id="navSettings">
+          <iconsax-icon name="setting-2" type="linear" size="20" color="currentColor"></iconsax-icon>
+          Pengaturan
+        </div>
       </nav>
 
       <div class="sidebar-divider"></div>
@@ -815,8 +819,13 @@
       </div>
     </div>
 
-    <!-- Right Controls: Lyrics, Queue, Fullscreen & Volume Control -->
+    <!-- Right Controls: Lyrics, Queue, Sleep Timer, Fullscreen & Volume Control -->
     <div class="player-right">
+      <button class="control-btn" id="sleepTimerBtn" title="Pengatur Waktu Tidur" style="position: relative;">
+        <iconsax-icon name="timer-1" type="linear" size="18" color="currentColor"></iconsax-icon>
+        <span class="sleep-timer-badge" id="sleepTimerBadge" style="display: none;"></span>
+      </button>
+
       <button class="control-btn" id="toggleLyricsBtn" title="Lirik Lagu">
         <iconsax-icon name="music-filter" type="linear" size="20" color="currentColor"></iconsax-icon>
       </button>
@@ -957,6 +966,238 @@
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
         <button class="hero-secondary-btn" id="modalCreateNewPlaylistBtn">+ Buat Playlist Baru</button>
         <button class="hero-outline-btn" id="cancelAddToPlaylistBtn">Selesai</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dialog Sleep Timer -->
+  <div id="sleepTimerModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card sleep-timer-modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <iconsax-icon name="timer-1" type="bold" size="20" color="#00E599"></iconsax-icon>
+          <h3 style="font-size: 17px; font-weight: 700; margin: 0;">Pengatur Waktu Tidur</h3>
+        </div>
+        <button class="control-btn" id="closeSleepTimerModalBtn" title="Tutup">
+          <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
+        </button>
+      </div>
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 6px;">
+        Musik akan meredup perlahan dan dijeda saat batas waktu tercapai.
+      </p>
+
+      <div class="sleep-timer-options" id="sleepTimerOptions">
+        <button class="sleep-timer-btn active" data-minutes="0">
+          <span>Nonaktif</span>
+          <span class="timer-check">✓</span>
+        </button>
+        <button class="sleep-timer-btn" data-minutes="15">
+          <span>15 Menit</span>
+          <span class="timer-check"></span>
+        </button>
+        <button class="sleep-timer-btn" data-minutes="30">
+          <span>30 Menit</span>
+          <span class="timer-check"></span>
+        </button>
+        <button class="sleep-timer-btn" data-minutes="45">
+          <span>45 Menit</span>
+          <span class="timer-check"></span>
+        </button>
+        <button class="sleep-timer-btn" data-minutes="60">
+          <span>60 Menit</span>
+          <span class="timer-check"></span>
+        </button>
+        <button class="sleep-timer-btn" data-minutes="-1">
+          <span>Akhir Lagu Ini</span>
+          <span class="timer-check"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Dialog Settings Hub -->
+  <div id="settingsModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card settings-modal-card">
+      <div class="settings-modal-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <iconsax-icon name="setting-2" type="bold" size="22" color="#00E599"></iconsax-icon>
+          <h3 style="font-size: 18px; font-weight: 700; margin: 0;">Pengaturan SoraFy</h3>
+        </div>
+        <button class="control-btn" id="closeSettingsModalBtn" title="Tutup">
+          <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
+        </button>
+      </div>
+
+      <!-- Settings Tabs -->
+      <div class="settings-tab-bar" id="settingsTabBar">
+        <button class="settings-tab-btn active" data-tab="audio">Audio & Kualitas</button>
+        <button class="settings-tab-btn" data-tab="system">Sistem</button>
+        <button class="settings-tab-btn" data-tab="data">Cadangan Data</button>
+        <button class="settings-tab-btn" data-tab="shortcuts">Pintasan</button>
+        <button class="settings-tab-btn" data-tab="about">Tentang</button>
+      </div>
+
+      <div class="settings-body">
+        <!-- 1. Tab Audio -->
+        <div class="settings-tab-pane active" id="settingsTabAudio">
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Kualitas Streaming Audio</span>
+              <span class="setting-desc">Pilih bitrate preferensi untuk pemutaran audio.</span>
+            </div>
+            <select class="settings-select" id="settingAudioQuality">
+              <option value="auto">Otomatis / Adaptif</option>
+              <option value="high" selected>Tinggi (Opus HD 160 kbps)</option>
+              <option value="lossless">Maksimum (Lossless / 320 kbps)</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Normalisasi Volume</span>
+              <span class="setting-desc">Menyamakan tingkat kenyaringan antar lagu secara otomatis.</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingVolumeNorm">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Crossfade Antar Lagu</span>
+              <span class="setting-desc">Transisi halus saat berpindah ke lagu berikutnya.</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="range" class="volume-slider" id="settingCrossfade" min="0" max="5" step="1" value="0" style="width: 120px;">
+              <span id="settingCrossfadeLabel" style="font-size: 13px; font-weight: 600; color: #00E599; min-width: 32px;">0 dtk</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Tab System -->
+        <div class="settings-tab-pane" id="settingsTabSystem" style="display: none;">
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Tutup ke System Tray</span>
+              <span class="setting-desc">Lagu tetap diputar di latar belakang saat jendela ditutup (X).</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingCloseToTray" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Notifikasi Lagu Desktop</span>
+              <span class="setting-desc">Tampilkan notifikasi pop-up saat lagu berganti di latar belakang.</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingNotifications" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Discord Rich Presence</span>
+              <span class="setting-desc">Tampilkan status lagu yang sedang didengar di profil Discord.</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingDiscordRpc" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 3. Tab Data & Backup -->
+        <div class="settings-tab-pane" id="settingsTabData" style="display: none;">
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Penyimpanan & Cache Audio</span>
+              <span class="setting-desc">Hapus cache stream audio dan sampul untuk menghemat ruang disk.</span>
+            </div>
+            <button class="hero-secondary-btn" id="settingClearCacheBtn" style="padding: 6px 14px; font-size: 12px;">Bersihkan Cache</button>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Ekspor Cadangan Playlist</span>
+              <span class="setting-desc">Simpan seluruh playlist lokal dan lagu yang disukai ke file JSON.</span>
+            </div>
+            <button class="hero-secondary-btn" id="settingExportBackupBtn" style="padding: 6px 14px; font-size: 12px;">Ekspor File (.json)</button>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title">Pulihkan Data Playlist</span>
+              <span class="setting-desc">Impor kembali file cadangan JSON yang sebelumnya disimpan.</span>
+            </div>
+            <button class="hero-play-btn" id="settingRestoreBackupBtn" style="padding: 6px 14px; font-size: 12px;">Pilih File Cadangan</button>
+          </div>
+        </div>
+
+        <!-- 4. Tab Shortcuts -->
+        <div class="settings-tab-pane" id="settingsTabShortcuts" style="display: none;">
+          <div class="shortcuts-grid">
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Putar / Jeda Lagu</span>
+              <kbd class="shortcut-kbd">Spasi</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Bisukan Suara (Mute / Unmute)</span>
+              <kbd class="shortcut-kbd">M</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Lagu Berikutnya</span>
+              <kbd class="shortcut-kbd">Ctrl + →</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Lagu Sebelumnya</span>
+              <kbd class="shortcut-kbd">Ctrl + ←</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Maju / Mundur 5 Detik</span>
+              <kbd class="shortcut-kbd">→ / ←</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Volume Naik / Turun (5%)</span>
+              <kbd class="shortcut-kbd">↑ / ↓</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Fokus ke Pencarian</span>
+              <kbd class="shortcut-kbd">Ctrl + F</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Buka / Tutup Layar Lirik</span>
+              <kbd class="shortcut-kbd">L</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-desc">Tutup Layar Penuh / Modal</span>
+              <kbd class="shortcut-kbd">Esc</kbd>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Tab About -->
+        <div class="settings-tab-pane" id="settingsTabAbout" style="display: none;">
+          <div style="text-align: center; padding: 20px 0;">
+            <img src="assets/logo.png" alt="SoraFy Logo" style="width: 64px; height: 64px; border-radius: 16px; margin-bottom: 12px;" onerror="this.style.display='none'">
+            <div style="font-size: 20px; font-weight: 800; color: #FFFFFF;">SoraFy Desktop</div>
+            <div style="font-size: 13px; color: var(--color-text-secondary); margin-top: 4px;">Versi 1.0.0 (Linux x64) • Lisensi GPL-3.0</div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); max-width: 380px; margin: 12px auto 20px; line-height: 1.5;">
+              Pemutar musik streaming beresolusi tinggi dengan sinkronisasi lirik real-time, equalizer DSP, dan dukungan impor multi-platform.
+            </p>
+            <div style="display: flex; justify-content: center; gap: 12px;">
+              <button class="hero-secondary-btn" id="checkUpdateBtn" style="padding: 8px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                <iconsax-icon name="refresh" type="linear" size="16" color="currentColor"></iconsax-icon>
+                <span>Periksa Pembaruan</span>
+              </button>
+            </div>
+            <div id="updateStatusText" style="font-size: 12px; color: var(--color-text-secondary); margin-top: 10px;"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

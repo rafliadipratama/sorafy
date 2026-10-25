@@ -52,7 +52,7 @@ jobs:
         run: |
           cd desktop
           npm install
-          npm run build:linux
+          npm run build:linux:all
 
       - name: Upload Linux Artifacts
         uses: actions/upload-artifact@v4

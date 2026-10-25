@@ -984,6 +984,35 @@ class SoraFyDesktopApp {
     this.bottomPlayerTrackInfo = document.getElementById("bottomPlayerTrackInfo");
     this.expandPlayerBtn = document.getElementById("expandPlayerBtn");
 
+    // Sleep Timer Elements & State
+    this.sleepTimerMinutes = 0;
+    this.sleepTimerTargetMs = null;
+    this.sleepTimerInterval = null;
+    this.isSleepTimerAtTrackEnd = false;
+    this.sleepTimerBtn = document.getElementById("sleepTimerBtn");
+    this.sleepTimerBadge = document.getElementById("sleepTimerBadge");
+    this.sleepTimerModal = document.getElementById("sleepTimerModal");
+    this.closeSleepTimerModalBtn = document.getElementById("closeSleepTimerModalBtn");
+    this.sleepTimerOptions = document.getElementById("sleepTimerOptions");
+
+    // Settings Hub Elements & State
+    this.navSettings = document.getElementById("navSettings");
+    this.settingsModal = document.getElementById("settingsModal");
+    this.closeSettingsModalBtn = document.getElementById("closeSettingsModalBtn");
+    this.settingsTabBar = document.getElementById("settingsTabBar");
+    this.settingAudioQuality = document.getElementById("settingAudioQuality");
+    this.settingVolumeNorm = document.getElementById("settingVolumeNorm");
+    this.settingCrossfade = document.getElementById("settingCrossfade");
+    this.settingCrossfadeLabel = document.getElementById("settingCrossfadeLabel");
+    this.settingCloseToTray = document.getElementById("settingCloseToTray");
+    this.settingNotifications = document.getElementById("settingNotifications");
+    this.settingDiscordRpc = document.getElementById("settingDiscordRpc");
+    this.settingClearCacheBtn = document.getElementById("settingClearCacheBtn");
+    this.settingExportBackupBtn = document.getElementById("settingExportBackupBtn");
+    this.settingRestoreBackupBtn = document.getElementById("settingRestoreBackupBtn");
+    this.checkUpdateBtn = document.getElementById("checkUpdateBtn");
+    this.updateStatusText = document.getElementById("updateStatusText");
+
     this.currentScreenMode = "audio"; // "audio" or "video"
     this.previousView = "home";
   }
@@ -1006,7 +1035,442 @@ class SoraFyDesktopApp {
     return false;
   }
 
+  // =========================================================================
+  // OS Native Media Session API (SMTC / macOS Control Center / Linux MPRIS)
+  // =========================================================================
+  initMediaSessionHandlers() {
+    if (!('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.setActionHandler('play', () => {
+        if (!this.isPlaying) this.togglePlayPause();
+      });
+      navigator.mediaSession.setActionHandler('pause', () => {
+        if (this.isPlaying) this.togglePlayPause();
+      });
+      navigator.mediaSession.setActionHandler('previoustrack', () => {
+        this.playPrevious();
+      });
+      navigator.mediaSession.setActionHandler('nexttrack', () => {
+        this.playNext();
+      });
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime !== undefined && this.audio) {
+          this.audio.currentTime = details.seekTime;
+          this.updateMediaSessionPosition();
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        if (this.audio) {
+          const skipTime = details.seekOffset || 5;
+          this.audio.currentTime = Math.max(0, (this.audio.currentTime || 0) - skipTime);
+          this.updateMediaSessionPosition();
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        if (this.audio) {
+          const skipTime = details.seekOffset || 5;
+          this.audio.currentTime = Math.min(this.audio.duration || 0, (this.audio.currentTime || 0) + skipTime);
+          this.updateMediaSessionPosition();
+        }
+      });
+    } catch (e) {
+      console.warn("MediaSession handlers note:", e);
+    }
+  }
+
+  updateMediaSession(track) {
+    if (!('mediaSession' in navigator) || !track) return;
+    try {
+      const artUrl = track.artwork_url || this.DEFAULT_TRACK_ART;
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: track.title || 'Judul Lagu',
+        artist: track.artist || 'Artis',
+        album: track.album || 'SoraFy Music',
+        artwork: [
+          { src: artUrl, sizes: '96x96', type: 'image/jpeg' },
+          { src: artUrl, sizes: '128x128', type: 'image/jpeg' },
+          { src: artUrl, sizes: '256x256', type: 'image/jpeg' },
+          { src: artUrl, sizes: '512x512', type: 'image/jpeg' }
+        ]
+      });
+
+      navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+    } catch (e) {
+      console.warn("MediaSession update note:", e);
+    }
+  }
+
+  updateMediaSessionPosition() {
+    if (!('mediaSession' in navigator) || !this.audio || !('setPositionState' in navigator.mediaSession)) return;
+    try {
+      const dur = this.audio.duration;
+      if (dur && isFinite(dur) && dur > 0) {
+        navigator.mediaSession.setPositionState({
+          duration: dur,
+          playbackRate: this.audio.playbackRate || 1.0,
+          position: Math.min(this.audio.currentTime || 0, dur)
+        });
+      }
+    } catch (_) {}
+  }
+
+  // =========================================================================
+  // Discord Rich Presence Integration
+  // =========================================================================
+  updateDiscordPresence(track) {
+    if (!track || !window.electronAPI || typeof window.electronAPI.updateDiscordPresence !== 'function') return;
+    if (this.appSettings && this.appSettings.discordRpc === false) return;
+
+    try {
+      const startTimestamp = Math.floor(Date.now() / 1000) - Math.floor(this.audio ? (this.audio.currentTime || 0) : 0);
+      const endTimestamp = (track.duration_secs && track.duration_secs > 0)
+        ? startTimestamp + track.duration_secs
+        : undefined;
+
+      window.electronAPI.updateDiscordPresence({
+        details: track.title || 'Mendengarkan Musik',
+        state: track.artist || 'SoraFy Music',
+        timestamps: this.isPlaying ? { start: startTimestamp, end: endTimestamp } : undefined,
+        assets: {
+          large_image: track.artwork_url || 'sorafy_logo',
+          large_text: track.title ? `${track.title} - ${track.artist}` : 'SoraFy Desktop',
+          small_image: this.isPlaying ? 'play' : 'pause',
+          small_text: this.isPlaying ? 'Memutar' : 'Dijeda'
+        }
+      });
+    } catch (_) {}
+  }
+
+  // =========================================================================
+  // Sleep Timer (Pengatur Waktu Tidur)
+  // =========================================================================
+  initSleepTimer() {
+    if (this.sleepTimerBtn) {
+      this.sleepTimerBtn.addEventListener("click", () => {
+        if (this.sleepTimerModal) this.sleepTimerModal.style.display = "flex";
+      });
+    }
+
+    if (this.closeSleepTimerModalBtn) {
+      this.closeSleepTimerModalBtn.addEventListener("click", () => {
+        if (this.sleepTimerModal) this.sleepTimerModal.style.display = "none";
+      });
+    }
+
+    if (this.sleepTimerOptions) {
+      this.sleepTimerOptions.querySelectorAll('.sleep-timer-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const mins = parseInt(btn.dataset.minutes, 10);
+          this.setSleepTimer(mins);
+          if (this.sleepTimerModal) this.sleepTimerModal.style.display = "none";
+        });
+      });
+    }
+  }
+
+  setSleepTimer(minutes) {
+    clearInterval(this.sleepTimerInterval);
+    this.sleepTimerInterval = null;
+    this.sleepTimerMinutes = minutes;
+    this.isSleepTimerAtTrackEnd = (minutes === -1);
+
+    if (minutes === 0) {
+      this.sleepTimerTargetMs = null;
+      if (this.sleepTimerBadge) this.sleepTimerBadge.style.display = "none";
+      if (this.sleepTimerBtn) this.sleepTimerBtn.classList.remove("active");
+      this.showToast("Pengatur waktu tidur dinonaktifkan");
+      this.updateSleepTimerUI(0);
+      return;
+    }
+
+    if (this.sleepTimerBtn) this.sleepTimerBtn.classList.add("active");
+    if (this.sleepTimerBadge) this.sleepTimerBadge.style.display = "flex";
+
+    if (this.isSleepTimerAtTrackEnd) {
+      if (this.sleepTimerBadge) this.sleepTimerBadge.textContent = "1";
+      this.showToast("Musik akan berhenti di akhir lagu ini");
+      this.updateSleepTimerUI(-1);
+      return;
+    }
+
+    this.sleepTimerTargetMs = Date.now() + (minutes * 60 * 1000);
+    this.showToast(`Waktu tidur disetel ${minutes} menit`);
+    this.updateSleepTimerUI(minutes);
+
+    this.sleepTimerInterval = setInterval(() => {
+      const remainingMs = this.sleepTimerTargetMs - Date.now();
+      if (remainingMs <= 0) {
+        clearInterval(this.sleepTimerInterval);
+        this.sleepTimerInterval = null;
+        this.triggerSleepTimerFadeOut();
+      } else {
+        const remainingMins = Math.ceil(remainingMs / 60000);
+        if (this.sleepTimerBadge) this.sleepTimerBadge.textContent = `${remainingMins}m`;
+      }
+    }, 1000);
+
+    const initialMins = Math.ceil((this.sleepTimerTargetMs - Date.now()) / 60000);
+    if (this.sleepTimerBadge) this.sleepTimerBadge.textContent = `${initialMins}m`;
+  }
+
+  updateSleepTimerUI(activeMinutes) {
+    if (!this.sleepTimerOptions) return;
+    this.sleepTimerOptions.querySelectorAll('.sleep-timer-btn').forEach(btn => {
+      const m = parseInt(btn.dataset.minutes, 10);
+      const isActive = (m === activeMinutes);
+      btn.classList.toggle('active', isActive);
+      const check = btn.querySelector('.timer-check');
+      if (check) check.textContent = isActive ? '✓' : '';
+    });
+  }
+
+  triggerSleepTimerFadeOut() {
+    if (!this.audio || !this.isPlaying) {
+      this.setSleepTimer(0);
+      return;
+    }
+    const startVol = this.audio.volume;
+    let step = 0;
+    const fadeSteps = 20;
+    const fadeInterval = setInterval(() => {
+      step++;
+      const currentRatio = 1 - (step / fadeSteps);
+      if (this.audio) this.audio.volume = Math.max(0, startVol * currentRatio);
+      if (step >= fadeSteps) {
+        clearInterval(fadeInterval);
+        this.pause();
+        if (this.audio) this.audio.volume = startVol;
+        this.setSleepTimer(0);
+        this.showToast("Waktu tidur selesai. Musik dijeda.");
+      }
+    }, 150);
+  }
+
+  // =========================================================================
+  // Settings Hub (Panel Pengaturan & Cadangan Data)
+  // =========================================================================
+  async initSettingsHub() {
+    let currentSettings = {
+      closeToTray: true,
+      notifications: true,
+      discordRpc: true,
+      audioQuality: 'high',
+      volumeNormalization: false,
+      crossfadeDuration: 0
+    };
+
+    if (window.electronAPI && typeof window.electronAPI.getAppSettings === 'function') {
+      try {
+        const fetched = await window.electronAPI.getAppSettings();
+        if (fetched) currentSettings = { ...currentSettings, ...fetched };
+      } catch (_) {}
+    } else {
+      const local = localStorage.getItem("sorafy_app_settings");
+      if (local) {
+        try { currentSettings = { ...currentSettings, ...JSON.parse(local) }; } catch (_) {}
+      }
+    }
+
+    this.appSettings = currentSettings;
+
+    if (this.settingAudioQuality) this.settingAudioQuality.value = this.appSettings.audioQuality || 'high';
+    if (this.settingVolumeNorm) this.settingVolumeNorm.checked = !!this.appSettings.volumeNormalization;
+    if (this.settingCrossfade) {
+      this.settingCrossfade.value = this.appSettings.crossfadeDuration || 0;
+      if (this.settingCrossfadeLabel) this.settingCrossfadeLabel.textContent = `${this.appSettings.crossfadeDuration || 0} dtk`;
+    }
+    if (this.settingCloseToTray) this.settingCloseToTray.checked = this.appSettings.closeToTray !== false;
+    if (this.settingNotifications) this.settingNotifications.checked = this.appSettings.notifications !== false;
+    if (this.settingDiscordRpc) this.settingDiscordRpc.checked = this.appSettings.discordRpc !== false;
+
+    if (this.navSettings) {
+      this.navSettings.addEventListener("click", () => {
+        if (this.settingsModal) this.settingsModal.style.display = "flex";
+      });
+    }
+
+    if (this.closeSettingsModalBtn) {
+      this.closeSettingsModalBtn.addEventListener("click", () => {
+        if (this.settingsModal) this.settingsModal.style.display = "none";
+      });
+    }
+
+    if (this.settingsTabBar) {
+      this.settingsTabBar.querySelectorAll('.settings-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.settingsTabBar.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const target = btn.dataset.tab;
+          document.querySelectorAll('.settings-tab-pane').forEach(pane => {
+            pane.style.display = pane.id === `settingsTab${target.charAt(0).toUpperCase() + target.slice(1)}` ? 'block' : 'none';
+          });
+        });
+      });
+    }
+
+    const persistSettings = async () => {
+      localStorage.setItem("sorafy_app_settings", JSON.stringify(this.appSettings));
+      if (window.electronAPI && typeof window.electronAPI.saveAppSettings === 'function') {
+        await window.electronAPI.saveAppSettings(this.appSettings).catch(() => {});
+      }
+    };
+
+    if (this.settingAudioQuality) {
+      this.settingAudioQuality.addEventListener("change", (e) => {
+        this.appSettings.audioQuality = e.target.value;
+        persistSettings();
+        this.showToast(`Kualitas audio: ${e.target.options[e.target.selectedIndex].text}`);
+      });
+    }
+
+    if (this.settingVolumeNorm) {
+      this.settingVolumeNorm.addEventListener("change", (e) => {
+        this.appSettings.volumeNormalization = e.target.checked;
+        persistSettings();
+        this.showToast(`Normalisasi volume ${e.target.checked ? 'diaktifkan' : 'dinonaktifkan'}`);
+      });
+    }
+
+    if (this.settingCrossfade) {
+      this.settingCrossfade.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value, 10);
+        this.appSettings.crossfadeDuration = val;
+        if (this.settingCrossfadeLabel) this.settingCrossfadeLabel.textContent = `${val} dtk`;
+        persistSettings();
+      });
+    }
+
+    if (this.settingCloseToTray) {
+      this.settingCloseToTray.addEventListener("change", (e) => {
+        this.appSettings.closeToTray = e.target.checked;
+        persistSettings();
+      });
+    }
+
+    if (this.settingNotifications) {
+      this.settingNotifications.addEventListener("change", (e) => {
+        this.appSettings.notifications = e.target.checked;
+        persistSettings();
+      });
+    }
+
+    if (this.settingDiscordRpc) {
+      this.settingDiscordRpc.addEventListener("change", (e) => {
+        this.appSettings.discordRpc = e.target.checked;
+        persistSettings();
+        if (!e.target.checked && window.electronAPI && typeof window.electronAPI.clearDiscordPresence === 'function') {
+          window.electronAPI.clearDiscordPresence();
+        } else if (e.target.checked) {
+          const cur = this.tracks[this.currentTrackIndex];
+          if (cur) this.updateDiscordPresence(cur);
+        }
+      });
+    }
+
+    if (this.settingClearCacheBtn) {
+      this.settingClearCacheBtn.addEventListener("click", async () => {
+        if (window.electronAPI && typeof window.electronAPI.clearAppCache === 'function') {
+          await window.electronAPI.clearAppCache();
+          this.showToast("Cache audio dan penyimpanan lokal berhasil dibersihkan");
+        } else {
+          this.showToast("Cache berhasil dibersihkan");
+        }
+      });
+    }
+
+    if (this.settingExportBackupBtn) {
+      this.settingExportBackupBtn.addEventListener("click", async () => {
+        const backupData = {
+          version: "1.0.0",
+          exportDate: new Date().toISOString(),
+          userPlaylists: this.userPlaylists,
+          likedTrackIds: Array.from(this.likedTrackIds),
+          followedArtists: Array.from(this.followedArtists),
+          playHistory: this.playHistory,
+          tasteProfile: this.tasteProfile
+        };
+        if (window.electronAPI && typeof window.electronAPI.saveBackupFile === 'function') {
+          const res = await window.electronAPI.saveBackupFile(backupData);
+          if (res && res.success) {
+            this.showToast("Cadangan data berhasil disimpan!");
+          }
+        } else {
+          const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `sorafy-backup-${new Date().toISOString().slice(0, 10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+          this.showToast("Cadangan data diunduh");
+        }
+      });
+    }
+
+    if (this.settingRestoreBackupBtn) {
+      this.settingRestoreBackupBtn.addEventListener("click", async () => {
+        if (window.electronAPI && typeof window.electronAPI.loadBackupFile === 'function') {
+          const res = await window.electronAPI.loadBackupFile();
+          if (res && res.success && res.data) {
+            this.restoreBackupData(res.data);
+          }
+        }
+      });
+    }
+
+    if (this.checkUpdateBtn) {
+      this.checkUpdateBtn.addEventListener("click", async () => {
+        if (this.updateStatusText) this.updateStatusText.textContent = "Memeriksa rilis terbaru di GitHub...";
+        if (window.electronAPI && typeof window.electronAPI.checkForUpdates === 'function') {
+          const res = await window.electronAPI.checkForUpdates();
+          if (res && res.success) {
+            if (res.hasUpdate) {
+              if (this.updateStatusText) {
+                this.updateStatusText.innerHTML = `<span style="color: #00E599; font-weight: 600;">Versi baru ${res.latestVersion} tersedia!</span> <a href="${res.htmlUrl}" target="_blank" style="color: #38BDF8; margin-left: 6px; text-decoration: underline;">Unduh di GitHub</a>`;
+              }
+            } else {
+              if (this.updateStatusText) {
+                this.updateStatusText.textContent = `Anda menggunakan versi terbaru (${res.currentVersion}).`;
+              }
+            }
+          } else {
+            if (this.updateStatusText) this.updateStatusText.textContent = "Tidak dapat memeriksa pembaruan saat ini.";
+          }
+        }
+      });
+    }
+  }
+
+  restoreBackupData(data) {
+    if (!data) return;
+    try {
+      if (Array.isArray(data.userPlaylists)) {
+        this.userPlaylists = data.userPlaylists;
+        localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+        this.renderUserPlaylists();
+      }
+      if (Array.isArray(data.likedTrackIds)) {
+        this.likedTrackIds = new Set(data.likedTrackIds);
+        localStorage.setItem("sorafy_liked_track_ids", JSON.stringify(Array.from(this.likedTrackIds)));
+        this.updateLikeButton();
+      }
+      if (Array.isArray(data.followedArtists)) {
+        this.followedArtists = new Set(data.followedArtists);
+        localStorage.setItem("sorafy_followed_artists", JSON.stringify(Array.from(this.followedArtists)));
+      }
+      this.showToast("Data cadangan berhasil dipulihkan!");
+      if (this.settingsModal) this.settingsModal.style.display = "none";
+    } catch (e) {
+      console.warn("Restore backup note:", e);
+      this.showToast("Gagal membaca file cadangan");
+    }
+  }
+
   initEvents() {
+    this.initSleepTimer();
+    this.initSettingsHub();
+    this.initMediaSessionHandlers();
+
     this.playPauseBtn.addEventListener("click", () => this.togglePlayPause());
     this.prevBtn.addEventListener("click", () => this.playPrevious());
     this.nextBtn.addEventListener("click", () => this.playNext());
@@ -1851,16 +2315,79 @@ class SoraFyDesktopApp {
       });
     }
 
-    // Keyboard Shortcuts (Space, ArrowLeft, ArrowRight)
+    // Comprehensive Native Keyboard Shortcuts
     window.addEventListener("keydown", (e) => {
-      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
+      // Allow escape to close modals or fullscreen even if inside inputs
+      if (e.code === "Escape") {
+        if (this.settingsModal && this.settingsModal.style.display !== "none") {
+          this.settingsModal.style.display = "none";
+          return;
+        }
+        if (this.sleepTimerModal && this.sleepTimerModal.style.display !== "none") {
+          this.sleepTimerModal.style.display = "none";
+          return;
+        }
+        if (this.unifiedImportModal && this.unifiedImportModal.style.display !== "none") {
+          this.unifiedImportModal.style.display = "none";
+          return;
+        }
+        if (this.currentView === "player") {
+          this.switchView(this.previousView && this.previousView !== "player" ? this.previousView : "home");
+          return;
+        }
+        if (this.searchInput && document.activeElement === this.searchInput) {
+          this.searchInput.blur();
+          return;
+        }
+      }
+
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable) return;
+
       if (e.code === "Space") {
         e.preventDefault();
         this.togglePlayPause();
-      } else if (e.code === "ArrowRight") {
+      } else if (e.code === "KeyM") {
+        e.preventDefault();
+        this.toggleMute();
+      } else if (e.code === "KeyL") {
+        e.preventDefault();
+        this.toggleLyricsTab();
+      } else if ((e.ctrlKey || e.metaKey) && e.code === "KeyF") {
+        e.preventDefault();
+        if (this.searchInput) {
+          this.searchInput.focus();
+          this.searchInput.select();
+        }
+      } else if (e.key === "/" && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        if (this.searchInput) {
+          this.searchInput.focus();
+          this.searchInput.select();
+        }
+      } else if ((e.ctrlKey || e.metaKey) && e.code === "ArrowRight") {
+        e.preventDefault();
         this.playNext();
-      } else if (e.code === "ArrowLeft") {
+      } else if ((e.ctrlKey || e.metaKey) && e.code === "ArrowLeft") {
+        e.preventDefault();
         this.playPrevious();
+      } else if (e.code === "ArrowRight") {
+        e.preventDefault();
+        if (this.audio) {
+          this.audio.currentTime = Math.min(this.audio.duration || 0, (this.audio.currentTime || 0) + 5);
+          this.updateMediaSessionPosition();
+        }
+      } else if (e.code === "ArrowLeft") {
+        e.preventDefault();
+        if (this.audio) {
+          this.audio.currentTime = Math.max(0, (this.audio.currentTime || 0) - 5);
+          this.updateMediaSessionPosition();
+        }
+      } else if (e.code === "ArrowUp") {
+        e.preventDefault();
+        this.setVolume(Math.min(1, (this.audio?.volume ?? 0.85) + 0.05));
+      } else if (e.code === "ArrowDown") {
+        e.preventDefault();
+        this.setVolume(Math.max(0, (this.audio?.volume ?? 0.85) - 0.05));
       }
     });
 
@@ -4918,6 +5445,22 @@ class SoraFyDesktopApp {
     // Fetch dynamic LRCLIB Synced Karaoke Lyrics
     this.fetchTrackLyrics(track);
 
+    // OS Native Media Session API (Windows SMTC / macOS Control Center / Linux MPRIS)
+    this.updateMediaSession(track);
+
+    // Desktop Notification on Track Change
+    if (window.electronAPI && typeof window.electronAPI.showTrackNotification === 'function') {
+      window.electronAPI.showTrackNotification({
+        title: track.title,
+        artist: track.artist,
+        album: track.album || 'SoraFy Music',
+        artwork_url: track.artwork_url
+      });
+    }
+
+    // Discord Rich Presence
+    this.updateDiscordPresence(track);
+
     // Update responsive drag-and-drop queue
     this.renderQueue();
 
@@ -5257,6 +5800,9 @@ class SoraFyDesktopApp {
       }
       this.isPlaying = false;
       this.updatePlayPauseIcon();
+      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      const cur = this.tracks[this.currentTrackIndex];
+      if (cur) this.updateDiscordPresence(cur);
     } else {
       if (!this.audio.src || this.audio.error) {
         this.loadTrack(this.currentTrackIndex, true);
@@ -5265,6 +5811,9 @@ class SoraFyDesktopApp {
       this.audio.play().then(() => {
         this.isPlaying = true;
         this.updatePlayPauseIcon();
+        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+        const cur = this.tracks[this.currentTrackIndex];
+        if (cur) this.updateDiscordPresence(cur);
         if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
           if (this.screenPlayerNativeVideo.paused) {
             this.screenPlayerNativeVideo.play().catch(() => {});
@@ -5277,6 +5826,7 @@ class SoraFyDesktopApp {
         } catch (e2) {
           this.isPlaying = false;
           this.updatePlayPauseIcon();
+          if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
           this.showToast("Tidak dapat memutar audio");
         }
       });
@@ -5336,6 +5886,12 @@ class SoraFyDesktopApp {
   }
 
   onTrackEnded() {
+    if (this.isSleepTimerAtTrackEnd) {
+      this.pause();
+      this.setSleepTimer(0);
+      this.showToast("Waktu tidur selesai. Musik dijeda.");
+      return;
+    }
     if (this.repeatMode === 2) {
       this.audio.currentTime = 0;
       this.audio.play();

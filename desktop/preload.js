@@ -12,6 +12,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   downloadTrack: (track) => ipcRenderer.invoke('download-track', track),
   saveBackupFile: (data) => ipcRenderer.invoke('save-backup-file', data),
   loadBackupFile: () => ipcRenderer.invoke('load-backup-file'),
+  showTrackNotification: (track) => ipcRenderer.send('show-track-notification', track),
+  updateDiscordPresence: (presence) => ipcRenderer.send('update-discord-presence', presence),
+  clearDiscordPresence: () => ipcRenderer.send('clear-discord-presence'),
+  getAppSettings: () => ipcRenderer.invoke('get-app-settings'),
+  saveAppSettings: (settings) => ipcRenderer.invoke('save-app-settings', settings),
+  clearAppCache: () => ipcRenderer.invoke('clear-app-cache'),
+  checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   onMediaAction: (callback) => {
     ipcRenderer.on('media-action', (_event, action) => {
       if (typeof callback === 'function') callback(action);
