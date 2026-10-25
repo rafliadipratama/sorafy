@@ -18,6 +18,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppSettings: () => ipcRenderer.invoke('get-app-settings'),
   saveAppSettings: (settings) => ipcRenderer.invoke('save-app-settings', settings),
   clearAppCache: () => ipcRenderer.invoke('clear-app-cache'),
+  pruneAudioCache: () => ipcRenderer.invoke('prune-audio-cache'),
+  selectYouTubeCookie: () => ipcRenderer.invoke('select-youtube-cookie'),
+  clearYouTubeCookie: () => ipcRenderer.invoke('clear-youtube-cookie'),
+  getYouTubeCookieStatus: () => ipcRenderer.invoke('get-youtube-cookie-status'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
   onMediaAction: (callback) => {
     ipcRenderer.on('media-action', (_event, action) => {

@@ -30,29 +30,29 @@
       <nav class="nav-menu">
         <div class="nav-item active" data-view="home" id="navHome">
           <iconsax-icon name="home-2" type="bold" size="20" color="currentColor"></iconsax-icon>
-          Home
+          <span data-i18n="nav_home">Home</span>
         </div>
         <div class="nav-item" data-view="explore" id="navExplore">
           <iconsax-icon name="discover" type="linear" size="20" color="currentColor"></iconsax-icon>
-          Explore
+          <span data-i18n="nav_explore">Explore</span>
         </div>
         <div class="nav-item" data-view="plugins" id="navPlugins">
           <iconsax-icon name="box" type="linear" size="20" color="currentColor"></iconsax-icon>
-          Plugins & Extensions
+          <span data-i18n="nav_plugins">Plugins & Extensions</span>
         </div>
         <div class="nav-item" data-view="equalizer" id="navEqualizer">
           <iconsax-icon name="setting-4" type="linear" size="20" color="currentColor"></iconsax-icon>
-          Equalizer DSP
+          <span data-i18n="nav_equalizer">Equalizer DSP</span>
         </div>
         <div class="nav-item" id="navSettings">
           <iconsax-icon name="setting-2" type="linear" size="20" color="currentColor"></iconsax-icon>
-          Settings
+          <span data-i18n="nav_settings">Settings</span>
         </div>
       </nav>
 
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-header-row">
-        <div class="sidebar-section-title">My Playlists</div>
+        <div class="sidebar-section-title" data-i18n="sidebar_playlists">My Playlists</div>
         <div style="display: flex; align-items: center; gap: 4px;">
           <button class="sidebar-add-playlist-btn" id="sidebarImportPlaylistBtn" title="Import Hub: Spotify, Apple Music & YT Music">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -116,6 +116,12 @@
           </div>
         </div>
       </header>
+
+      <!-- Offline Mode Resilience Banner -->
+      <div id="offlineBanner" class="offline-banner" style="display: none;">
+        <iconsax-icon name="wifi-square" type="linear" size="18" color="#FCD34D"></iconsax-icon>
+        <span data-i18n="offline_notice">You are currently offline. Local cache playback is active.</span>
+      </div>
 
       <!-- Home View Container -->
       <div id="homeViewContainer">
@@ -1019,11 +1025,11 @@
 
       <!-- Settings Tabs -->
       <div class="settings-tab-bar" id="settingsTabBar">
-        <button class="settings-tab-btn active" data-tab="audio">Audio & Quality</button>
-        <button class="settings-tab-btn" data-tab="system">System</button>
-        <button class="settings-tab-btn" data-tab="data">Data & Backup</button>
-        <button class="settings-tab-btn" data-tab="shortcuts">Shortcuts</button>
-        <button class="settings-tab-btn" data-tab="about">About</button>
+        <button class="settings-tab-btn active" data-tab="audio" data-i18n="settings_tab_audio">Audio & Quality</button>
+        <button class="settings-tab-btn" data-tab="system" data-i18n="settings_tab_system">System</button>
+        <button class="settings-tab-btn" data-tab="data" data-i18n="settings_tab_data">Data & Backup</button>
+        <button class="settings-tab-btn" data-tab="shortcuts" data-i18n="settings_tab_shortcuts">Shortcuts</button>
+        <button class="settings-tab-btn" data-tab="about" data-i18n="settings_tab_about">About</button>
       </div>
 
       <div class="settings-body">
@@ -1031,8 +1037,8 @@
         <div class="settings-tab-pane active" id="settingsTabAudio">
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Audio Streaming Quality</span>
-              <span class="setting-desc">Select preferred bitrate for playback stream.</span>
+              <span class="setting-title" data-i18n="setting_audio_quality">Audio Streaming Quality</span>
+              <span class="setting-desc" data-i18n="setting_audio_quality_desc">Select preferred bitrate for playback stream.</span>
             </div>
             <select class="settings-select" id="settingAudioQuality">
               <option value="auto">Automatic / Adaptive</option>
@@ -1043,8 +1049,8 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Volume Normalization</span>
-              <span class="setting-desc">Equalize loudness levels across tracks automatically.</span>
+              <span class="setting-title" data-i18n="setting_volume_norm">Volume Normalization</span>
+              <span class="setting-desc" data-i18n="setting_volume_norm_desc">Equalize loudness levels across tracks automatically.</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="settingVolumeNorm">
@@ -1054,11 +1060,11 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Crossfade Between Tracks</span>
-              <span class="setting-desc">Smooth transition when switching to the next track.</span>
+              <span class="setting-title" data-i18n="setting_crossfade">Crossfade Between Tracks</span>
+              <span class="setting-desc" data-i18n="setting_crossfade_desc">Smooth transition when switching to the next track.</span>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="range" class="volume-slider" id="settingCrossfade" min="0" max="5" step="1" value="0" style="width: 120px;">
+              <input type="range" class="volume-slider" id="settingCrossfade" min="0" max="10" step="1" value="0" style="width: 120px;">
               <span id="settingCrossfadeLabel" style="font-size: 13px; font-weight: 600; color: #00E599; min-width: 32px;">0s</span>
             </div>
           </div>
@@ -1068,8 +1074,19 @@
         <div class="settings-tab-pane" id="settingsTabSystem" style="display: none;">
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Close to System Tray</span>
-              <span class="setting-desc">Keep playback running in background when window is closed (X).</span>
+              <span class="setting-title" data-i18n="setting_language">Language / Bahasa</span>
+              <span class="setting-desc" data-i18n="setting_language_desc">Select display language for user interface.</span>
+            </div>
+            <select class="settings-select" id="settingLanguage">
+              <option value="en" selected>English (Default)</option>
+              <option value="id">Bahasa Indonesia</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title" data-i18n="setting_close_tray">Close to System Tray</span>
+              <span class="setting-desc" data-i18n="setting_close_tray_desc">Keep playback running in background when window is closed (X).</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="settingCloseToTray" checked>
@@ -1079,8 +1096,8 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Desktop Track Notifications</span>
-              <span class="setting-desc">Show pop-up notification when track changes in background.</span>
+              <span class="setting-title" data-i18n="setting_notifications">Desktop Track Notifications</span>
+              <span class="setting-desc" data-i18n="setting_notifications_desc">Show pop-up notification when track changes in background.</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="settingNotifications" checked>
@@ -1090,8 +1107,8 @@
 
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Discord Rich Presence</span>
-              <span class="setting-desc">Show your currently playing track on your Discord profile.</span>
+              <span class="setting-title" data-i18n="setting_discord_rpc">Discord Rich Presence</span>
+              <span class="setting-desc" data-i18n="setting_discord_rpc_desc">Show your currently playing track on your Discord profile.</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="settingDiscordRpc" checked>
@@ -1104,26 +1121,53 @@
         <div class="settings-tab-pane" id="settingsTabData" style="display: none;">
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Audio Cache & Storage</span>
-              <span class="setting-desc">Clear cached audio streams and artworks to free disk space.</span>
+              <span class="setting-title" data-i18n="setting_cache_storage">Audio Cache & Storage</span>
+              <span class="setting-desc" data-i18n="setting_cache_storage_desc">Clear cached audio streams and artworks to free disk space.</span>
             </div>
-            <button class="hero-secondary-btn" id="settingClearCacheBtn" style="padding: 6px 14px; font-size: 12px;">Clear Cache</button>
+            <button class="hero-secondary-btn" id="settingClearCacheBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_clear_cache">Clear Cache</button>
           </div>
 
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Backup All Data</span>
-              <span class="setting-desc">Save your custom playlists, liked tracks, listening history, and sound preferences to a secure JSON file.</span>
+              <span class="setting-title" data-i18n="setting_cache_quota">Max Cache Quota (LRU)</span>
+              <span class="setting-desc" data-i18n="setting_cache_quota_desc">Automatically evict oldest streams when cache exceeds this limit.</span>
             </div>
-            <button class="hero-secondary-btn" id="settingExportBackupBtn" style="padding: 6px 14px; font-size: 12px;">Backup Data (.json)</button>
+            <select class="settings-select" id="settingCacheQuota">
+              <option value="1024">1 GB</option>
+              <option value="2048" selected>2 GB (Default)</option>
+              <option value="4096">4 GB</option>
+              <option value="8192">8 GB</option>
+            </select>
           </div>
 
           <div class="setting-item">
             <div class="setting-info">
-              <span class="setting-title">Restore Data</span>
-              <span class="setting-desc">Restore your playlists, liked tracks, and listening profile from a previously saved JSON file.</span>
+              <span class="setting-title" data-i18n="setting_cookies_title">YouTube Cookies (Anti-Bot Bypass)</span>
+              <span class="setting-desc" data-i18n="setting_cookies_desc">Import Netscape cookies.txt to bypass YouTube age gates and IP bot blocks.</span>
             </div>
-            <button class="hero-play-btn" id="settingRestoreBackupBtn" style="padding: 6px 14px; font-size: 12px;">Restore Data</button>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="settingCookieStatus" style="font-size: 12px; color: var(--color-text-secondary);">None</span>
+              <button class="hero-secondary-btn" id="settingSelectCookieBtn" style="padding: 6px 12px; font-size: 12px;" data-i18n="btn_import_cookies">Import cookies.txt</button>
+              <button class="control-btn" id="settingClearCookieBtn" title="Remove Cookie" style="display: none; padding: 4px;">
+                <iconsax-icon name="trash" type="linear" size="16" color="#EF4444"></iconsax-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title" data-i18n="setting_backup_all">Backup All Data</span>
+              <span class="setting-desc" data-i18n="setting_backup_all_desc">Save your custom playlists, liked tracks, listening history, and sound preferences to a secure JSON file.</span>
+            </div>
+            <button class="hero-secondary-btn" id="settingExportBackupBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_backup_data">Backup Data (.json)</button>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title" data-i18n="setting_restore_data">Restore Data</span>
+              <span class="setting-desc" data-i18n="setting_restore_data_desc">Restore your playlists, liked tracks, and listening profile from a previously saved JSON file.</span>
+            </div>
+            <button class="hero-play-btn" id="settingRestoreBackupBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_restore_data">Restore Data</button>
           </div>
         </div>
 

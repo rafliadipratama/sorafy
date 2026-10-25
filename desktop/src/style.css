@@ -1968,7 +1968,6 @@ body {
 
 .playlist-card:hover {
   background: var(--color-surface-elevated);
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -2000,13 +1999,11 @@ body {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: translateY(6px);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .playlist-card:hover .playlist-card-play-overlay {
   opacity: 1;
-  transform: translateY(0);
 }
 
 .playlist-card-title {
@@ -2056,7 +2053,6 @@ body {
 
 .video-card:hover {
   background: var(--color-surface-elevated);
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -2072,11 +2068,6 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.video-card:hover .video-thumb {
-  transform: scale(1.03);
 }
 
 .video-badges-row {
@@ -2214,12 +2205,10 @@ body {
 .search-hero-artist-card:hover {
   background: #171C24;
   border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
 }
 
 .search-hero-artist-card:hover .search-hero-chevron {
   color: #FFFFFF;
-  transform: translateX(3px);
 }
 
 .search-hero-avatar {
@@ -2285,7 +2274,6 @@ body {
 
 .btn-hero-shuffle:hover {
   background: #F1F5F9;
-  transform: scale(1.03);
 }
 
 .btn-hero-mix {
@@ -2306,7 +2294,6 @@ body {
 .btn-hero-mix:hover {
   background: rgba(255, 255, 255, 0.14);
   border-color: rgba(255, 255, 255, 0.25);
-  transform: scale(1.03);
 }
 
 .search-hero-chevron {
@@ -2457,7 +2444,6 @@ body {
 
 .artist-card:hover {
   background: var(--color-surface-elevated);
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -2669,7 +2655,6 @@ body {
 
 .album-card:hover {
   background: var(--color-surface-elevated);
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.12);
 }
 
@@ -3058,7 +3043,6 @@ body {
 }
 
 .top-result-card:hover {
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.18);
   background: #171A22;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
@@ -3771,7 +3755,6 @@ body {
 
 .explore-nav-pill:hover {
   background: rgba(255, 255, 255, 0.1);
-  transform: translateY(-2px);
   border-color: rgba(255, 255, 255, 0.18);
 }
 
@@ -3803,13 +3786,13 @@ body {
   position: relative;
   overflow: hidden;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .mood-genre-card:hover {
-  transform: translateY(-3px) scale(1.02);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+  border-color: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.45);
 }
 
 .mood-genre-title {
@@ -3997,12 +3980,11 @@ body {
 
 .ytm-mix-card {
   cursor: pointer;
-  transition: transform 0.22s ease;
   border-radius: 12px;
 }
 
 .ytm-mix-card:hover {
-  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .ytm-mix-card-art {
@@ -4034,14 +4016,12 @@ body {
   justify-content: center;
   color: #FFFFFF;
   opacity: 0;
-  transform: scale(0.9);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
 }
 
 .ytm-mix-card:hover .mix-play-overlay {
   opacity: 1;
-  transform: scale(1);
 }
 
 .ytm-mix-card-title {
@@ -4132,11 +4112,6 @@ body {
   flex: 0 0 290px;
   min-width: 290px;
   cursor: pointer;
-  transition: transform 0.22s ease;
-}
-
-.ytm-video-card:hover {
-  transform: translateY(-3px);
 }
 
 .ytm-video-art-box {
@@ -4153,18 +4128,13 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
-}
-
-.ytm-video-card:hover .ytm-video-art-box img {
-  transform: scale(1.04);
 }
 
 .ytm-video-play-center {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.85);
+  transform: translate(-50%, -50%);
   width: 48px;
   height: 48px;
   border-radius: 50%;
@@ -4175,12 +4145,11 @@ body {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: all 0.22s ease;
+  transition: opacity 0.2s ease;
 }
 
 .ytm-video-card:hover .ytm-video-play-center {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
 }
 
 .ytm-video-badge-tag {
@@ -4232,11 +4201,6 @@ body {
   flex: 0 0 190px;
   min-width: 190px;
   cursor: pointer;
-  transition: transform 0.22s ease;
-}
-
-.ytm-comm-card:hover {
-  transform: translateY(-3px);
 }
 
 .ytm-comm-art-box {
@@ -4288,13 +4252,11 @@ body {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: scale(0.85);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .ytm-comm-card:hover .ytm-comm-play-overlay {
   opacity: 1;
-  transform: scale(1);
 }
 
 .ytm-comm-title {
@@ -4334,11 +4296,6 @@ body {
   flex: 0 0 180px;
   min-width: 180px;
   cursor: pointer;
-  transition: transform 0.22s ease;
-}
-
-.ytm-release-card:hover {
-  transform: translateY(-3px);
 }
 
 .ytm-release-art-box {
@@ -4355,11 +4312,6 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.25s ease;
-}
-
-.ytm-release-card:hover .ytm-release-art-box img {
-  transform: scale(1.04);
 }
 
 .ytm-release-play-overlay {
@@ -4376,13 +4328,11 @@ body {
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transform: scale(0.85);
-  transition: all 0.2s ease;
+  transition: opacity 0.2s ease;
 }
 
 .ytm-release-card:hover .ytm-release-play-overlay {
   opacity: 1;
-  transform: scale(1);
 }
 
 .ytm-release-title {
@@ -4672,6 +4622,26 @@ body {
   padding: 3px 8px;
   border-radius: 6px;
   letter-spacing: 0.5px;
+}
+
+/* Offline Resilience Notification Banner */
+.offline-banner {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #FCD34D;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  margin: 12px 24px 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: fadeIn 0.2s ease;
+}
+
+.offline-banner iconsax-icon {
+  flex-shrink: 0;
 }
 
 

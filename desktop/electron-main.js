@@ -39,13 +39,32 @@ function findYtDlpBinary() {
 
 const YT_DLP_BIN = findYtDlpBinary();
 
+function getCookieArgs() {
+  try {
+    const configDir = path.join(os.homedir(), '.config', 'sorafy');
+    const defaultCookie = path.join(configDir, 'cookies.txt');
+    if (fs.existsSync(defaultCookie)) {
+      return ['--cookies', defaultCookie];
+    }
+    const settingsPath = path.join(configDir, 'settings.json');
+    if (fs.existsSync(settingsPath)) {
+      const s = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      if (s.cookiePath && fs.existsSync(s.cookiePath)) {
+        return ['--cookies', s.cookiePath];
+      }
+    }
+  } catch (_) {}
+  return [];
+}
+
 function resolveYtDlpStream(videoId) {
   return new Promise((resolve) => {
     if (!videoId) return resolve(null);
     try {
+      const cookieArgs = getCookieArgs();
       execFile(
         YT_DLP_BIN,
-        ['--print', '%(duration)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
+        [...cookieArgs, '--print', '%(duration)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
         { timeout: 9000 },
         (error, stdout) => {
           if (error || !stdout) {
@@ -1326,12 +1345,15 @@ let isQuitting = false;
 
 // Persistent Settings Hub
 const DEFAULT_SETTINGS = {
+  language: 'en',
   closeToTray: true,
   notifications: true,
   discordRpc: true,
   audioQuality: 'high',
   volumeNormalization: false,
-  crossfadeDuration: 0
+  crossfadeDuration: 0,
+  cacheQuotaMb: 2048,
+  cookiePath: ''
 };
 
 function getSettingsPath() {
@@ -2274,9 +2296,10 @@ function fetchYouTubePlaylist(url) {
     const normalizedUrl = url.includes('list=') ? url : `https://www.youtube.com/playlist?list=${listId}`;
 
     // Try yt-dlp first with 3-minute timeout and 100MB buffer for full unlimited extraction of 1000+ tracks
+    const cookieArgs = getCookieArgs();
     execFile(
       YT_DLP_BIN,
-      ['--flat-playlist', '-J', normalizedUrl],
+      [...cookieArgs, '--flat-playlist', '-J', normalizedUrl],
       { timeout: 180000, maxBuffer: 100 * 1024 * 1024 },
       async (err, stdout) => {
         if (!err && stdout) {
@@ -2484,10 +2507,106 @@ ipcMain.handle('clear-app-cache', async () => {
         storages: ['appcache', 'serviceworkers', 'cachestorage']
       });
     }
+    // Also reset memory stream cache and flush index file
+    streamCache.clear();
+    saveStreamCache();
     return { success: true };
   } catch (err) {
     return { success: false, error: err.message };
   }
+});
+
+// IPC Handler: Prune Cache to Max Quota (LRU Eviction)
+ipcMain.handle('prune-audio-cache', async () => {
+  try {
+    const settings = loadAppSettings();
+    const quotaMb = parseInt(settings.cacheQuotaMb || 2048, 10);
+    const maxBytes = quotaMb * 1024 * 1024;
+    if (!fs.existsSync(cacheDir)) return { success: true, currentSizeMb: 0 };
+
+    const files = fs.readdirSync(cacheDir).map(file => {
+      const fullPath = path.join(cacheDir, file);
+      try {
+        const stat = fs.statSync(fullPath);
+        return { file, fullPath, size: stat.size, mtime: stat.mtimeMs };
+      } catch (_) { return null; }
+    }).filter(Boolean);
+
+    let totalSize = files.reduce((acc, f) => acc + f.size, 0);
+    if (totalSize > maxBytes) {
+      // Sort oldest files first for LRU eviction
+      files.sort((a, b) => a.mtime - b.mtime);
+      for (const f of files) {
+        if (f.file === 'stream_cache.json') continue; // Retain stream index
+        try {
+          fs.unlinkSync(f.fullPath);
+          totalSize -= f.size;
+          if (totalSize <= maxBytes * 0.8) break; // Evicted down to 80%
+        } catch (_) {}
+      }
+    }
+    return { success: true, currentSizeMb: Math.round(totalSize / (1024 * 1024)) };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC Handler: Import YouTube Cookies.txt
+ipcMain.handle('select-youtube-cookie', async () => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      title: 'Select YouTube cookies.txt',
+      filters: [{ name: 'Text Files', extensions: ['txt'] }],
+      properties: ['openFile']
+    });
+    if (canceled || !filePaths || filePaths.length === 0) {
+      return { success: false, canceled: true };
+    }
+    const selectedPath = filePaths[0];
+    const configDir = path.join(os.homedir(), '.config', 'sorafy');
+    if (!fs.existsSync(configDir)) fs.mkdirSync(configDir, { recursive: true });
+    const destCookie = path.join(configDir, 'cookies.txt');
+    fs.copyFileSync(selectedPath, destCookie);
+
+    const current = loadAppSettings();
+    current.cookiePath = destCookie;
+    saveAppSettings(current);
+
+    return { success: true, filename: path.basename(selectedPath) };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC Handler: Remove YouTube Cookies
+ipcMain.handle('clear-youtube-cookie', () => {
+  try {
+    const configDir = path.join(os.homedir(), '.config', 'sorafy');
+    const destCookie = path.join(configDir, 'cookies.txt');
+    if (fs.existsSync(destCookie)) fs.unlinkSync(destCookie);
+    const current = loadAppSettings();
+    current.cookiePath = '';
+    saveAppSettings(current);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// IPC Handler: Get YouTube Cookie Status
+ipcMain.handle('get-youtube-cookie-status', () => {
+  try {
+    const configDir = path.join(os.homedir(), '.config', 'sorafy');
+    const destCookie = path.join(configDir, 'cookies.txt');
+    if (fs.existsSync(destCookie)) {
+      return { hasCookie: true, filename: 'cookies.txt' };
+    }
+    const current = loadAppSettings();
+    if (current.cookiePath && fs.existsSync(current.cookiePath)) {
+      return { hasCookie: true, filename: path.basename(current.cookiePath) };
+    }
+  } catch (_) {}
+  return { hasCookie: false };
 });
 
 // IPC Handler: Check For Updates via GitHub Releases
