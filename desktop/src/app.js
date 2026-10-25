@@ -893,10 +893,6 @@ class SoraFyDesktopApp {
     this.unifiedImportStatusText = document.getElementById("unifiedImportStatusText");
     this.selectedImportPlatform = "spotify";
 
-    // Data Backup & Restore elements
-    this.sidebarBackupBtn = document.getElementById("sidebarBackupBtn");
-    this.sidebarRestoreBtn = document.getElementById("sidebarRestoreBtn");
-
     // Personalized Taste Shelf elements
     this.personalizedShelfSection = document.getElementById("personalizedShelfSection");
     this.personalizedShelfTitle = document.getElementById("personalizedShelfTitle");
@@ -1379,43 +1375,11 @@ class SoraFyDesktopApp {
     }
 
     if (this.settingExportBackupBtn) {
-      this.settingExportBackupBtn.addEventListener("click", async () => {
-        const backupData = {
-          version: "1.0.0",
-          exportDate: new Date().toISOString(),
-          userPlaylists: this.userPlaylists,
-          likedTrackIds: Array.from(this.likedTrackIds),
-          followedArtists: Array.from(this.followedArtists),
-          playHistory: this.playHistory,
-          tasteProfile: this.tasteProfile
-        };
-        if (window.electronAPI && typeof window.electronAPI.saveBackupFile === 'function') {
-          const res = await window.electronAPI.saveBackupFile(backupData);
-          if (res && res.success) {
-            this.showToast("Backup data saved successfully!");
-          }
-        } else {
-          const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: "application/json" });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = `sorafy-backup-${new Date().toISOString().slice(0, 10)}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-          this.showToast("Backup data downloaded");
-        }
-      });
+      this.settingExportBackupBtn.addEventListener("click", () => this.handleDataBackup());
     }
 
     if (this.settingRestoreBackupBtn) {
-      this.settingRestoreBackupBtn.addEventListener("click", async () => {
-        if (window.electronAPI && typeof window.electronAPI.loadBackupFile === 'function') {
-          const res = await window.electronAPI.loadBackupFile();
-          if (res && res.success && res.data) {
-            this.restoreBackupData(res.data);
-          }
-        }
-      });
+      this.settingRestoreBackupBtn.addEventListener("click", () => this.handleDataRestore());
     }
 
     if (this.checkUpdateBtn) {
@@ -2265,15 +2229,6 @@ class SoraFyDesktopApp {
           }
         });
       });
-    }
-
-    // Sidebar Backup & Restore events
-    if (this.sidebarBackupBtn) {
-      this.sidebarBackupBtn.addEventListener("click", () => this.handleDataBackup());
-    }
-
-    if (this.sidebarRestoreBtn) {
-      this.sidebarRestoreBtn.addEventListener("click", () => this.handleDataRestore());
     }
 
     // Reset plugins button

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, Menu, Tray, globalShortcut, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, Tray, globalShortcut, dialog, net: electronNet } = require('electron');
 const path = require('path');
 const http = require('http');
 const https = require('https');
@@ -1848,11 +1848,91 @@ function fetchTrackArtwork(title, artist) {
   });
 }
 
-function fetchSpotifyPlaylistOrAlbum(url) {
+function makeHttpsRequest(urlStr, options = {}, postData = null) {
   return new Promise((resolve, reject) => {
-    const match = url.match(/(playlist|album)[/:]([a-zA-Z0-9]+)/);
-    if (!match) return reject(new Error('Format URL Spotify tidak valid. Masukkan tautan playlist atau album publik.'));
-    const [, type, id] = match;
+    try {
+      const urlObj = new URL(urlStr);
+      const reqOptions = {
+        hostname: urlObj.hostname,
+        port: urlObj.port || 443,
+        path: urlObj.pathname + urlObj.search,
+        method: options.method || (postData ? 'POST' : 'GET'),
+        headers: options.headers || {}
+      };
+
+      if (postData) {
+        reqOptions.headers['Content-Length'] = Buffer.byteLength(postData);
+      }
+
+      const req = https.request(reqOptions, res => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => {
+          resolve({
+            status: res.statusCode,
+            headers: res.headers,
+            data
+          });
+        });
+      });
+
+      req.on('error', reject);
+      req.setTimeout(options.timeout || 20000, () => {
+        req.destroy();
+        reject(new Error('Request timed out'));
+      });
+
+      if (postData) {
+        req.write(postData);
+      }
+      req.end();
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+function captureWebBearerToken(targetUrl, hostFilter, timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    let resolved = false;
+    const ses = session.fromPartition('scraper-' + Date.now());
+    let win = new BrowserWindow({
+      show: false,
+      width: 800,
+      height: 600,
+      webPreferences: {
+        session: ses,
+        nodeIntegration: false,
+        contextIsolation: true
+      }
+    });
+
+    const cleanup = (token) => {
+      if (resolved) return;
+      resolved = true;
+      try {
+        if (win && !win.isDestroyed()) win.destroy();
+      } catch (_) {}
+      resolve(token || null);
+    };
+
+    const timer = setTimeout(() => cleanup(null), timeoutMs);
+
+    ses.webRequest.onBeforeSendHeaders((details, callback) => {
+      const auth = details.requestHeaders['authorization'] || details.requestHeaders['Authorization'];
+      if (auth && !resolved && details.url.includes(hostFilter)) {
+        clearTimeout(timer);
+        cleanup(auth);
+      }
+      callback({ requestHeaders: details.requestHeaders });
+    });
+
+    win.loadURL(targetUrl).catch(() => cleanup(null));
+  });
+}
+
+function fetchSpotifyEmbedFallback(type, id) {
+  return new Promise((resolve, reject) => {
     const embedUrl = `https://open.spotify.com/embed/${type}/${id}`;
     https.get(embedUrl, {
       headers: {
@@ -1863,16 +1943,15 @@ function fetchSpotifyPlaylistOrAlbum(url) {
       res.on('data', chunk => data += chunk);
       res.on('end', async () => {
         const matchScript = data.match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
-        if (!matchScript) return reject(new Error('Tidak dapat membaca data playlist dari Spotify Embed.'));
+        if (!matchScript) return reject(new Error('Unable to extract Spotify metadata. Please verify the URL.'));
         try {
           const json = JSON.parse(matchScript[1]);
           const entity = json.props?.pageProps?.state?.data?.entity;
-          if (!entity) return reject(new Error('Playlist Spotify tidak ditemukan atau bersifat privat.'));
-          const title = entity.name || (type === 'album' ? 'Album Spotify' : 'Playlist Spotify');
+          if (!entity) return reject(new Error('Spotify playlist not found or private.'));
+          const title = entity.name || (type === 'album' ? 'Spotify Album' : 'Spotify Playlist');
           const playlistCover = entity.coverArt?.sources?.[0]?.url || '';
           const rawTracks = entity.trackList || [];
 
-          // Resolve authentic individual album cover for each song in parallel chunks
           const chunkSize = 20;
           const individualCovers = [];
           for (let i = 0; i < rawTracks.length; i += chunkSize) {
@@ -1883,7 +1962,6 @@ function fetchSpotifyPlaylistOrAlbum(url) {
 
           const tracks = rawTracks.map((t, idx) => {
             const individualCover = individualCovers[idx];
-            // If individual cover found, use it; if album, use album cover; if playlist, avoid mosaic for tracks
             const trackArtwork = individualCover || (type === 'album' ? playlistCover : 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80');
             const isExplicit = !!(t.isExplicit || (t.contentRatings && t.contentRatings.labels && t.contentRatings.labels.includes('EXPLICIT')));
 
@@ -1914,7 +1992,121 @@ function fetchSpotifyPlaylistOrAlbum(url) {
   });
 }
 
-function fetchAppleMusicPlaylistOrAlbum(url) {
+async function fetchSpotifyPlaylistOrAlbum(url) {
+  const match = url.match(/(playlist|album)[/:]([a-zA-Z0-9]+)/);
+  if (!match) throw new Error('Invalid Spotify link format. Please paste a public playlist or album URL.');
+  const [, type, id] = match;
+
+  // 1. Try GraphQL Pathfinder extraction for unlimited full playlist tracks (supporting 1000+ songs)
+  if (type === 'playlist') {
+    try {
+      const token = await captureWebBearerToken(`https://open.spotify.com/playlist/${id}`, 'spotify', 8000);
+      if (token) {
+        let offset = 0;
+        const LIMIT = 100;
+        let allTracks = [];
+        let totalCount = 0;
+        let playlistTitle = '';
+        let playlistCover = '';
+
+        while (true) {
+          const body = JSON.stringify({
+            operationName: 'fetchPlaylistContents',
+            variables: {
+              uri: `spotify:playlist:${id}`,
+              offset: offset,
+              limit: LIMIT,
+              includeEpisodeContentRatingsV2: true
+            },
+            extensions: {
+              persistedQuery: {
+                version: 1,
+                sha256Hash: 'a65e12194ed5fc443a1cdebed5fabe33ca5b07b987185d63c72483867ad13cb4'
+              }
+            }
+          });
+
+          const resp = await electronNet.fetch('https://api-partner.spotify.com/pathfinder/v2/query', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'Authorization': token
+            },
+            body
+          });
+
+          if (!resp.ok) break;
+          const json = await resp.json();
+          const plData = json?.data?.playlistV2;
+          const content = plData?.content;
+          if (!content) break;
+
+          if (!playlistTitle) {
+            playlistTitle = plData?.name || plData?.identityTrait?.name || 'Spotify Playlist';
+          }
+          if (!playlistCover) {
+            playlistCover = plData?.images?.items?.[0]?.sources?.[0]?.url
+              || plData?.visualIdentityTrait?.squareCoverImage?.image?.data?.sources?.[0]?.url || '';
+          }
+
+          totalCount = content.totalCount || 0;
+          const items = content.items || [];
+          if (items.length === 0) break;
+
+          for (const it of items) {
+            const trackData = it.itemV2?.data || it.itemV3?.data;
+            if (!trackData) continue;
+            const trackName = (trackData.name || trackData.identityTrait?.name || '').trim();
+            if (!trackName) continue;
+            const artists = trackData.artists?.items?.map(a => a.profile?.name).filter(Boolean).join(', ')
+              || trackData.identityTrait?.contributors?.items?.map(c => c.name).filter(Boolean).join(', ')
+              || 'Various Artists';
+            const durSecs = Math.round((trackData.trackDuration?.totalMilliseconds || (trackData.identityTrait?.duration?.seconds ? trackData.identityTrait.duration.seconds * 1000 : 0)) / 1000) || 180;
+            const cover = trackData.albumOfTrack?.coverArt?.sources?.[0]?.url
+              || trackData.visualIdentityTrait?.squareCoverImage?.image?.data?.sources?.[0]?.url
+              || playlistCover;
+            const isExplicit = trackData.contentRating?.label === 'EXPLICIT';
+
+            allTracks.push({
+              id: `spot_${id}_${allTracks.length}_${Date.now()}`,
+              title: trackName,
+              artist: artists,
+              album: trackData.albumOfTrack?.name || '',
+              duration_secs: durSecs,
+              artwork_url: cover,
+              is_video: false,
+              is_explicit: isExplicit,
+              source_label: 'Spotify Match'
+            });
+          }
+
+          offset += items.length;
+          if (offset >= totalCount || items.length < LIMIT || allTracks.length >= 3000) {
+            break;
+          }
+        }
+
+        if (allTracks.length > 0) {
+          return {
+            title: playlistTitle || 'Spotify Playlist',
+            artwork_url: playlistCover || allTracks[0]?.artwork_url || '',
+            provider: 'Spotify',
+            type,
+            tracks: allTracks
+          };
+        }
+      }
+    } catch (e) {
+      console.warn('Spotify GraphQL fetch notice:', e.message);
+    }
+  }
+
+  // Fallback: Embed __NEXT_DATA__
+  return fetchSpotifyEmbedFallback(type, id);
+}
+
+function fetchAppleMusicHtmlFallback(url) {
   return new Promise((resolve, reject) => {
     https.get(url, {
       headers: {
@@ -1929,7 +2121,6 @@ function fetchAppleMusicPlaylistOrAlbum(url) {
           const pageTitle = titleMatch ? titleMatch[1].replace(/ - Apple Music.*$/i, '').replace(/^[^\w\s]+/, '').trim() : 'Apple Music Playlist';
           
           let tracks = [];
-          // 1. Check serialized-server-data for trackLockup
           const scriptMatch = data.match(/<script type="application\/json" id="serialized-server-data">([\s\S]*?)<\/script>/);
           if (scriptMatch) {
             try {
@@ -1952,7 +2143,6 @@ function fetchAppleMusicPlaylistOrAlbum(url) {
             } catch (_) {}
           }
 
-          // 2. Fallback to LD+JSON Schema
           if (tracks.length === 0) {
             const schemaMatch = data.match(/<script id="?schema:music-(?:playlist|album)"? type="application\/ld\+json">([\s\S]*?)<\/script>/i);
             if (schemaMatch) {
@@ -1987,6 +2177,85 @@ function fetchAppleMusicPlaylistOrAlbum(url) {
   });
 }
 
+async function fetchAppleMusicPlaylistOrAlbum(url) {
+  // 1. Try Apple Music Amp API with captured web token for complete tracklist (supporting 1000+ tracks)
+  try {
+    const plMatch = url.match(/playlist\/([^/]+)\/(pl\.[a-zA-Z0-9_-]+)/);
+    const storefrontMatch = url.match(/music\.apple\.com\/([a-z]{2})\//);
+    const storefront = storefrontMatch ? storefrontMatch[1] : 'us';
+    const playlistId = plMatch ? plMatch[2] : (url.match(/(pl\.[a-zA-Z0-9_-]+)/)?.[1]);
+
+    if (playlistId) {
+      const token = await captureWebBearerToken(url, 'apple.com', 8000);
+      if (token) {
+        let nextUrl = `https://amp-api.music.apple.com/v1/catalog/${storefront}/playlists/${playlistId}/tracks?limit=100`;
+        let allTracks = [];
+        let playlistCover = '';
+
+        while (nextUrl) {
+          const resp = await electronNet.fetch(nextUrl, {
+            headers: {
+              'Authorization': token,
+              'Origin': 'https://music.apple.com'
+            }
+          });
+
+          if (!resp.ok) break;
+          const json = await resp.json();
+          const data = json.data || [];
+          if (data.length === 0) break;
+
+          for (const it of data) {
+            const attr = it.attributes || {};
+            const title = (attr.name || '').trim();
+            if (!title) continue;
+            const artist = (attr.artistName || 'Various Artists').trim();
+            const dur = attr.durationInMillis ? Math.round(attr.durationInMillis / 1000) : 180;
+            const cover = attr.artwork?.url ? attr.artwork.url.replace('{w}x{h}', '600x600').replace('{f}', 'jpg') : '';
+            if (!playlistCover && cover) playlistCover = cover;
+
+            allTracks.push({
+              id: `am_${it.id || allTracks.length}_${Date.now()}`,
+              title,
+              artist,
+              album: attr.albumName || '',
+              duration_secs: dur,
+              artwork_url: cover,
+              is_video: false,
+              is_explicit: !!(attr.contentRating === 'explicit'),
+              source_label: 'Apple Music Match'
+            });
+          }
+
+          if (json.next) {
+            nextUrl = json.next.startsWith('http') ? json.next : `https://amp-api.music.apple.com${json.next}`;
+          } else {
+            nextUrl = null;
+          }
+
+          if (allTracks.length >= 3000) break;
+        }
+
+        if (allTracks.length > 0) {
+          const titleMatch = url.match(/playlist\/([^/]+)\//);
+          const derivedTitle = titleMatch ? titleMatch[1].replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'Apple Music Playlist';
+          return {
+            title: derivedTitle,
+            artwork_url: playlistCover || allTracks[0]?.artwork_url || '',
+            provider: 'Apple Music',
+            tracks: allTracks
+          };
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('Apple Music API fetch notice:', err.message);
+  }
+
+  // Fallback: HTML extraction
+  return fetchAppleMusicHtmlFallback(url);
+}
+
 function fetchYouTubePlaylist(url) {
   return new Promise((resolve, reject) => {
     let listId = '';
@@ -1999,14 +2268,16 @@ function fetchYouTubePlaylist(url) {
     }
 
     if (!listId) {
-      return reject(new Error('URL YouTube Music tidak memiliki parameter playlist atau album (?list=...)'));
+      return reject(new Error('Invalid YouTube Music playlist link. Missing playlist ID (?list=...).'));
     }
 
-    // Try yt-dlp first for fast comprehensive playlist extraction
+    const normalizedUrl = url.includes('list=') ? url : `https://www.youtube.com/playlist?list=${listId}`;
+
+    // Try yt-dlp first with 3-minute timeout and 100MB buffer for full unlimited extraction of 1000+ tracks
     execFile(
       YT_DLP_BIN,
-      ['--flat-playlist', '-J', url],
-      { timeout: 25000, maxBuffer: 10 * 1024 * 1024 },
+      ['--flat-playlist', '-J', normalizedUrl],
+      { timeout: 180000, maxBuffer: 100 * 1024 * 1024 },
       async (err, stdout) => {
         if (!err && stdout) {
           try {
