@@ -622,7 +622,7 @@ function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                       avatar_url: artwork || '',
                       artwork_url: artwork || '',
                       browse_id: browseId,
-                      sub_label: sub || 'Artis Terverifikasi',
+                      sub_label: sub || 'Verified Artist',
                       is_top_hero: true,
                       top_songs: cardSongs
                     });
@@ -631,11 +631,11 @@ function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                   itemsList.unshift({
                     id: browseId || ('pl_' + title.toLowerCase().replace(/[^a-z0-9]/g, '_')),
                     title: title,
-                    author: 'SoraFy Koleksi',
+                    author: 'SoraFy Collection',
                     artwork_url: artwork,
                     browse_id: browseId,
-                    track_count: 'Daftar Putar',
-                    source_label: 'Koleksi Spesial'
+                    track_count: 'Playlist',
+                    source_label: 'Special Collection'
                   });
                 } else if (filterType === 'all' || filterType === 'song' || filterType === 'video') {
                   const heroVid = card.onTap?.watchEndpoint?.videoId
@@ -750,7 +750,7 @@ function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                       avatar_url: artwork || '',
                       artwork_url: artwork || '',
                       browse_id: browseId,
-                      sub_label: subRuns.map(r => r.text).join('') || 'Artis'
+                      sub_label: subRuns.map(r => r.text).join('') || 'Artist'
                     });
                   }
                 } else if (filterType === 'album') {
@@ -780,13 +780,13 @@ function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                       artwork_url: artwork,
                       browse_id: bId,
                       is_official: isOfficialArtist,
-                      source_label: 'Album Resmi'
+                      source_label: 'Official Album'
                     });
                   }
                 } else if (filterType === 'playlist') {
                   let authorClean = artist;
                   if (!authorClean || authorClean.toLowerCase().includes('youtube') || authorClean === 'Artist') {
-                    authorClean = 'SoraFy Koleksi';
+                    authorClean = 'SoraFy Collection';
                   }
                   itemsList.push({
                     id: browseId || ('pl_' + title.toLowerCase().replace(/[^a-z0-9]/g, '_')),
@@ -794,8 +794,8 @@ function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                     author: authorClean,
                     artwork_url: artwork,
                     browse_id: browseId,
-                    track_count: album || 'Daftar Putar',
-                    source_label: 'Koleksi Spesial'
+                    track_count: album || 'Playlist',
+                    source_label: 'Special Collection'
                   });
                 } else if (filterType === 'video') {
                   const isOfficial = /\b(official\s*(?:music\s*)?video|video\s*musik|music\s*video|mv|m\/v)\b/i.test(title);
@@ -1079,7 +1079,7 @@ function browseYouTubeInnerTube(browseId) {
                         itArtist = r.subtitle.runs[0].text;
                       }
                     }
-                    if (!itArtist) itArtist = 'Artis';
+                    if (!itArtist) itArtist = 'Artist';
 
                     parsedAlbums.push({
                       id: itBrowseId || ('alb_' + itTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')),
@@ -1498,7 +1498,7 @@ function createTray() {
       appTray = new Tray(iconPath);
       const contextMenu = Menu.buildFromTemplate([
         {
-          label: 'Buka SoraFy',
+          label: 'Open SoraFy',
           click: () => {
             if (mainWindow) {
               mainWindow.show();
@@ -1507,7 +1507,7 @@ function createTray() {
           }
         },
         {
-          label: 'Putar / Jeda',
+          label: 'Play / Pause',
           click: () => {
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send('media-action', 'play-pause');
@@ -1515,7 +1515,7 @@ function createTray() {
           }
         },
         {
-          label: 'Lagu Berikutnya',
+          label: 'Next Track',
           click: () => {
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send('media-action', 'next');
@@ -1523,7 +1523,7 @@ function createTray() {
           }
         },
         {
-          label: 'Lagu Sebelumnya',
+          label: 'Previous Track',
           click: () => {
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send('media-action', 'prev');
@@ -1532,7 +1532,7 @@ function createTray() {
         },
         { type: 'separator' },
         {
-          label: 'Keluar',
+          label: 'Quit',
           click: () => {
             isQuitting = true;
             app.quit();
@@ -1971,7 +1971,7 @@ function fetchAppleMusicPlaylistOrAlbum(url) {
           }
 
           if (tracks.length === 0) {
-            return reject(new Error('Tidak ada lagu yang ditemukan di halaman Apple Music tersebut. Pastikan tautan bersifat publik.'));
+            return reject(new Error('No tracks found on the Apple Music page. Please ensure the link is public.'));
           }
 
           resolve({
@@ -2040,7 +2040,7 @@ function fetchYouTubePlaylist(url) {
           });
         }
 
-        reject(new Error('Tidak dapat mengekstrak daftar lagu dari playlist YouTube Music. Pastikan playlist bersifat publik.'));
+        reject(new Error('Unable to extract tracks from the YouTube Music playlist. Please ensure the playlist is public.'));
       }
     );
   });
@@ -2064,24 +2064,24 @@ ipcMain.handle('import-external-playlist', async (event, url) => {
       const res = await fetchYouTubePlaylist(cleanUrl);
       return { success: true, ...res };
     } else {
-      return { success: false, error: 'Platform tidak dikenali. Masukkan tautan dari Spotify, Apple Music, atau YouTube Music.' };
+      return { success: false, error: 'Platform not recognized. Please enter a valid link from Spotify, Apple Music, or YouTube Music.' };
     }
   } catch (err) {
-    return { success: false, error: err.message || 'Gagal mengimpor playlist.' };
+    return { success: false, error: err.message || 'Failed to import playlist.' };
   }
 });
 
 // IPC Handler: Offline Track Downloader (Local Audio Storage)
 ipcMain.handle('download-track', async (event, track) => {
-  if (!track || !track.title) return { success: false, error: 'Data lagu tidak valid.' };
+  if (!track || !track.title) return { success: false, error: 'Invalid track data.' };
 
   const downloadDir = path.join(os.homedir(), 'Music', 'SoraFy');
   if (!fs.existsSync(downloadDir)) {
     fs.mkdirSync(downloadDir, { recursive: true });
   }
 
-  const cleanTitle = (track.title || 'Lagu').replace(/[/\\?%*:|"<>]/g, '_').trim();
-  const cleanArtist = (track.artist || 'Artis').replace(/[/\\?%*:|"<>]/g, '_').trim();
+  const cleanTitle = (track.title || 'Track').replace(/[/\\?%*:|"<>]/g, '_').trim();
+  const cleanArtist = (track.artist || 'Artist').replace(/[/\\?%*:|"<>]/g, '_').trim();
   const baseFilename = `${cleanArtist} - ${cleanTitle}`;
   const outPattern = path.join(downloadDir, `${baseFilename}.%(ext)s`);
 
@@ -2098,7 +2098,7 @@ ipcMain.handle('download-track', async (event, track) => {
   }
 
   if (!vid) {
-    return { success: false, error: 'Audio resmi tidak dapat ditemukan di YouTube Music.' };
+    return { success: false, error: 'Official audio could not be found on YouTube Music.' };
   }
 
   const videoUrl = `https://www.youtube.com/watch?v=${vid}`;
@@ -2129,7 +2129,7 @@ ipcMain.handle('download-track', async (event, track) => {
         // Fallback: Pipe direct audio stream if yt-dlp conversion fails
         resolveYtDlpStream(vid).then(stream => {
           if (!stream || !stream.url) {
-            return resolve({ success: false, error: err ? err.message : 'Gagal mengunduh audio.' });
+            return resolve({ success: false, error: err ? err.message : 'Failed to download audio.' });
           }
 
           const fallbackPath = path.join(downloadDir, `${baseFilename}.opus`);
@@ -2157,7 +2157,7 @@ ipcMain.handle('download-track', async (event, track) => {
 ipcMain.handle('save-backup-file', async (event, data) => {
   try {
     const { filePath, canceled } = await dialog.showSaveDialog(mainWindow, {
-      title: 'Simpan Cadangan Data SoraFy',
+      title: 'Save SoraFy Backup File',
       defaultPath: path.join(os.homedir(), `sorafy-backup-${new Date().toISOString().slice(0, 10)}.json`),
       filters: [{ name: 'JSON Backup', extensions: ['json'] }]
     });
@@ -2174,7 +2174,7 @@ ipcMain.handle('save-backup-file', async (event, data) => {
 ipcMain.handle('load-backup-file', async () => {
   try {
     const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow, {
-      title: 'Pilih File Cadangan SoraFy (.json)',
+      title: 'Select SoraFy Backup File (.json)',
       properties: ['openFile'],
       filters: [{ name: 'JSON Backup', extensions: ['json'] }]
     });
