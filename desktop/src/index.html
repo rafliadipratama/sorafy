@@ -54,7 +54,7 @@
       <div class="sidebar-section-header-row">
         <div class="sidebar-section-title" data-i18n="sidebar_playlists">My Playlists</div>
         <div style="display: flex; align-items: center; gap: 4px;">
-          <button class="sidebar-add-playlist-btn" id="sidebarImportPlaylistBtn" title="Import Hub: Spotify, Apple Music & YT Music">
+          <button class="sidebar-add-playlist-btn" id="sidebarImportPlaylistBtn" title="Import Hub: Spotify, Apple Music & YouTube">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           </button>
           <button class="sidebar-add-playlist-btn" id="sidebarCreatePlaylistBtn" title="Create New Playlist">
@@ -181,11 +181,12 @@
           </div>
         </section>
 
-        <!-- 5. Section: "Trending community playlists" (YT Music Screenshot 2) -->
+        <!-- 5. Section: "Featured Playlists" (Curated directly from official music catalog) -->
         <section class="ytm-shelf-section" id="ytmCommunityPlaylistsSection" style="margin-bottom: 34px;">
           <div class="section-title">
             <div style="display: flex; flex-direction: column; gap: 2px;">
-              <span style="font-size: 22px; font-weight: 800;">Trending community playlists</span>
+              <span style="font-size: 22px; font-weight: 800;" id="featuredPlaylistsTitle" data-i18n="featured_playlists">Featured Playlists</span>
+              <span style="font-size: 13px; color: var(--color-text-secondary);" id="featuredPlaylistsSub" data-i18n="featured_playlists_sub">Official curated editorial playlists</span>
             </div>
             <div class="carousel-nav-arrows">
               <button class="carousel-arrow-btn" id="commPlPrevBtn" title="Previous">
@@ -197,15 +198,16 @@
             </div>
           </div>
           <div class="ytm-community-playlists-row" id="ytmCommunityPlaylistsRow">
-            <!-- Populated dynamically via JS: Community cards with author badge -->
+            <!-- Populated dynamically via JS: Official curated playlist cards -->
           </div>
         </section>
 
-        <!-- 6. Section: "New releases" (YT Music Screenshot 2) -->
+        <!-- 6. Section: "Recommended Albums for You" (Personalized based on frequently listened tracks) -->
         <section class="ytm-shelf-section" id="ytmNewReleasesSection" style="margin-bottom: 34px;">
           <div class="section-title">
             <div style="display: flex; flex-direction: column; gap: 2px;">
-              <span style="font-size: 22px; font-weight: 800;">New releases</span>
+              <span style="font-size: 22px; font-weight: 800;" id="homeAlbumsTitle" data-i18n="recommended_albums">Albums Recommended For You</span>
+              <span style="font-size: 13px; color: var(--color-text-secondary);" id="homeAlbumsSub" data-i18n="recommended_albums_sub">Based on songs and artists you listen to frequently</span>
             </div>
             <div style="display: flex; align-items: center; gap: 10px;">
               <button class="ytm-pill-action-btn" id="viewAllNewReleasesBtn">See more</button>
@@ -220,7 +222,7 @@
             </div>
           </div>
           <div class="ytm-new-releases-row" id="ytmNewReleasesRow">
-            <!-- Populated dynamically via JS: Square album & single cards -->
+            <!-- Populated dynamically via JS: Square personalized album & single cards -->
           </div>
         </section>
 
@@ -843,7 +845,7 @@
     </div>
   </footer>
 
-  <!-- Modal Dialog Unified Importer (YouTube Music, Spotify, Apple Music) -->
+  <!-- Modal Dialog Unified Importer (YouTube, Spotify, Apple Music) -->
   <div id="unifiedImportModal" class="modal-backdrop" style="display: none;">
     <div class="modal-card import-modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -878,7 +880,7 @@
             <circle cx="12" cy="12" r="7.5" fill="none" stroke="#FFFFFF" stroke-width="1.8"/>
             <polygon points="10,8.5 16,12 10,15.5" fill="#FFFFFF"/>
           </svg>
-          <span>YouTube Music</span>
+          <span>YouTube</span>
         </button>
       </div>
 

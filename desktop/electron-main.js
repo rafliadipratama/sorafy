@@ -1169,11 +1169,11 @@ function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
                     parsedPlaylists.push({
                       id: itBrowseId || ('pl_' + itTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')),
                       title: itTitle,
-                      author: itSub || 'YouTube Music Community',
+                      author: itSub ? itSub.replace(/YouTube Music/gi, 'Official Selection').replace(/YouTube/gi, 'Official') : 'Curated Selection',
                       artwork_url: itArt,
                       browse_id: itBrowseId,
                       track_count: 'Playlist',
-                      source_label: 'Community Playlist'
+                      source_label: 'Official Playlist'
                     });
                   }
                 }
@@ -1365,7 +1365,7 @@ async function resolveInnerTubeStream(videoId) {
               videoId: videoId,
               bitrate: chosen.bitrate || 160000,
               mimeType: chosen.mimeType || 'audio/mp4',
-              provider: 'YouTube Music InnerTube',
+              provider: 'SoraFy HD Stream',
               duration: parseInt(json.videoDetails?.lengthSeconds, 10) || 0,
               isFull: true
             });
@@ -1802,7 +1802,7 @@ function fetchYouTubeMusicLyrics(videoId) {
                 const desc = bJson.contents?.sectionListRenderer?.contents?.[0]?.musicDescriptionShelfRenderer?.description?.runs;
                 if (desc && desc.length) {
                   const plainText = desc.map(r => r.text).join('').trim();
-                  const source = bJson.contents?.sectionListRenderer?.contents?.[0]?.musicDescriptionShelfRenderer?.footer?.runs?.map(r => r.text).join('') || 'YouTube Music';
+                  const source = bJson.contents?.sectionListRenderer?.contents?.[0]?.musicDescriptionShelfRenderer?.footer?.runs?.map(r => r.text).join('') || 'Synced Lyrics';
                   resolve({
                     plainLyrics: plainText,
                     source: source
@@ -1844,15 +1844,98 @@ ipcMain.handle('browse-yt', async (event, browseId) => {
   return await browseYouTubeInnerTube(browseId);
 });
 
-// IPC Handler: Official YouTube Music Home Feed (Quick Picks, Charts, Playlists, New Releases)
+// Helper to fetch official curated editorial playlists directly from InnerTube
+function fetchOfficialCuratedPlaylists(hl = 'en', gl = 'US') {
+  return new Promise((resolve) => {
+    const isId = hl === 'id' || gl === 'ID';
+    const query = isId ? 'Top Hits Indonesia 2024' : 'Top Hits 2024';
+    const payload = JSON.stringify({
+      query,
+      params: 'EgWKAQI4AWoKEAkQBRAKEAMQBw%3D%3D', // Playlists filter
+      context: {
+        client: {
+          clientName: 'WEB_REMIX',
+          clientVersion: '1.20240318.01.00',
+          hl,
+          gl
+        }
+      }
+    });
+
+    const req = https.request({
+      hostname: 'music.youtube.com',
+      path: '/youtubei/v1/search',
+      method: 'POST',
+      family: 4,
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Content-Length': Buffer.byteLength(payload)
+      }
+    }, res => {
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(body);
+          const contents = json.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents;
+          const items = [];
+          if (contents) {
+            for (const sec of contents) {
+              const rawItems = sec.musicShelfRenderer?.contents || [];
+              for (const it of rawItems) {
+                const r = it.musicResponsiveListItemRenderer;
+                if (!r || !r.flexColumns) continue;
+                const title = r.flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
+                const subRuns = r.flexColumns[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+                const rawAuthor = subRuns.map(x => x.text).join('');
+                const navEndpoint = it.navigationEndpoint || r.navigationEndpoint;
+                const browseId = navEndpoint?.browseEndpoint?.browseId
+                  || r.flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseId || '';
+                const thumbs = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails
+                  || r.thumbnail?.croppedSquareThumbnailRenderer?.thumbnail?.thumbnails || [];
+                let artwork = thumbs.length ? thumbs[thumbs.length - 1].url : '';
+                if (artwork) artwork = artwork.replace(/=(?:w\d+-h\d+|s\d+).*$/, '=w544-h544-p-l90-rj');
+
+                if (title && browseId) {
+                  let author = rawAuthor.replace(/YouTube Music/gi, 'Official Selection').replace(/YouTube/gi, 'Official').trim();
+                  if (!author || author === '•') author = 'Official Selection';
+
+                  items.push({
+                    id: browseId,
+                    title,
+                    author,
+                    artwork_url: artwork,
+                    browse_id: browseId,
+                    track_count: 'Playlist',
+                    source_label: 'Official Playlist'
+                  });
+                }
+              }
+            }
+          }
+          resolve(items);
+        } catch (_) {
+          resolve([]);
+        }
+      });
+    });
+    req.on('error', () => resolve([]));
+    req.write(payload);
+    req.end();
+  });
+}
+
+// IPC Handler: Official Home Feed (Quick Picks, Charts, Curated Playlists, New Releases)
 ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
   const hl = (lang === 'id') ? 'id' : 'en';
   const gl = (lang === 'id') ? 'ID' : 'US';
   try {
-    const [homeData, chartData, exploreData] = await Promise.all([
+    const [homeData, chartData, exploreData, officialPlaylists] = await Promise.all([
       browseYouTubeInnerTube('FEmusic_home', hl, gl).catch(() => null),
       browseYouTubeInnerTube('VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G', hl, gl).catch(() => null),
-      browseYouTubeInnerTube('FEmusic_explore', hl, gl).catch(() => null)
+      browseYouTubeInnerTube('FEmusic_explore', hl, gl).catch(() => null),
+      fetchOfficialCuratedPlaylists(hl, gl).catch(() => [])
     ]);
 
     const quickPicks = (homeData && homeData.tracks && homeData.tracks.length > 0)
@@ -1863,9 +1946,9 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
       ? chartData.tracks
       : [];
 
-    const communityPlaylists = (homeData && homeData.playlists && homeData.playlists.length > 0)
-      ? homeData.playlists
-      : [];
+    const curatedPlaylists = (officialPlaylists && officialPlaylists.length > 0)
+      ? officialPlaylists
+      : ((homeData && homeData.playlists && homeData.playlists.length > 0) ? homeData.playlists : []);
 
     const newReleases = (exploreData && exploreData.albums && exploreData.albums.length > 0)
       ? exploreData.albums
@@ -1875,12 +1958,13 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
       success: true,
       quickPicks,
       charts,
-      communityPlaylists,
+      communityPlaylists: curatedPlaylists,
+      featuredPlaylists: curatedPlaylists,
       newReleases
     };
   } catch (err) {
     console.error('get-yt-home-feed error:', err);
-    return { success: false, quickPicks: [], charts: [], communityPlaylists: [], newReleases: [] };
+    return { success: false, quickPicks: [], charts: [], communityPlaylists: [], featuredPlaylists: [], newReleases: [] };
   }
 });
 
@@ -2411,7 +2495,7 @@ function fetchYouTubePlaylist(url) {
     }
 
     if (!listId) {
-      return reject(new Error('Invalid YouTube Music playlist link. Missing playlist ID (?list=...).'));
+      return reject(new Error('Invalid YouTube playlist link. Missing playlist ID (?list=...).'));
     }
 
     const normalizedUrl = url.includes('list=') ? url : `https://www.youtube.com/playlist?list=${listId}`;
@@ -2426,7 +2510,7 @@ function fetchYouTubePlaylist(url) {
         if (!err && stdout) {
           try {
             const json = JSON.parse(stdout);
-            const title = json.title || 'YouTube Music Playlist';
+            const title = json.title || 'YouTube Playlist';
             const entries = json.entries || [];
             const tracks = entries.map((e, idx) => ({
               id: 'yt_' + (e.id || idx),
@@ -2436,10 +2520,10 @@ function fetchYouTubePlaylist(url) {
               duration_secs: Math.round(e.duration || 0) || 180,
               artwork_url: e.thumbnails?.length ? e.thumbnails[e.thumbnails.length - 1].url : `https://i.ytimg.com/vi/${e.id}/hqdefault.jpg`,
               is_video: false,
-              source_label: 'YouTube Music'
+              source_label: 'YouTube'
             }));
             if (tracks.length > 0) {
-              return resolve({ title, provider: 'YouTube Music', tracks });
+              return resolve({ title, provider: 'YouTube', tracks });
             }
           } catch (_) {}
         }
@@ -2449,13 +2533,13 @@ function fetchYouTubePlaylist(url) {
         const res = await browseYouTubeInnerTube(browseTarget);
         if (res && res.tracks && res.tracks.length > 0) {
           return resolve({
-            title: res.name || 'YouTube Music Playlist',
-            provider: 'YouTube Music',
+            title: res.name || 'YouTube Playlist',
+            provider: 'YouTube',
             tracks: res.tracks
           });
         }
 
-        reject(new Error('Unable to extract tracks from the YouTube Music playlist. Please ensure the playlist is public.'));
+        reject(new Error('Unable to extract tracks from the YouTube playlist. Please ensure the playlist is public.'));
       }
     );
   });
@@ -2479,7 +2563,7 @@ ipcMain.handle('import-external-playlist', async (event, url) => {
       const res = await fetchYouTubePlaylist(cleanUrl);
       return { success: true, ...res };
     } else {
-      return { success: false, error: 'Platform not recognized. Please enter a valid link from Spotify, Apple Music, or YouTube Music.' };
+      return { success: false, error: 'Platform not recognized. Please enter a valid link from Spotify, Apple Music, or YouTube.' };
     }
   } catch (err) {
     return { success: false, error: err.message || 'Failed to import playlist.' };
@@ -2513,7 +2597,7 @@ ipcMain.handle('download-track', async (event, track) => {
   }
 
   if (!vid) {
-    return { success: false, error: 'Official audio could not be found on YouTube Music.' };
+    return { success: false, error: 'Official audio could not be found.' };
   }
 
   const videoUrl = `https://www.youtube.com/watch?v=${vid}`;
