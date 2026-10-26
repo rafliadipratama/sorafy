@@ -818,6 +818,10 @@ class SoraFyDesktopApp {
     this.isNextTrackPreloaded = false;
     this.preloadedTrackIndex = -1;
 
+    // State for playback resume & persistence
+    this.hasRestoredSession = false;
+    this._lastSessionSave = 0;
+
     this.initElements();
     this.initEvents();
     this.initPlugins();
@@ -831,6 +835,13 @@ class SoraFyDesktopApp {
     const savedVol = localStorage.getItem("sorafy_volume");
     const initialVol = savedVol !== null ? parseFloat(savedVol) : 0.85;
     this.setVolume(isNaN(initialVol) ? 0.85 : initialVol);
+
+    // Restore last played track and timestamp on launch
+    setTimeout(() => {
+      this.restorePlaybackSession().catch(err => {
+        console.warn("Playback session restore notice:", err);
+      });
+    }, 120);
   }
 
   initElements() {
@@ -2428,7 +2439,18 @@ class SoraFyDesktopApp {
       if (this.screenPlayerNativeVideo && !this.screenPlayerNativeVideo.paused) {
         this.screenPlayerNativeVideo.pause();
       }
+      this.savePlaybackSession();
     });
+
+    // Playback session persistence hooks (on window close, unload, pagehide, and Electron app-before-close)
+    window.addEventListener("beforeunload", () => this.savePlaybackSession());
+    window.addEventListener("pagehide", () => this.savePlaybackSession());
+
+    if (window.electronAPI && typeof window.electronAPI.onAppBeforeClose === "function") {
+      window.electronAPI.onAppBeforeClose(() => {
+        this.savePlaybackSession();
+      });
+    }
 
     // Bottom player linear seekbar
     if (this.playerSeekbar) {
@@ -3335,7 +3357,7 @@ class SoraFyDesktopApp {
 
       this.renderShelves(finalShelves);
 
-      if (!this.isPlaying && this.tracks.length > 0 && !this.audio.src) {
+      if (!this.isPlaying && !this.hasRestoredSession && this.tracks.length > 0 && !this.audio.src) {
         this.loadTrack(0, false);
       }
     } catch (e) {
@@ -3857,7 +3879,7 @@ class SoraFyDesktopApp {
           this.renderYtmSongCarousel(this.quickPicksCarousel, this.homeTracks.slice(0, 16));
         }
         this.renderTrackGrid(this.homeTracks);
-        if (!this.isPlaying && this.tracks.length > 0 && !this.audio.src) {
+        if (!this.isPlaying && !this.hasRestoredSession && this.tracks.length > 0 && !this.audio.src) {
           this.loadTrack(0, false);
         }
       }
@@ -4242,11 +4264,23 @@ class SoraFyDesktopApp {
     }
   }
 
+  // Filter to strictly exclude Indian songs, playlists, Bollywood, and regional Indian scripts
+  isIndianMusic(title = '', author = '') {
+    const str = `${title} ${author}`.toLowerCase();
+    const indianKeywords = /\b(hindi|bollywood|punjabi|tamil|telugu|india|indian|tollywood|malayalam|bhojpuri|gujarati|bengali|marathi|kannada|desi|bhangra|sufi|urdu|ghazal|qawwali|arijit|shreya|neha|jubin|badshah|sidhu|diljit|anirudh|pritam|himesh|t-series|zeemusic|speedrecords|geetmp3|whitehill)\b/i;
+    const indianScripts = /[\u0900-\u097F\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/;
+    return indianKeywords.test(str) || indianScripts.test(str);
+  }
+
   renderCommunityPlaylistsDirect(playlists) {
     if (!this.ytmCommunityPlaylistsRow || !playlists || playlists.length === 0) return;
     this.ytmCommunityPlaylistsRow.innerHTML = "";
 
-    playlists.slice(0, 16).forEach(pl => {
+    // Strictly keep only Indonesian and Global curated playlists
+    const cleanList = playlists.filter(pl => !this.isIndianMusic(pl.title || '', pl.author || ''));
+    if (cleanList.length === 0) return;
+
+    cleanList.slice(0, 16).forEach(pl => {
       const card = document.createElement("div");
       card.className = "ytm-comm-card";
       const authorInitial = (pl.avatar_letter || pl.author?.charAt(0) || 'S').toUpperCase();
@@ -4388,7 +4422,7 @@ class SoraFyDesktopApp {
         return;
       }
 
-      // Official verified editorial playlists fallback
+      // Official verified editorial playlists fallback (Indonesia & Global)
       const officialFallback = [
         {
           title: "Indonesian Pop Hits 2024",
@@ -4399,11 +4433,27 @@ class SoraFyDesktopApp {
           avatar_letter: "S"
         },
         {
+          title: "Today's Top Hits Pop",
+          author: "Official Selection • 50 songs",
+          track_count: "50 songs",
+          artwork_url: "https://i.ytimg.com/vi/P5ZBISo2CaE/hqdefault.jpg",
+          browse_id: "VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G",
+          avatar_letter: "S"
+        },
+        {
           title: "Trend Viral Sekarang",
           author: "Official Selection • 100 lagu",
           track_count: "100 lagu",
           artwork_url: "https://yt3.googleusercontent.com/sxj4Jr1CXagkdEc4aFZ5q5QTffWALYYuNXZGGaU8j0yu-szSvxNcmrpV6fDExbEFvE3UVHSDhUUqycs=w544-h544-p-l90-rj",
           browse_id: "VLRDCLAK5uy_nOVpLE7yC1hOzKOA9SqiVIeLqmoUDWBkE",
+          avatar_letter: "S"
+        },
+        {
+          title: "Global Pop Chart Toppers",
+          author: "Official Selection • 50 songs",
+          track_count: "50 songs",
+          artwork_url: "https://i.ytimg.com/vi/k3ChphiX7Wk/hqdefault.jpg",
+          browse_id: "VLOLAK5uy_n7Ig_LAUbKE6_ZeQ1pwHmJcEhwX7BekBo",
           avatar_letter: "S"
         },
         {
@@ -5959,7 +6009,90 @@ class SoraFyDesktopApp {
     });
   }
 
-  async loadTrack(index, autoPlay = true) {
+  savePlaybackSession() {
+    if (!this.tracks || !this.tracks[this.currentTrackIndex]) return;
+    const currentTrack = this.tracks[this.currentTrackIndex];
+    const currentTime = Math.max(0, this.audio ? (this.audio.currentTime || 0) : 0);
+    const duration = (this.audio && this.audio.duration && !isNaN(this.audio.duration))
+      ? this.audio.duration
+      : (currentTrack.duration_secs || 0);
+
+    const session = {
+      track: currentTrack,
+      currentTrackIndex: this.currentTrackIndex,
+      currentTime: currentTime,
+      duration: duration,
+      queue: this.tracks.slice(0, 50),
+      savedAt: Date.now()
+    };
+
+    try {
+      localStorage.setItem("sorafy_last_playback_session", JSON.stringify(session));
+    } catch (_) {}
+
+    if (window.electronAPI && typeof window.electronAPI.savePlaybackSession === "function") {
+      window.electronAPI.savePlaybackSession(session).catch(() => {});
+    }
+  }
+
+  async restorePlaybackSession() {
+    let session = null;
+
+    // 1. Try reading from Electron disk persistence
+    if (window.electronAPI && typeof window.electronAPI.loadPlaybackSession === "function") {
+      try {
+        session = await window.electronAPI.loadPlaybackSession();
+      } catch (e) {
+        console.warn("loadPlaybackSession error:", e);
+      }
+    }
+
+    // 2. Fallback to localStorage if disk read returned null
+    if (!session || !session.track) {
+      try {
+        const localRaw = localStorage.getItem("sorafy_last_playback_session");
+        if (localRaw) session = JSON.parse(localRaw);
+      } catch (_) {}
+    }
+
+    if (!session || !session.track) return false;
+
+    this.hasRestoredSession = true;
+
+    // Refresh expired GoogleVideo stream URLs if saved session is older than 45 minutes
+    if (session.savedAt && (Date.now() - session.savedAt > 2700000)) {
+      if (session.track) {
+        session.track.stream_url = null;
+        session.track.is_full_stream = false;
+      }
+      if (Array.isArray(session.queue)) {
+        session.queue.forEach(t => {
+          t.stream_url = null;
+          t.is_full_stream = false;
+        });
+      }
+    }
+
+    // Restore queue and track index
+    if (Array.isArray(session.queue) && session.queue.length > 0) {
+      this.tracks = session.queue;
+      this.currentTrackIndex = (typeof session.currentTrackIndex === "number" && session.currentTrackIndex < this.tracks.length)
+        ? session.currentTrackIndex
+        : 0;
+    } else {
+      this.tracks = [session.track];
+      this.currentTrackIndex = 0;
+    }
+
+    const startPos = (typeof session.currentTime === "number" && session.currentTime > 0)
+      ? session.currentTime
+      : 0;
+
+    await this.loadTrack(this.currentTrackIndex, false, startPos);
+    return true;
+  }
+
+  async loadTrack(index, autoPlay = true, startPosition = 0) {
     this.currentTrackIndex = index;
     const track = this.tracks[index];
     if (!track) return;
@@ -5984,8 +6117,23 @@ class SoraFyDesktopApp {
     }
 
     // Set initial display times immediately
-    this.currentTimeLabel.textContent = "0:00";
+    const initialPos = startPosition > 0 ? startPosition : 0;
+    this.currentTimeLabel.textContent = this.formatTime(initialPos);
     this.durationLabel.textContent = track.duration_secs ? this.formatTime(track.duration_secs) : "--:--";
+    if (this.screenPlayerCurrentTime) this.screenPlayerCurrentTime.textContent = this.formatTime(initialPos);
+    if (this.screenPlayerDuration) this.screenPlayerDuration.textContent = track.duration_secs ? this.formatTime(track.duration_secs) : "--:--";
+
+    if (startPosition > 0 && track.duration_secs && track.duration_secs > 0) {
+      const initialPct = Math.min(100, (startPosition / track.duration_secs) * 100);
+      if (this.playerSeekbar) {
+        this.playerSeekbar.value = initialPct;
+        this.playerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
+      }
+      if (this.screenPlayerSeekbar) {
+        this.screenPlayerSeekbar.value = initialPct;
+        this.screenPlayerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
+      }
+    }
 
     // Synchronize Screen Player immediately
     this.updateScreenPlayer();
@@ -6056,6 +6204,25 @@ class SoraFyDesktopApp {
 
     this.audio.src = track.stream_url;
     this.audio.load();
+
+    if (startPosition > 0) {
+      const applyRestoredSeek = () => {
+        try {
+          if (this.audio && !isNaN(this.audio.duration) && this.audio.duration > 0) {
+            this.audio.currentTime = Math.min(startPosition, Math.max(0, this.audio.duration - 1));
+          } else {
+            this.audio.currentTime = startPosition;
+          }
+          this.onTimeUpdate();
+        } catch (e) {
+          console.warn("Restore seek position notice:", e);
+        }
+      };
+
+      this.audio.addEventListener("loadedmetadata", applyRestoredSeek, { once: true });
+      this.audio.addEventListener("canplay", applyRestoredSeek, { once: true });
+    }
+
     this.updateLikeButton();
     this.updateLyricsOffsetUI();
 
@@ -6107,6 +6274,9 @@ class SoraFyDesktopApp {
           try {
             this.audio.src = track.fallback_url;
             this.audio.load();
+            if (startPosition > 0) {
+              this.audio.currentTime = startPosition;
+            }
             await this.audio.play();
             this.isPlaying = true;
             this.updatePlayPauseIcon();
@@ -6118,6 +6288,12 @@ class SoraFyDesktopApp {
         this.updatePlayPauseIcon();
         this.showToast("Unable to play audio");
       });
+    } else {
+      this.isPlaying = false;
+      this.updatePlayPauseIcon();
+      if ('mediaSession' in navigator) {
+        navigator.mediaSession.playbackState = 'paused';
+      }
     }
   }
 
@@ -6539,6 +6715,13 @@ class SoraFyDesktopApp {
     const current = this.audio.currentTime || 0;
     const total = this.audio.duration || this.tracks[this.currentTrackIndex]?.duration_secs || 1;
     const pct = total > 0 ? (current / total) * 100 : 0;
+
+    // Periodically persist playback session state (throttled every 3 seconds)
+    const now = Date.now();
+    if (!this._lastSessionSave || (now - this._lastSessionSave > 3000)) {
+      this._lastSessionSave = now;
+      this.savePlaybackSession();
+    }
 
     // YT Music Background Autoplay Preload: when 70% completed, ensure next radio tracks
     if (pct > 70 && !this.isUpcomingQueueTriggeredForCurrent) {

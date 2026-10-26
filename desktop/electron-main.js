@@ -1472,6 +1472,42 @@ function saveAppSettings(newSettings) {
   }
 }
 
+// Playback Session Persistence (State & Timestamp Resume on Window Close)
+function getPlaybackSessionPath() {
+  try {
+    return path.join(app.getPath('userData'), 'playback-session.json');
+  } catch (_) {
+    return path.join(os.homedir(), '.config', 'sorafy', 'playback-session.json');
+  }
+}
+
+function loadPlaybackSessionDisk() {
+  try {
+    const pPath = getPlaybackSessionPath();
+    if (fs.existsSync(pPath)) {
+      const raw = fs.readFileSync(pPath, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch (err) {
+    console.warn('loadPlaybackSessionDisk error:', err);
+  }
+  return null;
+}
+
+function savePlaybackSessionDisk(session) {
+  try {
+    if (!session || !session.track) return false;
+    const pPath = getPlaybackSessionPath();
+    const dir = path.dirname(pPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(pPath, JSON.stringify(session, null, 2), 'utf-8');
+    return true;
+  } catch (err) {
+    console.warn('savePlaybackSessionDisk error:', err);
+    return false;
+  }
+}
+
 // Zero-dependency Native Discord Rich Presence (IPC Socket)
 class DiscordRpcClient {
   constructor(clientId = '1343717202353160232') {
@@ -1680,6 +1716,11 @@ function createWindow() {
   win.setMenuBarVisibility(false);
 
   win.on('close', (e) => {
+    try {
+      if (win.webContents && !win.webContents.isDestroyed()) {
+        win.webContents.send('app-before-close');
+      }
+    } catch (_) {}
     const settings = loadAppSettings();
     if (!isQuitting && settings.closeToTray === true) {
       e.preventDefault();
@@ -1844,11 +1885,16 @@ ipcMain.handle('browse-yt', async (event, browseId) => {
   return await browseYouTubeInnerTube(browseId);
 });
 
-// Helper to fetch official curated editorial playlists directly from InnerTube
-function fetchOfficialCuratedPlaylists(hl = 'en', gl = 'US') {
+// Strict filter to exclude Indian songs, playlists, Bollywood, and regional Indian scripts
+function isIndianMusicOrPlaylist(title = '', author = '') {
+  const str = `${title} ${author}`.toLowerCase();
+  const indianKeywords = /\b(hindi|bollywood|punjabi|tamil|telugu|india|indian|tollywood|malayalam|bhojpuri|gujarati|bengali|marathi|kannada|desi|bhangra|sufi|urdu|ghazal|qawwali|arijit|shreya|neha|jubin|badshah|sidhu|diljit|anirudh|pritam|himesh|t-series|zeemusic|speedrecords|geetmp3|whitehill)\b/i;
+  const indianScripts = /[\u0900-\u097F\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/;
+  return indianKeywords.test(str) || indianScripts.test(str);
+}
+
+function searchInnerTubePlaylists(query, hl = 'id', gl = 'ID') {
   return new Promise((resolve) => {
-    const isId = hl === 'id' || gl === 'ID';
-    const query = isId ? 'Top Hits Indonesia 2024' : 'Top Hits 2024';
     const payload = JSON.stringify({
       query,
       params: 'EgWKAQI4AWoKEAkQBRAKEAMQBw%3D%3D', // Playlists filter
@@ -1898,6 +1944,11 @@ function fetchOfficialCuratedPlaylists(hl = 'en', gl = 'US') {
                 if (artwork) artwork = artwork.replace(/=(?:w\d+-h\d+|s\d+).*$/, '=w544-h544-p-l90-rj');
 
                 if (title && browseId) {
+                  // Filter out any Indian content
+                  if (isIndianMusicOrPlaylist(title, rawAuthor)) {
+                    continue;
+                  }
+
                   let author = rawAuthor.replace(/YouTube Music/gi, 'Official Selection').replace(/YouTube/gi, 'Official').trim();
                   if (!author || author === '•') author = 'Official Selection';
 
@@ -1926,6 +1977,47 @@ function fetchOfficialCuratedPlaylists(hl = 'en', gl = 'US') {
   });
 }
 
+// Helper to fetch official curated editorial playlists focusing purely on Indonesia and Global (zero Indian content)
+async function fetchOfficialCuratedPlaylists(hl = 'en', gl = 'US') {
+  try {
+    const isId = hl === 'id' || gl === 'ID';
+    const [indonesiaPlaylists, globalPlaylists] = await Promise.all([
+      searchInnerTubePlaylists('Top Hits Indonesia 2024', 'id', 'ID').catch(() => []),
+      searchInnerTubePlaylists('Today\'s Top Hits Pop 2024', 'en', 'US').catch(() => [])
+    ]);
+
+    const combined = [];
+    const seen = new Set();
+    const maxLen = Math.max(indonesiaPlaylists.length, globalPlaylists.length);
+
+    // Prioritize language selection first, then interleave
+    const primary = isId ? indonesiaPlaylists : globalPlaylists;
+    const secondary = isId ? globalPlaylists : indonesiaPlaylists;
+
+    for (let i = 0; i < maxLen; i++) {
+      if (i < primary.length) {
+        const pl = primary[i];
+        if (pl.browse_id && !seen.has(pl.browse_id) && !isIndianMusicOrPlaylist(pl.title, pl.author)) {
+          seen.add(pl.browse_id);
+          combined.push(pl);
+        }
+      }
+      if (i < secondary.length) {
+        const pl = secondary[i];
+        if (pl.browse_id && !seen.has(pl.browse_id) && !isIndianMusicOrPlaylist(pl.title, pl.author)) {
+          seen.add(pl.browse_id);
+          combined.push(pl);
+        }
+      }
+    }
+
+    return combined;
+  } catch (err) {
+    console.warn('fetchOfficialCuratedPlaylists error:', err);
+    return [];
+  }
+}
+
 // IPC Handler: Official Home Feed (Quick Picks, Charts, Curated Playlists, New Releases)
 ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
   const hl = (lang === 'id') ? 'id' : 'en';
@@ -1938,17 +2030,21 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
       fetchOfficialCuratedPlaylists(hl, gl).catch(() => [])
     ]);
 
-    const quickPicks = (homeData && homeData.tracks && homeData.tracks.length > 0)
+    const quickPicksRaw = (homeData && homeData.tracks && homeData.tracks.length > 0)
       ? homeData.tracks
       : (chartData && chartData.tracks ? chartData.tracks.slice(0, 20) : []);
+    const quickPicks = quickPicksRaw.filter(t => !isIndianMusicOrPlaylist(t.title, t.artist));
 
-    const charts = (chartData && chartData.tracks && chartData.tracks.length > 0)
+    const chartsRaw = (chartData && chartData.tracks && chartData.tracks.length > 0)
       ? chartData.tracks
       : [];
+    const charts = chartsRaw.filter(t => !isIndianMusicOrPlaylist(t.title, t.artist));
 
     const curatedPlaylists = (officialPlaylists && officialPlaylists.length > 0)
       ? officialPlaylists
-      : ((homeData && homeData.playlists && homeData.playlists.length > 0) ? homeData.playlists : []);
+      : ((homeData && homeData.playlists && homeData.playlists.length > 0)
+          ? homeData.playlists.filter(p => !isIndianMusicOrPlaylist(p.title, p.author))
+          : []);
 
     const newReleases = (exploreData && exploreData.albums && exploreData.albums.length > 0)
       ? exploreData.albums
@@ -2701,6 +2797,15 @@ ipcMain.handle('save-app-settings', (_event, newSettings) => {
     discordRpc.connect();
   }
   return updated;
+});
+
+// IPC Handlers: Playback Session Persistence (State & Exact Timestamp Resume)
+ipcMain.handle('save-playback-session', (_event, sessionData) => {
+  return savePlaybackSessionDisk(sessionData);
+});
+
+ipcMain.handle('load-playback-session', () => {
+  return loadPlaybackSessionDisk();
 });
 
 // IPC Handler: Clear Storage & Cache

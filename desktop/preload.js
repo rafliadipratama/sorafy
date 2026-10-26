@@ -26,6 +26,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   clearYouTubeCookie: () => ipcRenderer.invoke('clear-youtube-cookie'),
   getYouTubeCookieStatus: () => ipcRenderer.invoke('get-youtube-cookie-status'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  savePlaybackSession: (session) => ipcRenderer.invoke('save-playback-session', session),
+  loadPlaybackSession: () => ipcRenderer.invoke('load-playback-session'),
+  onAppBeforeClose: (callback) => {
+    ipcRenderer.on('app-before-close', () => {
+      if (typeof callback === 'function') callback();
+    });
+  },
   onMediaAction: (callback) => {
     ipcRenderer.on('media-action', (_event, action) => {
       if (typeof callback === 'function') callback(action);
