@@ -579,6 +579,7 @@ function searchYouTubeMusicInnerTube(query, filterType = 'song') {
       hostname: 'music.youtube.com',
       path: '/youtubei/v1/search',
       method: 'POST',
+      family: 4,
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -967,7 +968,7 @@ function searchYouTubeMusicInnerTube(query, filterType = 'song') {
   });
 }
 
-function browseYouTubeInnerTube(browseId) {
+function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
   if (!browseId) return Promise.resolve(null);
   return new Promise((resolve) => {
     const payload = JSON.stringify({
@@ -976,8 +977,8 @@ function browseYouTubeInnerTube(browseId) {
         client: {
           clientName: 'WEB_REMIX',
           clientVersion: '1.20240318.01.00',
-          hl: 'id',
-          gl: 'ID'
+          hl,
+          gl
         }
       }
     });
@@ -986,6 +987,7 @@ function browseYouTubeInnerTube(browseId) {
       hostname: 'music.youtube.com',
       path: '/youtubei/v1/browse',
       method: 'POST',
+      family: 4,
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -1016,20 +1018,33 @@ function browseYouTubeInnerTube(browseId) {
           let avatarUrl = thumbs.length ? thumbs[thumbs.length - 1].url : '';
           if (avatarUrl) avatarUrl = avatarUrl.replace(/=(?:w\d+-h\d+|s\d+).*$/, '=w544-h544-p-l90-rj');
 
-          // Extract tracks, albums, videos, and peers
+          // Extract tracks, albums, videos, peers, and playlists
           const parsedTracks = [];
           const parsedAlbums = [];
           const parsedVideos = [];
           const parsedPeers = [];
+          const parsedPlaylists = [];
 
           const contents = json.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents
             || twoCol?.secondaryContents?.sectionListRenderer?.contents || [];
 
           for (const sec of contents) {
-            // Top Songs or Album Tracklist
+            // Top Songs or Album Tracklist or Carousel list items (like FEmusic_home Quick Picks)
+            const listItems = [];
             const shelf = sec.musicShelfRenderer || sec.musicPlaylistShelfRenderer;
             if (shelf && shelf.contents) {
-              for (const item of shelf.contents) {
+              listItems.push(...shelf.contents);
+            }
+            if (sec.musicCarouselShelfRenderer?.contents) {
+              for (const itm of sec.musicCarouselShelfRenderer.contents) {
+                if (itm.musicResponsiveListItemRenderer) {
+                  listItems.push(itm);
+                }
+              }
+            }
+
+            if (listItems.length > 0) {
+              for (const item of listItems) {
                 const r = item.musicResponsiveListItemRenderer;
                 if (!r || !r.flexColumns) continue;
                 const tTitle = r.flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
@@ -1149,6 +1164,18 @@ function browseYouTubeInnerTube(browseId) {
                       sub_label: itSub
                     });
                   }
+                } else if (itBrowseId.startsWith('VLPL') || itBrowseId.startsWith('VLOLAK') || itPageType === 'MUSIC_PAGE_TYPE_PLAYLIST' || cTitle.includes('playlist') || cTitle.includes('komunitas')) {
+                  if (itTitle) {
+                    parsedPlaylists.push({
+                      id: itBrowseId || ('pl_' + itTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')),
+                      title: itTitle,
+                      author: itSub || 'YouTube Music Community',
+                      artwork_url: itArt,
+                      browse_id: itBrowseId,
+                      track_count: 'Playlist',
+                      source_label: 'Community Playlist'
+                    });
+                  }
                 }
               }
             }
@@ -1162,7 +1189,8 @@ function browseYouTubeInnerTube(browseId) {
             tracks: parsedTracks,
             albums: parsedAlbums,
             videos: parsedVideos,
-            peers: parsedPeers
+            peers: parsedPeers,
+            playlists: parsedPlaylists
           });
         } catch (e) {
           resolve(null);
@@ -1194,6 +1222,7 @@ function searchYouTubeMusicStrict(title, artist) {
       hostname: 'music.youtube.com',
       path: '/youtubei/v1/search',
       method: 'POST',
+      family: 4,
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
@@ -1813,6 +1842,46 @@ ipcMain.handle('fetch-yt-lyrics', async (event, videoId) => {
 ipcMain.handle('browse-yt', async (event, browseId) => {
   if (!browseId) return null;
   return await browseYouTubeInnerTube(browseId);
+});
+
+// IPC Handler: Official YouTube Music Home Feed (Quick Picks, Charts, Playlists, New Releases)
+ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
+  const hl = (lang === 'id') ? 'id' : 'en';
+  const gl = (lang === 'id') ? 'ID' : 'US';
+  try {
+    const [homeData, chartData, exploreData] = await Promise.all([
+      browseYouTubeInnerTube('FEmusic_home', hl, gl).catch(() => null),
+      browseYouTubeInnerTube('VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G', hl, gl).catch(() => null),
+      browseYouTubeInnerTube('FEmusic_explore', hl, gl).catch(() => null)
+    ]);
+
+    const quickPicks = (homeData && homeData.tracks && homeData.tracks.length > 0)
+      ? homeData.tracks
+      : (chartData && chartData.tracks ? chartData.tracks.slice(0, 20) : []);
+
+    const charts = (chartData && chartData.tracks && chartData.tracks.length > 0)
+      ? chartData.tracks
+      : [];
+
+    const communityPlaylists = (homeData && homeData.playlists && homeData.playlists.length > 0)
+      ? homeData.playlists
+      : [];
+
+    const newReleases = (exploreData && exploreData.albums && exploreData.albums.length > 0)
+      ? exploreData.albums
+      : [];
+
+    return {
+      success: true,
+      quickPicks,
+      charts,
+      communityPlaylists,
+      newReleases
+    };
+  } catch (err) {
+    console.error('get-yt-home-feed error:', err);
+    return { success: false, quickPicks: [], charts: [], communityPlaylists: [], newReleases: [] };
+  }
 });
 
 ipcMain.handle('resolve-artist-profile', async (event, name) => {

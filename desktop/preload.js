@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   resolveDirectVideo: (videoId) => ipcRenderer.invoke('resolve-direct-video', videoId),
   searchYouTubeMusic: (query, filterType) => ipcRenderer.invoke('search-yt-music', query, filterType),
   browseYouTube: (browseId) => ipcRenderer.invoke('browse-yt', browseId),
+  getYtHomeFeed: (lang) => ipcRenderer.invoke('get-yt-home-feed', lang),
   resolveArtistProfile: (name) => ipcRenderer.invoke('resolve-artist-profile', name),
   fetchYouTubeLyrics: (videoId) => ipcRenderer.invoke('fetch-yt-lyrics', videoId),
   importExternalPlaylist: (url) => ipcRenderer.invoke('import-external-playlist', url),
