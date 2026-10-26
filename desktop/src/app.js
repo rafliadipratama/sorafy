@@ -677,6 +677,18 @@ const I18N_DICTIONARY = {
     btn_backup_data: "Backup Data (.json)",
     btn_restore_data: "Restore Data",
     nav_downloads: "Downloads",
+    nav_library: "Your Library",
+    library_title: "Your Library",
+    tab_all: "All",
+    tab_liked_songs: "Liked Songs",
+    tab_downloads: "Downloads",
+    tab_albums: "Albums",
+    tab_artists: "Artists",
+    tab_playlists: "Playlists",
+    liked_albums_empty: "No liked albums yet. Browse albums and click the heart icon to save them to your library.",
+    followed_artists_empty: "You are not following any artists yet. Click '+ Follow' on an artist profile to tune your recommendations.",
+    btn_like_album: "Like Album",
+    btn_liked_album: "Liked Album",
     downloads_title: "Downloaded Music",
     downloads_empty_title: "No downloaded tracks yet",
     downloads_empty_desc: "Right-click any song while online and choose 'Download Track (MP3)' to listen offline anytime.",
@@ -707,6 +719,18 @@ const I18N_DICTIONARY = {
     nav_plugins: "Plugin & Ekstensi",
     nav_equalizer: "Equalizer DSP",
     nav_downloads: "Lagu Tersimpan",
+    nav_library: "Koleksi Saya",
+    library_title: "Koleksi Saya",
+    tab_all: "Semua",
+    tab_liked_songs: "Lagu Disukai",
+    tab_downloads: "Lagu Terunduh",
+    tab_albums: "Album Favorit",
+    tab_artists: "Artis Diikuti",
+    tab_playlists: "Playlist",
+    liked_albums_empty: "Belum ada album favorit. Jelajahi album dan klik ikon hati untuk menyimpannya di koleksi Anda.",
+    followed_artists_empty: "Anda belum mengikuti artis apa pun. Klik '+ Follow' di profil artis untuk menyesuaikan rekomendasi beranda Anda.",
+    btn_like_album: "Sukai Album",
+    btn_liked_album: "Album Disukai",
     nav_settings: "Pengaturan",
     sidebar_playlists: "Playlist Saya",
     quick_picks: "Pilihan Cepat",
@@ -819,6 +843,9 @@ class SoraFyDesktopApp {
     this.historyTracks = JSON.parse(localStorage.getItem("sorafy_history") || "[]");
     this.userPlaylists = JSON.parse(localStorage.getItem("sorafy_user_playlists") || "[]");
     this.followedArtists = new Set(JSON.parse(localStorage.getItem("sorafy_followed_artists") || "[]"));
+    this.followedArtistDetails = JSON.parse(localStorage.getItem("sorafy_followed_artist_details") || "{}");
+    this.likedAlbums = JSON.parse(localStorage.getItem("sorafy_liked_albums") || "[]");
+    this.activeLibraryTab = "all";
 
     // App state
     this.curatedPlaylists = [];
@@ -988,10 +1015,37 @@ class SoraFyDesktopApp {
     this.exploreViewContainer = document.getElementById("exploreViewContainer");
     this.pluginsViewContainer = document.getElementById("pluginsViewContainer");
     this.equalizerViewContainer = document.getElementById("equalizerViewContainer");
-    this.downloadsViewContainer = document.getElementById("downloadsViewContainer");
+    this.libraryViewContainer = document.getElementById("libraryViewContainer");
     this.searchResultsContainer = document.getElementById("searchResultsContainer");
     this.artistViewContainer = document.getElementById("artistViewContainer");
     this.playlistViewContainer = document.getElementById("playlistViewContainer");
+
+    // Your Library View Elements
+    this.librarySubtitle = document.getElementById("librarySubtitle");
+    this.libFilterPills = document.querySelectorAll(".library-filter-pill");
+    this.libLikedSection = document.getElementById("libLikedSection");
+    this.libDownloadsSection = document.getElementById("libDownloadsSection");
+    this.libAlbumsSection = document.getElementById("libAlbumsSection");
+    this.libArtistsSection = document.getElementById("libArtistsSection");
+    this.libPlaylistsSection = document.getElementById("libPlaylistsSection");
+    this.libLikedList = document.getElementById("libLikedList");
+    this.libLikedCount = document.getElementById("libLikedCount");
+    this.libLikedEmpty = document.getElementById("libLikedEmpty");
+    this.libLikedPlayAllBtn = document.getElementById("libLikedPlayAllBtn");
+    this.libLikedShuffleBtn = document.getElementById("libLikedShuffleBtn");
+    this.libAlbumsGrid = document.getElementById("libAlbumsGrid");
+    this.libAlbumsCount = document.getElementById("libAlbumsCount");
+    this.libAlbumsEmpty = document.getElementById("libAlbumsEmpty");
+    this.libArtistsGrid = document.getElementById("libArtistsGrid");
+    this.libArtistsCount = document.getElementById("libArtistsCount");
+    this.libArtistsEmpty = document.getElementById("libArtistsEmpty");
+    this.libPlaylistsGrid = document.getElementById("libPlaylistsGrid");
+    this.libPlaylistsCount = document.getElementById("libPlaylistsCount");
+    this.libCreatePlaylistBtn = document.getElementById("libCreatePlaylistBtn");
+
+    // Album Like Button Elements
+    this.playlistLikeAlbumBtn = document.getElementById("playlistLikeAlbumBtn");
+    this.playlistLikeAlbumLabel = document.getElementById("playlistLikeAlbumLabel");
 
     // Downloads View Elements
     this.downloadsSubtitle = document.getElementById("downloadsSubtitle");
@@ -2240,19 +2294,43 @@ class SoraFyDesktopApp {
     if (this.artistFollowBtn) {
       this.artistFollowBtn.addEventListener("click", () => {
         if (!this.currentArtist) return;
-        const key = this.currentArtist.name.toLowerCase().trim();
+        const artName = this.currentArtist.name;
+        const key = artName.toLowerCase().trim();
         if (this.followedArtists.has(key)) {
           this.followedArtists.delete(key);
+          delete this.followedArtistDetails[key];
           this.artistFollowBtn.textContent = "+ Follow";
           this.artistFollowBtn.classList.remove("active");
-          this.showToast(`Unfollowed ${this.currentArtist.name}`);
+          this.showToast(this.currentLanguage === "id" ? `Berhenti mengikuti ${artName}` : `Unfollowed ${artName}`);
         } else {
           this.followedArtists.add(key);
+          this.followedArtistDetails[key] = {
+            name: artName,
+            avatar_url: this.artistAvatarImg ? this.artistAvatarImg.src : getArtistAvatar(artName),
+            browse_id: this.currentArtist.browse_id || '',
+            followedAt: Date.now()
+          };
           this.artistFollowBtn.textContent = "Following";
           this.artistFollowBtn.classList.add("active");
-          this.showToast(`Following ${this.currentArtist.name}`);
+          this.showToast(this.currentLanguage === "id" ? `Mengikuti ${artName} • Rekomendasi beranda diperbarui` : `Following ${artName} • Home recommendations updated`);
         }
         localStorage.setItem("sorafy_followed_artists", JSON.stringify([...this.followedArtists]));
+        localStorage.setItem("sorafy_followed_artist_details", JSON.stringify(this.followedArtistDetails));
+
+        // Re-calculate taste affinity & trigger home recommendations update
+        if (this._albumRecDebounce) clearTimeout(this._albumRecDebounce);
+        this._albumRecDebounce = setTimeout(() => {
+          this.fetchYtmNewReleases();
+          this.fetchMusicfyRecommendations();
+        }, 1200);
+      });
+    }
+
+    if (this.playlistLikeAlbumBtn) {
+      this.playlistLikeAlbumBtn.addEventListener("click", () => {
+        if (this.currentPlaylist) {
+          this.toggleLikeAlbum(this.currentPlaylist);
+        }
       });
     }
 
@@ -2672,7 +2750,55 @@ class SoraFyDesktopApp {
       });
     }
 
-    // Downloads View & Portability Listeners
+    // Your Library View & Downloads Listeners
+    if (this.libFilterPills) {
+      this.libFilterPills.forEach(pill => {
+        pill.addEventListener("click", () => {
+          this.libFilterPills.forEach(p => p.classList.remove("active"));
+          pill.classList.add("active");
+          const tab = pill.dataset.libTab || "all";
+          this.switchLibraryTab(tab);
+        });
+      });
+    }
+
+    if (this.libLikedPlayAllBtn) {
+      this.libLikedPlayAllBtn.addEventListener("click", () => {
+        const liked = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+        if (liked.length > 0) {
+          this.tracks = [...liked];
+          this.loadTrack(0, true);
+        } else {
+          this.showToast(this.currentLanguage === "id" ? "Belum ada lagu disukai" : "No liked songs");
+        }
+      });
+    }
+
+    if (this.libLikedShuffleBtn) {
+      this.libLikedShuffleBtn.addEventListener("click", () => {
+        const liked = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+        if (liked.length > 0) {
+          this.tracks = [...liked];
+          this.isShuffled = true;
+          if (this.shuffleBtn) this.shuffleBtn.classList.add("active");
+          const r = Math.floor(Math.random() * this.tracks.length);
+          this.loadTrack(r, true);
+        } else {
+          this.showToast(this.currentLanguage === "id" ? "Belum ada lagu disukai" : "No liked songs");
+        }
+      });
+    }
+
+    if (this.libCreatePlaylistBtn) {
+      this.libCreatePlaylistBtn.addEventListener("click", () => {
+        const name = prompt(this.currentLanguage === "id" ? "Masukkan nama playlist baru:" : "Enter new playlist name:");
+        if (name && name.trim()) {
+          this.createNewPlaylist(name.trim());
+          this.renderLibraryPlaylists();
+        }
+      });
+    }
+
     if (this.downloadsPlayAllBtn) {
       this.downloadsPlayAllBtn.addEventListener("click", () => {
         if (this.downloadedTracks && this.downloadedTracks.length > 0) {
@@ -2711,7 +2837,10 @@ class SoraFyDesktopApp {
     }
 
     if (this.offlineGoToDownloadsBtn) {
-      this.offlineGoToDownloadsBtn.addEventListener("click", () => this.switchView("downloads"));
+      this.offlineGoToDownloadsBtn.addEventListener("click", () => {
+        this.switchView("library");
+        this.switchLibraryTab("downloads");
+      });
     }
 
     if (this.settingInstallYtDlpBtn) {
@@ -3217,7 +3346,7 @@ class SoraFyDesktopApp {
       tasteProfile = JSON.parse(localStorage.getItem("sorafy_taste_profile") || "{}");
     } catch (_) {}
 
-    // Calculate aggregated weighted artist affinity (history + liked + tasteProfile)
+    // Calculate aggregated weighted artist affinity (history + liked + followed + likedAlbums + tasteProfile)
     const artistAffinity = {};
     history.forEach((t, idx) => {
       if (t.artist) {
@@ -3231,6 +3360,22 @@ class SoraFyDesktopApp {
         artistAffinity[t.artist] = (artistAffinity[t.artist] || 0) + 2.5;
       }
     });
+    // Explicit followed artists get the highest recommendation weight (+12.0)
+    if (this.followedArtists) {
+      this.followedArtists.forEach(artKey => {
+        const details = this.followedArtistDetails ? this.followedArtistDetails[artKey] : null;
+        const artName = details?.name || artKey;
+        artistAffinity[artName] = (artistAffinity[artName] || 0) + 12.0;
+      });
+    }
+    // Saved full albums also grant strong artist affinity (+7.0)
+    if (Array.isArray(this.likedAlbums)) {
+      this.likedAlbums.forEach(alb => {
+        if (alb && alb.artist) {
+          artistAffinity[alb.artist] = (artistAffinity[alb.artist] || 0) + 7.0;
+        }
+      });
+    }
     if (tasteProfile.artists) {
       for (const [art, count] of Object.entries(tasteProfile.artists)) {
         artistAffinity[art] = (artistAffinity[art] || 0) + (count * 1.2);
@@ -3898,18 +4043,21 @@ class SoraFyDesktopApp {
       this.likedTrackIds.delete(track.id);
       track.is_liked = false;
       likedTracks = likedTracks.filter(t => t.id !== track.id);
-      this.showToast("Removed from Liked Songs");
+      this.showToast(this.currentLanguage === "id" ? "Dihapus dari Lagu Disukai" : "Removed from Liked Songs");
     } else {
       this.likedTrackIds.add(track.id);
       track.is_liked = true;
       if (!likedTracks.some(t => t.id === track.id)) {
         likedTracks.unshift(track);
       }
-      this.showToast("Added to Liked Songs");
+      this.showToast(this.currentLanguage === "id" ? "Ditambahkan ke Lagu Disukai" : "Added to Liked Songs");
     }
     localStorage.setItem("sorafy_liked_ids", JSON.stringify([...this.likedTrackIds]));
     localStorage.setItem("sorafy_liked_tracks", JSON.stringify(likedTracks));
     this.updateLikeButton();
+    if (this.currentView === "library") {
+      this.renderLibraryLikedSongs();
+    }
   }
 
   async fetchExternalMusic(query) {
@@ -4481,9 +4629,45 @@ class SoraFyDesktopApp {
     });
   }
 
-  // Extract frequently listened artists from user playback history & liked tracks
+  // Extract frequently listened & favored artists from user history, liked tracks, liked albums, and followed artists
   getFrequentArtists() {
     const counts = {};
+
+    // 1. Followed Artists give HIGHEST weight (+12)
+    if (this.followedArtists) {
+      this.followedArtists.forEach(artKey => {
+        const details = this.followedArtistDetails?.[artKey];
+        const artName = details?.name || artKey;
+        if (artName && artName.toLowerCase() !== 'artist') {
+          counts[artName] = (counts[artName] || 0) + 12;
+        }
+      });
+    }
+
+    // 2. Liked Albums artists give strong weight (+7)
+    if (this.likedAlbums && Array.isArray(this.likedAlbums)) {
+      this.likedAlbums.forEach(alb => {
+        if (!alb || !alb.artist) return;
+        const primary = alb.artist.split(/\s*,\s*|\s+&\s+|\s+(?:feat|ft)\.?\s+/i)[0].trim();
+        if (primary && primary.toLowerCase() !== 'artist') {
+          counts[primary] = (counts[primary] || 0) + 7;
+        }
+      });
+    }
+
+    // 3. Liked Songs give solid weight (+3)
+    try {
+      const liked = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+      liked.forEach(t => {
+        if (!t || !t.artist) return;
+        const primary = t.artist.split(/\s*,\s*|\s+&\s+|\s+(?:feat|ft)\.?\s+/i)[0].trim();
+        if (primary && primary.toLowerCase() !== 'artist' && primary.toLowerCase() !== 'unknown') {
+          counts[primary] = (counts[primary] || 0) + 3;
+        }
+      });
+    } catch (_) {}
+
+    // 4. Play History gives incremental recency weight (+1)
     const history = this.historyTracks || [];
     history.forEach(t => {
       if (!t || !t.artist) return;
@@ -4492,17 +4676,6 @@ class SoraFyDesktopApp {
         counts[primary] = (counts[primary] || 0) + 1;
       }
     });
-
-    try {
-      const liked = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
-      liked.forEach(t => {
-        if (!t || !t.artist) return;
-        const primary = t.artist.split(/\s*,\s*|\s+&\s+|\s+(?:feat|ft)\.?\s+/i)[0].trim();
-        if (primary && primary.toLowerCase() !== 'artist' && primary.toLowerCase() !== 'unknown') {
-          counts[primary] = (counts[primary] || 0) + 2; // Liked songs give strong weight
-        }
-      });
-    } catch (_) {}
 
     return Object.entries(counts)
       .sort((a, b) => b[1] - a[1])
@@ -5009,6 +5182,10 @@ class SoraFyDesktopApp {
 
     if (this.playlistDeleteBtn) this.playlistDeleteBtn.style.display = "none";
     if (this.playlistEditBtn) this.playlistEditBtn.style.display = "none";
+    if (this.playlistLikeAlbumBtn) {
+      this.playlistLikeAlbumBtn.style.display = "inline-flex";
+      this.updateAlbumLikeButton(album);
+    }
 
     const typeBadge = document.getElementById("playlistTypeBadge");
     if (typeBadge) typeBadge.textContent = "Official Album";
@@ -5056,6 +5233,7 @@ class SoraFyDesktopApp {
     const isUserPl = this.userPlaylists.some(p => p.id === playlist.id);
     if (this.playlistDeleteBtn) this.playlistDeleteBtn.style.display = isUserPl ? "inline-flex" : "none";
     if (this.playlistEditBtn) this.playlistEditBtn.style.display = isUserPl ? "inline-flex" : "none";
+    if (this.playlistLikeAlbumBtn) this.playlistLikeAlbumBtn.style.display = "none";
 
     this.playlistTitleHeading.textContent = playlist.title;
     this.playlistDescText.textContent = playlist.description || (playlist.author ? `Curated collection: ${playlist.author}` : "Curated playlist.");
@@ -7245,11 +7423,16 @@ class SoraFyDesktopApp {
     if (this.equalizerViewContainer) {
       this.equalizerViewContainer.style.display = (viewName === "equalizer") ? "block" : "none";
     }
-    if (this.downloadsViewContainer) {
-      this.downloadsViewContainer.style.display = (viewName === "downloads") ? "block" : "none";
-      if (viewName === "downloads") {
-        this.loadDownloadedTracksView();
+    if (this.libraryViewContainer) {
+      this.libraryViewContainer.style.display = (viewName === "library") ? "block" : "none";
+      if (viewName === "library") {
+        this.renderLibraryView();
       }
+    }
+    if (viewName === "downloads") {
+      this.currentView = "library";
+      if (this.libraryViewContainer) this.libraryViewContainer.style.display = "block";
+      this.switchLibraryTab("downloads");
     }
     if (this.searchResultsContainer) {
       this.searchResultsContainer.style.display = (viewName === "search_results") ? "block" : "none";
@@ -8220,6 +8403,9 @@ class SoraFyDesktopApp {
     if (window.electronAPI && typeof window.electronAPI.saveUserPlaylistsDisk === 'function') {
       window.electronAPI.saveUserPlaylistsDisk(this.userPlaylists).catch(() => {});
     }
+    if (this.libPlaylistsGrid) {
+      this.renderLibraryPlaylists();
+    }
   }
 
   renderUserPlaylistsNav() {
@@ -8634,6 +8820,386 @@ class SoraFyDesktopApp {
     });
 
     this.personalizedShelfSection.style.display = "block";
+  }
+
+  // =========================================================================
+  // Your Library (Unified Collection: Liked, Downloads, Albums, Artists, Playlists)
+  // =========================================================================
+  renderLibraryView() {
+    if (this.librarySubtitle) {
+      this.librarySubtitle.textContent = this.currentLanguage === "id"
+        ? "Kelola lagu favorit, musik offline, album tersimpan, dan artis yang diikuti"
+        : "Manage your favorite tracks, offline music, albums, and followed artists";
+    }
+
+    this.renderLibraryLikedSongs();
+    this.loadDownloadedTracksView();
+    this.renderLibraryAlbums();
+    this.renderLibraryArtists();
+    this.renderLibraryPlaylists();
+
+    this.switchLibraryTab(this.activeLibraryTab || "all");
+  }
+
+  switchLibraryTab(tab = "all") {
+    this.activeLibraryTab = tab;
+
+    if (this.libFilterPills) {
+      this.libFilterPills.forEach(pill => {
+        if (pill.dataset.libTab === tab) {
+          pill.classList.add("active");
+        } else {
+          pill.classList.remove("active");
+        }
+      });
+    }
+
+    const showAll = tab === "all";
+    if (this.libLikedSection) this.libLikedSection.style.display = (showAll || tab === "liked") ? "block" : "none";
+    if (this.libDownloadsSection) this.libDownloadsSection.style.display = (showAll || tab === "downloads") ? "block" : "none";
+    if (this.libAlbumsSection) this.libAlbumsSection.style.display = (showAll || tab === "albums") ? "block" : "none";
+    if (this.libArtistsSection) this.libArtistsSection.style.display = (showAll || tab === "artists") ? "block" : "none";
+    if (this.libPlaylistsSection) this.libPlaylistsSection.style.display = (showAll || tab === "playlists") ? "block" : "none";
+  }
+
+  renderLibraryLikedSongs() {
+    if (!this.libLikedList) return;
+    const liked = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+    const count = liked.length;
+
+    if (this.libLikedCount) {
+      this.libLikedCount.textContent = this.currentLanguage === "id" ? `${count} lagu` : `${count} songs`;
+    }
+
+    if (count === 0) {
+      this.libLikedList.innerHTML = "";
+      if (this.libLikedEmpty) this.libLikedEmpty.style.display = "block";
+      if (this.libLikedActions) this.libLikedActions.style.display = "none";
+      return;
+    }
+
+    if (this.libLikedEmpty) this.libLikedEmpty.style.display = "none";
+    if (this.libLikedActions) this.libLikedActions.style.display = "flex";
+
+    this.libLikedList.innerHTML = "";
+    liked.forEach((track, idx) => {
+      const isCurrentActive = this.tracks[this.currentTrackIndex]?.id === track.id;
+      const row = document.createElement("div");
+      row.className = `track-row ${isCurrentActive ? "active" : ""}`;
+      row.id = `lib_liked_row_${track.id}`;
+
+      const artUrl = track.artwork_url || this.DEFAULT_TRACK_ART;
+      const durSecs = track.duration_secs || track.duration || 0;
+      const durStr = this.formatDuration ? this.formatDuration(durSecs) : `${Math.floor(durSecs / 60)}:${String(Math.floor(durSecs % 60)).padStart(2, '0')}`;
+
+      row.innerHTML = `
+        <div class="track-row-num" style="display: flex; align-items: center; justify-content: center; width: 28px;">
+          <span class="num-text">${idx + 1}</span>
+          <iconsax-icon class="play-icon" name="play" type="bold" size="14" color="#00E599"></iconsax-icon>
+        </div>
+        <div class="track-row-art-box" style="position: relative; width: 42px; height: 42px; border-radius: 8px; overflow: hidden; background: #181D24; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+          <img src="${artUrl}" alt="${this.escapeHtml(track.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+        </div>
+        <div class="track-row-info" style="flex: 1; min-width: 0;">
+          <div class="track-row-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 14px;">${this.escapeHtml(track.title)}</div>
+          <div class="track-row-artist" style="font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(track.artist || 'Unknown Artist')}</div>
+        </div>
+        <div style="font-size: 12px; color: var(--color-text-secondary); min-width: 50px; text-align: right; margin-right: 12px;">${durStr}</div>
+        <div class="track-row-actions" style="display: flex; align-items: center; gap: 6px;">
+          <button class="control-btn lib-unlike-btn" title="Remove from Liked Songs" style="padding: 6px; color: #EF4444;">
+            <iconsax-icon name="heart" type="bold" size="16" color="#EF4444"></iconsax-icon>
+          </button>
+        </div>
+      `;
+
+      row.addEventListener("click", (e) => {
+        if (e.target.closest(".lib-unlike-btn")) return;
+        this.tracks = [...liked];
+        this.loadTrack(idx, true);
+      });
+
+      const unlikeBtn = row.querySelector(".lib-unlike-btn");
+      if (unlikeBtn) {
+        unlikeBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.toggleLikeTrack(track);
+          this.renderLibraryLikedSongs();
+        });
+      }
+
+      this.libLikedList.appendChild(row);
+    });
+  }
+
+  renderLibraryAlbums() {
+    if (!this.libAlbumsGrid) return;
+    const albums = Array.isArray(this.likedAlbums) ? this.likedAlbums : [];
+    const count = albums.length;
+
+    if (this.libAlbumsCount) {
+      this.libAlbumsCount.textContent = this.currentLanguage === "id" ? `${count} album` : `${count} albums`;
+    }
+
+    if (count === 0) {
+      this.libAlbumsGrid.innerHTML = "";
+      if (this.libAlbumsEmpty) this.libAlbumsEmpty.style.display = "block";
+      return;
+    }
+
+    if (this.libAlbumsEmpty) this.libAlbumsEmpty.style.display = "none";
+    this.libAlbumsGrid.innerHTML = "";
+
+    albums.forEach(album => {
+      const card = document.createElement("div");
+      card.className = "curated-playlist-card";
+      const artUrl = album.artwork_url || this.DEFAULT_TRACK_ART;
+      const subtitle = album.artist ? (album.year ? `${album.artist} • ${album.year}` : album.artist) : "Album";
+
+      card.innerHTML = `
+        <div class="curated-card-cover-wrapper">
+          <img src="${artUrl}" alt="${this.escapeHtml(album.title)}" class="curated-card-cover" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <div class="curated-card-play-overlay">
+            <iconsax-icon name="play" type="bold" size="20" color="#07080A"></iconsax-icon>
+          </div>
+        </div>
+        <div class="curated-card-info">
+          <div class="curated-card-title" title="${this.escapeHtml(album.title)}">${this.escapeHtml(album.title)}</div>
+          <div class="curated-card-author" title="${this.escapeHtml(subtitle)}">${this.escapeHtml(subtitle)}</div>
+        </div>
+      `;
+
+      card.addEventListener("click", () => {
+        this.openAlbumDetail(album);
+      });
+
+      const playOverlay = card.querySelector(".curated-card-play-overlay");
+      if (playOverlay) {
+        playOverlay.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          await this.openAlbumDetail(album);
+          if (album.tracks && album.tracks.length > 0) {
+            this.tracks = [...album.tracks];
+            this.loadTrack(0, true);
+          }
+        });
+      }
+
+      this.libAlbumsGrid.appendChild(card);
+    });
+  }
+
+  renderLibraryArtists() {
+    if (!this.libArtistsGrid) return;
+    const artistKeys = Array.isArray(this.followedArtists)
+      ? this.followedArtists
+      : Array.from(this.followedArtists || []);
+    const count = artistKeys.length;
+
+    if (this.libArtistsCount) {
+      this.libArtistsCount.textContent = this.currentLanguage === "id" ? `${count} artis` : `${count} artists`;
+    }
+
+    if (count === 0) {
+      this.libArtistsGrid.innerHTML = "";
+      if (this.libArtistsEmpty) this.libArtistsEmpty.style.display = "block";
+      return;
+    }
+
+    if (this.libArtistsEmpty) this.libArtistsEmpty.style.display = "none";
+    this.libArtistsGrid.innerHTML = "";
+
+    artistKeys.forEach(artKey => {
+      const details = (this.followedArtistDetails && this.followedArtistDetails[artKey]) || {};
+      const artName = details.name || artKey;
+      const avatarUrl = details.avatar_url || "";
+      const browseId = details.browse_id || "";
+
+      const card = document.createElement("div");
+      card.className = "library-artist-card";
+
+      const avatarMarkup = avatarUrl
+        ? `<img src="${avatarUrl}" alt="${this.escapeHtml(artName)}" class="library-artist-avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(artName)}&background=181D24&color=00E599';">`
+        : `<div class="library-artist-avatar" style="display:flex; align-items:center; justify-content:center; background:#181D24;"><iconsax-icon name="user" type="bold" size="36" color="#00E599"></iconsax-icon></div>`;
+
+      card.innerHTML = `
+        ${avatarMarkup}
+        <div class="library-artist-name" title="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</div>
+        <div class="library-artist-sub">${this.currentLanguage === "id" ? "Artis" : "Artist"}</div>
+        <button class="library-artist-follow-btn following" title="Unfollow">
+          <iconsax-icon name="tick-circle" type="bold" size="14" color="#00E599"></iconsax-icon>
+          <span>${this.currentLanguage === "id" ? "Mengikuti" : "Following"}</span>
+        </button>
+      `;
+
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".library-artist-follow-btn")) return;
+        this.openArtistDetail(artName, browseId);
+      });
+
+      const unfollowBtn = card.querySelector(".library-artist-follow-btn");
+      if (unfollowBtn) {
+        unfollowBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const lowerName = artName.toLowerCase();
+          this.followedArtists.delete(lowerName);
+          if (this.followedArtistDetails) delete this.followedArtistDetails[lowerName];
+
+          localStorage.setItem("sorafy_followed_artists", JSON.stringify([...this.followedArtists]));
+          localStorage.setItem("sorafy_followed_artist_details", JSON.stringify(this.followedArtistDetails));
+
+          this.showToast(this.currentLanguage === "id" ? `Berhenti mengikuti ${artName}` : `Unfollowed ${artName}`);
+          this.renderLibraryArtists();
+          this.fetchYtmNewReleases();
+          this.fetchMusicfyRecommendations();
+        });
+      }
+
+      this.libArtistsGrid.appendChild(card);
+    });
+  }
+
+  renderLibraryPlaylists() {
+    if (!this.libPlaylistsGrid) return;
+    const playlists = (this.userPlaylists || []).filter(pl => pl && pl.id && pl.id !== "upl_favorites" && pl.title !== "Lagu Santai Saya");
+    const count = playlists.length;
+
+    if (this.libPlaylistsCount) {
+      this.libPlaylistsCount.textContent = `${count} playlists`;
+    }
+
+    this.libPlaylistsGrid.innerHTML = "";
+
+    playlists.forEach(pl => {
+      const card = document.createElement("div");
+      card.className = "curated-playlist-card";
+      const trackCount = pl.tracks?.length || 0;
+      const artUrl = pl.artwork_url || (pl.tracks?.[0]?.artwork_url) || this.DEFAULT_TRACK_ART;
+
+      card.innerHTML = `
+        <div class="curated-card-cover-wrapper">
+          <img src="${artUrl}" alt="${this.escapeHtml(pl.title)}" class="curated-card-cover" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <div class="curated-card-play-overlay">
+            <iconsax-icon name="play" type="bold" size="20" color="#07080A"></iconsax-icon>
+          </div>
+        </div>
+        <div class="curated-card-info">
+          <div class="curated-card-title" title="${this.escapeHtml(pl.title)}">${this.escapeHtml(pl.title)}</div>
+          <div class="curated-card-author">${trackCount} ${trackCount === 1 ? 'track' : 'tracks'}</div>
+        </div>
+      `;
+
+      card.addEventListener("click", () => {
+        this.openPlaylistDetail(pl);
+      });
+
+      const playOverlay = card.querySelector(".curated-card-play-overlay");
+      if (playOverlay) {
+        playOverlay.addEventListener("click", (e) => {
+          e.stopPropagation();
+          if (pl.tracks && pl.tracks.length > 0) {
+            this.tracks = [...pl.tracks];
+            this.loadTrack(0, true);
+          } else {
+            this.openPlaylistDetail(pl);
+          }
+        });
+      }
+
+      this.libPlaylistsGrid.appendChild(card);
+    });
+  }
+
+  isAlbumLiked(album) {
+    if (!album) return false;
+    const albId = String(album.id || album.browse_id || "");
+    const titleKey = `${(album.title || "").toLowerCase()}::${(album.artist || "").toLowerCase()}`;
+    return (this.likedAlbums || []).some(a => {
+      if (!a) return false;
+      const currentId = String(a.id || a.browse_id || "");
+      if (albId && currentId && albId === currentId) return true;
+      const existingKey = `${(a.title || "").toLowerCase()}::${(a.artist || "").toLowerCase()}`;
+      return existingKey === titleKey;
+    });
+  }
+
+  toggleLikeAlbum(album = null) {
+    const targetAlbum = album || this.currentPlaylist;
+    if (!targetAlbum || !targetAlbum.title) return;
+
+    const isLiked = this.isAlbumLiked(targetAlbum);
+    let likedAlbums = Array.isArray(this.likedAlbums) ? [...this.likedAlbums] : [];
+    const albId = String(targetAlbum.id || targetAlbum.browse_id || "");
+    const titleKey = `${(targetAlbum.title || "").toLowerCase()}::${(targetAlbum.artist || "").toLowerCase()}`;
+
+    if (isLiked) {
+      likedAlbums = likedAlbums.filter(a => {
+        if (!a) return false;
+        const currentId = String(a.id || a.browse_id || "");
+        if (albId && currentId && albId === currentId) return false;
+        const existingKey = `${(a.title || "").toLowerCase()}::${(a.artist || "").toLowerCase()}`;
+        return existingKey !== titleKey;
+      });
+      this.likedAlbums = likedAlbums;
+      localStorage.setItem("sorafy_liked_albums", JSON.stringify(this.likedAlbums));
+      this.updateAlbumLikeButton(targetAlbum);
+      this.showToast(this.currentLanguage === "id" ? "Album dihapus dari koleksi" : "Album removed from library");
+    } else {
+      const albumObj = {
+        id: targetAlbum.id || targetAlbum.browse_id || `alb_${Date.now()}`,
+        browse_id: targetAlbum.browse_id || targetAlbum.id || "",
+        title: targetAlbum.title,
+        artist: targetAlbum.artist || "Unknown Artist",
+        artwork_url: targetAlbum.artwork_url || this.DEFAULT_TRACK_ART,
+        year: targetAlbum.year || "",
+        savedAt: Date.now()
+      };
+      likedAlbums.unshift(albumObj);
+      this.likedAlbums = likedAlbums;
+      localStorage.setItem("sorafy_liked_albums", JSON.stringify(this.likedAlbums));
+      this.updateAlbumLikeButton(targetAlbum);
+      this.showToast(this.currentLanguage === "id" ? "Album disimpan ke koleksi" : "Album saved to library");
+    }
+
+    if (this.currentView === "library") {
+      this.renderLibraryAlbums();
+    }
+
+    // Refresh recommendations to reflect updated taste weights
+    this.fetchYtmNewReleases();
+    this.fetchMusicfyRecommendations();
+  }
+
+  updateAlbumLikeButton(album = null) {
+    if (!this.playlistLikeAlbumBtn) return;
+    const targetAlbum = album || this.currentPlaylist;
+    if (!targetAlbum) return;
+
+    const isLiked = this.isAlbumLiked(targetAlbum);
+    const heartIcon = this.playlistLikeAlbumBtn.querySelector("iconsax-icon");
+
+    if (isLiked) {
+      this.playlistLikeAlbumBtn.classList.add("active");
+      this.playlistLikeAlbumBtn.style.color = "#EF4444";
+      this.playlistLikeAlbumBtn.style.borderColor = "rgba(239, 68, 68, 0.4)";
+      if (heartIcon) {
+        heartIcon.setAttribute("type", "bold");
+        heartIcon.setAttribute("color", "#EF4444");
+      }
+      if (this.playlistLikeAlbumLabel) {
+        this.playlistLikeAlbumLabel.textContent = this.currentLanguage === "id" ? "Disimpan" : "Saved";
+      }
+    } else {
+      this.playlistLikeAlbumBtn.classList.remove("active");
+      this.playlistLikeAlbumBtn.style.color = "currentColor";
+      this.playlistLikeAlbumBtn.style.borderColor = "rgba(255, 255, 255, 0.12)";
+      if (heartIcon) {
+        heartIcon.setAttribute("type", "linear");
+        heartIcon.setAttribute("color", "currentColor");
+      }
+      if (this.playlistLikeAlbumLabel) {
+        this.playlistLikeAlbumLabel.textContent = this.currentLanguage === "id" ? "Simpan Album" : "Save Album";
+      }
+    }
   }
 }
 

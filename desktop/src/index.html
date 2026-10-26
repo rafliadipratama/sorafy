@@ -44,9 +44,9 @@
           <iconsax-icon name="setting-4" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_equalizer">Equalizer DSP</span>
         </div>
-        <div class="nav-item" data-view="downloads" id="navDownloads">
-          <iconsax-icon name="folder-cloud" type="linear" size="20" color="currentColor"></iconsax-icon>
-          <span data-i18n="nav_downloads">Downloads</span>
+        <div class="nav-item" data-view="library" id="navLibrary">
+          <iconsax-icon name="music-library-2" type="linear" size="20" color="currentColor"></iconsax-icon>
+          <span data-i18n="nav_library">Your Library</span>
         </div>
         <div class="nav-item" id="navSettings">
           <iconsax-icon name="setting-2" type="linear" size="20" color="currentColor"></iconsax-icon>
@@ -522,6 +522,10 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
                 Shuffle
               </button>
+              <button class="hero-secondary-btn" id="playlistLikeAlbumBtn" style="display: none;" title="Save album to your library">
+                <iconsax-icon name="heart" type="linear" size="16" color="#EF4444"></iconsax-icon>
+                <span id="playlistLikeAlbumLabel">Like Album</span>
+              </button>
               <button class="hero-secondary-btn" id="playlistEditBtn" style="display: none;">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
                 Edit
@@ -612,50 +616,158 @@
         </div>
       </div>
 
-      <!-- Downloads / Offline Music View Container -->
-      <div id="downloadsViewContainer" style="display: none;">
-        <div class="downloads-header">
-          <div class="downloads-header-info">
-            <div class="downloads-icon-box">
-              <iconsax-icon name="folder-cloud" type="bold" size="32" color="#00E599"></iconsax-icon>
+      <!-- Your Library View Container (Liked Songs, Downloads, Albums, Artists, Playlists) -->
+      <div id="libraryViewContainer" style="display: none;">
+        <div class="library-header">
+          <div class="library-header-main">
+            <div class="library-icon-box">
+              <iconsax-icon name="music-library-2" type="bold" size="32" color="#00E599"></iconsax-icon>
             </div>
             <div>
-              <h1 class="downloads-title" data-i18n="downloads_title">Downloaded Music</h1>
-              <div class="downloads-subtitle" id="downloadsSubtitle">0 tracks saved locally for offline listening</div>
+              <h1 class="library-title" data-i18n="nav_library">Your Library</h1>
+              <div class="library-subtitle" id="librarySubtitle">Manage your favorite tracks, offline music, albums, and followed artists</div>
             </div>
           </div>
-          <div class="downloads-actions">
-            <button class="hero-play-btn" id="downloadsPlayAllBtn" title="Play All Downloaded Tracks">
-              <iconsax-icon name="play" type="bold" size="18" color="#07080A"></iconsax-icon>
-              <span data-i18n="btn_play_all">Play All</span>
+
+          <!-- Library Filter Pill Tabs -->
+          <div class="library-filter-bar">
+            <button class="library-filter-pill active" data-lib-tab="all" data-i18n="tab_all">All</button>
+            <button class="library-filter-pill" data-lib-tab="liked">
+              <iconsax-icon name="heart" type="bold" size="14" color="#EF4444"></iconsax-icon>
+              <span data-i18n="tab_liked_songs">Liked Songs</span>
             </button>
-            <button class="hero-secondary-btn" id="downloadsShuffleBtn" title="Shuffle Downloaded Tracks">
-              <iconsax-icon name="shuffle" type="linear" size="18" color="currentColor"></iconsax-icon>
-              <span data-i18n="btn_shuffle">Shuffle</span>
+            <button class="library-filter-pill" data-lib-tab="downloads">
+              <iconsax-icon name="folder-cloud" type="linear" size="14" color="#00E599"></iconsax-icon>
+              <span data-i18n="tab_downloads">Downloads</span>
             </button>
-            <button class="hero-secondary-btn" id="downloadsOpenFolderBtn" title="Open Downloads Folder">
-              <iconsax-icon name="folder-open" type="linear" size="18" color="currentColor"></iconsax-icon>
-              <span data-i18n="btn_open_folder">Open Folder</span>
+            <button class="library-filter-pill" data-lib-tab="albums">
+              <iconsax-icon name="music-square" type="linear" size="14" color="currentColor"></iconsax-icon>
+              <span data-i18n="tab_albums">Albums</span>
             </button>
-            <button class="control-btn" id="downloadsRefreshBtn" title="Refresh Downloads">
-              <iconsax-icon name="refresh" type="linear" size="18" color="currentColor"></iconsax-icon>
+            <button class="library-filter-pill" data-lib-tab="artists">
+              <iconsax-icon name="musicnote" type="linear" size="14" color="currentColor"></iconsax-icon>
+              <span data-i18n="tab_artists">Artists</span>
+            </button>
+            <button class="library-filter-pill" data-lib-tab="playlists">
+              <iconsax-icon name="music-playlist" type="linear" size="14" color="currentColor"></iconsax-icon>
+              <span data-i18n="tab_playlists">Playlists</span>
             </button>
           </div>
         </div>
 
-        <div id="downloadsTrackList" class="downloads-track-list">
-          <!-- Populated dynamically via JS -->
-        </div>
-
-        <div id="downloadsEmptyState" class="downloads-empty-state" style="display: none;">
-          <div class="downloads-empty-icon">
-            <iconsax-icon name="cloud-cross" type="linear" size="44" color="var(--color-text-secondary)"></iconsax-icon>
+        <!-- 1. Liked Songs Section -->
+        <section class="library-section" id="libLikedSection">
+          <div class="library-section-header">
+            <div class="library-section-title-wrap">
+              <h2 class="library-section-title" data-i18n="tab_liked_songs">Liked Songs</h2>
+              <span class="library-badge-count" id="libLikedCount">0 songs</span>
+            </div>
+            <div class="library-section-actions" id="libLikedActions">
+              <button class="hero-play-btn" id="libLikedPlayAllBtn">
+                <iconsax-icon name="play" type="bold" size="16" color="#07080A"></iconsax-icon>
+                <span data-i18n="btn_play_all">Play All</span>
+              </button>
+              <button class="hero-secondary-btn" id="libLikedShuffleBtn">
+                <iconsax-icon name="shuffle" type="linear" size="16" color="currentColor"></iconsax-icon>
+                <span data-i18n="btn_shuffle">Shuffle</span>
+              </button>
+            </div>
           </div>
-          <div class="downloads-empty-title" data-i18n="downloads_empty_title">No downloaded tracks yet</div>
-          <p class="downloads-empty-desc" data-i18n="downloads_empty_desc">
-            Right-click any song while online and choose "Download Track (MP3)" to listen offline anytime.
-          </p>
-        </div>
+          <div class="library-track-list" id="libLikedList"></div>
+          <div class="library-empty-box" id="libLikedEmpty" style="display: none;">
+            <iconsax-icon name="heart" type="linear" size="40" color="var(--color-text-secondary)"></iconsax-icon>
+            <div style="font-weight: 700; margin: 10px 0 4px; color: #FFFFFF;">No liked songs yet</div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;">Click the heart icon on any track to save it here.</p>
+          </div>
+        </section>
+
+        <!-- 2. Downloads Section -->
+        <section class="library-section" id="libDownloadsSection">
+          <div class="library-section-header">
+            <div class="library-section-title-wrap">
+              <h2 class="library-section-title" data-i18n="tab_downloads">Downloaded Music</h2>
+              <span class="library-badge-count" id="libDownloadsCount">0 tracks</span>
+            </div>
+            <div class="library-section-actions">
+              <button class="hero-play-btn" id="downloadsPlayAllBtn">
+                <iconsax-icon name="play" type="bold" size="16" color="#07080A"></iconsax-icon>
+                <span data-i18n="btn_play_all">Play All</span>
+              </button>
+              <button class="hero-secondary-btn" id="downloadsShuffleBtn">
+                <iconsax-icon name="shuffle" type="linear" size="16" color="currentColor"></iconsax-icon>
+                <span data-i18n="btn_shuffle">Shuffle</span>
+              </button>
+              <button class="hero-secondary-btn" id="downloadsOpenFolderBtn">
+                <iconsax-icon name="folder-open" type="linear" size="16" color="currentColor"></iconsax-icon>
+                <span data-i18n="btn_open_folder">Open Folder</span>
+              </button>
+              <button class="control-btn" id="downloadsRefreshBtn" title="Refresh Downloads">
+                <iconsax-icon name="refresh" type="linear" size="18" color="currentColor"></iconsax-icon>
+              </button>
+            </div>
+          </div>
+          <div class="library-track-list" id="downloadsTrackList"></div>
+          <div class="library-empty-box" id="downloadsEmptyState" style="display: none;">
+            <iconsax-icon name="cloud-cross" type="linear" size="40" color="var(--color-text-secondary)"></iconsax-icon>
+            <div style="font-weight: 700; margin: 10px 0 4px; color: #FFFFFF;" data-i18n="downloads_empty_title">No downloaded tracks yet</div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;" data-i18n="downloads_empty_desc">
+              Right-click any song while online and choose "Download Track (MP3)" to listen offline anytime.
+            </p>
+          </div>
+        </section>
+
+        <!-- 3. Liked Albums Section -->
+        <section class="library-section" id="libAlbumsSection">
+          <div class="library-section-header">
+            <div class="library-section-title-wrap">
+              <h2 class="library-section-title" data-i18n="tab_albums">Liked Albums</h2>
+              <span class="library-badge-count" id="libAlbumsCount">0 albums</span>
+            </div>
+          </div>
+          <div class="library-albums-grid" id="libAlbumsGrid"></div>
+          <div class="library-empty-box" id="libAlbumsEmpty" style="display: none;">
+            <iconsax-icon name="music-square" type="linear" size="40" color="var(--color-text-secondary)"></iconsax-icon>
+            <div style="font-weight: 700; margin: 10px 0 4px; color: #FFFFFF;">No liked albums yet</div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;" data-i18n="liked_albums_empty">
+              Browse albums and click the heart icon to save them to your library.
+            </p>
+          </div>
+        </section>
+
+        <!-- 4. Followed Artists Section -->
+        <section class="library-section" id="libArtistsSection">
+          <div class="library-section-header">
+            <div class="library-section-title-wrap">
+              <h2 class="library-section-title" data-i18n="tab_artists">Followed Artists</h2>
+              <span class="library-badge-count" id="libArtistsCount">0 artists</span>
+            </div>
+          </div>
+          <div class="library-artists-grid" id="libArtistsGrid"></div>
+          <div class="library-empty-box" id="libArtistsEmpty" style="display: none;">
+            <iconsax-icon name="musicnote" type="linear" size="40" color="var(--color-text-secondary)"></iconsax-icon>
+            <div style="font-weight: 700; margin: 10px 0 4px; color: #FFFFFF;">You are not following any artists yet</div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); margin: 0;" data-i18n="followed_artists_empty">
+              Click "+ Follow" on an artist profile to tune your recommendations.
+            </p>
+          </div>
+        </section>
+
+        <!-- 5. User Custom Playlists Section -->
+        <section class="library-section" id="libPlaylistsSection">
+          <div class="library-section-header">
+            <div class="library-section-title-wrap">
+              <h2 class="library-section-title" data-i18n="tab_playlists">My Playlists</h2>
+              <span class="library-badge-count" id="libPlaylistsCount">0 playlists</span>
+            </div>
+            <div class="library-section-actions">
+              <button class="hero-secondary-btn" id="libCreatePlaylistBtn">
+                <iconsax-icon name="add" type="linear" size="16" color="currentColor"></iconsax-icon>
+                <span>New Playlist</span>
+              </button>
+            </div>
+          </div>
+          <div class="library-playlists-grid" id="libPlaylistsGrid"></div>
+        </section>
       </div>
 
       <!-- Dedicated Screen Player View Container (Fullscreen / Now Playing Player) -->

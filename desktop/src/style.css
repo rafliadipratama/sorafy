@@ -4706,6 +4706,206 @@ body {
   margin-top: 4px;
 }
 
+/* =========================================================
+   Your Library View Container (Liked, Downloads, Albums, Artists, Playlists)
+   ========================================================= */
+.library-header {
+  padding: 24px 32px 16px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.library-header-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.library-icon-box {
+  width: 52px;
+  height: 52px;
+  background: rgba(0, 229, 153, 0.1);
+  border: 1px solid rgba(0, 229, 153, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.library-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.library-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.library-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.library-filter-pill {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.library-filter-pill:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.library-filter-pill.active {
+  background: #FFFFFF;
+  color: #07080A;
+  border-color: #FFFFFF;
+}
+
+.library-filter-pill.active iconsax-icon {
+  color: #07080A !important;
+}
+
+.library-section {
+  padding: 24px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.library-section:last-child {
+  border-bottom: none;
+  padding-bottom: 56px;
+}
+
+.library-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.library-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.library-section-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0;
+}
+
+.library-badge-count {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.06);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.library-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.library-track-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.library-albums-grid,
+.library-playlists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.library-artists-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 18px;
+}
+
+.library-artist-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 16px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.library-artist-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+  transform: translateY(-2px);
+}
+
+.library-artist-avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.library-artist-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.library-artist-badge {
+  font-size: 11px;
+  color: #00E599;
+  background: rgba(0, 229, 153, 0.1);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 6px;
+  font-weight: 600;
+}
+
+.library-empty-box {
+  text-align: center;
+  padding: 36px 16px;
+  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+}
+
 .downloads-actions {
   display: flex;
   align-items: center;
