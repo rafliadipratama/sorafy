@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   saveAppSettings: (settings) => ipcRenderer.invoke('save-app-settings', settings),
   clearAppCache: () => ipcRenderer.invoke('clear-app-cache'),
   pruneAudioCache: () => ipcRenderer.invoke('prune-audio-cache'),
+  saveUserPlaylistsDisk: (playlists) => ipcRenderer.invoke('save-user-playlists-disk', playlists),
+  loadUserPlaylistsDisk: () => ipcRenderer.invoke('load-user-playlists-disk'),
   selectYouTubeCookie: () => ipcRenderer.invoke('select-youtube-cookie'),
   clearYouTubeCookie: () => ipcRenderer.invoke('clear-youtube-cookie'),
   getYouTubeCookieStatus: () => ipcRenderer.invoke('get-youtube-cookie-status'),

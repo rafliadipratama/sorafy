@@ -13,6 +13,21 @@ app.commandLine.appendSwitch('disable-features', 'Vulkan');
 app.commandLine.appendSwitch('disable-dev-shm-usage');
 app.commandLine.appendSwitch('log-level', '3'); // Suppress harmless Chromium Ozone/Vulkan warnings
 
+// Guarantee single-instance execution (prevent duplicate processes, zombie audio, and LevelDB collisions)
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+  process.exit(0);
+}
+
+app.on('second-instance', () => {
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+  }
+});
+
 // Apple / Safari User-Agent (exact match with Android MusicStreamSource.kt & MusicCacheManager.kt)
 const APPLE_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
 const IOS_UA = 'com.google.ios.youtube/21.03.3 (iPad7,6; U; CPU iPadOS 17_7_10 like Mac OS X; en-US)';
@@ -1346,7 +1361,7 @@ let isQuitting = false;
 // Persistent Settings Hub
 const DEFAULT_SETTINGS = {
   language: 'en',
-  closeToTray: true,
+  closeToTray: false,
   notifications: true,
   discordRpc: true,
   audioQuality: 'high',
@@ -1355,6 +1370,44 @@ const DEFAULT_SETTINGS = {
   cacheQuotaMb: 2048,
   cookiePath: ''
 };
+
+function getPlaylistsDiskPath() {
+  try {
+    return path.join(app.getPath('userData'), 'user_playlists.json');
+  } catch (_) {
+    return path.join(os.homedir(), '.config', 'sorafy', 'user_playlists.json');
+  }
+}
+
+function loadUserPlaylistsDisk() {
+  try {
+    const pPath = getPlaylistsDiskPath();
+    if (fs.existsSync(pPath)) {
+      const raw = fs.readFileSync(pPath, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (err) {
+    console.warn('loadUserPlaylistsDisk note:', err.message);
+  }
+  return [];
+}
+
+function saveUserPlaylistsDisk(playlists) {
+  try {
+    if (!Array.isArray(playlists)) return { success: false, error: 'Invalid playlists payload' };
+    const pPath = getPlaylistsDiskPath();
+    const dir = path.dirname(pPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const tempPath = pPath + '.tmp';
+    fs.writeFileSync(tempPath, JSON.stringify(playlists, null, 2), 'utf8');
+    fs.renameSync(tempPath, pPath);
+    return { success: true };
+  } catch (err) {
+    console.error('saveUserPlaylistsDisk error:', err.message);
+    return { success: false, error: err.message };
+  }
+}
 
 function getSettingsPath() {
   try {
@@ -1598,14 +1651,13 @@ function createWindow() {
   win.setMenuBarVisibility(false);
 
   win.on('close', (e) => {
-    if (!isQuitting) {
-      const settings = loadAppSettings();
-      if (settings.closeToTray !== false) {
-        e.preventDefault();
-        win.hide();
-        return false;
-      }
+    const settings = loadAppSettings();
+    if (!isQuitting && settings.closeToTray === true) {
+      e.preventDefault();
+      win.hide();
+      return false;
     }
+    isQuitting = true;
   });
 
   win.on('closed', () => {
@@ -2609,6 +2661,15 @@ ipcMain.handle('get-youtube-cookie-status', () => {
   return { hasCookie: false };
 });
 
+// IPC Handlers: Persistent Disk Playlists (High-Capacity & Collision-Resistant)
+ipcMain.handle('save-user-playlists-disk', (_event, playlists) => {
+  return saveUserPlaylistsDisk(playlists);
+});
+
+ipcMain.handle('load-user-playlists-disk', () => {
+  return loadUserPlaylistsDisk();
+});
+
 // IPC Handler: Check For Updates via GitHub Releases
 ipcMain.handle('check-for-updates', async () => {
   return new Promise((resolve) => {
@@ -2801,11 +2862,12 @@ app.on('before-quit', () => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform === 'darwin') return;
   const settings = loadAppSettings();
-  if (settings.closeToTray === false || isQuitting) {
-    app.quit();
+  if (settings.closeToTray === true && !isQuitting) {
+    return;
   }
+  isQuitting = true;
+  app.quit();
 });
 
 app.on('will-quit', () => {

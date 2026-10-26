@@ -1473,7 +1473,7 @@ class SoraFyDesktopApp {
   async initSettingsHub() {
     let currentSettings = {
       language: 'en',
-      closeToTray: true,
+      closeToTray: false,
       notifications: true,
       discordRpc: true,
       audioQuality: 'high',
@@ -1514,7 +1514,7 @@ class SoraFyDesktopApp {
     if (this.settingCacheQuota) {
       this.settingCacheQuota.value = String(this.appSettings.cacheQuotaMb || 2048);
     }
-    if (this.settingCloseToTray) this.settingCloseToTray.checked = this.appSettings.closeToTray !== false;
+    if (this.settingCloseToTray) this.settingCloseToTray.checked = !!this.appSettings.closeToTray;
     if (this.settingNotifications) this.settingNotifications.checked = this.appSettings.notifications !== false;
     if (this.settingDiscordRpc) this.settingDiscordRpc.checked = this.appSettings.discordRpc !== false;
 
@@ -1704,7 +1704,7 @@ class SoraFyDesktopApp {
     try {
       if (Array.isArray(data.userPlaylists)) {
         this.userPlaylists = data.userPlaylists;
-        localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+        this.saveUserPlaylists();
         this.renderUserPlaylists();
       }
       if (Array.isArray(data.likedTrackIds)) {
@@ -1729,6 +1729,17 @@ class SoraFyDesktopApp {
     this.initSettingsHub();
     this.initMediaSessionHandlers();
     this.initOfflineListener();
+
+    window.addEventListener('beforeunload', () => {
+      if (this.audio) {
+        this.audio.pause();
+        this.audio.src = '';
+      }
+      if (this.screenPlayerNativeVideo) {
+        this.screenPlayerNativeVideo.pause();
+        this.screenPlayerNativeVideo.src = '';
+      }
+    });
 
     this.playPauseBtn.addEventListener("click", () => this.togglePlayPause());
     this.prevBtn.addEventListener("click", () => this.playPrevious());
@@ -4347,10 +4358,32 @@ class SoraFyDesktopApp {
     }
   }
 
-  initUserPlaylists() {
+  async initUserPlaylists() {
     if (!this.userPlaylistsNav) return;
-    this.userPlaylists = (this.userPlaylists || []).filter(pl => pl.id !== "upl_favorites" && pl.title !== "Lagu Santai Saya");
-    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+
+    if (window.electronAPI && typeof window.electronAPI.loadUserPlaylistsDisk === 'function') {
+      try {
+        const diskPlaylists = await window.electronAPI.loadUserPlaylistsDisk();
+        if (Array.isArray(diskPlaylists) && diskPlaylists.length > 0) {
+          if (!this.userPlaylists || this.userPlaylists.length === 0) {
+            this.userPlaylists = diskPlaylists;
+          } else {
+            const currentIds = new Set(this.userPlaylists.map(p => p.id));
+            for (const dp of diskPlaylists) {
+              if (dp && dp.id && !currentIds.has(dp.id)) {
+                this.userPlaylists.push(dp);
+                currentIds.add(dp.id);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Disk playlists load note:", err);
+      }
+    }
+
+    this.userPlaylists = (this.userPlaylists || []).filter(pl => pl && pl.id && pl.id !== "upl_favorites" && pl.title !== "Lagu Santai Saya");
+    this.saveUserPlaylists();
     this.renderUserPlaylists();
   }
 
@@ -4489,7 +4522,7 @@ class SoraFyDesktopApp {
 
   createPlaylist(name, desc = "") {
     const newPl = {
-      id: "upl_" + Date.now(),
+      id: "upl_" + Date.now() + "_" + Math.random().toString(36).slice(2, 6),
       title: name,
       description: desc || "Custom user playlist",
       tracks: []
@@ -4502,7 +4535,7 @@ class SoraFyDesktopApp {
     }
 
     this.userPlaylists.push(newPl);
-    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+    this.saveUserPlaylists();
     this.renderUserPlaylists();
     this.showToast(`Playlist "${name}" created successfully!`);
     this.openPlaylistDetail(newPl);
@@ -4521,11 +4554,12 @@ class SoraFyDesktopApp {
   }
 
   updatePlaylist(playlistId, newTitle, newDesc) {
+    if (!playlistId) return;
     const pl = this.userPlaylists.find(p => p.id === playlistId);
     if (!pl) return;
     pl.title = newTitle;
     pl.description = newDesc;
-    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+    this.saveUserPlaylists();
     this.renderUserPlaylists();
     if (this.currentPlaylist && this.currentPlaylist.id === playlistId) {
       this.currentPlaylist.title = newTitle;
@@ -4537,12 +4571,14 @@ class SoraFyDesktopApp {
   }
 
   deletePlaylist(playlistId) {
-    const pl = this.userPlaylists.find(p => p.id === playlistId);
-    const title = pl ? pl.title : "Playlist";
-    this.userPlaylists = this.userPlaylists.filter(p => p.id !== playlistId);
-    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+    if (!playlistId) return;
+    const plIndex = this.userPlaylists.findIndex(p => p.id === playlistId);
+    if (plIndex === -1) return;
+    const title = this.userPlaylists[plIndex].title || "Playlist";
+    this.userPlaylists.splice(plIndex, 1);
+    this.saveUserPlaylists();
     this.renderUserPlaylists();
-    this.showToast(`Playlist "${title}" deleted`);
+    this.showToast(this.currentLanguage === 'id' ? `Playlist "${title}" berhasil dihapus` : `Playlist "${title}" deleted`);
     this.switchView("home");
   }
 
@@ -4589,13 +4625,14 @@ class SoraFyDesktopApp {
   }
 
   addTrackToPlaylist(playlistId, track) {
+    if (!playlistId || !track) return;
     const pl = this.userPlaylists.find(p => p.id === playlistId);
     if (!pl) return;
     if (!pl.tracks) pl.tracks = [];
     if (!pl.tracks.some(t => t.id === track.id)) {
       pl.tracks.push(track);
       if (!pl.artwork_url) pl.artwork_url = track.artwork_url;
-      localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+      this.saveUserPlaylists();
       this.renderUserPlaylists();
       this.showToast(`Added to "${pl.title}"`);
       if (this.currentPlaylist && this.currentPlaylist.id === pl.id) {
@@ -4607,16 +4644,20 @@ class SoraFyDesktopApp {
   }
 
   removeTrackFromPlaylist(playlistId, trackId) {
+    if (!playlistId || !trackId) return;
     const pl = this.userPlaylists.find(p => p.id === playlistId);
     if (!pl || !pl.tracks) return;
-    pl.tracks = pl.tracks.filter(t => t.id !== trackId);
-    if (pl.tracks.length > 0) {
-      pl.artwork_url = pl.tracks[0].artwork_url;
+    const tIndex = pl.tracks.findIndex(t => t.id === trackId);
+    if (tIndex !== -1) {
+      pl.tracks.splice(tIndex, 1);
+      if (pl.tracks.length > 0) {
+        pl.artwork_url = pl.tracks[0].artwork_url;
+      }
+      this.saveUserPlaylists();
+      this.renderUserPlaylists();
+      this.showToast(this.currentLanguage === 'id' ? "Lagu dihapus dari playlist" : "Song removed from playlist");
+      this.openPlaylistDetail(pl);
     }
-    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
-    this.renderUserPlaylists();
-    this.showToast("Song removed from playlist");
-    this.openPlaylistDetail(pl);
   }
 
   async openAlbumDetail(album) {
@@ -4811,7 +4852,7 @@ class SoraFyDesktopApp {
                 }
               });
               if (updated) {
-                localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+                this.saveUserPlaylists();
               }
             }
           }).catch(() => {});
@@ -4838,7 +4879,7 @@ class SoraFyDesktopApp {
             if (this.screenPlayerArtwork) this.screenPlayerArtwork.src = highRes;
           }
           if (userPlaylistId) {
-            localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+            this.saveUserPlaylists();
           }
         }
       } catch (_) {}
@@ -5814,7 +5855,7 @@ class SoraFyDesktopApp {
             const rowArt = document.querySelector(`#track_row_${track.id} .track-row-art`);
             if (rowArt) rowArt.src = fullArt;
             if (this.currentPlaylist && Array.isArray(this.currentPlaylist.tracks)) {
-              localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+              this.saveUserPlaylists();
             }
           }
         }
@@ -7633,7 +7674,7 @@ class SoraFyDesktopApp {
 
       const playlistTitle = res.title || `Imported ${res.provider || 'Music'}`;
       const newPlaylist = {
-        id: `pl_imp_${Date.now()}`,
+        id: `pl_imp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
         name: playlistTitle,
         title: playlistTitle,
         author: `Imported ${res.provider || 'Spotify'}`,
@@ -7645,7 +7686,7 @@ class SoraFyDesktopApp {
       };
 
       this.userPlaylists.unshift(newPlaylist);
-      localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+      this.saveUserPlaylists();
       this.renderUserPlaylists();
 
       if (this.unifiedImportModal) this.unifiedImportModal.style.display = "none";
@@ -7669,7 +7710,14 @@ class SoraFyDesktopApp {
   }
 
   saveUserPlaylists() {
-    localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+    try {
+      localStorage.setItem("sorafy_user_playlists", JSON.stringify(this.userPlaylists));
+    } catch (e) {
+      console.warn("localStorage quota exceeded, syncing to disk:", e);
+    }
+    if (window.electronAPI && typeof window.electronAPI.saveUserPlaylistsDisk === 'function') {
+      window.electronAPI.saveUserPlaylistsDisk(this.userPlaylists).catch(() => {});
+    }
   }
 
   renderUserPlaylistsNav() {
