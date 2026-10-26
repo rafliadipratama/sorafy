@@ -44,6 +44,10 @@
           <iconsax-icon name="setting-4" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_equalizer">Equalizer DSP</span>
         </div>
+        <div class="nav-item" data-view="downloads" id="navDownloads">
+          <iconsax-icon name="folder-cloud" type="linear" size="20" color="currentColor"></iconsax-icon>
+          <span data-i18n="nav_downloads">Downloads</span>
+        </div>
         <div class="nav-item" id="navSettings">
           <iconsax-icon name="setting-2" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_settings">Settings</span>
@@ -119,8 +123,11 @@
 
       <!-- Offline Mode Resilience Banner -->
       <div id="offlineBanner" class="offline-banner" style="display: none;">
-        <iconsax-icon name="wifi-square" type="linear" size="18" color="#FCD34D"></iconsax-icon>
-        <span data-i18n="offline_notice">You are currently offline. Local cache playback is active.</span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <iconsax-icon name="wifi-square" type="linear" size="18" color="#FCD34D"></iconsax-icon>
+          <span data-i18n="offline_notice">You are currently offline. Local cache playback is active.</span>
+        </div>
+        <button id="offlineGoToDownloadsBtn" class="offline-action-btn" data-i18n="btn_view_downloads">View Downloads</button>
       </div>
 
       <!-- Home View Container -->
@@ -602,6 +609,52 @@
               <input type="range" class="volume-slider" style="width: 100%;" id="virtualizerSlider" min="0" max="100" value="0">
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Downloads / Offline Music View Container -->
+      <div id="downloadsViewContainer" style="display: none;">
+        <div class="downloads-header">
+          <div class="downloads-header-info">
+            <div class="downloads-icon-box">
+              <iconsax-icon name="folder-cloud" type="bold" size="32" color="#00E599"></iconsax-icon>
+            </div>
+            <div>
+              <h1 class="downloads-title" data-i18n="downloads_title">Downloaded Music</h1>
+              <div class="downloads-subtitle" id="downloadsSubtitle">0 tracks saved locally for offline listening</div>
+            </div>
+          </div>
+          <div class="downloads-actions">
+            <button class="hero-play-btn" id="downloadsPlayAllBtn" title="Play All Downloaded Tracks">
+              <iconsax-icon name="play" type="bold" size="18" color="#07080A"></iconsax-icon>
+              <span data-i18n="btn_play_all">Play All</span>
+            </button>
+            <button class="hero-secondary-btn" id="downloadsShuffleBtn" title="Shuffle Downloaded Tracks">
+              <iconsax-icon name="shuffle" type="linear" size="18" color="currentColor"></iconsax-icon>
+              <span data-i18n="btn_shuffle">Shuffle</span>
+            </button>
+            <button class="hero-secondary-btn" id="downloadsOpenFolderBtn" title="Open Downloads Folder">
+              <iconsax-icon name="folder-open" type="linear" size="18" color="currentColor"></iconsax-icon>
+              <span data-i18n="btn_open_folder">Open Folder</span>
+            </button>
+            <button class="control-btn" id="downloadsRefreshBtn" title="Refresh Downloads">
+              <iconsax-icon name="refresh" type="linear" size="18" color="currentColor"></iconsax-icon>
+            </button>
+          </div>
+        </div>
+
+        <div id="downloadsTrackList" class="downloads-track-list">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+        <div id="downloadsEmptyState" class="downloads-empty-state" style="display: none;">
+          <div class="downloads-empty-icon">
+            <iconsax-icon name="cloud-cross" type="linear" size="44" color="var(--color-text-secondary)"></iconsax-icon>
+          </div>
+          <div class="downloads-empty-title" data-i18n="downloads_empty_title">No downloaded tracks yet</div>
+          <p class="downloads-empty-desc" data-i18n="downloads_empty_desc">
+            Right-click any song while online and choose "Download Track (MP3)" to listen offline anytime.
+          </p>
         </div>
       </div>
 
@@ -1146,6 +1199,7 @@
             <div class="setting-info">
               <span class="setting-title" data-i18n="setting_cookies_title">YouTube Cookies (Anti-Bot Bypass)</span>
               <span class="setting-desc" data-i18n="setting_cookies_desc">Import Netscape cookies.txt to bypass YouTube age gates and IP bot blocks.</span>
+              <span style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; display: block;" data-i18n="setting_cookies_hint">Tip: Export cookies with browser extension 'Get cookies.txt LOCALLY' if YouTube restricts access.</span>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span id="settingCookieStatus" style="font-size: 12px; color: var(--color-text-secondary);">None</span>
@@ -1153,6 +1207,17 @@
               <button class="control-btn" id="settingClearCookieBtn" title="Remove Cookie" style="display: none; padding: 4px;">
                 <iconsax-icon name="trash" type="linear" size="16" color="#EF4444"></iconsax-icon>
               </button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title" data-i18n="setting_ytdlp_title">Audio Engine Companion (yt-dlp)</span>
+              <span class="setting-desc" data-i18n="setting_ytdlp_desc">Enables local offline MP3 downloads and unlimited 1000+ track playlist imports.</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span id="settingYtDlpStatus" style="font-size: 12px; color: var(--color-text-secondary);">Checking...</span>
+              <button class="hero-secondary-btn" id="settingInstallYtDlpBtn" style="padding: 6px 12px; font-size: 12px;" data-i18n="btn_check_engine">Check / Download Engine</button>
             </div>
           </div>
 

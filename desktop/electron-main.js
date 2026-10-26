@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, Menu, Tray, globalShortcut, dialog, net: electronNet } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, Tray, globalShortcut, dialog, net: electronNet, shell } = require('electron');
 const path = require('path');
 const http = require('http');
 const https = require('https');
@@ -32,13 +32,14 @@ app.on('second-instance', () => {
 const APPLE_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
 const IOS_UA = 'com.google.ios.youtube/21.03.3 (iPad7,6; U; CPU iPadOS 17_7_10 like Mac OS X; en-US)';
 
-// Locate yt-dlp binary dynamically across platforms (bundled sidecar, user home, or system PATH)
+// Locate yt-dlp binary dynamically across platforms (bundled sidecar, config dir, user home, or system PATH)
 function findYtDlpBinary() {
   const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
   const candidatePaths = [
     path.join(process.resourcesPath || '', binaryName),
     path.join(process.resourcesPath || '', 'bin', binaryName),
     path.join(__dirname, 'bin', binaryName),
+    path.join(os.homedir(), '.config', 'sorafy', 'bin', binaryName),
     path.join(os.homedir(), '.local', 'bin', binaryName),
     '/usr/local/bin/' + binaryName,
     '/usr/bin/' + binaryName
@@ -52,7 +53,7 @@ function findYtDlpBinary() {
   return binaryName;
 }
 
-const YT_DLP_BIN = findYtDlpBinary();
+let YT_DLP_BIN = findYtDlpBinary();
 
 function getCookieArgs() {
   try {
@@ -228,7 +229,60 @@ const localAudioProxy = http.createServer((req, res) => {
     return res.end(html);
   }
 
-  // 2. High-Performance Audio Stream Relay with full Range & CORS support
+  // 2. Local Audio File Relay (with HTTP 206 Partial Content support for instant offline playback & scrubbing)
+  if (reqUrl.pathname === '/local-file') {
+    const rawPath = reqUrl.searchParams.get('path');
+    if (!rawPath || !fs.existsSync(rawPath)) {
+      res.writeHead(404, { 'Access-Control-Allow-Origin': '*' });
+      return res.end('File not found');
+    }
+    try {
+      const stat = fs.statSync(rawPath);
+      const total = stat.size;
+      const range = req.headers.range;
+
+      const ext = path.extname(rawPath).toLowerCase();
+      const mimeTypes = {
+        '.mp3': 'audio/mpeg',
+        '.m4a': 'audio/mp4',
+        '.opus': 'audio/opus',
+        '.ogg': 'audio/ogg',
+        '.flac': 'audio/flac',
+        '.wav': 'audio/wav'
+      };
+      const contentType = mimeTypes[ext] || 'audio/mpeg';
+
+      if (range) {
+        const parts = range.replace(/bytes=/, "").split("-");
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : total - 1;
+        const chunksize = (end - start) + 1;
+        const fileStream = fs.createReadStream(rawPath, { start, end });
+        res.writeHead(206, {
+          'Content-Range': `bytes ${start}-${end}/${total}`,
+          'Accept-Ranges': 'bytes',
+          'Content-Length': chunksize,
+          'Content-Type': contentType,
+          'Access-Control-Allow-Origin': '*'
+        });
+        fileStream.pipe(res);
+      } else {
+        res.writeHead(200, {
+          'Content-Length': total,
+          'Content-Type': contentType,
+          'Accept-Ranges': 'bytes',
+          'Access-Control-Allow-Origin': '*'
+        });
+        fs.createReadStream(rawPath).pipe(res);
+      }
+      return;
+    } catch (e) {
+      if (!res.headersSent) res.writeHead(500, { 'Access-Control-Allow-Origin': '*' });
+      return res.end('Error reading local audio');
+    }
+  }
+
+  // 3. High-Performance Audio Stream Relay with full Range & CORS support
   const target = reqUrl.searchParams.get('url');
   if (!target) {
     res.writeHead(400);
@@ -2748,6 +2802,168 @@ ipcMain.handle('download-track', async (event, track) => {
   });
 });
 
+// Local Downloaded Music Library Manager
+function getDownloadDirectory() {
+  const downloadDir = path.join(os.homedir(), 'Music', 'SoraFy');
+  if (!fs.existsSync(downloadDir)) {
+    try {
+      fs.mkdirSync(downloadDir, { recursive: true });
+    } catch (_) {}
+  }
+  return downloadDir;
+}
+
+ipcMain.handle('get-downloaded-tracks', async () => {
+  try {
+    const downloadDir = getDownloadDirectory();
+    if (!fs.existsSync(downloadDir)) return [];
+
+    const files = fs.readdirSync(downloadDir);
+    const audioExts = new Set(['.mp3', '.m4a', '.opus', '.ogg', '.flac', '.wav', '.webm']);
+    const tracks = [];
+
+    for (const f of files) {
+      const ext = path.extname(f).toLowerCase();
+      if (!audioExts.has(ext)) continue;
+
+      const fullPath = path.join(downloadDir, f);
+      try {
+        const stat = fs.statSync(fullPath);
+        if (!stat.isFile() || stat.size === 0) continue;
+
+        // Parse artist - title from filename
+        const baseName = path.basename(f, ext);
+        let artist = 'Offline Artist';
+        let title = baseName;
+
+        if (baseName.includes(' - ')) {
+          const parts = baseName.split(' - ');
+          artist = parts[0].trim();
+          title = parts.slice(1).join(' - ').trim();
+        }
+
+        const proxiedStreamUrl = (localProxyPort > 0)
+          ? `http://127.0.0.1:${localProxyPort}/local-file?path=${encodeURIComponent(fullPath)}`
+          : `file://${fullPath}`;
+
+        tracks.push({
+          id: `local_${Buffer.from(f).toString('hex').slice(0, 16)}`,
+          title: title || baseName,
+          artist: artist,
+          album: 'Downloaded Music',
+          artwork_url: 'assets/logo.png',
+          stream_url: proxiedStreamUrl,
+          raw_path: fullPath,
+          filename: f,
+          is_local: true,
+          is_full_stream: true,
+          audio_format: {
+            codec: ext.replace('.', '').toUpperCase(),
+            bitrate_kbps: 320
+          },
+          duration_secs: 0,
+          size_bytes: stat.size,
+          mtime_ms: stat.mtimeMs
+        });
+      } catch (_) {}
+    }
+
+    // Sort by latest downloaded first
+    tracks.sort((a, b) => b.mtime_ms - a.mtime_ms);
+    return tracks;
+  } catch (err) {
+    console.warn('get-downloaded-tracks error:', err);
+    return [];
+  }
+});
+
+ipcMain.handle('delete-downloaded-track', async (_event, filePath) => {
+  try {
+    if (!filePath || !fs.existsSync(filePath)) return { success: false, error: 'File not found' };
+    const downloadDir = getDownloadDirectory();
+    const resolved = path.resolve(filePath);
+    if (!resolved.startsWith(downloadDir)) {
+      return { success: false, error: 'Access denied outside download folder' };
+    }
+    fs.unlinkSync(resolved);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+ipcMain.handle('open-download-folder', async () => {
+  try {
+    const downloadDir = getDownloadDirectory();
+    await shell.openPath(downloadDir);
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: err.message };
+  }
+});
+
+// Audio Engine Companion (yt-dlp) Portability
+ipcMain.handle('check-yt-dlp-status', async () => {
+  return new Promise((resolve) => {
+    execFile(YT_DLP_BIN, ['--version'], { timeout: 4000 }, (err, stdout) => {
+      if (!err && stdout && stdout.trim()) {
+        resolve({
+          installed: true,
+          version: stdout.trim(),
+          path: YT_DLP_BIN
+        });
+      } else {
+        resolve({
+          installed: false,
+          version: null,
+          path: YT_DLP_BIN
+        });
+      }
+    });
+  });
+});
+
+ipcMain.handle('download-yt-dlp-binary', async () => {
+  const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : (process.platform === 'darwin' ? 'yt-dlp_macos' : 'yt-dlp');
+  const targetDir = path.join(os.homedir(), '.config', 'sorafy', 'bin');
+  if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+
+  const destFile = path.join(targetDir, process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
+  const downloadUrl = `https://github.com/yt-dlp/yt-dlp/releases/latest/download/${binaryName}`;
+
+  return new Promise((resolve) => {
+    function fetchWithRedirect(url, redirectCount = 0) {
+      if (redirectCount > 5) return resolve({ success: false, error: 'Too many redirects' });
+      https.get(url, { headers: { 'User-Agent': 'SoraFy-Desktop-Installer' } }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return fetchWithRedirect(res.headers.location, redirectCount + 1);
+        }
+        if (res.statusCode !== 200) {
+          return resolve({ success: false, error: `HTTP ${res.statusCode}` });
+        }
+        const fileStream = fs.createWriteStream(destFile);
+        res.pipe(fileStream);
+        fileStream.on('finish', () => {
+          fileStream.close(() => {
+            try {
+              if (process.platform !== 'win32') {
+                fs.chmodSync(destFile, 0o755);
+              }
+              YT_DLP_BIN = destFile;
+              resolve({ success: true, path: destFile });
+            } catch (e) {
+              resolve({ success: false, error: e.message });
+            }
+          });
+        });
+      }).on('error', (err) => {
+        resolve({ success: false, error: err.message });
+      });
+    }
+    fetchWithRedirect(downloadUrl);
+  });
+});
+
 // IPC Handlers: Data Backup & Restore
 ipcMain.handle('save-backup-file', async (event, data) => {
   try {
@@ -3058,6 +3274,37 @@ app.whenReady().then(() => {
 
   createWindow();
   createTray();
+
+  // Background disk cache auto-cleanup based on quota limit (runs silently 4s after launch)
+  setTimeout(() => {
+    try {
+      const settings = loadAppSettings();
+      const quotaMb = parseInt(settings.cacheQuotaMb || 2048, 10);
+      const maxBytes = quotaMb * 1024 * 1024;
+      if (!fs.existsSync(cacheDir)) return;
+
+      const files = fs.readdirSync(cacheDir).map(file => {
+        const fullPath = path.join(cacheDir, file);
+        try {
+          const stat = fs.statSync(fullPath);
+          return { file, fullPath, size: stat.size, mtime: stat.mtimeMs };
+        } catch (_) { return null; }
+      }).filter(Boolean);
+
+      let totalSize = files.reduce((acc, f) => acc + f.size, 0);
+      if (totalSize > maxBytes) {
+        files.sort((a, b) => a.mtime - b.mtime);
+        for (const f of files) {
+          if (f.file === 'stream_cache.json') continue;
+          try {
+            fs.unlinkSync(f.fullPath);
+            totalSize -= f.size;
+            if (totalSize <= maxBytes * 0.8) break;
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }, 4000);
 
   // Register Global Media Keys for hardware keyboard controls
   try {

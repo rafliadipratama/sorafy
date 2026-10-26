@@ -4644,5 +4644,132 @@ body {
   flex-shrink: 0;
 }
 
+/* =========================================================
+   Offline Action Button & Downloads View Container
+   ========================================================= */
+.offline-action-btn {
+  margin-left: auto;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #FCD34D;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.offline-action-btn:hover {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+.downloads-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 32px 18px 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  flex-wrap: wrap;
+}
+
+.downloads-header-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.downloads-icon-box {
+  width: 56px;
+  height: 56px;
+  background: rgba(0, 229, 153, 0.1);
+  border: 1px solid rgba(0, 229, 153, 0.2);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.downloads-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.downloads-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.downloads-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.downloads-track-list {
+  padding: 16px 32px 48px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.downloads-empty-state {
+  text-align: center;
+  padding: 64px 24px;
+  color: var(--color-text-secondary);
+}
+
+.downloads-empty-icon {
+  margin-bottom: 14px;
+  opacity: 0.6;
+}
+
+.downloads-empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-bottom: 6px;
+}
+
+.downloads-empty-desc {
+  font-size: 13px;
+  max-width: 380px;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* Subtle Stream Buffering Indicator (Clean & Non-Intrusive) */
+.player-buffering-pulse {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.buffering-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #00E599;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
 
 

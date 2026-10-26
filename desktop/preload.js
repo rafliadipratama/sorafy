@@ -26,6 +26,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   clearYouTubeCookie: () => ipcRenderer.invoke('clear-youtube-cookie'),
   getYouTubeCookieStatus: () => ipcRenderer.invoke('get-youtube-cookie-status'),
   checkForUpdates: () => ipcRenderer.invoke('check-for-updates'),
+  getDownloadedTracks: () => ipcRenderer.invoke('get-downloaded-tracks'),
+  deleteDownloadedTrack: (filePath) => ipcRenderer.invoke('delete-downloaded-track', filePath),
+  openDownloadFolder: () => ipcRenderer.invoke('open-download-folder'),
+  checkYtDlpStatus: () => ipcRenderer.invoke('check-yt-dlp-status'),
+  downloadYtDlpBinary: () => ipcRenderer.invoke('download-yt-dlp-binary'),
   savePlaybackSession: (session) => ipcRenderer.invoke('save-playback-session', session),
   loadPlaybackSession: () => ipcRenderer.invoke('load-playback-session'),
   onAppBeforeClose: (callback) => {

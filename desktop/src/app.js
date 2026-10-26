@@ -676,6 +676,18 @@ const I18N_DICTIONARY = {
     btn_import_cookies: "Import cookies.txt",
     btn_backup_data: "Backup Data (.json)",
     btn_restore_data: "Restore Data",
+    nav_downloads: "Downloads",
+    downloads_title: "Downloaded Music",
+    downloads_empty_title: "No downloaded tracks yet",
+    downloads_empty_desc: "Right-click any song while online and choose 'Download Track (MP3)' to listen offline anytime.",
+    btn_open_folder: "Open Folder",
+    btn_view_downloads: "View Downloads",
+    btn_play_all: "Play All",
+    btn_shuffle: "Shuffle",
+    setting_ytdlp_title: "Audio Engine Companion (yt-dlp)",
+    setting_ytdlp_desc: "Enables local offline MP3 downloads and unlimited 1000+ track playlist imports.",
+    setting_cookies_hint: "Tip: Export cookies with browser extension 'Get cookies.txt LOCALLY' if YouTube restricts access.",
+    btn_check_engine: "Check / Download Engine",
     search_placeholder: "Search songs, artists, music videos, or playlists...",
     popular_suggestions: "Popular Suggestions:",
     songs: "Songs",
@@ -694,6 +706,7 @@ const I18N_DICTIONARY = {
     nav_explore: "Jelajah",
     nav_plugins: "Plugin & Ekstensi",
     nav_equalizer: "Equalizer DSP",
+    nav_downloads: "Lagu Tersimpan",
     nav_settings: "Pengaturan",
     sidebar_playlists: "Playlist Saya",
     quick_picks: "Pilihan Cepat",
@@ -728,6 +741,30 @@ const I18N_DICTIONARY = {
     setting_discord_rpc: "Discord Rich Presence",
     setting_discord_rpc_desc: "Tampilkan lagu yang sedang diputar di profil Discord Anda.",
     setting_cache_storage: "Penyimpanan & Cache Audio",
+    setting_cache_storage_desc: "Bersihkan cache streaming audio dan gambar album untuk menghemat ruang disk.",
+    setting_cache_quota: "Batas Kuota Cache (LRU)",
+    setting_cache_quota_desc: "Hapus otomatis stream terlama saat cache melebihi batas ini.",
+    setting_cookies_title: "Cookie YouTube (Anti-Bot & Verifikasi)",
+    setting_cookies_desc: "Impor file cookies.txt untuk melewati pembatasan verifikasi atau batas usia YouTube.",
+    setting_cookies_hint: "Tips: Ekspor cookies dengan ekstensi browser 'Get cookies.txt LOCALLY' jika YouTube membatasi akses.",
+    setting_ytdlp_title: "Mesin Pendukung Audio (yt-dlp)",
+    setting_ytdlp_desc: "Mengaktifkan unduhan MP3 offline lokal dan impor playlist tak terbatas 1000+ lagu.",
+    setting_backup_all: "Cadangkan Semua Data",
+    setting_backup_all_desc: "Simpan semua playlist kustom, lagu favorit, riwayat, dan preferensi ke file JSON yang aman.",
+    setting_restore_data: "Pulihkan Data",
+    setting_restore_data_desc: "Pulihkan playlist, lagu favorit, dan riwayat Anda dari file JSON cadangan.",
+    btn_clear_cache: "Bersihkan Cache",
+    btn_import_cookies: "Impor cookies.txt",
+    btn_check_engine: "Periksa / Unduh Mesin",
+    btn_backup_data: "Cadangkan Data (.json)",
+    btn_restore_data: "Pulihkan Data",
+    downloads_title: "Lagu Tersimpan",
+    downloads_empty_title: "Belum ada lagu yang diunduh",
+    downloads_empty_desc: "Klik kanan lagu saat online dan pilih 'Download Track (MP3)' untuk mendengarkan secara offline kapan saja.",
+    btn_open_folder: "Buka Folder",
+    btn_view_downloads: "Lihat Unduhan",
+    btn_play_all: "Putar Semua",
+    btn_shuffle: "Acak",
     setting_cache_storage_desc: "Bersihkan cache streaming audio dan gambar album untuk menghemat ruang disk.",
     setting_cache_quota: "Batas Kuota Cache (LRU)",
     setting_cache_quota_desc: "Hapus otomatis stream terlama saat cache melebihi batas ini.",
@@ -951,9 +988,25 @@ class SoraFyDesktopApp {
     this.exploreViewContainer = document.getElementById("exploreViewContainer");
     this.pluginsViewContainer = document.getElementById("pluginsViewContainer");
     this.equalizerViewContainer = document.getElementById("equalizerViewContainer");
+    this.downloadsViewContainer = document.getElementById("downloadsViewContainer");
     this.searchResultsContainer = document.getElementById("searchResultsContainer");
     this.artistViewContainer = document.getElementById("artistViewContainer");
     this.playlistViewContainer = document.getElementById("playlistViewContainer");
+
+    // Downloads View Elements
+    this.downloadsSubtitle = document.getElementById("downloadsSubtitle");
+    this.downloadsTrackList = document.getElementById("downloadsTrackList");
+    this.downloadsEmptyState = document.getElementById("downloadsEmptyState");
+    this.downloadsPlayAllBtn = document.getElementById("downloadsPlayAllBtn");
+    this.downloadsShuffleBtn = document.getElementById("downloadsShuffleBtn");
+    this.downloadsOpenFolderBtn = document.getElementById("downloadsOpenFolderBtn");
+    this.downloadsRefreshBtn = document.getElementById("downloadsRefreshBtn");
+    this.offlineGoToDownloadsBtn = document.getElementById("offlineGoToDownloadsBtn");
+    this.downloadedTracks = [];
+
+    // Audio Engine Companion (yt-dlp) Settings Elements
+    this.settingYtDlpStatus = document.getElementById("settingYtDlpStatus");
+    this.settingInstallYtDlpBtn = document.getElementById("settingInstallYtDlpBtn");
 
     // Horizontal Swipe Carousels (YouTube Music Style)
     this.quickPicksSection = document.getElementById("quickPicksSection");
@@ -1721,6 +1774,9 @@ class SoraFyDesktopApp {
         }
       });
     }
+
+    // Initialize yt-dlp Audio Engine Companion status in Settings
+    this.checkYtDlpCompanionStatus();
   }
 
   restoreBackupData(data) {
@@ -2428,7 +2484,12 @@ class SoraFyDesktopApp {
       }
     });
     this.audio.addEventListener("ended", () => this.onTrackEnded());
+    this.audio.addEventListener("waiting", () => this.showPlayerBuffering(true));
+    this.audio.addEventListener("canplay", () => this.showPlayerBuffering(false));
+    this.audio.addEventListener("playing", () => this.showPlayerBuffering(false));
+
     this.audio.addEventListener("play", () => {
+      this.showPlayerBuffering(false);
       if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
         if (this.screenPlayerNativeVideo.paused) {
           this.screenPlayerNativeVideo.play().catch(() => {});
@@ -2609,6 +2670,52 @@ class SoraFyDesktopApp {
         this.virtualizerAmount = val;
         this.virtualizerVal.textContent = `${val}%`;
       });
+    }
+
+    // Downloads View & Portability Listeners
+    if (this.downloadsPlayAllBtn) {
+      this.downloadsPlayAllBtn.addEventListener("click", () => {
+        if (this.downloadedTracks && this.downloadedTracks.length > 0) {
+          this.tracks = [...this.downloadedTracks];
+          this.loadTrack(0, true);
+        } else {
+          this.showToast(this.currentLanguage === "id" ? "Tidak ada lagu tersimpan" : "No downloaded tracks");
+        }
+      });
+    }
+
+    if (this.downloadsShuffleBtn) {
+      this.downloadsShuffleBtn.addEventListener("click", () => {
+        if (this.downloadedTracks && this.downloadedTracks.length > 0) {
+          this.tracks = [...this.downloadedTracks];
+          this.isShuffled = true;
+          if (this.shuffleBtn) this.shuffleBtn.classList.add("active");
+          const randIdx = Math.floor(Math.random() * this.tracks.length);
+          this.loadTrack(randIdx, true);
+        } else {
+          this.showToast(this.currentLanguage === "id" ? "Tidak ada lagu tersimpan" : "No downloaded tracks");
+        }
+      });
+    }
+
+    if (this.downloadsOpenFolderBtn) {
+      this.downloadsOpenFolderBtn.addEventListener("click", async () => {
+        if (window.electronAPI && typeof window.electronAPI.openDownloadFolder === "function") {
+          await window.electronAPI.openDownloadFolder();
+        }
+      });
+    }
+
+    if (this.downloadsRefreshBtn) {
+      this.downloadsRefreshBtn.addEventListener("click", () => this.loadDownloadedTracksView());
+    }
+
+    if (this.offlineGoToDownloadsBtn) {
+      this.offlineGoToDownloadsBtn.addEventListener("click", () => this.switchView("downloads"));
+    }
+
+    if (this.settingInstallYtDlpBtn) {
+      this.settingInstallYtDlpBtn.addEventListener("click", () => this.installYtDlpCompanion());
     }
 
     // Comprehensive Native Keyboard Shortcuts
@@ -7138,6 +7245,12 @@ class SoraFyDesktopApp {
     if (this.equalizerViewContainer) {
       this.equalizerViewContainer.style.display = (viewName === "equalizer") ? "block" : "none";
     }
+    if (this.downloadsViewContainer) {
+      this.downloadsViewContainer.style.display = (viewName === "downloads") ? "block" : "none";
+      if (viewName === "downloads") {
+        this.loadDownloadedTracksView();
+      }
+    }
     if (this.searchResultsContainer) {
       this.searchResultsContainer.style.display = (viewName === "search_results") ? "block" : "none";
     }
@@ -8217,12 +8330,178 @@ class SoraFyDesktopApp {
       const res = await window.electronAPI.downloadTrack(track);
       if (res && res.success) {
         this.showToast(`Successfully downloaded: ${res.filename}`);
+        if (this.currentView === "downloads") {
+          this.loadDownloadedTracksView();
+        }
       } else {
         this.showToast(`Download failed: ${res?.error || 'Audio stream unavailable'}`);
       }
     } catch (err) {
       console.error("Download error:", err);
       this.showToast(`Download failed: ${err.message}`);
+    }
+  }
+
+  // =========================================================
+  // Local Downloaded Music Library & Portability Engine
+  // =========================================================
+  async loadDownloadedTracksView() {
+    if (!this.downloadsTrackList) return;
+    this.downloadsTrackList.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--color-text-secondary); font-size: 13px;">${this.currentLanguage === 'id' ? 'Memuat lagu tersimpan...' : 'Loading downloaded tracks...'}</div>`;
+
+    if (!window.electronAPI || typeof window.electronAPI.getDownloadedTracks !== 'function') {
+      this.downloadsTrackList.innerHTML = `<div style="text-align: center; padding: 40px; color: var(--color-text-secondary); font-size: 13px;">Local downloads are supported on SoraFy desktop app.</div>`;
+      return;
+    }
+
+    try {
+      const tracks = await window.electronAPI.getDownloadedTracks();
+      this.downloadedTracks = Array.isArray(tracks) ? tracks : [];
+
+      const count = this.downloadedTracks.length;
+      const totalBytes = this.downloadedTracks.reduce((sum, t) => sum + (t.size_bytes || 0), 0);
+      const mbStr = (totalBytes / (1024 * 1024)).toFixed(1);
+
+      if (this.downloadsSubtitle) {
+        if (this.currentLanguage === 'id') {
+          this.downloadsSubtitle.textContent = `${count} lagu tersimpan di ~/Music/SoraFy • ${mbStr} MB ruang disk`;
+        } else {
+          this.downloadsSubtitle.textContent = `${count} tracks stored locally in ~/Music/SoraFy • ${mbStr} MB disk space`;
+        }
+      }
+
+      if (count === 0) {
+        this.downloadsTrackList.innerHTML = "";
+        if (this.downloadsEmptyState) this.downloadsEmptyState.style.display = "block";
+        return;
+      }
+
+      if (this.downloadsEmptyState) this.downloadsEmptyState.style.display = "none";
+      this.downloadsTrackList.innerHTML = "";
+
+      this.downloadedTracks.forEach((track, idx) => {
+        const isCurrentActive = this.tracks[this.currentTrackIndex]?.id === track.id;
+        const row = document.createElement("div");
+        row.className = `track-row ${isCurrentActive ? 'active' : ''}`;
+        row.id = `download_row_${track.id}`;
+
+        const sizeStr = track.size_bytes ? `${(track.size_bytes / (1024 * 1024)).toFixed(1)} MB` : '';
+        const codecBadge = track.audio_format?.codec || 'MP3';
+
+        row.innerHTML = `
+          <div class="track-row-num" style="display: flex; align-items: center; justify-content: center; width: 28px;">
+            <span class="num-text">${idx + 1}</span>
+            <iconsax-icon class="play-icon" name="play" type="bold" size="14" color="#00E599"></iconsax-icon>
+          </div>
+          <div class="track-row-art-box" style="position: relative; width: 42px; height: 42px; border-radius: 8px; overflow: hidden; background: #181D24; display: flex; align-items: center; justify-content: center;">
+            <iconsax-icon name="music" type="bold" size="20" color="#00E599"></iconsax-icon>
+          </div>
+          <div class="track-row-info" style="flex: 1; min-width: 0;">
+            <div class="track-row-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 14px;">${this.escapeHtml(track.title)}</div>
+            <div class="track-row-artist" style="font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(track.artist)} • <span style="font-size: 11px; padding: 1px 4px; border-radius: 4px; background: rgba(255,255,255,0.06);">${codecBadge}</span></div>
+          </div>
+          <div style="font-size: 12px; color: var(--color-text-secondary); min-width: 60px; text-align: right; margin-right: 12px;">${sizeStr}</div>
+          <div class="track-row-actions" style="display: flex; align-items: center; gap: 6px;">
+            <button class="control-btn delete-download-btn" title="Delete from disk" style="padding: 6px; color: var(--color-text-secondary);">
+              <iconsax-icon name="trash" type="linear" size="16" color="#EF4444"></iconsax-icon>
+            </button>
+          </div>
+        `;
+
+        row.addEventListener("click", (e) => {
+          if (e.target.closest(".delete-download-btn")) return;
+          this.tracks = [...this.downloadedTracks];
+          this.loadTrack(idx, true);
+        });
+
+        const deleteBtn = row.querySelector(".delete-download-btn");
+        if (deleteBtn) {
+          deleteBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            const confirmMsg = this.currentLanguage === 'id' 
+              ? `Hapus "${track.title}" dari penyimpanan lokal?`
+              : `Delete "${track.title}" from your disk?`;
+            if (confirm(confirmMsg)) {
+              if (window.electronAPI && typeof window.electronAPI.deleteDownloadedTrack === 'function') {
+                const delRes = await window.electronAPI.deleteDownloadedTrack(track.raw_path);
+                if (delRes && delRes.success) {
+                  this.showToast(this.currentLanguage === 'id' ? "Lagu dihapus dari disk" : "Track deleted from disk");
+                  this.loadDownloadedTracksView();
+                } else {
+                  this.showToast(`Failed: ${delRes?.error || 'Could not delete'}`);
+                }
+              }
+            }
+          });
+        }
+
+        this.downloadsTrackList.appendChild(row);
+      });
+    } catch (err) {
+      console.warn("loadDownloadedTracksView error:", err);
+      this.downloadsTrackList.innerHTML = `<div style="text-align: center; padding: 40px; color: #EF4444; font-size: 13px;">Error reading local library: ${this.escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  async checkYtDlpCompanionStatus() {
+    if (!this.settingYtDlpStatus || !window.electronAPI || typeof window.electronAPI.checkYtDlpStatus !== 'function') return;
+    this.settingYtDlpStatus.textContent = "Checking...";
+    try {
+      const res = await window.electronAPI.checkYtDlpStatus();
+      if (res && res.installed) {
+        this.settingYtDlpStatus.innerHTML = `<span style="color: #00E599; font-weight: 600;">✓ Installed (${res.version})</span>`;
+        if (this.settingInstallYtDlpBtn) {
+          this.settingInstallYtDlpBtn.textContent = this.currentLanguage === 'id' ? "Perbarui Mesin" : "Update Engine";
+        }
+      } else {
+        this.settingYtDlpStatus.innerHTML = `<span style="color: #EF4444; font-weight: 600;">✗ Not Installed</span>`;
+        if (this.settingInstallYtDlpBtn) {
+          this.settingInstallYtDlpBtn.textContent = this.currentLanguage === 'id' ? "Unduh Mesin (yt-dlp)" : "Download Engine (yt-dlp)";
+        }
+      }
+    } catch (_) {
+      this.settingYtDlpStatus.textContent = "Status Unknown";
+    }
+  }
+
+  async installYtDlpCompanion() {
+    if (!this.settingInstallYtDlpBtn || !window.electronAPI || typeof window.electronAPI.downloadYtDlpBinary !== 'function') return;
+    this.settingInstallYtDlpBtn.disabled = true;
+    this.settingInstallYtDlpBtn.textContent = this.currentLanguage === 'id' ? "Mengunduh mesin..." : "Downloading engine...";
+    if (this.settingYtDlpStatus) this.settingYtDlpStatus.textContent = "Downloading latest standalone binary...";
+
+    try {
+      const res = await window.electronAPI.downloadYtDlpBinary();
+      if (res && res.success) {
+        this.showToast(this.currentLanguage === 'id' ? "Mesin audio pendukung berhasil diinstal!" : "Audio engine companion installed successfully!");
+        await this.checkYtDlpCompanionStatus();
+      } else {
+        this.showToast(`Installation failed: ${res?.error || 'Network error'}`);
+        await this.checkYtDlpCompanionStatus();
+      }
+    } catch (err) {
+      this.showToast(`Error: ${err.message}`);
+      await this.checkYtDlpCompanionStatus();
+    } finally {
+      this.settingInstallYtDlpBtn.disabled = false;
+    }
+  }
+
+  showPlayerBuffering(isBuffering) {
+    let buff = document.getElementById("playerBufferingIndicator");
+    if (isBuffering) {
+      if (!buff) {
+        const artBox = document.getElementById("playerArtworkBox") || (this.playerArtwork ? this.playerArtwork.parentElement : null);
+        if (artBox) {
+          buff = document.createElement("div");
+          buff.id = "playerBufferingIndicator";
+          buff.className = "player-buffering-pulse";
+          buff.innerHTML = `<div class="buffering-spinner"></div>`;
+          artBox.appendChild(buff);
+        }
+      }
+    } else {
+      if (buff) buff.remove();
     }
   }
 

@@ -10,7 +10,7 @@
     "build:mac": "electron-builder --mac",
     "build:dmg": "electron-builder --mac dmg",
     "build:linux": "electron-builder --linux AppImage",
-    "build:linux:all": "electron-builder --linux AppImage deb",
+    "build:linux:all": "electron-builder --linux AppImage deb rpm",
     "build:win": "electron-builder --win nsis",
     "dist": "electron-builder",
     "tauri": "tauri",
@@ -62,13 +62,18 @@
       "icon": "src-tauri/icons/icon.png",
       "executableName": "sorafy",
       "target": [
-        "AppImage"
+        "AppImage",
+        "deb",
+        "rpm"
       ],
       "category": "Audio"
     },
     "deb": {
       "maintainer": "Rafli Adi Pratama <rafliadipratama@gmail.com>",
       "packageCategory": "sound"
+    },
+    "rpm": {
+      "category": "Applications/Multimedia"
     },
     "nsis": {
       "oneClick": false,
