@@ -687,6 +687,7 @@
             <div class="library-section-title-wrap">
               <h2 class="library-section-title" data-i18n="tab_downloads">Downloaded Music</h2>
               <span class="library-badge-count" id="libDownloadsCount">0 tracks</span>
+              <div class="library-subtitle" id="downloadsSubtitle" style="margin-top: 4px; font-size: 13px; color: var(--color-text-secondary);"></div>
             </div>
             <div class="library-section-actions">
               <button class="hero-play-btn" id="downloadsPlayAllBtn">
@@ -898,10 +899,43 @@
           </button>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
+          <!-- Real-time Lyrics Timing Offset Controls -->
+          <div class="lyrics-offset-controls" id="lyricsOffsetControls" title="Adjust lyrics timing" style="display: none;">
+            <button class="lyrics-offset-btn" id="lyricsOffsetMinusBtn" title="Delay lyrics (-0.5s)">-0.5s</button>
+            <span class="lyrics-offset-label" id="lyricsOffsetBadge" title="Click to reset offset">0.0s</span>
+            <button class="lyrics-offset-btn" id="lyricsOffsetPlusBtn" title="Advance lyrics (+0.5s)">+0.5s</button>
+          </div>
+          <!-- In-Document Lyrics Search Toggle -->
+          <button class="control-btn" id="lyricsSearchToggleBtn" style="display: none;" title="Search within lyrics">
+            <iconsax-icon name="search-normal-1" type="linear" size="16" color="currentColor"></iconsax-icon>
+          </button>
           <button class="queue-clear-btn" id="clearQueueBtn" style="display: none;" title="Clear Queue">Clear</button>
           <button class="control-btn" id="closeSideDrawerBtn" title="Close Panel">
             <iconsax-icon name="close-circle" type="linear" size="18" color="currentColor"></iconsax-icon>
           </button>
+        </div>
+      </div>
+
+      <!-- In-Document Notes-App Style Lyrics Search Bar -->
+      <div class="lyrics-search-bar" id="lyricsSearchBar" style="display: none;">
+        <div class="lyrics-search-input-wrap">
+          <iconsax-icon class="lyrics-search-icon" name="search-normal-1" type="linear" size="14" color="currentColor"></iconsax-icon>
+          <input type="text" class="lyrics-search-input" id="lyricsSearchInput" placeholder="Find in lyrics..." autocomplete="off" spellcheck="false">
+          <button id="lyricsClearBtn" class="lyrics-search-clear-btn" style="display: none;" title="Clear search">
+            <iconsax-icon name="close-circle" type="bold" size="12" color="currentColor"></iconsax-icon>
+          </button>
+        </div>
+        <div class="lyrics-search-controls">
+          <span class="lyrics-match-counter" id="lyricsMatchCounter">0 / 0</span>
+          <div class="lyrics-stepper-group">
+            <button class="lyrics-stepper-btn" id="lyricsPrevMatchBtn" disabled title="Previous match (Shift+Enter)">
+              <iconsax-icon name="arrow-up-2" type="linear" size="14" color="currentColor"></iconsax-icon>
+            </button>
+            <button class="lyrics-stepper-btn" id="lyricsNextMatchBtn" disabled title="Next match (Enter)">
+              <iconsax-icon name="arrow-down-1" type="linear" size="14" color="currentColor"></iconsax-icon>
+            </button>
+          </div>
+          <button class="lyrics-search-close-btn" id="lyricsSearchCloseBtn" title="Close search (Esc)">Done</button>
         </div>
       </div>
 
