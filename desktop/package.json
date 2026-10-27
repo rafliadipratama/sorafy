@@ -35,9 +35,10 @@
         "dmg",
         "zip"
       ],
-      "icon": "src/assets/logo.png",
+      "icon": "src-tauri/icons/icon.png",
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "identity": null
     },
     "dmg": {
       "title": "SoraFy",
