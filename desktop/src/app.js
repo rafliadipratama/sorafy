@@ -4692,18 +4692,7 @@ class SoraFyDesktopApp {
     this.ytmCommunityPlaylistsRow.innerHTML = `<div style="padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${this.currentLanguage === 'id' ? "Memuat playlist pilihan..." : "Loading featured playlists..."}</div>`;
 
     try {
-      let playlists = [];
-      if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
-        const query = this.currentLanguage === 'id' ? "Top Hits Indonesia 2024" : "Top Hits 2024";
-        playlists = await window.electronAPI.searchYouTubeMusic(query, 'playlist').catch(() => []);
-      }
-
-      if (playlists && playlists.length > 0) {
-        this.renderCommunityPlaylistsDirect(playlists);
-        return;
-      }
-
-      // Official verified editorial playlists fallback (Indonesia & Global)
+      // Use official editorial playlists fallback immediately with high-res official covers
       const officialFallback = [
         {
           title: "Indonesian Pop Hits 2024",

@@ -1218,7 +1218,7 @@ function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
                       sub_label: itSub
                     });
                   }
-                } else if (itBrowseId.startsWith('VLPL') || itBrowseId.startsWith('VLOLAK') || itPageType === 'MUSIC_PAGE_TYPE_PLAYLIST' || cTitle.includes('playlist') || cTitle.includes('komunitas')) {
+                } else if (itBrowseId.startsWith('VL') || itBrowseId.startsWith('RD') || itPageType === 'MUSIC_PAGE_TYPE_PLAYLIST' || cTitle.includes('playlist') || cTitle.includes('komunitas')) {
                   if (itTitle) {
                     parsedPlaylists.push({
                       id: itBrowseId || ('pl_' + itTitle.toLowerCase().replace(/[^a-z0-9]/g, '_')),
@@ -2098,11 +2098,15 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
       : [];
     const charts = chartsRaw.filter(t => !isIndianMusicOrPlaylist(t.title, t.artist));
 
-    const curatedPlaylists = (officialPlaylists && officialPlaylists.length > 0)
-      ? officialPlaylists
-      : ((homeData && homeData.playlists && homeData.playlists.length > 0)
-          ? homeData.playlists.filter(p => !isIndianMusicOrPlaylist(p.title, p.author))
-          : []);
+    const homePlaylists = (homeData && homeData.playlists && homeData.playlists.length > 0)
+      ? homeData.playlists.filter(p => !isIndianMusicOrPlaylist(p.title, p.author))
+      : [];
+
+    const curatedPlaylists = homePlaylists.length > 0
+      ? homePlaylists
+      : ((exploreData && exploreData.playlists && exploreData.playlists.length > 0)
+          ? exploreData.playlists.filter(p => !isIndianMusicOrPlaylist(p.title, p.author))
+          : ((officialPlaylists && officialPlaylists.length > 0) ? officialPlaylists : []));
 
     const newReleases = (exploreData && exploreData.albums && exploreData.albums.length > 0)
       ? exploreData.albums
