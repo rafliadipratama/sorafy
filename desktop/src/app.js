@@ -962,7 +962,6 @@ class SoraFyDesktopApp {
     this.lyricsLineElements = [];
 
     // Lyrics Timing Offset Calibration Controls
-    this.lyricsOffsetControls = document.getElementById("lyricsOffsetControls");
     this.lyricsOffsetBadge = document.getElementById("lyricsOffsetBadge");
     this.lyricsOffsetMinusBtn = document.getElementById("lyricsOffsetMinusBtn");
     this.lyricsOffsetPlusBtn = document.getElementById("lyricsOffsetPlusBtn");
@@ -7069,16 +7068,12 @@ class SoraFyDesktopApp {
     if (!lyrics || lyrics.length === 0) {
       this.lyricsContainer.innerHTML = `<div style="color: var(--color-text-tertiary); text-align: center; margin-top: 40px;">No synchronized lyrics available for this track.</div>`;
       if (this.lyricsSearchToggleBtn) this.lyricsSearchToggleBtn.style.display = "none";
-      if (this.lyricsOffsetControls) this.lyricsOffsetControls.style.display = "none";
       if (this.isLyricsSearchOpen) this.closeLyricsSearch();
       return;
     }
 
     if (this.lyricsSearchToggleBtn && this.activeSideTab === "lyrics") {
       this.lyricsSearchToggleBtn.style.display = "flex";
-    }
-    if (this.lyricsOffsetControls && this.activeSideTab === "lyrics") {
-      this.lyricsOffsetControls.style.display = "inline-flex";
     }
 
     lyrics.forEach((line, idx) => {
@@ -7576,9 +7571,6 @@ class SoraFyDesktopApp {
       if (this.lyricsSearchToggleBtn) {
         this.lyricsSearchToggleBtn.style.display = (this.currentLyrics && this.currentLyrics.length > 0) ? "flex" : "none";
       }
-      if (this.lyricsOffsetControls) {
-        this.lyricsOffsetControls.style.display = (this.currentLyrics && this.currentLyrics.length > 0) ? "inline-flex" : "none";
-      }
       if (this.isLyricsSearchOpen && this.lyricsSearchBar) {
         this.lyricsSearchBar.classList.add("active");
       }
@@ -7593,9 +7585,6 @@ class SoraFyDesktopApp {
       if (this.toggleQueueBtn) this.toggleQueueBtn.classList.add("active");
       if (this.lyricsSearchToggleBtn) {
         this.lyricsSearchToggleBtn.style.display = "none";
-      }
-      if (this.lyricsOffsetControls) {
-        this.lyricsOffsetControls.style.display = "none";
       }
       if (this.lyricsSearchBar) {
         this.lyricsSearchBar.classList.remove("active");
