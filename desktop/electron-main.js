@@ -1597,7 +1597,7 @@ class DiscordRpcClient {
           this.isConnected = true;
           this.sendHandshake();
           if (this.currentActivity) {
-            this.sendActivity(this.currentActivity);
+            this.setActivity(this.currentActivity);
           }
         });
 
@@ -1663,6 +1663,10 @@ class DiscordRpcClient {
       },
       nonce
     });
+  }
+
+  sendActivity(activity) {
+    this.setActivity(activity);
   }
 
   clearActivity() {
