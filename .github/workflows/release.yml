@@ -48,6 +48,9 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install Linux packaging tools
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
       - name: Build Linux Desktop Packages
         run: |
           cd desktop
@@ -61,6 +64,7 @@ jobs:
           path: |
             desktop/dist/*.AppImage
             desktop/dist/*.deb
+            desktop/dist/*.rpm
 
   # 3. Build Windows Executable (Electron Builder)
   build-windows:
@@ -123,11 +127,17 @@ jobs:
         with:
           path: release-assets
 
+      - name: Organize release assets
+        run: |
+          mkdir -p final-release
+          find release-assets/ -type f -exec cp {} final-release/ \;
+          ls -lh final-release/
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: release-assets/**/*
+          files: final-release/*
           draft: false
           prerelease: false
           generate_release_notes: true

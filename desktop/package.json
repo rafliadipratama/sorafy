@@ -1,7 +1,7 @@
 {
   "name": "sorafy",
   "desktopName": "sorafy",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "SoraFy - High-fidelity cross-platform music streaming (macOS, Linux & Windows)",
   "homepage": "https://github.com/rafliadipratama/sorafy",
   "main": "electron-main.js",
