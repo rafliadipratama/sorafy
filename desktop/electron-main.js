@@ -160,37 +160,36 @@ function resolveYtDlpVideoStream(videoId) {
   });
 }
 
-function postInnerTube(endpoint, payload, ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36') {
+function postInnerTube(endpoint, payload, ua = null) {
   return new Promise((resolve) => {
     try {
       const postData = typeof payload === 'string' ? payload : JSON.stringify(payload);
       const url = endpoint.startsWith('http') ? endpoint : `https://music.youtube.com/youtubei/v1/${endpoint}`;
+      const defaultUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+
       const req = electronNet.request({
         method: 'POST',
-        url: url
+        url
       });
       req.setHeader('Content-Type', 'application/json');
-      req.setHeader('User-Agent', ua);
+      req.setHeader('User-Agent', ua || defaultUa);
+
       req.on('response', (res) => {
-        let b = '';
-        res.on('data', chunk => b += chunk);
+        let body = '';
+        res.on('data', chunk => body += chunk);
         res.on('end', () => {
           try {
-            const json = JSON.parse(b);
-            resolve(json);
-          } catch (e) {
+            resolve(JSON.parse(body));
+          } catch (_) {
             resolve(null);
           }
         });
       });
-      req.on('error', (err) => {
-        console.warn(`InnerTube error (${endpoint}):`, err.message);
-        resolve(null);
-      });
+
+      req.on('error', () => resolve(null));
       req.write(postData);
       req.end();
-    } catch (e) {
-      console.warn(`InnerTube exception (${endpoint}):`, e.message);
+    } catch (_) {
       resolve(null);
     }
   });
@@ -206,7 +205,7 @@ function getVisitorData() {
         url: 'https://music.youtube.com/sw.js_data'
       });
       req.setHeader('User-Agent', APPLE_UA);
-      req.on('response', res => {
+      req.on('response', (res) => {
         let b = '';
         res.on('data', c => b += c);
         res.on('end', () => {
@@ -350,6 +349,7 @@ const localAudioProxy = http.createServer((req, res) => {
     upReq.on('response', (upRes) => {
       const mimeMatch = target.match(/mime=([^&]+)/);
       let detectedMime = upRes.headers['content-type'] || 'audio/mp4';
+      if (Array.isArray(detectedMime)) detectedMime = detectedMime[0];
       if (mimeMatch) {
         detectedMime = decodeURIComponent(mimeMatch[1]);
       } else if (target.includes('.webm') || target.includes('webm')) {
@@ -364,8 +364,10 @@ const localAudioProxy = http.createServer((req, res) => {
         'Content-Type': detectedMime
       };
 
-      if (upRes.headers['content-range']) respHeaders['Content-Range'] = upRes.headers['content-range'];
-      if (upRes.headers['content-length']) respHeaders['Content-Length'] = upRes.headers['content-length'];
+      const cRange = upRes.headers['content-range'];
+      const cLength = upRes.headers['content-length'];
+      if (cRange) respHeaders['Content-Range'] = Array.isArray(cRange) ? cRange[0] : cRange;
+      if (cLength) respHeaders['Content-Length'] = Array.isArray(cLength) ? cLength[0] : cLength;
 
       res.writeHead(upRes.statusCode || 200, respHeaders);
       if (typeof upRes.pipe === 'function') {
@@ -382,7 +384,7 @@ const localAudioProxy = http.createServer((req, res) => {
     });
 
     req.on('close', () => {
-      if (typeof upReq.abort === 'function') upReq.abort();
+      try { (upReq.destroy || upReq.abort).call(upReq); } catch (_) {}
     });
 
     upReq.end();
@@ -676,6 +678,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
 
   const json = await postInnerTube('search', payloadObj);
   if (!json) return [];
+
   try {
     const contents = json.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents;
     const itemsList = [];
@@ -1043,9 +1046,9 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
           }
 
           return itemsList;
-  } catch (e) {
-    return [];
-  }
+        } catch (e) {
+          return [];
+        }
 }
 
 async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
@@ -1064,6 +1067,7 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
 
   const json = await postInnerTube('browse', payloadObj);
   if (!json) return null;
+
   try {
     const twoCol = json.contents?.twoColumnBrowseResultsRenderer;
           const respHeader = twoCol?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicResponsiveHeaderRenderer;
@@ -1261,7 +1265,7 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
         } catch (e) {
           return null;
         }
-      }
+}
 
 async function searchYouTubeMusicStrict(title, artist) {
   const payloadObj = {
@@ -1279,6 +1283,7 @@ async function searchYouTubeMusicStrict(title, artist) {
 
   const json = await postInnerTube('search', payloadObj);
   if (!json) return null;
+
   try {
     const contents = json.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents;
     const shelf = contents?.[0]?.musicShelfRenderer?.contents || [];
@@ -1330,6 +1335,7 @@ async function searchYouTubeId(query) {
 
   const json = await postInnerTube('search', payloadObj);
   if (!json) return null;
+
   try {
     const str = JSON.stringify(json);
     const vids = [...str.matchAll(/"videoId":"([a-zA-Z0-9_-]{11})"/g)].map(m => m[1]);
@@ -1359,6 +1365,7 @@ async function resolveInnerTubeStream(videoId) {
 
   const json = await postInnerTube('https://www.youtube.com/youtubei/v1/player', payloadObj, IOS_UA);
   if (!json) return null;
+
   try {
     const formats = json.streamingData?.adaptiveFormats?.filter(f => f.mimeType?.includes("audio"));
     if (formats && formats.length > 0) {
@@ -1377,9 +1384,8 @@ async function resolveInnerTubeStream(videoId) {
         duration: parseInt(json.videoDetails?.lengthSeconds, 10) || 0,
         isFull: true
       };
-    } else {
-      return null;
     }
+    return null;
   } catch (e) {
     return null;
   }
@@ -1596,6 +1602,10 @@ class DiscordRpcClient {
     this.send(0, { v: 1, client_id: this.clientId });
   }
 
+  sendActivity(activity) {
+    this.setActivity(activity);
+  }
+
   setActivity(activity) {
     this.currentActivity = activity;
     if (!this.isConnected) {
@@ -1611,12 +1621,6 @@ class DiscordRpcClient {
       },
       nonce
     });
-  }
-
-  sendActivity(activity) {
-    if (typeof this.setActivity === 'function') {
-      this.setActivity(activity);
-    }
   }
 
   clearActivity() {
@@ -1795,6 +1799,7 @@ async function fetchYouTubeMusicLyrics(videoId) {
 
   const json = await postInnerTube('next', payloadObj);
   if (!json) return null;
+
   try {
     const tabs = json.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs;
     const lyricsTab = tabs?.find(t => 
@@ -1819,6 +1824,7 @@ async function fetchYouTubeMusicLyrics(videoId) {
 
     const bJson = await postInnerTube('browse', bPayloadObj);
     if (!bJson) return null;
+
     const desc = bJson.contents?.sectionListRenderer?.contents?.[0]?.musicDescriptionShelfRenderer?.description?.runs;
     if (desc && desc.length) {
       const plainText = desc.map(r => r.text).join('').trim();
@@ -1873,6 +1879,7 @@ async function searchInnerTubePlaylists(query, hl = 'id', gl = 'ID') {
 
   const json = await postInnerTube('search', payloadObj);
   if (!json) return [];
+
   try {
     const contents = json.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents;
     const items = [];
@@ -1926,8 +1933,8 @@ async function fetchOfficialCuratedPlaylists(hl = 'en', gl = 'US') {
   try {
     const isId = hl === 'id' || gl === 'ID';
     const [indonesiaPlaylists, globalPlaylists] = await Promise.all([
-      searchInnerTubePlaylists('Top Hits Indonesia', 'id', 'ID').catch(() => []),
-      searchInnerTubePlaylists("Today's Top Hits Pop", 'en', 'US').catch(() => [])
+      searchInnerTubePlaylists('Top Hits Indonesia 2024', 'id', 'ID').catch(() => []),
+      searchInnerTubePlaylists('Today\'s Top Hits Pop 2024', 'en', 'US').catch(() => [])
     ]);
 
     const combined = [];

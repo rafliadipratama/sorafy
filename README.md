@@ -4,14 +4,13 @@
 
 <img src="shared/assets/logo_monogram.png" alt="SoraFy Logo" width="128" />
 
-### **Aplikasi Streaming Musik Cepat, Elegan, dan Bebas Biaya Langganan untuk Android, Linux, Windows, dan macOS**
+### **Aplikasi Streaming Musik Cepat, Elegan, dan Bebas Biaya Langganan untuk Android, Linux, dan Windows**
 
 [![Release](https://img.shields.io/github/v/release/rafliadipratama/sorafy?color=00e599&style=flat-square)](https://github.com/rafliadipratama/sorafy/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](LICENSE)
 [![Android](https://img.shields.io/badge/Platform-Android_7.0%2B-brightgreen?style=flat-square&logo=android)](https://www.android.com/)
-[![Linux](https://img.shields.io/badge/Platform-Linux_(AppImage%20%7C%20deb%20%7C%20rpm)-FCC624?style=flat-square&logo=linux&logoColor=black)](https://kernel.org/)
+[![Linux](https://img.shields.io/badge/Platform-Linux_(AppImage%20%7C%20deb)-FCC624?style=flat-square&logo=linux&logoColor=black)](https://kernel.org/)
 [![Windows](https://img.shields.io/badge/Platform-Windows_10%2F11-0078D6?style=flat-square&logo=windows)](https://www.microsoft.com/)
-[![macOS](https://img.shields.io/badge/Platform-macOS_(DMG)-000000?style=flat-square&logo=apple)](https://www.apple.com/macos/)
 [![Rust](https://img.shields.io/badge/Rust-1.80%2B-orange?style=flat-square&logo=rust)](https://www.rust-lang.org/)
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1-7F52FF?style=flat-square&logo=kotlin)](https://kotlinlang.org/)
 
@@ -25,9 +24,8 @@
 
 Tersedia untuk:
 - 📱 **Android**: Native Kotlin + Jetpack Compose (Material 3) + AndroidX Media3
-- 🐧 **Linux**: Native Desktop App (AppImage, deb, rpm)
-- 🪟 **Windows**: Native Desktop App (Installer & Portable)
-- 🍏 **macOS**: Native Desktop App (Apple Silicon & Intel DMG)
+- 🐧 **Linux**: Native Desktop App (Rust + Tauri v2)
+- 🪟 **Windows**: Native Desktop App (Rust + Tauri v2)
 
 Dirancang dengan nuansa visual gelap premium: kanvas *Obsidian Void*, kartu *Slate Surface*, serta aksen kembar *Priangan Emerald* & *Electric Lime*.
 
@@ -140,7 +138,7 @@ npm run build:dmg
 
 ## 📥 Unduh Rilis Resmi
 
-Seluruh versi rilis untuk semua platform (Android APK, Linux AppImage/deb/rpm, Windows exe, macOS dmg) dipublikasikan secara terpadu di:
+Seluruh versi rilis untuk semua platform (Android APK, Linux AppImage/deb, Windows exe) dipublikasikan secara terpadu di:
 👉 **[Unduh SoraFy di GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest)**
 
 ---
