@@ -36,9 +36,11 @@ const IOS_UA = 'com.google.ios.youtube/21.03.3 (iPad7,6; U; CPU iPadOS 17_7_10 l
 function findYtDlpBinary() {
   const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
   const candidatePaths = [
-    path.join(process.resourcesPath || '', binaryName),
     path.join(process.resourcesPath || '', 'bin', binaryName),
+    path.join(process.resourcesPath || '', binaryName),
     path.join(__dirname, 'bin', binaryName),
+    path.join(__dirname, '..', 'bin', binaryName),
+    path.join(__dirname, 'bin', process.platform, binaryName),
     path.join(os.homedir(), '.config', 'sorafy', 'bin', binaryName),
     path.join(os.homedir(), '.local', 'bin', binaryName),
     '/usr/local/bin/' + binaryName,
@@ -47,13 +49,29 @@ function findYtDlpBinary() {
 
   for (const p of candidatePaths) {
     try {
-      if (fs.existsSync(p)) return p;
+      if (fs.existsSync(p)) {
+        if (process.platform !== 'win32') {
+          try { fs.chmodSync(p, 0o755); } catch (_) {}
+        }
+        return p;
+      }
     } catch (_) {}
   }
   return binaryName;
 }
 
 let YT_DLP_BIN = findYtDlpBinary();
+
+function getYtDlpBin() {
+  if (YT_DLP_BIN && fs.existsSync(YT_DLP_BIN)) {
+    if (process.platform !== 'win32') {
+      try { fs.chmodSync(YT_DLP_BIN, 0o755); } catch (_) {}
+    }
+    return YT_DLP_BIN;
+  }
+  YT_DLP_BIN = findYtDlpBinary();
+  return YT_DLP_BIN;
+}
 
 function getCookieArgs() {
   try {
@@ -79,7 +97,7 @@ function resolveYtDlpStream(videoId) {
     try {
       const cookieArgs = getCookieArgs();
       execFile(
-        YT_DLP_BIN,
+        getYtDlpBin(),
         [...cookieArgs, '--print', '%(duration)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
         { timeout: 9000 },
         (error, stdout) => {
@@ -132,7 +150,7 @@ function resolveYtDlpVideoStream(videoId) {
   return new Promise((resolve) => {
     try {
       execFile(
-        YT_DLP_BIN,
+        getYtDlpBin(),
         ['-g', `https://www.youtube.com/watch?v=${videoId}`],
         { timeout: 12000 },
         (error, stdout) => {
@@ -2550,7 +2568,7 @@ function fetchYouTubePlaylist(url) {
     // Try yt-dlp first with 3-minute timeout and 100MB buffer for full unlimited extraction of 1000+ tracks
     const cookieArgs = getCookieArgs();
     execFile(
-      YT_DLP_BIN,
+      getYtDlpBin(),
       [...cookieArgs, '--flat-playlist', '-J', normalizedUrl],
       { timeout: 180000, maxBuffer: 100 * 1024 * 1024 },
       async (err, stdout) => {
@@ -2651,7 +2669,7 @@ ipcMain.handle('download-track', async (event, track) => {
 
   return new Promise((resolve) => {
     execFile(
-      YT_DLP_BIN,
+      getYtDlpBin(),
       [
         '-x',
         '--audio-format', 'mp3',
@@ -2801,19 +2819,20 @@ ipcMain.handle('open-download-folder', async () => {
 
 // Audio Engine Companion (yt-dlp) Portability
 ipcMain.handle('check-yt-dlp-status', async () => {
+  const currentBin = getYtDlpBin();
   return new Promise((resolve) => {
-    execFile(YT_DLP_BIN, ['--version'], { timeout: 4000 }, (err, stdout) => {
+    execFile(currentBin, ['--version'], { timeout: 4000 }, (err, stdout) => {
       if (!err && stdout && stdout.trim()) {
         resolve({
           installed: true,
           version: stdout.trim(),
-          path: YT_DLP_BIN
+          path: currentBin
         });
       } else {
         resolve({
           installed: false,
           version: null,
-          path: YT_DLP_BIN
+          path: currentBin
         });
       }
     });

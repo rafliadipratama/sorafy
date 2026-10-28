@@ -48,6 +48,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Download bundled yt-dlp for Linux
+        run: |
+          mkdir -p desktop/bin/linux
+          curl -L --retry 3 -o desktop/bin/linux/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_linux"
+          chmod +x desktop/bin/linux/yt-dlp
+
       - name: Install Linux packaging tools
         run: sudo apt-get update && sudo apt-get install -y rpm
 
@@ -78,6 +84,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Download bundled yt-dlp for Windows
+        shell: bash
+        run: |
+          mkdir -p desktop/bin/win32
+          curl -L --retry 3 -o desktop/bin/win32/yt-dlp.exe "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe"
+
       - name: Build Windows Desktop Packages
         run: |
           cd desktop
@@ -102,6 +114,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Download bundled yt-dlp for macOS
+        run: |
+          mkdir -p desktop/bin/darwin
+          curl -L --retry 3 -o desktop/bin/darwin/yt-dlp "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos"
+          chmod +x desktop/bin/darwin/yt-dlp
 
       - name: Build macOS DMG
         env:

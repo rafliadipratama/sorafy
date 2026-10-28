@@ -38,7 +38,13 @@
       "icon": "src-tauri/icons/icon.png",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "identity": null
+      "identity": null,
+      "extraResources": [
+        {
+          "from": "bin/darwin/yt-dlp",
+          "to": "bin/yt-dlp"
+        }
+      ]
     },
     "dmg": {
       "title": "SoraFy",
@@ -67,7 +73,13 @@
         "deb",
         "rpm"
       ],
-      "category": "Audio"
+      "category": "Audio",
+      "extraResources": [
+        {
+          "from": "bin/linux/yt-dlp",
+          "to": "bin/yt-dlp"
+        }
+      ]
     },
     "deb": {
       "maintainer": "Rafli Adi Pratama <rafliadipratama@gmail.com>",
@@ -88,6 +100,12 @@
       "target": [
         "nsis",
         "portable"
+      ],
+      "extraResources": [
+        {
+          "from": "bin/win32/yt-dlp.exe",
+          "to": "bin/yt-dlp.exe"
+        }
       ]
     }
   },

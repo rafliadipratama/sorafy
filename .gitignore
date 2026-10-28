@@ -23,3 +23,7 @@ node_modules/
 # Electron / Web distribution builds
 dist/
 **/dist/
+
+# Bundled binaries downloaded dynamically during build
+desktop/bin/
+**/desktop/bin/
