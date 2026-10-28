@@ -4918,30 +4918,21 @@ class SoraFyDesktopApp {
 
     this.userPlaylists.forEach(pl => {
       const item = document.createElement("div");
-      item.className = "nav-item";
-      item.style.position = "relative";
-      item.style.display = "flex";
-      item.style.alignItems = "center";
-      item.style.justifyContent = "space-between";
+      item.className = "nav-item playlist-nav-item";
+      item.dataset.playlistId = pl.id;
+      if (this.currentView === "playlist" && this.currentPlaylist && this.currentPlaylist.id === pl.id) {
+        item.classList.add("active");
+      }
 
       item.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
-          <svg viewBox="0 0 24 24" fill="none" stroke-width="2" style="flex-shrink: 0;"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
-          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${this.escapeHtml(pl.title)}</span>
+        <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
+          <iconsax-icon name="music-playlist" type="linear" size="20" color="currentColor" style="flex-shrink: 0;"></iconsax-icon>
+          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${this.escapeHtml(pl.title || pl.name || 'Playlist')}</span>
         </div>
-        <button class="playlist-more-dots-btn" title="Playlist options" style="background: none; border: none; color: var(--color-text-tertiary); padding: 4px 6px; cursor: pointer; border-radius: 4px; display: none;">
+        <button class="playlist-more-dots-btn" title="Playlist options">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg>
         </button>
       `;
-
-      item.addEventListener("mouseenter", () => {
-        const btn = item.querySelector(".playlist-more-dots-btn");
-        if (btn) btn.style.display = "inline-flex";
-      });
-      item.addEventListener("mouseleave", () => {
-        const btn = item.querySelector(".playlist-more-dots-btn");
-        if (btn) btn.style.display = "none";
-      });
 
       const moreBtn = item.querySelector(".playlist-more-dots-btn");
       if (moreBtn) {
@@ -5230,6 +5221,13 @@ class SoraFyDesktopApp {
     if (!playlist) return;
     this.currentPlaylist = playlist;
     this.switchView("playlist");
+
+    if (this.userPlaylistsNav) {
+      const plItems = this.userPlaylistsNav.querySelectorAll(".playlist-nav-item");
+      plItems.forEach(el => {
+        el.classList.toggle("active", el.dataset.playlistId === playlist.id);
+      });
+    }
 
     const isUserPl = this.userPlaylists.some(p => p.id === playlist.id);
     if (this.playlistDeleteBtn) this.playlistDeleteBtn.style.display = isUserPl ? "inline-flex" : "none";
@@ -7391,6 +7389,11 @@ class SoraFyDesktopApp {
     this.navItems.forEach(item => {
       item.classList.toggle("active", item.dataset.view === viewName);
     });
+
+    if (viewName !== "playlist" && this.userPlaylistsNav) {
+      const plItems = this.userPlaylistsNav.querySelectorAll(".playlist-nav-item");
+      plItems.forEach(el => el.classList.remove("active"));
+    }
 
     if (this.contentHeader) {
       this.contentHeader.style.display = (viewName === "player") ? "none" : "flex";

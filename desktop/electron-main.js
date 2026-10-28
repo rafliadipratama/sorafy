@@ -2223,7 +2223,33 @@ function captureWebBearerToken(targetUrl, hostFilter, timeoutMs = 8000) {
   });
 }
 
-function fetchSpotifyEmbedFallback(type, id) {
+function fetchSpotifyOembedMeta(url) {
+  return new Promise((resolve) => {
+    try {
+      const cleanUrl = url.split('?')[0];
+      const oembedUrl = `https://open.spotify.com/oembed?url=${encodeURIComponent(cleanUrl)}`;
+      https.get(oembedUrl, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36' }
+      }, res => {
+        let d = '';
+        res.on('data', c => d += c);
+        res.on('end', () => {
+          try {
+            const j = JSON.parse(d);
+            const title = (j.title || '').trim();
+            const cover = j.thumbnail_url || '';
+            if (title) return resolve({ title, cover });
+          } catch (_) {}
+          resolve(null);
+        });
+      }).on('error', () => resolve(null));
+    } catch (_) {
+      resolve(null);
+    }
+  });
+}
+
+function fetchSpotifyEmbedFallback(type, id, oembedMeta = null) {
   return new Promise((resolve, reject) => {
     const embedUrl = `https://open.spotify.com/embed/${type}/${id}`;
     https.get(embedUrl, {
@@ -2240,8 +2266,8 @@ function fetchSpotifyEmbedFallback(type, id) {
           const json = JSON.parse(matchScript[1]);
           const entity = json.props?.pageProps?.state?.data?.entity;
           if (!entity) return reject(new Error('Spotify playlist not found or private.'));
-          const title = entity.name || (type === 'album' ? 'Spotify Album' : 'Spotify Playlist');
-          const playlistCover = entity.coverArt?.sources?.[0]?.url || '';
+          const title = (entity.name || entity.title || oembedMeta?.title || '').trim() || (type === 'album' ? 'Spotify Album' : 'Spotify Playlist');
+          const playlistCover = entity.coverArt?.sources?.[0]?.url || oembedMeta?.cover || '';
           const rawTracks = entity.trackList || [];
 
           const chunkSize = 20;
@@ -2289,6 +2315,9 @@ async function fetchSpotifyPlaylistOrAlbum(url) {
   if (!match) throw new Error('Invalid Spotify link format. Please paste a public playlist or album URL.');
   const [, type, id] = match;
 
+  // Pre-fetch official metadata (title, cover) via Spotify oEmbed
+  const oembedMeta = await fetchSpotifyOembedMeta(url);
+
   // 1. Try GraphQL Pathfinder extraction for unlimited full playlist tracks (supporting 1000+ songs)
   if (type === 'playlist') {
     try {
@@ -2298,8 +2327,8 @@ async function fetchSpotifyPlaylistOrAlbum(url) {
         const LIMIT = 100;
         let allTracks = [];
         let totalCount = 0;
-        let playlistTitle = '';
-        let playlistCover = '';
+        let playlistTitle = oembedMeta?.title || '';
+        let playlistCover = oembedMeta?.cover || '';
 
         while (true) {
           const body = JSON.stringify({
@@ -2334,10 +2363,10 @@ async function fetchSpotifyPlaylistOrAlbum(url) {
           const content = plData?.content;
           if (!content) break;
 
-          if (!playlistTitle) {
-            playlistTitle = plData?.name || plData?.identityTrait?.name || 'Spotify Playlist';
+          if (!playlistTitle && (plData?.name || plData?.identityTrait?.name)) {
+            playlistTitle = (plData?.name || plData?.identityTrait?.name || '').trim();
           }
-          if (!playlistCover) {
+          if (!playlistCover && (plData?.images?.items?.[0]?.sources?.[0]?.url || plData?.visualIdentityTrait?.squareCoverImage?.image?.data?.sources?.[0]?.url)) {
             playlistCover = plData?.images?.items?.[0]?.sources?.[0]?.url
               || plData?.visualIdentityTrait?.squareCoverImage?.image?.data?.sources?.[0]?.url || '';
           }
@@ -2381,8 +2410,8 @@ async function fetchSpotifyPlaylistOrAlbum(url) {
 
         if (allTracks.length > 0) {
           return {
-            title: playlistTitle || 'Spotify Playlist',
-            artwork_url: playlistCover || allTracks[0]?.artwork_url || '',
+            title: playlistTitle || oembedMeta?.title || 'Spotify Playlist',
+            artwork_url: playlistCover || oembedMeta?.cover || allTracks[0]?.artwork_url || '',
             provider: 'Spotify',
             type,
             tracks: allTracks
@@ -2395,7 +2424,7 @@ async function fetchSpotifyPlaylistOrAlbum(url) {
   }
 
   // Fallback: Embed __NEXT_DATA__
-  return fetchSpotifyEmbedFallback(type, id);
+  return fetchSpotifyEmbedFallback(type, id, oembedMeta);
 }
 
 function fetchAppleMusicHtmlFallback(url) {

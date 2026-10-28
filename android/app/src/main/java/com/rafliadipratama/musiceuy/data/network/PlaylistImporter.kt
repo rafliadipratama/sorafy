@@ -153,7 +153,7 @@ class PlaylistImporter(
                 .getJSONObject("data")
                 .getJSONObject("entity")
 
-            val rawTitle = entity.optString("title", "Playlist Spotify")
+            val rawTitle = entity.optString("title").ifBlank { entity.optString("name") }.ifBlank { "Playlist Spotify" }
             val playlistTitle = customName?.ifBlank { null } ?: rawTitle
 
             val visualIdentity = entity.optJSONObject("visualIdentity")

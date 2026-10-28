@@ -1848,6 +1848,82 @@ body {
   border-color: rgba(0, 229, 153, 0.3);
 }
 
+/* Sidebar User Playlists Navigation & Hover Styling */
+#userPlaylistsNav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 430px);
+  padding-right: 2px;
+}
+
+#userPlaylistsNav::-webkit-scrollbar {
+  width: 4px;
+}
+
+#userPlaylistsNav::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+#userPlaylistsNav::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 229, 153, 0.3);
+}
+
+.nav-item.playlist-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
+}
+
+.nav-item.playlist-nav-item:hover {
+  color: var(--color-text-primary);
+  background-color: rgba(0, 229, 153, 0.08);
+}
+
+.nav-item.playlist-nav-item.active {
+  color: var(--color-brand-primary);
+  background-color: rgba(0, 229, 153, 0.12);
+  border-left: 3px solid var(--color-brand-primary);
+  font-weight: 700;
+}
+
+.nav-item.playlist-nav-item .playlist-more-dots-btn {
+  opacity: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  padding: 4px 6px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.nav-item.playlist-nav-item:hover .playlist-more-dots-btn {
+  opacity: 1;
+}
+
+.nav-item.playlist-nav-item .playlist-more-dots-btn:hover {
+  color: var(--color-brand-primary);
+  background-color: rgba(0, 229, 153, 0.18);
+}
+
 /* =========================================================
    Search Column, Suggestion Picks & Filter Tabs
    ========================================================= */
