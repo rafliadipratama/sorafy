@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#07080A">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>SoraFy Jam • Remote Control</title>
+  <style>
+    :root {
+      --bg-base: #07080A;
+      --bg-surface: #10141D;
+      --bg-card: rgba(255, 255, 255, 0.04);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --brand-primary: #00E599;
+      --brand-glow: rgba(0, 229, 153, 0.35);
+      --text-main: #FFFFFF;
+      --text-muted: #8F9CAE;
+      --text-subtle: #576579;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      padding-bottom: 70px;
+    }
+
+    /* Top Status Bar */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 18px;
+      background: rgba(7, 8, 10, 0.85);
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .brand-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand-title span {
+      color: var(--brand-primary);
+    }
+
+    .connection-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+    }
+
+    .connection-badge.connected {
+      background: rgba(0, 229, 153, 0.12);
+      color: var(--brand-primary);
+      border: 1px solid rgba(0, 229, 153, 0.25);
+    }
+
+    .connection-badge.disconnected {
+      background: rgba(255, 92, 92, 0.12);
+      color: #FF5C5C;
+      border: 1px solid rgba(255, 92, 92, 0.25);
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Main Container Views */
+    .view-panel {
+      display: none;
+      flex: 1;
+      flex-direction: column;
+      padding: 16px;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .view-panel.active {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ================= NOW PLAYING VIEW ================= */
+    .now-playing-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 8px 4px 20px 4px;
+    }
+
+    .artwork-wrapper {
+      width: 78vw;
+      max-width: 320px;
+      aspect-ratio: 1/1;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6), 0 0 24px rgba(0, 229, 153, 0.12);
+      margin-bottom: 24px;
+      background: var(--bg-surface);
+      position: relative;
+    }
+
+    .artwork-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .track-meta {
+      width: 100%;
+      max-width: 320px;
+      text-align: left;
+      margin-bottom: 20px;
+    }
+
+    .track-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+
+    .track-artist {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Seekbar */
+    .seek-container {
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 24px;
+    }
+
+    .seek-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .seek-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      box-shadow: 0 0 8px var(--brand-glow);
+      cursor: pointer;
+    }
+
+    .seek-times {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Controls */
+    .controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 320px;
+      margin-bottom: 24px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      border-radius: 50%;
+      transition: all 0.15s ease;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.9);
+    }
+
+    .icon-btn.active {
+      color: var(--brand-primary);
+    }
+
+    .play-btn {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--brand-primary);
+      color: #000000;
+      box-shadow: 0 6px 20px var(--brand-glow);
+    }
+
+    .play-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Volume Row */
+    .volume-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+      padding: 4px;
+    }
+
+    .volume-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      outline: none;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      cursor: pointer;
+    }
+
+    /* ================= LYRICS VIEW ================= */
+    .lyrics-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      text-align: center;
+    }
+
+    .lyric-line {
+      font-size: 18px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: rgba(255, 255, 255, 0.35);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+    }
+
+    .lyric-line.active {
+      color: var(--brand-primary);
+      font-size: 22px;
+      font-weight: 700;
+      transform: scale(1.04);
+      text-shadow: 0 0 16px var(--brand-glow);
+    }
+
+    /* ================= QUEUE VIEW ================= */
+    .queue-header {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .queue-item.is-current {
+      border-color: rgba(0, 229, 153, 0.35);
+      background: rgba(0, 229, 153, 0.08);
+    }
+
+    .queue-art {
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: var(--bg-surface);
+    }
+
+    .queue-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .queue-title {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .queue-artist {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
+    }
+
+    /* ================= SEARCH VIEW ================= */
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      margin-bottom: 16px;
+    }
+
+    .search-box input {
+      background: none;
+      border: none;
+      outline: none;
+      color: #FFFFFF;
+      font-size: 15px;
+      width: 100%;
+      margin-left: 10px;
+    }
+
+    .search-results {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .search-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius-md);
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .search-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .btn-action-small {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-subtle);
+      color: #FFFFFF;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .btn-action-small.primary {
+      background: var(--brand-primary);
+      color: #000000;
+      border-color: var(--brand-primary);
+    }
+
+    /* Bottom Navigation Bar */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background: rgba(7, 8, 10, 0.92);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      z-index: 100;
+    }
+
+    .nav-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.15s ease;
+      padding: 6px 14px;
+    }
+
+    .nav-btn.active {
+      color: var(--brand-primary);
+    }
+
+    .nav-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke-width: 2;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="brand-title">
+      SoraFy <span>Jam</span>
+    </div>
+    <div class="connection-badge" id="connBadge">
+      <span class="dot"></span>
+      <span id="connText">Menghubungkan...</span>
+    </div>
+  </header>
+
+  <!-- Panel 1: Now Playing -->
+  <main class="view-panel active" id="viewPlayer">
+    <div class="now-playing-container">
+      <div class="artwork-wrapper">
+        <img id="playerArt" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%231E2430'%3E%3Crect width='24' height='24'/%3E%3C/svg%3E" alt="Album Art">
+      </div>
+
+      <div class="track-meta">
+        <div class="track-title" id="playerTitle">Belum ada lagu</div>
+        <div class="track-artist" id="playerArtist">Pilih musik di desktop</div>
+      </div>
+
+      <div class="seek-container">
+        <input type="range" class="seek-slider" id="seekSlider" min="0" max="100" value="0" step="0.5">
+        <div class="seek-times">
+          <span id="currentTime">0:00</span>
+          <span id="durationTime">0:00</span>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <button class="icon-btn" id="shuffleBtn" title="Shuffle">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 3h5v5M4 20L21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>
+        </button>
+        <button class="icon-btn" id="prevBtn" title="Previous">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button class="icon-btn play-btn" id="playBtn" title="Play / Pause">
+          <svg id="playIcon" width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <button class="icon-btn" id="nextBtn" title="Next">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/></svg>
+        </button>
+        <button class="icon-btn" id="repeatBtn" title="Repeat">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg>
+        </button>
+      </div>
+
+      <div class="volume-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.02" value="0.85">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+      </div>
+    </div>
+  </main>
+
+  <!-- Panel 2: Lyrics -->
+  <main class="view-panel" id="viewLyrics">
+    <div class="lyrics-scroll" id="lyricsList">
+      <div style="color: var(--text-muted); padding: 40px 10px; font-size: 14px;">Memuat lirik dari desktop...</div>
+    </div>
+  </main>
+
+  <!-- Panel 3: Queue -->
+  <main class="view-panel" id="viewQueue">
+    <div class="queue-header">Antrean Berikutnya (<span id="queueCount">0</span>)</div>
+    <div class="queue-list" id="queueList"></div>
+  </main>
+
+  <!-- Panel 4: Search -->
+  <main class="view-panel" id="viewSearch">
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="jamSearchInput" placeholder="Cari lagu di YouTube Music...">
+    </div>
+    <div class="search-results" id="searchResults"></div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" data-view="viewPlayer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg>
+      <span>Player</span>
+    </button>
+    <button class="nav-btn" data-view="viewLyrics">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+      <span>Lirik</span>
+    </button>
+    <button class="nav-btn" data-view="viewQueue">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <span>Antrean</span>
+    </button>
+    <button class="nav-btn" data-view="viewSearch">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <span>Cari</span>
+    </button>
+  </nav>
+
+  <script>
+    // State Store
+    let currentState = {
+      isPlaying: false,
+      currentTime: 0,
+      duration: 0,
+      currentTrack: null,
+      queue: [],
+      lyrics: [],
+      volume: 0.85,
+      isShuffle: false,
+      repeatMode: 'off'
+    };
+
+    let isSeeking = false;
+    let eventSource = null;
+
+    // Elements
+    const connBadge = document.getElementById("connBadge");
+    const connText = document.getElementById("connText");
+    const playerArt = document.getElementById("playerArt");
+    const playerTitle = document.getElementById("playerTitle");
+    const playerArtist = document.getElementById("playerArtist");
+    const seekSlider = document.getElementById("seekSlider");
+    const currentTimeEl = document.getElementById("currentTime");
+    const durationTimeEl = document.getElementById("durationTime");
+    const playBtn = document.getElementById("playBtn");
+    const playIcon = document.getElementById("playIcon");
+    const prevBtn = document.getElementById("prevBtn");
+    const nextBtn = document.getElementById("nextBtn");
+    const shuffleBtn = document.getElementById("shuffleBtn");
+    const repeatBtn = document.getElementById("repeatBtn");
+    const volumeSlider = document.getElementById("volumeSlider");
+    const lyricsList = document.getElementById("lyricsList");
+    const queueList = document.getElementById("queueList");
+    const queueCount = document.getElementById("queueCount");
+    const jamSearchInput = document.getElementById("jamSearchInput");
+    const searchResults = document.getElementById("searchResults");
+
+    function formatTime(secs) {
+      if (!secs || isNaN(secs)) return "0:00";
+      const m = Math.floor(secs / 60);
+      const s = Math.floor(secs % 60);
+      return `${m}:${s < 10 ? '0' : ''}${s}`;
+    }
+
+    async function sendAction(action, value = null, track = null) {
+      try {
+        await fetch("/api/action", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action, value, track })
+        });
+      } catch (err) {
+        console.warn("Failed to send action:", err);
+      }
+    }
+
+    // Connect SSE for Real-time Two-way Sync
+    function initEventStream() {
+      if (eventSource) eventSource.close();
+      eventSource = new EventSource("/api/events");
+
+      eventSource.onopen = () => {
+        connBadge.className = "connection-badge connected";
+        connText.textContent = "Terhubung";
+      };
+
+      eventSource.onerror = () => {
+        connBadge.className = "connection-badge disconnected";
+        connText.textContent = "Menyambung...";
+        setTimeout(initEventStream, 3000);
+      };
+
+      eventSource.onmessage = (e) => {
+        try {
+          const data = JSON.parse(e.data);
+          updateUI(data);
+        } catch (_) {}
+      };
+    }
+
+    function updateUI(state) {
+      currentState = { ...currentState, ...state };
+
+      // Update Track Info
+      if (currentState.currentTrack) {
+        playerTitle.textContent = currentState.currentTrack.title || "Unknown Title";
+        playerArtist.textContent = currentState.currentTrack.artist || "Unknown Artist";
+        if (currentState.currentTrack.artwork_url) {
+          playerArt.src = currentState.currentTrack.artwork_url;
+        }
+      }
+
+      // Update Play/Pause Icon
+      if (currentState.isPlaying) {
+        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/>';
+      } else {
+        playIcon.innerHTML = '<polygon points="5 3 19 12 5 21 5 3"/>';
+      }
+
+      // Update Seekbar & Time
+      if (!isSeeking) {
+        const cur = currentState.currentTime || 0;
+        const dur = currentState.duration || (currentState.currentTrack ? currentState.currentTrack.duration_secs : 0) || 0;
+        currentTimeEl.textContent = formatTime(cur);
+        durationTimeEl.textContent = formatTime(dur);
+        seekSlider.value = dur > 0 ? (cur / dur) * 100 : 0;
+      }
+
+      // Update Volume
+      if (typeof currentState.volume === "number") {
+        volumeSlider.value = currentState.volume;
+      }
+
+      // Update Shuffle / Repeat buttons
+      shuffleBtn.classList.toggle("active", Boolean(currentState.isShuffle));
+      repeatBtn.classList.toggle("active", currentState.repeatMode === "one" || currentState.repeatMode === "all");
+
+      // Update Queue
+      renderQueue(currentState.queue || []);
+
+      // Update Lyrics
+      renderLyrics(currentState.lyrics || [], currentState.currentTime || 0);
+    }
+
+    function renderQueue(queue) {
+      queueCount.textContent = queue.length;
+      if (!queue || queue.length === 0) {
+        queueList.innerHTML = `<div style="text-align: center; padding: 32px 10px; color: var(--text-muted); font-size: 13px;">Antrean kosong</div>`;
+        return;
+      }
+
+      queueList.innerHTML = "";
+      queue.forEach((track, idx) => {
+        const item = document.createElement("div");
+        item.className = "queue-item";
+        if (currentState.currentTrack && (track.id === currentState.currentTrack.id || track.title === currentState.currentTrack.title)) {
+          item.classList.add("is-current");
+        }
+
+        item.innerHTML = `
+          <img src="${track.artwork_url || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%231E2430\'%3E%3Crect width=\'24\' height=\'24\'/%3E%3C/svg%3E'}" class="queue-art">
+          <div class="queue-info">
+            <div class="queue-title">${escapeHtml(track.title)}</div>
+            <div class="queue-artist">${escapeHtml(track.artist || '')}</div>
+          </div>
+          <button class="icon-btn" style="color: #FF5C5C; padding: 6px;" title="Hapus">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        `;
+
+        item.addEventListener("click", (e) => {
+          if (!e.target.closest("button")) {
+            sendAction("play-index", idx);
+          }
+        });
+
+        const delBtn = item.querySelector("button");
+        if (delBtn) {
+          delBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            sendAction("remove-index", idx);
+          });
+        }
+
+        queueList.appendChild(item);
+      });
+    }
+
+    function renderLyrics(lyrics, currentTimeSec) {
+      if (!lyrics || lyrics.length === 0) {
+        lyricsList.innerHTML = `<div style="color: var(--text-muted); padding: 40px 10px; font-size: 14px;">Tidak ada lirik tersedia untuk lagu ini</div>`;
+        return;
+      }
+
+      const curMs = currentTimeSec * 1000;
+      let activeIndex = -1;
+
+      for (let i = 0; i < lyrics.length; i++) {
+        if (curMs >= lyrics[i].time) {
+          activeIndex = i;
+        } else {
+          break;
+        }
+      }
+
+      lyricsList.innerHTML = "";
+      lyrics.forEach((line, i) => {
+        const div = document.createElement("div");
+        div.className = "lyric-line";
+        if (i === activeIndex) div.classList.add("active");
+        div.textContent = line.text;
+        div.addEventListener("click", () => {
+          sendAction("seek", line.time / 1000);
+        });
+        lyricsList.appendChild(div);
+      });
+
+      // Smooth auto-scroll active lyric into view
+      const activeEl = lyricsList.querySelector(".lyric-line.active");
+      if (activeEl) {
+        activeEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // Transport Listeners
+    playBtn.addEventListener("click", () => sendAction("toggle-play"));
+    prevBtn.addEventListener("click", () => sendAction("prev"));
+    nextBtn.addEventListener("click", () => sendAction("next"));
+    shuffleBtn.addEventListener("click", () => sendAction("toggle-shuffle"));
+    repeatBtn.addEventListener("click", () => sendAction("toggle-repeat"));
+
+    // Seekbar Interaction
+    seekSlider.addEventListener("input", (e) => {
+      isSeeking = true;
+      const pct = parseFloat(e.target.value);
+      const dur = currentState.duration || 0;
+      currentTimeEl.textContent = formatTime((pct / 100) * dur);
+    });
+
+    seekSlider.addEventListener("change", (e) => {
+      isSeeking = false;
+      const pct = parseFloat(e.target.value);
+      const dur = currentState.duration || 0;
+      const seekSec = (pct / 100) * dur;
+      sendAction("seek", seekSec);
+    });
+
+    volumeSlider.addEventListener("input", (e) => {
+      const vol = parseFloat(e.target.value);
+      sendAction("volume", vol);
+    });
+
+    // Navigation Switcher
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+        btn.classList.add("active");
+        const targetView = document.getElementById(btn.dataset.view);
+        if (targetView) targetView.classList.add("active");
+      });
+    });
+
+    // Mobile Search Engine
+    let searchTimeout = null;
+    jamSearchInput.addEventListener("input", (e) => {
+      const q = e.target.value.trim();
+      clearTimeout(searchTimeout);
+      if (!q) {
+        searchResults.innerHTML = "";
+        return;
+      }
+      searchTimeout = setTimeout(async () => {
+        searchResults.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">Mencari...</div>`;
+        try {
+          const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+          const items = await resp.json();
+          if (!items || items.length === 0) {
+            searchResults.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 13px;">Tidak ditemukan hasil</div>`;
+            return;
+          }
+          searchResults.innerHTML = "";
+          items.forEach(track => {
+            const card = document.createElement("div");
+            card.className = "search-card";
+            card.innerHTML = `
+              <img src="${track.artwork || track.cover || 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'%231E2430\'%3E%3Crect width=\'24\' height=\'24\'/%3E%3C/svg%3E'}" class="queue-art">
+              <div class="queue-info">
+                <div class="queue-title">${escapeHtml(track.title)}</div>
+                <div class="queue-artist">${escapeHtml(track.artist || '')}</div>
+              </div>
+              <div class="search-actions">
+                <button class="btn-action-small primary btn-play-now">Putar</button>
+                <button class="btn-action-small btn-add-queue">+ Antrean</button>
+              </div>
+            `;
+
+            card.querySelector(".btn-play-now").addEventListener("click", () => {
+              sendAction("play-track-now", null, track);
+            });
+            card.querySelector(".btn-add-queue").addEventListener("click", (ev) => {
+              ev.target.textContent = "✓ Ditambah";
+              ev.target.disabled = true;
+              sendAction("add-queue", null, track);
+            });
+
+            searchResults.appendChild(card);
+          });
+        } catch (err) {
+          searchResults.innerHTML = `<div style="text-align: center; padding: 24px; color: #FF5C5C; font-size: 13px;">Gagal memuat hasil pencarian</div>`;
+        }
+      }, 400);
+    });
+
+    // Start Live Stream
+    initEventStream();
+  </script>
+</body>
+</html>

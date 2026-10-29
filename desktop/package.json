@@ -27,6 +27,7 @@
       "electron-main.js",
       "preload.js",
       "src/**/*",
+      "remote-web/**/*",
       "!src-tauri/**/*"
     ],
     "mac": {
@@ -131,6 +132,7 @@
   },
   "dependencies": {
     "des.js": "^1.1.0",
-    "iconsax": "^0.1.1"
+    "iconsax": "^0.1.1",
+    "qrcode": "^1.5.4"
   }
 }

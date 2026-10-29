@@ -7,6 +7,10 @@ const fs = require('fs');
 const os = require('os');
 const net = require('net');
 const des = require('des.js');
+let QRCode;
+try {
+  QRCode = require('qrcode');
+} catch (_) {}
 
 // Disable incompatible Vulkan on Linux Wayland to guarantee silky smooth rendering
 app.commandLine.appendSwitch('disable-features', 'Vulkan');
@@ -440,6 +444,165 @@ const localAudioProxy = http.createServer((req, res) => {
 localAudioProxy.listen(0, '127.0.0.1', () => {
   localProxyPort = localAudioProxy.address().port;
 });
+
+// =========================================================
+// SoraFy Jam: Local LAN Remote Web Control & SSE Server
+// =========================================================
+function getLocalLanIp() {
+  const nets = os.networkInterfaces();
+  const candidates = [];
+  for (const name of Object.keys(nets)) {
+    const isVirtual = /^(docker|br-|veth|virbr|vmnet|vboxnet|tailscale|wg)/i.test(name);
+    for (const net of nets[name]) {
+      if (net.family === 'IPv4' && !net.internal) {
+        candidates.push({ name, ip: net.address, isVirtual });
+      }
+    }
+  }
+  const physical = candidates.find(c => !c.isVirtual);
+  if (physical) return physical.ip;
+  if (candidates.length > 0) return candidates[0].ip;
+  return '127.0.0.1';
+}
+
+let jamServer = null;
+let jamPort = 4120;
+const jamSseClients = new Set();
+let jamPlayerState = {
+  isPlaying: false,
+  currentTime: 0,
+  duration: 0,
+  currentTrack: null,
+  queue: [],
+  lyrics: [],
+  volume: 0.85,
+  isShuffle: false,
+  repeatMode: 'off'
+};
+
+function broadcastJamState() {
+  if (jamSseClients.size === 0) return;
+  const payload = `data: ${JSON.stringify(jamPlayerState)}\n\n`;
+  for (const res of jamSseClients) {
+    try {
+      res.write(payload);
+    } catch (_) {
+      jamSseClients.delete(res);
+    }
+  }
+}
+
+function startJamServer() {
+  if (jamServer) return;
+  jamServer = http.createServer(async (req, res) => {
+    const reqUrl = new URL(req.url, `http://127.0.0.1:${jamPort}`);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      return res.end();
+    }
+
+    // 1. Static Web App
+    if (reqUrl.pathname === '/' || reqUrl.pathname === '/index.html') {
+      const candidates = [
+        path.join(__dirname, 'remote-web', 'index.html'),
+        path.join(process.resourcesPath || '', 'remote-web', 'index.html'),
+        path.join(process.resourcesPath || '', 'app', 'remote-web', 'index.html')
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+          return fs.createReadStream(p).pipe(res);
+        }
+      }
+      res.writeHead(404);
+      return res.end('SoraFy Jam Remote Web not found');
+    }
+
+    // 2. SSE Real-time Events Stream
+    if (reqUrl.pathname === '/api/events') {
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive'
+      });
+      res.write(`data: ${JSON.stringify(jamPlayerState)}\n\n`);
+      jamSseClients.add(res);
+
+      req.on('close', () => {
+        jamSseClients.delete(res);
+      });
+      return;
+    }
+
+    // 3. API Status Snapshot
+    if (reqUrl.pathname === '/api/status') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        ...jamPlayerState,
+        lanIp: getLocalLanIp(),
+        port: jamPort,
+        jamUrl: `http://${getLocalLanIp()}:${jamPort}`
+      }));
+    }
+
+    // 4. API Search from Mobile Phone
+    if (reqUrl.pathname === '/api/search') {
+      const q = reqUrl.searchParams.get('q') || '';
+      try {
+        const items = await searchYouTubeMusicInnerTube(q, 'song');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify(items || []));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify([]));
+      }
+    }
+
+    // 5. API Playback Actions
+    if (reqUrl.pathname === '/api/action' && req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('jam-action', data);
+          }
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ success: true }));
+        } catch (e) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: e.message }));
+        }
+      });
+      return;
+    }
+
+    res.writeHead(404);
+    res.end('Not found');
+  });
+
+  const tryListen = (port) => {
+    jamServer.once('error', (err) => {
+      if (err.code === 'EADDRINUSE' && port < 4129) {
+        tryListen(port + 1);
+      }
+    });
+    jamServer.listen(port, '0.0.0.0', () => {
+      jamPort = port;
+      console.log(`[SoraFy Jam] Server running at http://${getLocalLanIp()}:${jamPort}`);
+    });
+  };
+
+  tryListen(jamPort);
+}
+
+startJamServer();
 
 // Persistent stream cache on disk for instant 0ms playback across sessions
 const cacheDir = path.join(os.homedir(), '.config', 'sorafy', 'cache');
@@ -2283,6 +2446,39 @@ ipcMain.handle('get-stream-candidates', async (event, { title, artist, currentId
     console.warn('get-stream-candidates error:', err.message);
     return [];
   }
+});
+
+// SoraFy Jam IPC Endpoints (Nuclear Jam Feature)
+ipcMain.handle('get-jam-info', async () => {
+  const lanIp = getLocalLanIp();
+  const jamUrl = `http://${lanIp}:${jamPort}`;
+  let qrDataUrl = '';
+  if (QRCode) {
+    try {
+      qrDataUrl = await QRCode.toDataURL(jamUrl, {
+        margin: 1,
+        color: {
+          dark: '#00E599',
+          light: '#07080A'
+        },
+        width: 240
+      });
+    } catch (_) {}
+  }
+  return {
+    enabled: Boolean(jamServer),
+    lanIp,
+    port: jamPort,
+    jamUrl,
+    qrDataUrl,
+    clientCount: jamSseClients.size
+  };
+});
+
+ipcMain.on('update-jam-state', (event, state) => {
+  if (!state || typeof state !== 'object') return;
+  jamPlayerState = { ...jamPlayerState, ...state };
+  broadcastJamState();
 });
 
 // =========================================================

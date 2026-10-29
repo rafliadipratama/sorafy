@@ -928,6 +928,15 @@ class SoraFyDesktopApp {
     this.streamCandidatesLoading = document.getElementById("streamCandidatesLoading");
     this.streamCandidatesList = document.getElementById("streamCandidatesList");
     this.unverifyStreamBtn = document.getElementById("unverifyStreamBtn");
+    this.jamRemoteBtn = document.getElementById("jamRemoteBtn");
+    this.screenJamRemoteBtn = document.getElementById("screenJamRemoteBtn");
+    this.jamModal = document.getElementById("jamModal");
+    this.closeJamModalBtn = document.getElementById("closeJamModalBtn");
+    this.cancelJamModalBtn = document.getElementById("cancelJamModalBtn");
+    this.jamQrLoading = document.getElementById("jamQrLoading");
+    this.jamQrImg = document.getElementById("jamQrImg");
+    this.jamUrlInput = document.getElementById("jamUrlInput");
+    this.copyJamUrlBtn = document.getElementById("copyJamUrlBtn");
     this.volumeSlider = document.getElementById("volumeSlider");
     this.volumeMuteBtn = document.getElementById("volumeMuteBtn");
     this.volumeIcon = document.getElementById("volumeIcon");
@@ -2502,6 +2511,105 @@ class SoraFyDesktopApp {
           this.showToast(this.currentLanguage === 'id' ? 'Verifikasi audio dihapus (kembali ke otomatis)' : 'Stream verification reset to auto');
           this.updateVerificationBadge(this.candidateActiveTrack);
           if (this.streamCandidatesModal) this.streamCandidatesModal.style.display = "none";
+        }
+      });
+    }
+
+    // SoraFy Jam Remote Modal & Action Listeners (Nuclear Jam Feature)
+    if (this.jamRemoteBtn) {
+      this.jamRemoteBtn.addEventListener("click", () => this.openJamModal());
+    }
+
+    if (this.screenJamRemoteBtn) {
+      this.screenJamRemoteBtn.addEventListener("click", () => this.openJamModal());
+    }
+
+    if (this.closeJamModalBtn) {
+      this.closeJamModalBtn.addEventListener("click", () => {
+        if (this.jamModal) this.jamModal.style.display = "none";
+      });
+    }
+
+    if (this.cancelJamModalBtn) {
+      this.cancelJamModalBtn.addEventListener("click", () => {
+        if (this.jamModal) this.jamModal.style.display = "none";
+      });
+    }
+
+    if (this.jamModal) {
+      this.jamModal.addEventListener("click", (e) => {
+        if (e.target === this.jamModal) {
+          this.jamModal.style.display = "none";
+        }
+      });
+    }
+
+    if (this.copyJamUrlBtn) {
+      this.copyJamUrlBtn.addEventListener("click", () => {
+        if (this.jamUrlInput) {
+          navigator.clipboard.writeText(this.jamUrlInput.value);
+          this.copyJamUrlBtn.textContent = "Tersalin!";
+          setTimeout(() => { if (this.copyJamUrlBtn) this.copyJamUrlBtn.textContent = "Salin"; }, 2000);
+        }
+      });
+    }
+
+    // Hook Jam Mobile Remote Actions
+    if (window.electronAPI && typeof window.electronAPI.onJamAction === 'function') {
+      window.electronAPI.onJamAction((action) => {
+        if (!action) return;
+        const act = action.action;
+        if (act === 'toggle-play') {
+          this.togglePlayPause();
+        } else if (act === 'next') {
+          this.playNext();
+        } else if (act === 'prev') {
+          this.playPrevious();
+        } else if (act === 'toggle-shuffle') {
+          this.toggleShuffle();
+        } else if (act === 'toggle-repeat') {
+          this.toggleRepeat();
+        } else if (act === 'seek' && typeof action.value === 'number') {
+          if (this.audio) {
+            this.audio.currentTime = action.value;
+            this.updateProgress();
+            this.syncJamState();
+          }
+        } else if (act === 'volume' && typeof action.value === 'number') {
+          this.setVolume(action.value);
+          this.syncJamState();
+        } else if (act === 'play-index' && typeof action.value === 'number') {
+          this.loadTrack(action.value, true);
+        } else if (act === 'remove-index' && typeof action.value === 'number') {
+          if (this.tracks && this.tracks[action.value]) {
+            this.tracks.splice(action.value, 1);
+            this.renderQueue();
+            this.syncJamState();
+          }
+        } else if (act === 'play-track-now' && action.track) {
+          const t = action.track;
+          const newTrack = {
+            id: t.videoId || t.id,
+            video_id: t.videoId || t.id,
+            title: t.title,
+            artist: t.artist || '',
+            artwork_url: t.artwork || t.cover || this.DEFAULT_TRACK_ART,
+            duration_secs: t.durationSec || 0
+          };
+          this.tracks.splice(this.currentTrackIndex + 1, 0, newTrack);
+          this.loadTrack(this.currentTrackIndex + 1, true);
+        } else if (act === 'add-queue' && action.track) {
+          const t = action.track;
+          const newTrack = {
+            id: t.videoId || t.id,
+            video_id: t.videoId || t.id,
+            title: t.title,
+            artist: t.artist || '',
+            artwork_url: t.artwork || t.cover || this.DEFAULT_TRACK_ART,
+            duration_secs: t.durationSec || 0
+          };
+          this.addToQueue(newTrack);
+          this.syncJamState();
         }
       });
     }
@@ -6612,6 +6720,7 @@ class SoraFyDesktopApp {
       this.audio.play().then(() => {
         this.isPlaying = true;
         this.updatePlayPauseIcon();
+        this.syncJamState();
         if (this.currentView === "player" && (track.is_video || this.currentScreenMode === "video")) {
           this.setScreenPlayerMode("video");
         }
@@ -6956,6 +7065,7 @@ class SoraFyDesktopApp {
       }
       this.isPlaying = false;
       this.updatePlayPauseIcon();
+      this.syncJamState();
       if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       const cur = this.tracks[this.currentTrackIndex];
       if (cur) this.updateDiscordPresence(cur);
@@ -6967,6 +7077,8 @@ class SoraFyDesktopApp {
       this.audio.play().then(() => {
         this.isPlaying = true;
         this.updatePlayPauseIcon();
+        this.syncJamState();
+        this.syncJamState();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         const cur = this.tracks[this.currentTrackIndex];
         if (cur) this.updateDiscordPresence(cur);
@@ -7072,6 +7184,12 @@ class SoraFyDesktopApp {
       this.savePlaybackSession();
     }
 
+    // Throttled sync state to SoraFy Jam mobile remote (every 1 second)
+    if (!this._lastJamSync || (now - this._lastJamSync > 1000)) {
+      this._lastJamSync = now;
+      this.syncJamState();
+    }
+
     // YT Music Background Autoplay Preload: when 70% completed, ensure next radio tracks
     if (pct > 70 && !this.isUpcomingQueueTriggeredForCurrent) {
       this.isUpcomingQueueTriggeredForCurrent = true;
@@ -7124,6 +7242,7 @@ class SoraFyDesktopApp {
   // Synchronized Glowing Karaoke Lyrics with Notes-App Search Architecture
   loadLyrics(lyrics) {
     this.currentLyrics = lyrics;
+    this.syncJamState();
     this.lyricsContainer.innerHTML = "";
     this.lyricsLineElements = [];
     this.activeLyricIndex = -1;
@@ -9450,6 +9569,51 @@ class SoraFyDesktopApp {
         `;
       }
     }
+  }
+
+  // =========================================================
+  // SoraFy Jam: State Synchronization & QR Modal
+  // =========================================================
+  syncJamState() {
+    if (!window.electronAPI || typeof window.electronAPI.sendJamState !== 'function') return;
+    const cur = this.tracks ? this.tracks[this.currentTrackIndex] : null;
+    const lrc = (this.currentLyrics || []).map(l => ({
+      text: l.text || '',
+      time: typeof l.timestamp_ms === 'number' ? l.timestamp_ms : (l.time || -1)
+    }));
+    window.electronAPI.sendJamState({
+      isPlaying: this.audio ? !this.audio.paused : false,
+      currentTime: this.audio ? this.audio.currentTime : 0,
+      duration: this.audio && this.audio.duration ? this.audio.duration : (cur?.duration_secs || 0),
+      currentTrack: cur,
+      queue: this.tracks || [],
+      lyrics: lrc,
+      volume: this.audio ? this.audio.volume : 0.85,
+      isShuffle: Boolean(this.isShuffled),
+      repeatMode: this.repeatMode || 'off'
+    });
+  }
+
+  async openJamModal() {
+    if (!this.jamModal) return;
+    this.jamModal.style.display = "flex";
+    if (this.jamQrLoading) this.jamQrLoading.style.display = "flex";
+    if (this.jamQrImg) this.jamQrImg.style.display = "none";
+
+    try {
+      if (window.electronAPI && typeof window.electronAPI.getJamInfo === 'function') {
+        const info = await window.electronAPI.getJamInfo();
+        if (info) {
+          if (this.jamUrlInput) this.jamUrlInput.value = info.jamUrl || `http://${info.lanIp || '127.0.0.1'}:${info.port || 4120}`;
+          if (this.jamQrImg && info.qrDataUrl) {
+            this.jamQrImg.src = info.qrDataUrl;
+            this.jamQrImg.style.display = "block";
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (this.jamQrLoading) this.jamQrLoading.style.display = "none";
   }
 }
 

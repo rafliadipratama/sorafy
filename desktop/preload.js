@@ -37,6 +37,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   verifyStreamCandidate: (data) => ipcRenderer.invoke('verify-stream-candidate', data),
   unverifyStream: (data) => ipcRenderer.invoke('unverify-stream', data),
   getStreamCandidates: (data) => ipcRenderer.invoke('get-stream-candidates', data),
+  getJamInfo: () => ipcRenderer.invoke('get-jam-info'),
+  sendJamState: (state) => ipcRenderer.send('update-jam-state', state),
+  onJamAction: (callback) => {
+    ipcRenderer.on('jam-action', (_event, action) => {
+      if (typeof callback === 'function') callback(action);
+    });
+  },
   onAppBeforeClose: (callback) => {
     ipcRenderer.on('app-before-close', () => {
       if (typeof callback === 'function') callback();
