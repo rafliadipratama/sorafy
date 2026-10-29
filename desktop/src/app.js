@@ -202,25 +202,175 @@ function fetchDeezerJsonp(url) {
   });
 }
 
-// LRC parser
+// =========================================================
+// Advanced Lyrics Engine (Phase 4):
+// Word-Level Timing, Enhanced LRC, Romaji & Hangul Phonetics
+// =========================================================
+const KANA_TO_ROMAJI = {
+  'きゃ':'kya','きゅ':'kyu','きょ':'kyo','しゃ':'sha','しゅ':'shu','しょ':'sho',
+  'ちゃ':'cha','ちゅ':'chu','ちょ':'cho','にゃ':'nya','にゅ':'nyu','にょ':'nyo',
+  'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo','みゃ':'mya','みゅ':'myu','みょ':'myo',
+  'りゃ':'rya','りゅ':'ryu','りょ':'ryo','ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
+  'じゃ':'ja','じゅ':'ju','じょ':'jo','びゃ':'bya','びゅ':'byu','びょ':'byo',
+  'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo','ティ':'ti','ディ':'di','チェ':'che',
+  'ファ':'fa','フィ':'fi','フェ':'fe','フォ':'fo','ウィ':'wi','ウェ':'we',
+  'あ':'a','い':'i','う':'u','え':'e','お':'o',
+  'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
+  'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
+  'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
+  'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
+  'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
+  'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
+  'や':'ya','ゆ':'yu','よ':'yo',
+  'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
+  'わ':'wa','を':'wo','ん':'n',
+  'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
+  'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
+  'だ':'da','ぢ':'ji','づ':'zu','で':'de','ど':'do',
+  'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
+  'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po'
+};
+
+const COMMON_KANJI_MAP = {
+  '世界':'sekai','明日':'ashita','未来':'mirai','昨日':'kinou','時間':'jikan',
+  '本当':'hontou','心':'kokoro','涙':'namida','笑顔':'egao','奇跡':'kiseki',
+  '運命':'unmei','孤独':'kodoku','自由':'jiyuu','理由':'riyuu','記憶':'kioku',
+  '自分':'jibun','二人':'futari','一人':'hitori','誰か':'dareka','今':'ima',
+  '夜':'yoru','朝':'asa','空':'sora','星':'hoshi','月':'tsuki','風':'kaze',
+  '雨':'ame','海':'umi','花':'hana','夢':'yume','愛':'ai','光':'hikari',
+  '影':'kage','声':'koe','音':'oto','手':'te','目':'me','私':'watashi',
+  '僕':'boku','君':'kimi','あなた':'anata','道':'michi','街':'machi',
+  '言葉':'kotoba','約束':'yakusoku','永遠':'eien','希望':'kibou','想い':'omoi'
+};
+
+function romanizeHangul(text) {
+  const initial = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+  const medial = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','weo','we','wi','yu','eu','ui','i'];
+  const final = ['','k','k','ks','n','nj','nh','t','l','lg','lm','lb','ls','lt','lp','lh','m','p','bs','s','ss','ng','j','ch','k','t','p','h'];
+  return text.replace(/[\uac00-\ud7af]/g, (char) => {
+    const code = char.charCodeAt(0) - 0xac00;
+    const i = Math.floor(code / 588);
+    const m = Math.floor((code % 588) / 28);
+    const f = code % 28;
+    return initial[i] + medial[m] + final[f];
+  });
+}
+
+function kataToHira(str) {
+  return str.replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+}
+
+function getPhoneticSubline(text) {
+  if (!text) return null;
+  if (/[\uac00-\ud7af]/.test(text)) {
+    return romanizeHangul(text);
+  }
+  if (/[\u3040-\u30ff\u4e00-\u9faf]/.test(text)) {
+    let replaced = text;
+    for (const [kanji, rom] of Object.entries(COMMON_KANJI_MAP)) {
+      if (replaced.includes(kanji)) {
+        replaced = replaced.split(kanji).join(rom + ' ');
+      }
+    }
+    const hira = kataToHira(replaced);
+    let res = '';
+    let i = 0;
+    while (i < hira.length) {
+      if (hira[i] === 'っ' && i + 1 < hira.length) {
+        const nextChar = hira.slice(i + 1, i + 3);
+        const nextRom = KANA_TO_ROMAJI[nextChar] || KANA_TO_ROMAJI[hira[i + 1]] || '';
+        res += nextRom[0] || '';
+        i++;
+        continue;
+      }
+      const pair = hira.slice(i, i + 2);
+      if (KANA_TO_ROMAJI[pair]) {
+        res += KANA_TO_ROMAJI[pair];
+        i += 2;
+      } else if (KANA_TO_ROMAJI[hira[i]]) {
+        res += KANA_TO_ROMAJI[hira[i]];
+        i++;
+      } else {
+        res += hira[i];
+        i++;
+      }
+    }
+    return res.replace(/\s+/g, ' ').trim();
+  }
+  return null;
+}
+
 function parseLrc(lrcText) {
   if (!lrcText) return [];
   const lines = lrcText.split("\n");
   const result = [];
-  const regex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
-  for (const line of lines) {
-    const match = regex.exec(line.trim());
-    if (match) {
-      const min = parseInt(match[1], 10);
-      const sec = parseInt(match[2], 10);
-      const ms = parseInt(match[3].padEnd(3, '0').slice(0, 3), 10);
-      const timestamp_ms = (min * 60 + sec) * 1000 + ms;
-      const text = match[4].trim();
-      if (text) {
-        result.push({ timestamp_ms, text });
+  const lineRegex = /\[(\d{2}):(\d{2})\.(\d{2,3})\](.*)/;
+  const wordTagRegex = /<(\d{2}):(\d{2})\.(\d{2,3})>([^<]+)/g;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const match = lineRegex.exec(line);
+    if (!match) continue;
+
+    const min = parseInt(match[1], 10);
+    const sec = parseInt(match[2], 10);
+    const ms = parseInt(match[3].padEnd(3, '0').slice(0, 3), 10);
+    const timestamp_ms = (min * 60 + sec) * 1000 + ms;
+    const rawText = match[4].trim();
+    if (!rawText) continue;
+
+    let words = [];
+    let cleanText = '';
+    if (rawText.includes('<') && rawText.includes('>')) {
+      let wMatch;
+      while ((wMatch = wordTagRegex.exec(rawText)) !== null) {
+        const wMin = parseInt(wMatch[1], 10);
+        const wSec = parseInt(wMatch[2], 10);
+        const wMs = parseInt(wMatch[3].padEnd(3, '0').slice(0, 3), 10);
+        const startMs = (wMin * 60 + wSec) * 1000 + wMs;
+        const wordStr = wMatch[4].trim();
+        if (wordStr) {
+          words.push({ word: wordStr, startMs, endMs: startMs + 400 });
+        }
+      }
+      for (let w = 0; w < words.length - 1; w++) {
+        words[w].endMs = words[w + 1].startMs;
+      }
+      cleanText = words.map(w => w.word).join(' ');
+    }
+
+    if (!cleanText) {
+      cleanText = rawText.replace(/<[^>]+>/g, '').trim();
+    }
+
+    result.push({
+      timestamp_ms,
+      text: cleanText,
+      words: words.length > 0 ? words : null
+    });
+  }
+
+  // Synthesize proportional syllable / word timing for lines without explicit word tags
+  for (let i = 0; i < result.length; i++) {
+    const cur = result[i];
+    const next = result[i + 1];
+    const nextTime = next ? next.timestamp_ms : cur.timestamp_ms + 4000;
+    const durationMs = Math.max(800, Math.min(8000, nextTime - cur.timestamp_ms));
+    cur.durationMs = durationMs;
+
+    if (!cur.words || cur.words.length === 0) {
+      const parts = cur.text.split(/(\s+)/).filter(p => p.trim().length > 0);
+      if (parts.length > 0) {
+        const perWord = durationMs / parts.length;
+        cur.words = parts.map((w, idx) => ({
+          word: w,
+          startMs: cur.timestamp_ms + idx * perWord,
+          endMs: cur.timestamp_ms + (idx + 1) * perWord
+        }));
       }
     }
   }
+
   return result;
 }
 
@@ -997,6 +1147,11 @@ class SoraFyDesktopApp {
     this.lyricsOffsetMinusBtn = document.getElementById("lyricsOffsetMinusBtn");
     this.lyricsOffsetPlusBtn = document.getElementById("lyricsOffsetPlusBtn");
     this.lyricsOffsets = JSON.parse(localStorage.getItem("sorafy_lyrics_offsets") || "{}");
+    this.toggleRomajiBtn = document.getElementById("toggleRomajiBtn");
+    this.showRomaji = localStorage.getItem("sorafy_show_romaji") === "true";
+    if (this.toggleRomajiBtn) {
+      this.toggleRomajiBtn.classList.toggle("active", this.showRomaji);
+    }
 
     this.searchInput = document.getElementById("searchInput");
     this.searchClearBtn = document.getElementById("searchClearBtn");
@@ -2019,6 +2174,17 @@ class SoraFyDesktopApp {
     }
     if (this.lyricsOffsetBadge) {
       this.lyricsOffsetBadge.addEventListener("click", () => this.resetLyricsOffset());
+    }
+
+    if (this.toggleRomajiBtn) {
+      this.toggleRomajiBtn.addEventListener("click", () => {
+        this.showRomaji = !this.showRomaji;
+        localStorage.setItem("sorafy_show_romaji", String(this.showRomaji));
+        this.toggleRomajiBtn.classList.toggle("active", this.showRomaji);
+        const subs = this.lyricsContainer.querySelectorAll(".lyric-sub.romaji");
+        subs.forEach(s => s.style.display = this.showRomaji ? "block" : "none");
+        this.showToast(`Pronunciation (Romaji / Hangul): ${this.showRomaji ? "ON" : "OFF"}`);
+      });
     }
 
     if (this.toggleQueueBtn) {
@@ -7305,6 +7471,7 @@ class SoraFyDesktopApp {
     this.lyricsContainer.innerHTML = "";
     this.lyricsLineElements = [];
     this.activeLyricIndex = -1;
+    this.updateLyricsOffsetUI();
 
     if (!lyrics || lyrics.length === 0) {
       this.lyricsContainer.innerHTML = `<div style="color: var(--color-text-tertiary); text-align: center; margin-top: 40px;">No synchronized lyrics available for this track.</div>`;
@@ -7320,12 +7487,41 @@ class SoraFyDesktopApp {
     lyrics.forEach((line, idx) => {
       const p = document.createElement("p");
       p.className = "lyric-line";
-      p.textContent = line.text;
       p.dataset.time = line.timestamp_ms;
       p.dataset.index = idx;
+
+      // 1. Main line with word spans for progressive karaoke fill
+      const mainDiv = document.createElement("div");
+      mainDiv.className = "lyric-main";
+
+      if (line.words && line.words.length > 0) {
+        line.words.forEach((w) => {
+          const span = document.createElement("span");
+          span.className = "lyric-word";
+          span.textContent = w.word + " ";
+          span.dataset.start = Math.round(w.startMs);
+          span.dataset.end = Math.round(w.endMs);
+          mainDiv.appendChild(span);
+        });
+      } else {
+        mainDiv.textContent = line.text;
+      }
+      p.appendChild(mainDiv);
+
+      // 2. Phonetic sub-line (Romaji / Hangul Romanization) if non-Latin
+      const phonetic = getPhoneticSubline(line.text);
+      if (phonetic) {
+        const subDiv = document.createElement("div");
+        subDiv.className = "lyric-sub romaji";
+        subDiv.textContent = phonetic;
+        if (!this.showRomaji) subDiv.style.display = "none";
+        p.appendChild(subDiv);
+      }
+
       p.addEventListener("click", () => {
         if (typeof line.timestamp_ms === "number" && line.timestamp_ms >= 0) {
-          this.audio.currentTime = line.timestamp_ms / 1000;
+          const offsetMs = this.getCurrentTrackLyricsOffset();
+          this.audio.currentTime = Math.max(0, (line.timestamp_ms - offsetMs) / 1000);
         }
       });
       this.lyricsContainer.appendChild(p);
@@ -7341,11 +7537,15 @@ class SoraFyDesktopApp {
   syncLyrics(currentMs) {
     if (!this.currentLyrics || this.currentLyrics.length === 0) return;
 
+    // Apply manual offset calibration (Phase 4)
+    const offsetMs = this.getCurrentTrackLyricsOffset();
+    const effectiveMs = currentMs + offsetMs;
+
     let activeIdx = -1;
     for (let i = 0; i < this.currentLyrics.length; i++) {
-      if (typeof this.currentLyrics[i].timestamp_ms === "number" && this.currentLyrics[i].timestamp_ms >= 0 && currentMs >= this.currentLyrics[i].timestamp_ms) {
+      if (typeof this.currentLyrics[i].timestamp_ms === "number" && this.currentLyrics[i].timestamp_ms >= 0 && effectiveMs >= this.currentLyrics[i].timestamp_ms) {
         activeIdx = i;
-      } else if (typeof this.currentLyrics[i].timestamp_ms === "number" && this.currentLyrics[i].timestamp_ms >= 0 && currentMs < this.currentLyrics[i].timestamp_ms) {
+      } else if (typeof this.currentLyrics[i].timestamp_ms === "number" && this.currentLyrics[i].timestamp_ms >= 0 && effectiveMs < this.currentLyrics[i].timestamp_ms) {
         break;
       }
     }
@@ -7363,8 +7563,40 @@ class SoraFyDesktopApp {
           }
         } else {
           l.classList.remove("active");
+          // Reset words outside active line
+          if (idx < activeIdx) {
+            l.querySelectorAll(".lyric-word").forEach(w => {
+              w.classList.add("sung");
+              w.classList.remove("singing");
+            });
+          } else {
+            l.querySelectorAll(".lyric-word").forEach(w => {
+              w.classList.remove("sung", "singing");
+            });
+          }
         }
       });
+    }
+
+    // High-precision word-level karaoke sync on active line
+    if (activeIdx >= 0 && this.lyricsLineElements[activeIdx]) {
+      const activeEl = this.lyricsLineElements[activeIdx];
+      const wordSpans = activeEl.querySelectorAll(".lyric-word");
+      if (wordSpans.length > 0) {
+        wordSpans.forEach(span => {
+          const wStart = Number(span.dataset.start);
+          const wEnd = Number(span.dataset.end);
+          if (effectiveMs >= wEnd) {
+            span.classList.add("sung");
+            span.classList.remove("singing");
+          } else if (effectiveMs >= wStart) {
+            span.classList.add("singing");
+            span.classList.remove("sung");
+          } else {
+            span.classList.remove("sung", "singing");
+          }
+        });
+      }
     }
   }
 

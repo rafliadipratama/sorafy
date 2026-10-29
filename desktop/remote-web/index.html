@@ -753,6 +753,23 @@
       });
     }
 
+    function getPhoneticSubline(text) {
+      if (!text) return null;
+      if (/[\uac00-\ud7af]/.test(text)) {
+        const initial = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
+        const medial = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','weo','we','wi','yu','eu','ui','i'];
+        const final = ['','k','k','ks','n','nj','nh','t','l','lg','lm','lb','ls','lt','lp','lh','m','p','bs','s','ss','ng','j','ch','k','t','p','h'];
+        return text.replace(/[\uac00-\ud7af]/g, (char) => {
+          const code = char.charCodeAt(0) - 0xac00;
+          const i = Math.floor(code / 588);
+          const m = Math.floor((code % 588) / 28);
+          const f = code % 28;
+          return initial[i] + medial[m] + final[f];
+        });
+      }
+      return null;
+    }
+
     function renderLyrics(lyrics, currentTimeSec) {
       if (!lyrics || lyrics.length === 0) {
         lyricsList.innerHTML = `<div style="color: var(--text-muted); padding: 40px 10px; font-size: 14px;">Tidak ada lirik tersedia untuk lagu ini</div>`;
@@ -775,7 +792,22 @@
         const div = document.createElement("div");
         div.className = "lyric-line";
         if (i === activeIndex) div.classList.add("active");
-        div.textContent = line.text;
+
+        const mainText = document.createElement("div");
+        mainText.textContent = line.text;
+        div.appendChild(mainText);
+
+        const sub = getPhoneticSubline(line.text);
+        if (sub) {
+          const subEl = document.createElement("div");
+          subEl.style.fontSize = "12px";
+          subEl.style.color = "var(--text-muted)";
+          subEl.style.marginTop = "3px";
+          subEl.style.opacity = "0.8";
+          subEl.textContent = sub;
+          div.appendChild(subEl);
+        }
+
         div.addEventListener("click", () => {
           sendAction("seek", line.time / 1000);
         });

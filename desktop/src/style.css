@@ -1137,6 +1137,111 @@ body {
   opacity: 0.25 !important;
 }
 
+/* =========================================================
+   Phase 4: Word-Level Synced Karaoke & Lyrics Toolbar
+   ========================================================= */
+.lyrics-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  font-size: 11px;
+}
+
+.lyrics-offset-controls {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lyrics-offset-badge {
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--color-text-secondary);
+  font-family: monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.lyrics-offset-badge:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #FFFFFF;
+}
+
+.lyrics-offset-badge.calibrated {
+  background: rgba(0, 229, 153, 0.15);
+  color: #00E599;
+  border: 1px solid rgba(0, 229, 153, 0.35);
+  font-weight: 700;
+}
+
+.lyrics-tool-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.lyrics-tool-btn:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.lyrics-tool-btn.active {
+  background: rgba(0, 229, 153, 0.18);
+  color: #00E599;
+  border-color: rgba(0, 229, 153, 0.4);
+  font-weight: 600;
+}
+
+.lyric-main {
+  display: inline;
+}
+
+.lyric-word {
+  display: inline-block;
+  transition: color 0.12s ease, transform 0.12s ease, text-shadow 0.12s ease;
+}
+
+.lyric-line.active .lyric-word.sung {
+  color: var(--color-brand-primary);
+  font-weight: 700;
+}
+
+.lyric-line.active .lyric-word.singing {
+  color: #FFFFFF;
+  transform: scale(1.08);
+  font-weight: 800;
+  text-shadow: 0 0 10px rgba(0, 229, 153, 0.9), 0 0 20px rgba(0, 229, 153, 0.6);
+}
+
+.lyric-sub.romaji {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #8F9CAE;
+  margin-top: 3px;
+  letter-spacing: 0.3px;
+  opacity: 0.8;
+  line-height: 1.4;
+}
+
+.lyric-line.active .lyric-sub.romaji {
+  color: #6EE7B7;
+  opacity: 1;
+}
+
 /* Floating Top Toast Notification */
 .top-toast {
   position: fixed;

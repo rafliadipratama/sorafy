@@ -939,6 +939,21 @@
         </div>
       </div>
 
+      <!-- Lyrics Calibration & Karaoke Toolbar (Phase 4) -->
+      <div class="lyrics-toolbar" id="lyricsToolbar">
+        <div class="lyrics-offset-controls" title="Adjust lyrics timing offset">
+          <span style="color: var(--color-text-muted); font-size: 11px;">Offset:</span>
+          <button class="lyrics-tool-btn" id="lyricsOffsetMinusBtn" title="Sync lyrics 0.5s earlier (-500ms)">-0.5s</button>
+          <span class="lyrics-offset-badge" id="lyricsOffsetBadge" title="Click to reset offset (0.0s)">0.0s</span>
+          <button class="lyrics-tool-btn" id="lyricsOffsetPlusBtn" title="Sync lyrics 0.5s later (+500ms)">+0.5s</button>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+          <button class="lyrics-tool-btn" id="toggleRomajiBtn" title="Toggle Furigana / Romaji / Hangul Romanization">
+            あ/A Romaji
+          </button>
+        </div>
+      </div>
+
       <!-- Tab Content 1: Lyrics -->
       <div class="lyrics-scroll-container" id="lyricsContainer">
         <!-- Lines populated dynamically -->
