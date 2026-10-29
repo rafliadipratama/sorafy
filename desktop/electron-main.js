@@ -733,6 +733,19 @@ function getMcpToolsDefinitions() {
         },
         required: ['url']
       }
+    },
+    {
+      name: 'sorafy_get_listening_stats',
+      description: 'Get local listening analytics, scrobbles history, total duration, and top tracks.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          limit: {
+            type: 'number',
+            description: 'Maximum number of recent tracks to return (default: 20)'
+          }
+        }
+      }
     }
   ];
 }
@@ -927,6 +940,17 @@ async function executeMcpTool(name, args = {}) {
         provider: res.provider || 'External',
         trackCount: res.tracks.length,
         firstThreeTracks: res.tracks.slice(0, 3).map(t => `${t.artist} - ${t.title}`)
+      };
+    }
+
+    case 'sorafy_get_listening_stats': {
+      const stats = loadListeningStatsDisk();
+      const events = stats.events || [];
+      const limit = Math.min(100, Math.max(1, args.limit || 20));
+      return {
+        success: true,
+        totalScrobbles: events.length,
+        recentTracks: events.slice(-limit).reverse()
       };
     }
 
@@ -2300,6 +2324,54 @@ function savePlaybackSessionDisk(session) {
     return true;
   } catch (err) {
     console.warn('savePlaybackSessionDisk error:', err);
+    return false;
+  }
+}
+
+// =========================================================
+// Listening Statistics & Analytics Storage (Nuclear Feature)
+// =========================================================
+function getListeningStatsPath() {
+  try {
+    return path.join(app.getPath('userData'), 'listening_stats.json');
+  } catch (_) {
+    return path.join(os.homedir(), '.config', 'sorafy', 'listening_stats.json');
+  }
+}
+
+let listeningStatsCache = null;
+
+function loadListeningStatsDisk() {
+  if (listeningStatsCache) return listeningStatsCache;
+  try {
+    const sPath = getListeningStatsPath();
+    if (fs.existsSync(sPath)) {
+      const raw = fs.readFileSync(sPath, 'utf8');
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.events)) {
+        listeningStatsCache = parsed;
+        return listeningStatsCache;
+      }
+    }
+  } catch (err) {
+    console.warn('loadListeningStatsDisk note:', err.message);
+  }
+  listeningStatsCache = { version: 1, events: [] };
+  return listeningStatsCache;
+}
+
+function saveListeningStatsDisk(stats) {
+  try {
+    const sPath = getListeningStatsPath();
+    const dir = path.dirname(sPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    const tempPath = sPath + '.tmp';
+    fs.writeFileSync(tempPath, JSON.stringify(stats, null, 2), 'utf8');
+    fs.renameSync(tempPath, sPath);
+    listeningStatsCache = stats;
+    return true;
+  } catch (err) {
+    console.warn('saveListeningStatsDisk note:', err.message);
     return false;
   }
 }
@@ -3852,6 +3924,41 @@ ipcMain.handle('save-playback-session', (_event, sessionData) => {
 
 ipcMain.handle('load-playback-session', () => {
   return loadPlaybackSessionDisk();
+});
+
+// IPC Handlers: Listening Statistics & Analytics (Nuclear Feature)
+ipcMain.handle('record-listen-event', (_event, eventData) => {
+  if (!eventData || !eventData.title) return { success: false, error: 'Invalid event' };
+  const stats = loadListeningStatsDisk();
+  const entry = {
+    timestamp: eventData.timestamp || Date.now(),
+    trackId: eventData.trackId || '',
+    title: eventData.title || '',
+    artist: eventData.artist || '',
+    album: eventData.album || '',
+    artworkUrl: eventData.artworkUrl || '',
+    durationSeconds: Number(eventData.durationSeconds) || 0,
+    secondsListened: Number(eventData.secondsListened) || 0
+  };
+
+  if (!Array.isArray(stats.events)) stats.events = [];
+  if (stats.events.length >= 25000) {
+    stats.events.shift();
+  }
+  stats.events.push(entry);
+  saveListeningStatsDisk(stats);
+  return { success: true, count: stats.events.length };
+});
+
+ipcMain.handle('get-listening-stats', () => {
+  const stats = loadListeningStatsDisk();
+  return { success: true, events: stats.events || [] };
+});
+
+ipcMain.handle('clear-listening-stats', () => {
+  const empty = { version: 1, events: [] };
+  saveListeningStatsDisk(empty);
+  return { success: true };
 });
 
 // IPC Handler: Clear Storage & Cache

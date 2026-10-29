@@ -40,6 +40,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getJamInfo: () => ipcRenderer.invoke('get-jam-info'),
   sendJamState: (state) => ipcRenderer.send('update-jam-state', state),
   getMcpInfo: () => ipcRenderer.invoke('get-mcp-info'),
+  recordListenEvent: (eventData) => ipcRenderer.invoke('record-listen-event', eventData),
+  getListeningStats: () => ipcRenderer.invoke('get-listening-stats'),
+  clearListeningStats: () => ipcRenderer.invoke('clear-listening-stats'),
   onJamAction: (callback) => {
     ipcRenderer.on('jam-action', (_event, action) => {
       if (typeof callback === 'function') callback(action);

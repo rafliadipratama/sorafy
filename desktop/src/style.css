@@ -5483,5 +5483,472 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* =========================================================
+   Listening Statistics & Analytics Dashboard (Nuclear Feature)
+   ========================================================= */
+#statsViewContainer {
+  padding: 24px 32px 60px 32px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.stats-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.stats-main-title {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #FFFFFF;
+  margin: 0 0 4px 0;
+}
+
+.stats-sub-title {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.stats-filter-pills {
+  display: flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 4px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.stats-pill {
+  padding: 6px 14px;
+  border-radius: 16px;
+  border: none;
+  background: none;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stats-pill:hover {
+  color: #FFFFFF;
+}
+
+.stats-pill.active {
+  background: #00E599;
+  color: #07080A;
+}
+
+.stats-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .stats-metrics-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.metric-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+}
+
+.metric-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.metric-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.metric-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-tertiary);
+  font-weight: 600;
+}
+
+.metric-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stats-panel-box {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+}
+
+.stats-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  gap: 12px;
+}
+
+.stats-panel-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin: 0 0 4px 0;
+}
+
+.stats-panel-desc {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Heatmap Styles */
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.legend-box {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.legend-label {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  margin: 0 4px;
+}
+
+.heatmap-scroll-container {
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.heatmap-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: fit-content;
+}
+
+.heatmap-months-row {
+  display: flex;
+  margin-left: 28px;
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  position: relative;
+  height: 16px;
+}
+
+.heatmap-months-row span {
+  position: absolute;
+}
+
+.heatmap-body {
+  display: flex;
+  gap: 8px;
+}
+
+.heatmap-weekdays {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 20px;
+  height: 102px;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  text-align: right;
+  padding-right: 4px;
+}
+
+.heatmap-grid {
+  display: grid;
+  grid-template-rows: repeat(7, 12px);
+  grid-auto-flow: column;
+  grid-auto-columns: 12px;
+  gap: 3px;
+}
+
+.heatmap-cell {
+  width: 12px;
+  height: 12px;
+  border-radius: 2.5px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+  box-sizing: border-box;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.35);
+  z-index: 5;
+  box-shadow: 0 0 8px rgba(0, 229, 153, 0.6);
+}
+
+/* Hourly Chart Styles */
+.hourly-chart-container {
+  display: flex;
+  align-items: flex-end;
+  height: 140px;
+  gap: 4px;
+  padding: 20px 4px 0 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.hourly-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+  cursor: pointer;
+}
+
+.hourly-bar-wrap {
+  width: 100%;
+  height: 100px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.hourly-bar {
+  width: 100%;
+  max-width: 20px;
+  border-radius: 4px 4px 0 0;
+  background: rgba(255, 255, 255, 0.12);
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
+  min-height: 3px;
+}
+
+.hourly-col:hover .hourly-bar {
+  background: #00E599;
+  box-shadow: 0 0 10px rgba(0, 229, 153, 0.4);
+}
+
+.hourly-bar.peak {
+  background: linear-gradient(180deg, #00E599 0%, #059669 100%);
+  box-shadow: 0 0 12px rgba(0, 229, 153, 0.35);
+}
+
+.hourly-col-label {
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  margin-top: 6px;
+}
+
+/* Rankings Grid */
+.stats-rankings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 800px) {
+  .stats-rankings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.rankings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.ranking-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+  cursor: pointer;
+}
+
+.ranking-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ranking-rank {
+  width: 24px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.ranking-rank.top1 {
+  color: #00E599;
+}
+
+.ranking-rank.top2 {
+  color: #38BDF8;
+}
+
+.ranking-rank.top3 {
+  color: #F59E0B;
+}
+
+.ranking-art {
+  width: 38px;
+  height: 38px;
+  border-radius: 6px;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
+}
+
+.ranking-art.artist {
+  border-radius: 50%;
+}
+
+.ranking-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.ranking-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ranking-sub {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.ranking-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #00E599;
+  background: rgba(0, 229, 153, 0.1);
+  padding: 3px 8px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+/* Recent Scrobbles List */
+.recent-scrobbles-table {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.recent-scrobble-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  transition: background 0.15s ease;
+}
+
+.recent-scrobble-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.recent-scrobble-time {
+  font-size: 11px;
+  color: var(--color-text-tertiary);
+  min-width: 100px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.stats-clear-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--color-text-secondary);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.stats-clear-btn:hover {
+  border-color: #EF4444;
+  color: #EF4444;
+}
+
+.stats-empty-state {
+  text-align: center;
+  padding: 50px 20px;
+  color: var(--color-text-secondary);
+}
+
+.stats-empty-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px auto;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+/* Tooltip */
+.stats-floating-tooltip {
+  position: fixed;
+  background: #161B22;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 11px;
+  color: #FFFFFF;
+  pointer-events: none;
+  z-index: 9999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  display: none;
+}
+
 
 

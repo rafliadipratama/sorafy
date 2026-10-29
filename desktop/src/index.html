@@ -48,6 +48,10 @@
           <iconsax-icon name="music-library-2" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_library">Your Library</span>
         </div>
+        <div class="nav-item" data-view="stats" id="navStats">
+          <iconsax-icon name="chart-2" type="linear" size="20" color="currentColor"></iconsax-icon>
+          <span data-i18n="nav_stats">Listening Stats</span>
+        </div>
         <div class="nav-item" id="navSettings">
           <iconsax-icon name="setting-2" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_settings">Settings</span>
@@ -769,6 +773,126 @@
           </div>
           <div class="library-playlists-grid" id="libPlaylistsGrid"></div>
         </section>
+      </div>
+
+      <!-- Listening Statistics & Analytics View (Nuclear Feature) -->
+      <div id="statsViewContainer" style="display: none;">
+        <div class="stats-header">
+          <div class="stats-header-titles">
+            <h1 class="stats-main-title">Listening Analytics</h1>
+            <p class="stats-sub-title">Visualisasi kebiasaan mendengarkan musik Anda secara lokal dan privat.</p>
+          </div>
+          <div class="stats-filter-pills" id="statsTimeFilterPills">
+            <button class="stats-pill active" data-range="all">Sepanjang Waktu</button>
+            <button class="stats-pill" data-range="1y">1 Tahun</button>
+            <button class="stats-pill" data-range="30d">30 Hari</button>
+            <button class="stats-pill" data-range="7d">7 Hari</button>
+          </div>
+        </div>
+
+        <!-- 4 Metric Cards Row -->
+        <div class="stats-metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon-wrap" style="color: #00E599; background: rgba(0, 229, 153, 0.12);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Total Waktu Dengar</span>
+              <span class="metric-value" id="statsTotalTime">0 Menit</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon-wrap" style="color: #38BDF8; background: rgba(56, 189, 248, 0.12);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Lagu Diputar</span>
+              <span class="metric-value" id="statsTotalTracks">0 Putaran</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon-wrap" style="color: #A855F7; background: rgba(168, 85, 247, 0.12);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Artis Unik</span>
+              <span class="metric-value" id="statsUniqueArtists">0 Artis</span>
+            </div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-icon-wrap" style="color: #F59E0B; background: rgba(245, 158, 11, 0.12);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            </div>
+            <div class="metric-content">
+              <span class="metric-label">Jam Dengar Terbanyak</span>
+              <span class="metric-value" id="statsPeakHour">--:--</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- GitHub-Style Contribution Heatmap -->
+        <div class="stats-panel-box">
+          <div class="stats-panel-header">
+            <div>
+              <h3 class="stats-panel-title">Aktivitas Mendengarkan (12 Bulan Terakhir)</h3>
+              <p class="stats-panel-desc">Jumlah menit mendengarkan musik setiap hari dalam 52 minggu terakhir.</p>
+            </div>
+            <div class="heatmap-legend">
+              <span class="legend-label">Sedikit</span>
+              <div class="legend-box" style="background: rgba(255, 255, 255, 0.05);" title="0 menit"></div>
+              <div class="legend-box" style="background: rgba(0, 229, 153, 0.25);" title="1-30 menit"></div>
+              <div class="legend-box" style="background: rgba(0, 229, 153, 0.50);" title="31-90 menit"></div>
+              <div class="legend-box" style="background: rgba(0, 229, 153, 0.75);" title="91-180 menit"></div>
+              <div class="legend-box" style="background: rgba(0, 229, 153, 1.0);" title="> 180 menit"></div>
+              <span class="legend-label">Banyak</span>
+            </div>
+          </div>
+          <div class="heatmap-scroll-container">
+            <div class="heatmap-wrapper" id="statsHeatmapWrapper">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 24-Hour Listening Distribution Chart -->
+        <div class="stats-panel-box">
+          <div class="stats-panel-header">
+            <div>
+              <h3 class="stats-panel-title">Distribusi Jam Dengar (24 Jam)</h3>
+              <p class="stats-panel-desc">Pola waktu kapan Anda paling aktif memutar musik sepanjang hari.</p>
+            </div>
+          </div>
+          <div class="hourly-chart-container" id="statsHourlyChart">
+            <!-- 24 vertical bars rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Two-Column Rankings: Top Artists & Top Tracks -->
+        <div class="stats-rankings-grid">
+          <div class="stats-panel-box">
+            <h3 class="stats-panel-title">Top 10 Artis Terbanyak Diputar</h3>
+            <div class="rankings-list" id="statsTopArtistsList"></div>
+          </div>
+          <div class="stats-panel-box">
+            <h3 class="stats-panel-title">Top 10 Lagu Terfavorit</h3>
+            <div class="rankings-list" id="statsTopTracksList"></div>
+          </div>
+        </div>
+
+        <!-- Recent Scrobbles List -->
+        <div class="stats-panel-box" style="margin-top: 24px; margin-bottom: 40px;">
+          <div class="stats-panel-header">
+            <div>
+              <h3 class="stats-panel-title">Riwayat Putar Terakhir</h3>
+              <p class="stats-panel-desc">Daftar lagu yang baru saja selesai Anda putar.</p>
+            </div>
+            <button class="stats-clear-btn" id="statsClearHistoryBtn" title="Hapus Riwayat">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+              <span>Bersihkan Riwayat</span>
+            </button>
+          </div>
+          <div class="recent-scrobbles-table" id="statsRecentScrobblesList"></div>
+        </div>
       </div>
 
       <!-- Dedicated Screen Player View Container (Fullscreen / Now Playing Player) -->

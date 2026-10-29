@@ -789,6 +789,7 @@ const I18N_DICTIONARY = {
     nav_explore: "Explore",
     nav_plugins: "Plugins & Extensions",
     nav_equalizer: "Equalizer DSP",
+    nav_stats: "Listening Stats",
     nav_settings: "Settings",
     sidebar_playlists: "My Playlists",
     quick_picks: "Quick Picks",
@@ -880,6 +881,7 @@ const I18N_DICTIONARY = {
     nav_equalizer: "Equalizer DSP",
     nav_downloads: "Lagu Tersimpan",
     nav_library: "Koleksi Saya",
+    nav_stats: "Statistik Mendengar",
     library_title: "Koleksi Saya",
     tab_all: "Semua",
     tab_liked_songs: "Lagu Disukai",
@@ -1205,6 +1207,23 @@ class SoraFyDesktopApp {
     this.searchResultsContainer = document.getElementById("searchResultsContainer");
     this.artistViewContainer = document.getElementById("artistViewContainer");
     this.playlistViewContainer = document.getElementById("playlistViewContainer");
+
+    // Listening Statistics & Analytics View Elements (Nuclear Feature)
+    this.statsViewContainer = document.getElementById("statsViewContainer");
+    this.statsTimeFilterPills = document.getElementById("statsTimeFilterPills");
+    this.statsTotalTime = document.getElementById("statsTotalTime");
+    this.statsTotalTracks = document.getElementById("statsTotalTracks");
+    this.statsUniqueArtists = document.getElementById("statsUniqueArtists");
+    this.statsPeakHour = document.getElementById("statsPeakHour");
+    this.statsHeatmapWrapper = document.getElementById("statsHeatmapWrapper");
+    this.statsHourlyChart = document.getElementById("statsHourlyChart");
+    this.statsTopArtistsList = document.getElementById("statsTopArtistsList");
+    this.statsTopTracksList = document.getElementById("statsTopTracksList");
+    this.statsRecentScrobblesList = document.getElementById("statsRecentScrobblesList");
+    this.statsClearHistoryBtn = document.getElementById("statsClearHistoryBtn");
+    this.currentStatsRange = "all";
+    this._currentListenRecorded = false;
+    this._currentListenTrack = null;
 
     // Your Library View Elements
     this.librarySubtitle = document.getElementById("librarySubtitle");
@@ -2067,6 +2086,7 @@ class SoraFyDesktopApp {
     this.initSettingsHub();
     this.initMediaSessionHandlers();
     this.initOfflineListener();
+    this.initStatsEvents();
 
     window.addEventListener('beforeunload', () => {
       if (this.audio) {
@@ -6784,6 +6804,10 @@ class SoraFyDesktopApp {
       track.video_id = track.id.replace(/^yt_/, "");
     }
 
+    // Reset listening analytics scrobble session (Nuclear Feature 5)
+    this._currentListenRecorded = false;
+    this._currentListenTrack = track;
+
     this.playerTitle.innerHTML = `
       <span class="title-text">${this.escapeHtml(track.title)}</span>
       ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
@@ -6827,6 +6851,10 @@ class SoraFyDesktopApp {
     if (!track.video_id && track.id && track.id.startsWith("yt_")) {
       track.video_id = track.id.replace(/^yt_/, "");
     }
+
+    // Reset listening analytics scrobble session (Nuclear Feature 5)
+    this._currentListenRecorded = false;
+    this._currentListenTrack = track;
 
     // Spotify/Apple Music Instant Stream: Skip network resolver if already preloaded or cached
     if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!track.is_full_stream || !track.stream_url)) {
@@ -7415,6 +7443,16 @@ class SoraFyDesktopApp {
       this.syncJamState();
     }
 
+    // Nuclear Feature 5: Record listening analytics event (at 30s or 50% duration)
+    if (!this._currentListenRecorded && this._currentListenTrack && current > 0) {
+      const dur = total > 1 ? total : (this._currentListenTrack.duration_secs || 0);
+      const threshold = (dur > 0 && dur < 60) ? Math.max(10, dur * 0.5) : 30;
+      if (current >= threshold) {
+        this._currentListenRecorded = true;
+        this.recordListenEvent(this._currentListenTrack, dur, current);
+      }
+    }
+
     // YT Music Background Autoplay Preload: when 70% completed, ensure next radio tracks
     if (pct > 70 && !this.isUpcomingQueueTriggeredForCurrent) {
       this.isUpcomingQueueTriggeredForCurrent = true;
@@ -7922,6 +7960,12 @@ class SoraFyDesktopApp {
     }
     if (this.playlistViewContainer) {
       this.playlistViewContainer.style.display = (viewName === "playlist") ? "block" : "none";
+    }
+    if (this.statsViewContainer) {
+      this.statsViewContainer.style.display = (viewName === "stats") ? "block" : "none";
+      if (viewName === "stats") {
+        this.renderStatsView();
+      }
     }
     if (this.screenPlayerViewContainer) {
       this.screenPlayerViewContainer.style.display = (viewName === "player") ? "block" : "none";
@@ -9906,6 +9950,474 @@ class SoraFyDesktopApp {
     } catch (_) {}
 
     if (this.jamQrLoading) this.jamQrLoading.style.display = "none";
+  }
+
+  // =========================================================
+  // Listening Statistics & Analytics Engine (Nuclear Feature 5)
+  // =========================================================
+  initStatsEvents() {
+    if (this.statsTimeFilterPills) {
+      const pills = this.statsTimeFilterPills.querySelectorAll(".stats-pill");
+      pills.forEach((pill) => {
+        pill.addEventListener("click", () => {
+          pills.forEach((p) => p.classList.remove("active"));
+          pill.classList.add("active");
+          this.currentStatsRange = pill.dataset.range || "all";
+          this.renderStatsView();
+        });
+      });
+    }
+
+    if (this.statsClearHistoryBtn) {
+      this.statsClearHistoryBtn.addEventListener("click", async () => {
+        if (!confirm("Apakah Anda yakin ingin menghapus seluruh riwayat analitik mendengar?")) return;
+        if (window.electronAPI && typeof window.electronAPI.clearListeningStats === "function") {
+          await window.electronAPI.clearListeningStats();
+          this.showToast("Riwayat analitik berhasil dibersihkan");
+          this.renderStatsView();
+        }
+      });
+    }
+  }
+
+  async recordListenEvent(track, totalSec, currentSec) {
+    if (!window.electronAPI || typeof window.electronAPI.recordListenEvent !== "function") return;
+    try {
+      await window.electronAPI.recordListenEvent({
+        trackId: track.video_id || track.id || "",
+        title: track.title || "Unknown Title",
+        artist: track.artist || "Unknown Artist",
+        album: track.album || "",
+        artworkUrl: track.artwork_url || "",
+        durationSeconds: Math.round(totalSec || 0),
+        secondsListened: Math.round(currentSec || 0),
+        timestamp: Date.now()
+      });
+    } catch (err) {
+      console.warn("recordListenEvent note:", err);
+    }
+  }
+
+  async renderStatsView() {
+    if (!window.electronAPI || typeof window.electronAPI.getListeningStats !== "function") return;
+    try {
+      const res = await window.electronAPI.getListeningStats();
+      const allEvents = (res && res.success && Array.isArray(res.events)) ? res.events : [];
+
+      // Filter based on selected time range
+      const now = Date.now();
+      let filteredEvents = allEvents;
+      if (this.currentStatsRange === "7d") {
+        filteredEvents = allEvents.filter(e => e.timestamp >= now - 7 * 86400000);
+      } else if (this.currentStatsRange === "30d") {
+        filteredEvents = allEvents.filter(e => e.timestamp >= now - 30 * 86400000);
+      } else if (this.currentStatsRange === "1y") {
+        filteredEvents = allEvents.filter(e => e.timestamp >= now - 365 * 86400000);
+      }
+
+      // Calculate Metrics
+      let totalSeconds = 0;
+      const artistsMap = new Map();
+      const tracksMap = new Map();
+      const hourCounts = new Array(24).fill(0);
+
+      filteredEvents.forEach((e) => {
+        const secs = (e.durationSeconds && e.durationSeconds > 0) ? e.durationSeconds : (e.secondsListened || 180);
+        totalSeconds += secs;
+
+        const art = (e.artist || "Unknown Artist").trim();
+        if (art) {
+          const prev = artistsMap.get(art) || { count: 0, seconds: 0, artwork: e.artworkUrl };
+          prev.count += 1;
+          prev.seconds += secs;
+          if (!prev.artwork && e.artworkUrl) prev.artwork = e.artworkUrl;
+          artistsMap.set(art, prev);
+        }
+
+        const trackKey = `${(e.title || "Unknown").trim().toLowerCase()}:::${art.toLowerCase()}`;
+        const prevTrack = tracksMap.get(trackKey) || {
+          trackId: e.trackId,
+          title: e.title || "Unknown Title",
+          artist: art,
+          artworkUrl: e.artworkUrl,
+          count: 0,
+          seconds: 0
+        };
+        prevTrack.count += 1;
+        prevTrack.seconds += secs;
+        if (!prevTrack.artworkUrl && e.artworkUrl) prevTrack.artworkUrl = e.artworkUrl;
+        tracksMap.set(trackKey, prevTrack);
+
+        const d = new Date(e.timestamp);
+        const h = d.getHours();
+        hourCounts[h] += 1;
+      });
+
+      // 1. Metric: Total Time
+      if (this.statsTotalTime) {
+        const totalMinutes = Math.round(totalSeconds / 60);
+        if (totalMinutes < 60) {
+          this.statsTotalTime.textContent = `${totalMinutes} Menit`;
+        } else {
+          const hours = Math.floor(totalMinutes / 60);
+          const mins = totalMinutes % 60;
+          this.statsTotalTime.textContent = `${hours} Jam ${mins} Menit`;
+        }
+      }
+
+      // 2. Metric: Total Tracks
+      if (this.statsTotalTracks) {
+        this.statsTotalTracks.textContent = `${filteredEvents.length} Putaran`;
+      }
+
+      // 3. Metric: Unique Artists
+      if (this.statsUniqueArtists) {
+        this.statsUniqueArtists.textContent = `${artistsMap.size} Artis`;
+      }
+
+      // 4. Metric: Peak Listening Hour
+      if (this.statsPeakHour) {
+        let maxCount = -1;
+        let peakH = -1;
+        hourCounts.forEach((cnt, h) => {
+          if (cnt > maxCount) {
+            maxCount = cnt;
+            peakH = h;
+          }
+        });
+        if (peakH !== -1 && maxCount > 0) {
+          const hStr = String(peakH).padStart(2, "0");
+          const nextH = String((peakH + 1) % 24).padStart(2, "0");
+          this.statsPeakHour.textContent = `${hStr}:00 - ${nextH}:00`;
+        } else {
+          this.statsPeakHour.textContent = "--:--";
+        }
+      }
+
+      // Render Sub-components
+      this.renderHeatmap(allEvents);
+      this.renderHourlyChart(hourCounts);
+      this.renderRankings(artistsMap, tracksMap);
+      this.renderRecentScrobbles(allEvents);
+    } catch (err) {
+      console.warn("renderStatsView note:", err);
+    }
+  }
+
+  renderHeatmap(allEvents) {
+    if (!this.statsHeatmapWrapper) return;
+    this.statsHeatmapWrapper.innerHTML = "";
+
+    const dayMap = new Map();
+    allEvents.forEach((e) => {
+      const d = new Date(e.timestamp);
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const m = Math.round(((e.durationSeconds && e.durationSeconds > 0) ? e.durationSeconds : (e.secondsListened || 180)) / 60);
+      dayMap.set(k, (dayMap.get(k) || 0) + m);
+    });
+
+    let tooltip = document.getElementById("statsFloatingTooltip");
+    if (!tooltip) {
+      tooltip = document.createElement("div");
+      tooltip.id = "statsFloatingTooltip";
+      tooltip.className = "stats-floating-tooltip";
+      document.body.appendChild(tooltip);
+    }
+
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    const dayOfWeek = today.getDay(); // 0 is Sun
+
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - (52 * 7 + dayOfWeek));
+    startDate.setHours(0, 0, 0, 0);
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const monthsRow = document.createElement("div");
+    monthsRow.className = "heatmap-months-row";
+
+    let lastMonth = -1;
+    for (let w = 0; w < 53; w++) {
+      const weekStart = new Date(startDate);
+      weekStart.setDate(startDate.getDate() + w * 7);
+      const m = weekStart.getMonth();
+      if (m !== lastMonth && w < 51) {
+        lastMonth = m;
+        const mSpan = document.createElement("span");
+        mSpan.textContent = monthNames[m];
+        mSpan.style.left = `${w * 15}px`;
+        monthsRow.appendChild(mSpan);
+      }
+    }
+    this.statsHeatmapWrapper.appendChild(monthsRow);
+
+    const heatmapBody = document.createElement("div");
+    heatmapBody.className = "heatmap-body";
+
+    const weekdays = document.createElement("div");
+    weekdays.className = "heatmap-weekdays";
+    weekdays.innerHTML = `<span>Min</span><span>Rab</span><span>Sab</span>`;
+    heatmapBody.appendChild(weekdays);
+
+    const grid = document.createElement("div");
+    grid.className = "heatmap-grid";
+
+    for (let w = 0; w < 53; w++) {
+      for (let d = 0; d < 7; d++) {
+        const cellDate = new Date(startDate);
+        cellDate.setDate(startDate.getDate() + (w * 7 + d));
+
+        if (cellDate > today) {
+          const emptyCell = document.createElement("div");
+          emptyCell.style.width = "12px";
+          emptyCell.style.height = "12px";
+          emptyCell.style.visibility = "hidden";
+          grid.appendChild(emptyCell);
+          continue;
+        }
+
+        const dateStr = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, "0")}-${String(cellDate.getDate()).padStart(2, "0")}`;
+        const minutes = dayMap.get(dateStr) || 0;
+
+        const cell = document.createElement("div");
+        cell.className = "heatmap-cell";
+
+        if (minutes === 0) {
+          cell.style.background = "rgba(255, 255, 255, 0.05)";
+        } else if (minutes <= 30) {
+          cell.style.background = "rgba(0, 229, 153, 0.25)";
+        } else if (minutes <= 90) {
+          cell.style.background = "rgba(0, 229, 153, 0.50)";
+        } else if (minutes <= 180) {
+          cell.style.background = "rgba(0, 229, 153, 0.75)";
+        } else {
+          cell.style.background = "rgba(0, 229, 153, 1.0)";
+        }
+
+        const dateDisplay = cellDate.toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "short",
+          year: "numeric"
+        });
+
+        cell.addEventListener("mouseenter", (e) => {
+          tooltip.innerHTML = `<strong>${dateDisplay}</strong><br>${minutes > 0 ? `${minutes} menit didengarkan` : 'Tidak ada aktivitas'}`;
+          tooltip.style.display = "block";
+          tooltip.style.left = `${e.clientX + 12}px`;
+          tooltip.style.top = `${e.clientY - 28}px`;
+        });
+
+        cell.addEventListener("mousemove", (e) => {
+          tooltip.style.left = `${e.clientX + 12}px`;
+          tooltip.style.top = `${e.clientY - 28}px`;
+        });
+
+        cell.addEventListener("mouseleave", () => {
+          tooltip.style.display = "none";
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
+    heatmapBody.appendChild(grid);
+    this.statsHeatmapWrapper.appendChild(heatmapBody);
+  }
+
+  renderHourlyChart(hourCounts) {
+    if (!this.statsHourlyChart) return;
+    this.statsHourlyChart.innerHTML = "";
+
+    const maxCount = Math.max(1, ...hourCounts);
+    let tooltip = document.getElementById("statsFloatingTooltip");
+
+    hourCounts.forEach((count, h) => {
+      const col = document.createElement("div");
+      col.className = "hourly-col";
+
+      const barWrap = document.createElement("div");
+      barWrap.className = "hourly-bar-wrap";
+
+      const bar = document.createElement("div");
+      bar.className = "hourly-bar";
+      const heightPct = count > 0 ? Math.max(5, Math.round((count / maxCount) * 100)) : 3;
+      bar.style.height = `${heightPct}%`;
+
+      if (count === maxCount && count > 0) {
+        bar.classList.add("peak");
+      }
+
+      barWrap.appendChild(bar);
+      col.appendChild(barWrap);
+
+      const label = document.createElement("div");
+      label.className = "hourly-col-label";
+      label.textContent = (h % 3 === 0) ? String(h).padStart(2, "0") : "";
+      col.appendChild(label);
+
+      col.addEventListener("mouseenter", (e) => {
+        if (!tooltip) return;
+        const hLabel = `${String(h).padStart(2, "0")}:00 - ${String((h + 1) % 24).padStart(2, "0")}:00`;
+        tooltip.innerHTML = `<strong>${hLabel}</strong><br>${count} lagu diputar`;
+        tooltip.style.display = "block";
+        tooltip.style.left = `${e.clientX + 12}px`;
+        tooltip.style.top = `${e.clientY - 28}px`;
+      });
+
+      col.addEventListener("mousemove", (e) => {
+        if (!tooltip) return;
+        tooltip.style.left = `${e.clientX + 12}px`;
+        tooltip.style.top = `${e.clientY - 28}px`;
+      });
+
+      col.addEventListener("mouseleave", () => {
+        if (!tooltip) return;
+        tooltip.style.display = "none";
+      });
+
+      this.statsHourlyChart.appendChild(col);
+    });
+  }
+
+  renderRankings(artistsMap, tracksMap) {
+    // 1. Top Artists
+    if (this.statsTopArtistsList) {
+      this.statsTopArtistsList.innerHTML = "";
+      const sortedArtists = Array.from(artistsMap.entries())
+        .map(([name, data]) => ({ name, count: data.count, seconds: data.seconds, artwork: data.artwork }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      if (sortedArtists.length === 0) {
+        this.statsTopArtistsList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">Belum ada data artis.</div>`;
+      } else {
+        sortedArtists.forEach((item, idx) => {
+          const div = document.createElement("div");
+          div.className = "ranking-item";
+
+          const rankClass = idx === 0 ? "top1" : idx === 1 ? "top2" : idx === 2 ? "top3" : "";
+          const avatar = item.artwork || getArtistAvatar(item.name);
+
+          div.innerHTML = `
+            <div class="ranking-rank ${rankClass}">#${idx + 1}</div>
+            <img class="ranking-art artist" src="${this.escapeHtml(avatar)}" onerror="this.src='assets/logo.png'">
+            <div class="ranking-info">
+              <div class="ranking-title">${this.escapeHtml(item.name)}</div>
+              <div class="ranking-sub">${Math.round(item.seconds / 60)} menit didengar</div>
+            </div>
+            <div class="ranking-badge">${item.count} putar</div>
+          `;
+
+          div.addEventListener("click", () => {
+            this.openArtistDetail(item.name);
+          });
+
+          this.statsTopArtistsList.appendChild(div);
+        });
+      }
+    }
+
+    // 2. Top Tracks
+    if (this.statsTopTracksList) {
+      this.statsTopTracksList.innerHTML = "";
+      const sortedTracks = Array.from(tracksMap.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+      if (sortedTracks.length === 0) {
+        this.statsTopTracksList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">Belum ada data lagu.</div>`;
+      } else {
+        sortedTracks.forEach((item, idx) => {
+          const div = document.createElement("div");
+          div.className = "ranking-item";
+
+          const rankClass = idx === 0 ? "top1" : idx === 1 ? "top2" : idx === 2 ? "top3" : "";
+          const art = item.artworkUrl || "assets/logo.png";
+
+          div.innerHTML = `
+            <div class="ranking-rank ${rankClass}">#${idx + 1}</div>
+            <img class="ranking-art" src="${this.escapeHtml(art)}" onerror="this.src='assets/logo.png'">
+            <div class="ranking-info">
+              <div class="ranking-title">${this.escapeHtml(item.title)}</div>
+              <div class="ranking-sub">${this.escapeHtml(item.artist)}</div>
+            </div>
+            <div class="ranking-badge">${item.count} putar</div>
+          `;
+
+          div.addEventListener("click", () => {
+            const trackObj = {
+              id: item.trackId ? (item.trackId.startsWith("yt_") ? item.trackId : `yt_${item.trackId}`) : `yt_${Date.now()}`,
+              video_id: item.trackId ? item.trackId.replace(/^yt_/, "") : "",
+              title: item.title,
+              artist: item.artist,
+              artwork_url: item.artworkUrl || "assets/logo.png",
+              duration_secs: item.seconds || 180
+            };
+            this.playTrackNow(trackObj);
+          });
+
+          this.statsTopTracksList.appendChild(div);
+        });
+      }
+    }
+  }
+
+  renderRecentScrobbles(allEvents) {
+    if (!this.statsRecentScrobblesList) return;
+    this.statsRecentScrobblesList.innerHTML = "";
+
+    const recent = [...allEvents].reverse().slice(0, 10);
+    if (recent.length === 0) {
+      this.statsRecentScrobblesList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">Belum ada lagu yang baru diputar.</div>`;
+      return;
+    }
+
+    recent.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "recent-scrobble-row";
+      const art = item.artworkUrl || "assets/logo.png";
+      const timeAgo = this.formatTimeAgo(item.timestamp);
+
+      row.innerHTML = `
+        <img class="ranking-art" src="${this.escapeHtml(art)}" onerror="this.src='assets/logo.png'">
+        <div class="ranking-info">
+          <div class="ranking-title">${this.escapeHtml(item.title)}</div>
+          <div class="ranking-sub">${this.escapeHtml(item.artist)}</div>
+        </div>
+        <div class="recent-scrobble-time">${timeAgo}</div>
+      `;
+
+      row.style.cursor = "pointer";
+      row.addEventListener("click", () => {
+        const trackObj = {
+          id: item.trackId ? (item.trackId.startsWith("yt_") ? item.trackId : `yt_${item.trackId}`) : `yt_${Date.now()}`,
+          video_id: item.trackId ? item.trackId.replace(/^yt_/, "") : "",
+          title: item.title,
+          artist: item.artist,
+          artwork_url: item.artworkUrl || "assets/logo.png",
+          duration_secs: item.durationSeconds || 180
+        };
+        this.playTrackNow(trackObj);
+      });
+
+      this.statsRecentScrobblesList.appendChild(row);
+    });
+  }
+
+  formatTimeAgo(timestamp) {
+    if (!timestamp) return "";
+    const diff = Math.max(0, Date.now() - timestamp);
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return "Baru saja";
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `${mins} mnt lalu`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours} jam lalu`;
+    const days = Math.floor(hours / 24);
+    if (days === 1) return "Kemarin";
+    if (days < 30) return `${days} hari lalu`;
+    const months = Math.floor(days / 30);
+    return `${months} bln lalu`;
   }
 }
 
