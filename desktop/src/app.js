@@ -7498,10 +7498,11 @@ class SoraFyDesktopApp {
         line.words.forEach((w) => {
           const span = document.createElement("span");
           span.className = "lyric-word";
-          span.textContent = w.word + " ";
+          span.textContent = w.word;
           span.dataset.start = Math.round(w.startMs);
           span.dataset.end = Math.round(w.endMs);
           mainDiv.appendChild(span);
+          mainDiv.appendChild(document.createTextNode(" "));
         });
       } else {
         mainDiv.textContent = line.text;

@@ -1097,13 +1097,16 @@ body {
 .lyric-line {
   font-size: 16px;
   font-weight: 600;
-  line-height: 1.6;
+  line-height: 1.7;
   color: rgba(255, 255, 255, 0.35);
   cursor: pointer;
-  padding: 8px 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
   border-radius: 8px;
   border-left: 3.5px solid transparent;
   transition: color 0.15s ease, background-color 0.15s ease, opacity 0.2s ease, transform 0.2s ease;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .lyric-line:hover {
@@ -1207,10 +1210,13 @@ body {
 
 .lyric-main {
   display: inline;
+  word-spacing: normal;
+  white-space: normal;
 }
 
 .lyric-word {
   display: inline-block;
+  margin-right: 0.28em;
   transition: color 0.12s ease, transform 0.12s ease, text-shadow 0.12s ease;
 }
 
