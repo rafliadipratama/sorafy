@@ -2217,7 +2217,9 @@ const DEFAULT_SETTINGS = {
   volumeNormalization: false,
   crossfadeDuration: 0,
   cacheQuotaMb: 2048,
-  cookiePath: ''
+  cookiePath: '',
+  theme: 'emerald',
+  customAccent: ''
 };
 
 function getPlaylistsDiskPath() {

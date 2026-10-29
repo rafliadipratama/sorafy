@@ -783,6 +783,97 @@ function isCompatibleMusifyTrack(candidate, seedTrack, seedCluster) {
   return true;
 }
 
+// =========================================================
+// Nuclear Feature 6: Theme Presets & Color Tokens
+// =========================================================
+const THEME_PRESETS = {
+  emerald: {
+    name: "SoraFy Emerald",
+    isDark: true,
+    accent: "#00E599",
+    secondary: "#00B377",
+    tokens: {
+      "--color-surface-canvas": "#07080A",
+      "--color-surface-container": "#121519",
+      "--color-surface-elevated": "#1A1E24",
+      "--color-surface-overlay": "rgba(7, 8, 10, 0.92)",
+      "--color-text-primary": "#FFFFFF",
+      "--color-text-secondary": "#9AA0A6",
+      "--color-text-tertiary": "#5F6368",
+      "--color-border": "rgba(255, 255, 255, 0.08)",
+      "--color-border-subtle": "rgba(255, 255, 255, 0.05)"
+    }
+  },
+  arctic: {
+    name: "Arctic Obsidian",
+    isDark: true,
+    accent: "#E0E0E0",
+    secondary: "#B0B0B0",
+    tokens: {
+      "--color-surface-canvas": "#000000",
+      "--color-surface-container": "#0C0C0C",
+      "--color-surface-elevated": "#161616",
+      "--color-surface-overlay": "rgba(0, 0, 0, 0.94)",
+      "--color-text-primary": "#FFFFFF",
+      "--color-text-secondary": "#A0A0A0",
+      "--color-text-tertiary": "#666666",
+      "--color-border": "rgba(255, 255, 255, 0.10)",
+      "--color-border-subtle": "rgba(255, 255, 255, 0.06)"
+    }
+  },
+  cyber: {
+    name: "Lagoon Cyber",
+    isDark: true,
+    accent: "#00D2FF",
+    secondary: "#0099CC",
+    tokens: {
+      "--color-surface-canvas": "#070D18",
+      "--color-surface-container": "#0C1424",
+      "--color-surface-elevated": "#142038",
+      "--color-surface-overlay": "rgba(7, 13, 24, 0.94)",
+      "--color-text-primary": "#EAF2FD",
+      "--color-text-secondary": "#7E97B8",
+      "--color-text-tertiary": "#4A5D78",
+      "--color-border": "rgba(0, 210, 255, 0.14)",
+      "--color-border-subtle": "rgba(0, 210, 255, 0.08)"
+    }
+  },
+  purple: {
+    name: "Aurora Purple",
+    isDark: true,
+    accent: "#A855F7",
+    secondary: "#9333EA",
+    tokens: {
+      "--color-surface-canvas": "#0D0714",
+      "--color-surface-container": "#160E22",
+      "--color-surface-elevated": "#231535",
+      "--color-surface-overlay": "rgba(13, 7, 20, 0.94)",
+      "--color-text-primary": "#F5EEFD",
+      "--color-text-secondary": "#A592BD",
+      "--color-text-tertiary": "#6B5780",
+      "--color-border": "rgba(168, 85, 247, 0.14)",
+      "--color-border-subtle": "rgba(168, 85, 247, 0.08)"
+    }
+  },
+  light: {
+    name: "Oasis Light",
+    isDark: false,
+    accent: "#00A86B",
+    secondary: "#00875A",
+    tokens: {
+      "--color-surface-canvas": "#F8F9FA",
+      "--color-surface-container": "#FFFFFF",
+      "--color-surface-elevated": "#EEF1F5",
+      "--color-surface-overlay": "rgba(248, 249, 250, 0.95)",
+      "--color-text-primary": "#12151A",
+      "--color-text-secondary": "#5F6775",
+      "--color-text-tertiary": "#8A94A6",
+      "--color-border": "rgba(0, 0, 0, 0.08)",
+      "--color-border-subtle": "rgba(0, 0, 0, 0.05)"
+    }
+  }
+};
+
 const I18N_DICTIONARY = {
   en: {
     nav_home: "Home",
@@ -805,10 +896,15 @@ const I18N_DICTIONARY = {
     music_videos: "Music Videos",
     offline_notice: "You are currently offline. Local cache playback is active.",
     settings_tab_audio: "Audio & Quality",
+    settings_tab_appearance: "Appearance & Theme",
     settings_tab_system: "System",
     settings_tab_data: "Data & Backup",
     settings_tab_shortcuts: "Shortcuts",
     settings_tab_about: "About",
+    setting_theme: "Interface Theme",
+    setting_theme_desc: "Choose the overall visual theme and color palette.",
+    setting_accent: "Custom Accent Color",
+    setting_accent_desc: "Customize primary highlights, waveforms, and button accents.",
     setting_language: "Language / Bahasa",
     setting_language_desc: "Select display language for user interface.",
     setting_audio_quality: "Audio Streaming Quality",
@@ -908,10 +1004,15 @@ const I18N_DICTIONARY = {
     music_videos: "Video Musik",
     offline_notice: "Anda sedang offline. Pemutaran cache lokal aktif.",
     settings_tab_audio: "Audio & Kualitas",
+    settings_tab_appearance: "Tampilan & Tema",
     settings_tab_system: "Sistem",
     settings_tab_data: "Data & Cadangan",
     settings_tab_shortcuts: "Pintasan Keyboard",
     settings_tab_about: "Tentang",
+    setting_theme: "Tema Antarmuka",
+    setting_theme_desc: "Pilih palet tema tampilan keseluruhan aplikasi.",
+    setting_accent: "Warna Aksen Kustom",
+    setting_accent_desc: "Sesuaikan warna sorotan utama, tombol aktif, dan seekbar.",
     setting_language: "Bahasa / Language",
     setting_language_desc: "Pilih bahasa tampilan untuk antarmuka pengguna.",
     setting_audio_quality: "Kualitas Streaming Audio",
@@ -1471,6 +1572,10 @@ class SoraFyDesktopApp {
     this.settingClearCookieBtn = document.getElementById("settingClearCookieBtn");
     this.settingCookieStatus = document.getElementById("settingCookieStatus");
     this.settingLanguage = document.getElementById("settingLanguage");
+    this.settingThemeSelect = document.getElementById("settingThemeSelect");
+    this.settingAccentColorPicker = document.getElementById("settingAccentColorPicker");
+    this.settingResetAccentBtn = document.getElementById("settingResetAccentBtn");
+    this.accentSwatchesRow = document.getElementById("accentSwatchesRow");
     this.offlineBanner = document.getElementById("offlineBanner");
     this.currentLanguage = localStorage.getItem("sorafy_language") || "en";
     this.playlistChunkObserver = null;
@@ -1518,6 +1623,75 @@ class SoraFyDesktopApp {
 
     if (this.settingLanguage) {
       this.settingLanguage.value = this.currentLanguage;
+    }
+  }
+
+  // =========================================================
+  // Nuclear Feature 6: Theme & Design Tokens Application
+  // =========================================================
+  applyTheme(themeKey, customAccent = null) {
+    const key = (themeKey && THEME_PRESETS[themeKey]) ? themeKey : "emerald";
+    const theme = THEME_PRESETS[key];
+    this.currentTheme = key;
+    localStorage.setItem("sorafy_theme", key);
+    if (this.appSettings) this.appSettings.theme = key;
+
+    document.documentElement.setAttribute("data-theme", key);
+
+    // Apply token definitions
+    if (theme.tokens) {
+      for (const [prop, val] of Object.entries(theme.tokens)) {
+        document.documentElement.style.setProperty(prop, val);
+      }
+    }
+
+    // Determine final accent color
+    const effectiveAccent = (customAccent && customAccent.trim()) ? customAccent.trim() : theme.accent;
+    this.currentAccent = effectiveAccent;
+    document.documentElement.style.setProperty("--color-brand-primary", effectiveAccent);
+    document.documentElement.style.setProperty("--color-brand-gradient", effectiveAccent);
+
+    // Set secondary color
+    if (customAccent && customAccent.trim()) {
+      document.documentElement.style.setProperty("--color-brand-secondary", customAccent.trim());
+    } else {
+      document.documentElement.style.setProperty("--color-brand-secondary", theme.secondary);
+    }
+
+    // Update Theme dropdown in Settings
+    if (this.settingThemeSelect) {
+      this.settingThemeSelect.value = key;
+    }
+
+    // Update color picker input
+    if (this.settingAccentColorPicker) {
+      this.settingAccentColorPicker.value = effectiveAccent;
+    }
+
+    // Update swatch buttons active state
+    if (this.accentSwatchesRow) {
+      const swatches = this.accentSwatchesRow.querySelectorAll(".accent-swatch-btn");
+      swatches.forEach(btn => {
+        const c = btn.dataset.color;
+        const matches = c && c.toLowerCase() === effectiveAccent.toLowerCase();
+        btn.classList.toggle("active", matches);
+        if (matches) {
+          btn.style.boxShadow = `0 0 12px ${effectiveAccent}`;
+        } else {
+          btn.style.boxShadow = "none";
+        }
+      });
+    }
+
+    // Refresh seekbars so they immediately show the new accent
+    if (this.audio && this.playerSeekbar) {
+      const current = this.audio.currentTime || 0;
+      const total = this.audio.duration || 1;
+      const pct = total > 0 ? (current / total) * 100 : 0;
+      this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
+      if (this.screenPlayerSeekbar) {
+        this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
+      }
     }
   }
 
@@ -1816,7 +1990,9 @@ class SoraFyDesktopApp {
       audioQuality: 'high',
       volumeNormalization: false,
       crossfadeDuration: 0,
-      cacheQuotaMb: 2048
+      cacheQuotaMb: 2048,
+      theme: 'emerald',
+      customAccent: ''
     };
 
     if (window.electronAPI && typeof window.electronAPI.getAppSettings === 'function') {
@@ -1836,6 +2012,11 @@ class SoraFyDesktopApp {
     // Apply configured language
     const initialLang = this.appSettings.language || localStorage.getItem("sorafy_language") || "en";
     this.applyLanguage(initialLang);
+
+    // Apply configured theme & custom accent (Nuclear Feature 6)
+    const initialTheme = this.appSettings.theme || localStorage.getItem("sorafy_theme") || "emerald";
+    const initialAccent = this.appSettings.customAccent || localStorage.getItem("sorafy_custom_accent") || "";
+    this.applyTheme(initialTheme, initialAccent);
 
     if (this.settingLanguage) {
       this.settingLanguage.value = initialLang;
@@ -1893,6 +2074,48 @@ class SoraFyDesktopApp {
         persistSettings();
         this.applyLanguage(e.target.value);
         this.showToast(e.target.value === 'id' ? 'Bahasa antarmuka diubah ke Bahasa Indonesia' : 'Interface language changed to English');
+      });
+    }
+
+    // Theme & Appearance Change Handlers (Nuclear Feature 6)
+    if (this.settingThemeSelect) {
+      this.settingThemeSelect.addEventListener("change", (e) => {
+        const themeKey = e.target.value;
+        this.appSettings.theme = themeKey;
+        persistSettings();
+        this.applyTheme(themeKey, this.appSettings.customAccent);
+        const name = THEME_PRESETS[themeKey]?.name || themeKey;
+        this.showToast(this.currentLanguage === 'id' ? `Tema antarmuka diubah ke ${name}` : `Interface theme changed to ${name}`);
+      });
+    }
+
+    if (this.settingAccentColorPicker) {
+      this.settingAccentColorPicker.addEventListener("input", (e) => {
+        const color = e.target.value;
+        this.appSettings.customAccent = color;
+        persistSettings();
+        this.applyTheme(this.appSettings.theme || 'emerald', color);
+      });
+    }
+
+    if (this.settingResetAccentBtn) {
+      this.settingResetAccentBtn.addEventListener("click", () => {
+        this.appSettings.customAccent = "";
+        persistSettings();
+        this.applyTheme(this.appSettings.theme || 'emerald', "");
+        this.showToast(this.currentLanguage === 'id' ? "Warna aksen dikembalikan ke bawaan tema" : "Accent color reset to theme default");
+      });
+    }
+
+    if (this.accentSwatchesRow) {
+      const swatches = this.accentSwatchesRow.querySelectorAll(".accent-swatch-btn");
+      swatches.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const color = btn.dataset.color;
+          this.appSettings.customAccent = color;
+          persistSettings();
+          this.applyTheme(this.appSettings.theme || 'emerald', color);
+        });
       });
     }
 
@@ -2390,7 +2613,7 @@ class SoraFyDesktopApp {
         if (this.audio.duration && !isNaN(this.audio.duration)) {
           const seekTime = (val / 100) * this.audio.duration;
           if (this.screenPlayerCurrentTime) this.screenPlayerCurrentTime.textContent = this.formatTime(seekTime);
-          this.screenPlayerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${val}%, rgba(255, 255, 255, 0.16) ${val}%, rgba(255, 255, 255, 0.16) 100%)`;
+          this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${val}%, rgba(255, 255, 255, 0.16) ${val}%, rgba(255, 255, 255, 0.16) 100%)`;
         }
       });
       this.screenPlayerSeekbar.addEventListener("change", (e) => {
@@ -3015,7 +3238,7 @@ class SoraFyDesktopApp {
         if (this.audio.duration && !isNaN(this.audio.duration)) {
           const seekTime = (val / 100) * this.audio.duration;
           this.currentTimeLabel.textContent = this.formatTime(seekTime);
-          this.playerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${val}%, rgba(255, 255, 255, 0.16) ${val}%, rgba(255, 255, 255, 0.16) 100%)`;
+          this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${val}%, rgba(255, 255, 255, 0.16) ${val}%, rgba(255, 255, 255, 0.16) 100%)`;
         }
       });
       this.playerSeekbar.addEventListener("change", (e) => {
@@ -6833,11 +7056,11 @@ class SoraFyDesktopApp {
       const initialPct = Math.min(100, (startPosition / track.duration_secs) * 100);
       if (this.playerSeekbar) {
         this.playerSeekbar.value = initialPct;
-        this.playerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
+        this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
       }
       if (this.screenPlayerSeekbar) {
         this.screenPlayerSeekbar.value = initialPct;
-        this.screenPlayerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
+        this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
       }
     }
 
@@ -7464,7 +7687,7 @@ class SoraFyDesktopApp {
 
     if (this.playerSeekbar && !this.isSeekingBottom) {
       this.playerSeekbar.value = pct;
-      this.playerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
+      this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
     }
 
     if (this.screenPlayerCurrentTime) this.screenPlayerCurrentTime.textContent = this.formatTime(current);
@@ -7472,7 +7695,7 @@ class SoraFyDesktopApp {
 
     if (this.screenPlayerSeekbar && !this.isSeekingScreen) {
       this.screenPlayerSeekbar.value = pct;
-      this.screenPlayerSeekbar.style.background = `linear-gradient(to right, #00E599 0%, #00E599 ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
+      this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
     }
 
     if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src && !this.screenPlayerNativeVideo.paused) {

@@ -11,6 +11,8 @@
   --color-text-primary: #FFFFFF;
   --color-text-secondary: #9AA0A6;
   --color-text-tertiary: #5F6368;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-border-subtle: rgba(255, 255, 255, 0.05);
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
@@ -18,6 +20,154 @@
   --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
   --shadow-glow: none;
   --shadow-neon: none;
+}
+
+/* =========================================================
+   Nuclear Feature 6: Theme Presets & Design Tokens
+   ========================================================= */
+/* 1. Arctic Obsidian (Monochrome) */
+[data-theme="arctic"] {
+  --color-brand-primary: #E0E0E0;
+  --color-brand-secondary: #B0B0B0;
+  --color-brand-gradient: #E0E0E0;
+  --color-surface-canvas: #000000;
+  --color-surface-container: #0C0C0C;
+  --color-surface-elevated: #161616;
+  --color-surface-overlay: rgba(0, 0, 0, 0.94);
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A0A0A0;
+  --color-text-tertiary: #666666;
+  --color-border: rgba(255, 255, 255, 0.10);
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+}
+
+/* 2. Lagoon Cyber (Blue / Cyan) */
+[data-theme="cyber"] {
+  --color-brand-primary: #00D2FF;
+  --color-brand-secondary: #0099CC;
+  --color-brand-gradient: #00D2FF;
+  --color-surface-canvas: #070D18;
+  --color-surface-container: #0C1424;
+  --color-surface-elevated: #142038;
+  --color-surface-overlay: rgba(7, 13, 24, 0.94);
+  --color-text-primary: #EAF2FD;
+  --color-text-secondary: #7E97B8;
+  --color-text-tertiary: #4A5D78;
+  --color-border: rgba(0, 210, 255, 0.14);
+  --color-border-subtle: rgba(0, 210, 255, 0.08);
+}
+
+/* 3. Aurora Purple (Dark Violet) */
+[data-theme="purple"] {
+  --color-brand-primary: #A855F7;
+  --color-brand-secondary: #9333EA;
+  --color-brand-gradient: #A855F7;
+  --color-surface-canvas: #0D0714;
+  --color-surface-container: #160E22;
+  --color-surface-elevated: #231535;
+  --color-surface-overlay: rgba(13, 7, 20, 0.94);
+  --color-text-primary: #F5EEFD;
+  --color-text-secondary: #A592BD;
+  --color-text-tertiary: #6B5780;
+  --color-border: rgba(168, 85, 247, 0.14);
+  --color-border-subtle: rgba(168, 85, 247, 0.08);
+}
+
+/* 4. Oasis Light (Mode Terang) */
+[data-theme="light"] {
+  --color-brand-primary: #00A86B;
+  --color-brand-secondary: #00875A;
+  --color-brand-gradient: #00A86B;
+  --color-surface-canvas: #F8F9FA;
+  --color-surface-container: #FFFFFF;
+  --color-surface-elevated: #EEF1F5;
+  --color-surface-overlay: rgba(248, 249, 250, 0.95);
+  --color-text-primary: #12151A;
+  --color-text-secondary: #5F6775;
+  --color-text-tertiary: #8A94A6;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-subtle: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .sidebar,
+[data-theme="light"] .bottom-player,
+[data-theme="light"] .lyrics-panel,
+[data-theme="light"] .content-header,
+[data-theme="light"] .modal-card,
+[data-theme="light"] .stats-panel-box,
+[data-theme="light"] .metric-card {
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .brand-title {
+  color: #12151A;
+}
+
+[data-theme="light"] input,
+[data-theme="light"] select {
+  color: #12151A;
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] input::placeholder {
+  color: #8A94A6;
+}
+
+[data-theme="light"] .play-pause-btn {
+  background: var(--color-brand-primary);
+  color: #FFFFFF;
+}
+
+[data-theme="light"] * {
+  scrollbar-color: rgba(0, 0, 0, 0.22) transparent;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.20);
+}
+
+[data-theme="light"] .lyric-line {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+[data-theme="light"] .lyric-line.active {
+  color: #12151A;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+/* Custom Accent Swatches */
+.accent-swatches-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.accent-swatch-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+}
+
+[data-theme="light"] .accent-swatch-btn {
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+.accent-swatch-btn:hover {
+  transform: scale(1.15);
+  border-color: #FFFFFF;
+}
+
+.accent-swatch-btn.active {
+  transform: scale(1.2);
+  border-color: #FFFFFF;
+  box-shadow: 0 0 10px currentColor;
 }
 
 /* =========================================================

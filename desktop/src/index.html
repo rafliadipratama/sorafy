@@ -7,6 +7,17 @@
   <title>SoraFy - High-Fidelity Music Streaming</title>
   <link rel="stylesheet" href="style.css">
   <script src="iconsax-bundle.js"></script>
+  <script>
+    try {
+      const t = localStorage.getItem('sorafy_theme');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+      const a = localStorage.getItem('sorafy_custom_accent');
+      if (a) {
+        document.documentElement.style.setProperty('--color-brand-primary', a);
+        document.documentElement.style.setProperty('--color-brand-gradient', a);
+      }
+    } catch (_) {}
+  </script>
 </head>
 <body>
 
@@ -1373,6 +1384,7 @@
       <!-- Settings Tabs -->
       <div class="settings-tab-bar" id="settingsTabBar">
         <button class="settings-tab-btn active" data-tab="audio" data-i18n="settings_tab_audio">Audio & Quality</button>
+        <button class="settings-tab-btn" data-tab="appearance" data-i18n="settings_tab_appearance">Appearance</button>
         <button class="settings-tab-btn" data-tab="system" data-i18n="settings_tab_system">System</button>
         <button class="settings-tab-btn" data-tab="data" data-i18n="settings_tab_data">Data & Backup</button>
         <button class="settings-tab-btn" data-tab="shortcuts" data-i18n="settings_tab_shortcuts">Shortcuts</button>
@@ -1413,6 +1425,48 @@
             <div style="display: flex; align-items: center; gap: 10px;">
               <input type="range" class="volume-slider" id="settingCrossfade" min="0" max="10" step="1" value="0" style="width: 120px;">
               <span id="settingCrossfadeLabel" style="font-size: 13px; font-weight: 600; color: #00E599; min-width: 32px;">0s</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab Appearance & Theme (Nuclear Feature 6) -->
+        <div class="settings-tab-pane" id="settingsTabAppearance" style="display: none;">
+          <div class="setting-item">
+            <div class="setting-info">
+              <span class="setting-title" data-i18n="setting_theme">Interface Theme</span>
+              <span class="setting-desc" data-i18n="setting_theme_desc">Pilih palet tema tampilan keseluruhan aplikasi.</span>
+            </div>
+            <select class="settings-select" id="settingThemeSelect">
+              <option value="emerald" selected>SoraFy Emerald (Default Dark)</option>
+              <option value="arctic">Arctic Obsidian (Monochrome)</option>
+              <option value="cyber">Lagoon Cyber (Blue / Cyan)</option>
+              <option value="purple">Aurora Purple (Dark Violet)</option>
+              <option value="light">Oasis Light (Mode Terang)</option>
+            </select>
+          </div>
+
+          <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+              <div class="setting-info">
+                <span class="setting-title" data-i18n="setting_accent">Custom Accent Color</span>
+                <span class="setting-desc" data-i18n="setting_accent_desc">Pilih warna aksen kustom untuk tombol, gelombang audio, dan indikator.</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <input type="color" id="settingAccentColorPicker" value="#00E599" style="width: 38px; height: 32px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                <button class="hero-secondary-btn" id="settingResetAccentBtn" style="padding: 4px 10px; font-size: 11px;">Reset</button>
+              </div>
+            </div>
+
+            <!-- Quick Preset Swatches -->
+            <div class="accent-swatches-row" id="accentSwatchesRow">
+              <button class="accent-swatch-btn active" data-color="#00E599" style="background: #00E599;" title="Emerald"></button>
+              <button class="accent-swatch-btn" data-color="#00D2FF" style="background: #00D2FF;" title="Electric Cyan"></button>
+              <button class="accent-swatch-btn" data-color="#3B82F6" style="background: #3B82F6;" title="Ocean Blue"></button>
+              <button class="accent-swatch-btn" data-color="#A855F7" style="background: #A855F7;" title="Neon Purple"></button>
+              <button class="accent-swatch-btn" data-color="#EC4899" style="background: #EC4899;" title="Hot Pink"></button>
+              <button class="accent-swatch-btn" data-color="#F59E0B" style="background: #F59E0B;" title="Amber Gold"></button>
+              <button class="accent-swatch-btn" data-color="#EF4444" style="background: #EF4444;" title="Crimson Red"></button>
+              <button class="accent-swatch-btn" data-color="#E0E0E0" style="background: #E0E0E0;" title="Obsidian Silver"></button>
             </div>
           </div>
         </div>
