@@ -916,6 +916,18 @@ class SoraFyDesktopApp {
     this.shuffleBtn = document.getElementById("shuffleBtn");
     this.repeatBtn = document.getElementById("repeatBtn");
     this.likeBtn = document.getElementById("likeBtn");
+    this.verifyStreamBtn = document.getElementById("verifyStreamBtn");
+    this.verifyStreamIcon = document.getElementById("verifyStreamIcon");
+    this.screenVerifyStreamBtn = document.getElementById("screenVerifyStreamBtn");
+    this.screenVerifyStreamIcon = document.getElementById("screenVerifyStreamIcon");
+    this.streamCandidatesModal = document.getElementById("streamCandidatesModal");
+    this.closeStreamCandidatesBtn = document.getElementById("closeStreamCandidatesBtn");
+    this.cancelStreamCandidatesBtn = document.getElementById("cancelStreamCandidatesBtn");
+    this.streamCandidatesSubtitle = document.getElementById("streamCandidatesSubtitle");
+    this.streamCandidatesStatusNotice = document.getElementById("streamCandidatesStatusNotice");
+    this.streamCandidatesLoading = document.getElementById("streamCandidatesLoading");
+    this.streamCandidatesList = document.getElementById("streamCandidatesList");
+    this.unverifyStreamBtn = document.getElementById("unverifyStreamBtn");
     this.volumeSlider = document.getElementById("volumeSlider");
     this.volumeMuteBtn = document.getElementById("volumeMuteBtn");
     this.volumeIcon = document.getElementById("volumeIcon");
@@ -2444,6 +2456,56 @@ class SoraFyDesktopApp {
       });
     }
 
+    // Stream Verification & Candidates Modal Listeners (Nuclear Feature)
+    if (this.verifyStreamBtn) {
+      this.verifyStreamBtn.addEventListener("click", () => {
+        const cur = this.tracks[this.currentTrackIndex];
+        if (cur) this.openStreamCandidatesModal(cur);
+      });
+    }
+
+    if (this.screenVerifyStreamBtn) {
+      this.screenVerifyStreamBtn.addEventListener("click", () => {
+        const cur = this.tracks[this.currentTrackIndex];
+        if (cur) this.openStreamCandidatesModal(cur);
+      });
+    }
+
+    if (this.closeStreamCandidatesBtn) {
+      this.closeStreamCandidatesBtn.addEventListener("click", () => {
+        if (this.streamCandidatesModal) this.streamCandidatesModal.style.display = "none";
+      });
+    }
+
+    if (this.cancelStreamCandidatesBtn) {
+      this.cancelStreamCandidatesBtn.addEventListener("click", () => {
+        if (this.streamCandidatesModal) this.streamCandidatesModal.style.display = "none";
+      });
+    }
+
+    if (this.streamCandidatesModal) {
+      this.streamCandidatesModal.addEventListener("click", (e) => {
+        if (e.target === this.streamCandidatesModal) {
+          this.streamCandidatesModal.style.display = "none";
+        }
+      });
+    }
+
+    if (this.unverifyStreamBtn) {
+      this.unverifyStreamBtn.addEventListener("click", async () => {
+        if (!this.candidateActiveTrack) return;
+        if (window.electronAPI && typeof window.electronAPI.unverifyStream === 'function') {
+          await window.electronAPI.unverifyStream({
+            title: this.candidateActiveTrack.title,
+            artist: this.candidateActiveTrack.artist
+          });
+          this.showToast(this.currentLanguage === 'id' ? 'Verifikasi audio dihapus (kembali ke otomatis)' : 'Stream verification reset to auto');
+          this.updateVerificationBadge(this.candidateActiveTrack);
+          if (this.streamCandidatesModal) this.streamCandidatesModal.style.display = "none";
+        }
+      });
+    }
+
     if (this.closeAddToPlaylistModalBtn) {
       this.closeAddToPlaylistModalBtn.addEventListener("click", () => {
         this.addToPlaylistModal.style.display = "none";
@@ -2958,6 +3020,8 @@ class SoraFyDesktopApp {
             this.toggleLikeTrack(track);
           } else if (action === "download-track") {
             this.downloadOfflineTrack(track);
+          } else if (action === "stream-candidates") {
+            this.openStreamCandidatesModal(track);
           }
         });
       });
@@ -6393,6 +6457,7 @@ class SoraFyDesktopApp {
     `;
     this.renderBottomPlayerArtist(track);
     this.playerArtwork.src = track.artwork_url;
+    this.updateVerificationBadge(track);
     if (this.playerBadge) {
       this.playerBadge.textContent = track.audio_format?.codec || "Opus HD";
     }
@@ -9206,6 +9271,183 @@ class SoraFyDesktopApp {
       }
       if (this.playlistLikeAlbumLabel) {
         this.playlistLikeAlbumLabel.textContent = this.currentLanguage === "id" ? "Simpan Album" : "Save Album";
+      }
+    }
+  }
+
+  // =========================================================
+  // Stream Verification & Multi-Candidate Stream Picker (Nuclear Feature)
+  // =========================================================
+  async updateVerificationBadge(track) {
+    if (!track) return;
+    try {
+      if (window.electronAPI && typeof window.electronAPI.getVerifiedStream === "function") {
+        const verified = await window.electronAPI.getVerifiedStream({
+          title: track.title,
+          artist: track.artist
+        });
+        const isVerified = Boolean(verified && verified.verifiedId);
+        if (this.verifyStreamBtn) {
+          this.verifyStreamBtn.classList.toggle("verified", isVerified);
+          this.verifyStreamBtn.title = isVerified
+            ? (this.currentLanguage === 'id' ? `Terverifikasi (Kunci Audio: ${verified.metadata?.channel || verified.verifiedId})` : `Verified Stream (${verified.metadata?.channel || verified.verifiedId})`)
+            : (this.currentLanguage === 'id' ? "Verifikasi Sumber Audio (Pilih Rekaman)" : "Check / Verify Audio Stream");
+        }
+        if (this.screenVerifyStreamBtn) {
+          this.screenVerifyStreamBtn.classList.toggle("verified", isVerified);
+          this.screenVerifyStreamBtn.title = this.verifyStreamBtn ? this.verifyStreamBtn.title : "Verify Audio";
+        }
+      }
+    } catch (_) {}
+  }
+
+  async openStreamCandidatesModal(track) {
+    if (!track || !this.streamCandidatesModal) return;
+    this.candidateActiveTrack = track;
+    this.streamCandidatesModal.style.display = "flex";
+
+    if (this.streamCandidatesSubtitle) {
+      this.streamCandidatesSubtitle.textContent = `${track.title} • ${track.artist || 'Unknown Artist'}`;
+    }
+
+    if (this.streamCandidatesLoading) this.streamCandidatesLoading.style.display = "flex";
+    if (this.streamCandidatesList) this.streamCandidatesList.innerHTML = "";
+    if (this.streamCandidatesStatusNotice) this.streamCandidatesStatusNotice.style.display = "none";
+    if (this.unverifyStreamBtn) this.unverifyStreamBtn.style.display = "none";
+
+    try {
+      // 1. Check verified state
+      let verified = null;
+      if (window.electronAPI && typeof window.electronAPI.getVerifiedStream === "function") {
+        verified = await window.electronAPI.getVerifiedStream({
+          title: track.title,
+          artist: track.artist
+        });
+      }
+
+      if (this.streamCandidatesStatusNotice) {
+        this.streamCandidatesStatusNotice.style.display = "flex";
+        if (verified && verified.verifiedId) {
+          this.streamCandidatesStatusNotice.className = "stream-status-notice verified";
+          this.streamCandidatesStatusNotice.innerHTML = `
+            <iconsax-icon name="shield-tick" type="bold" size="18" color="#00E599"></iconsax-icon>
+            <div><strong>Terkunci & Terverifikasi:</strong> Rekaman oleh <em>${this.escapeHtml(verified.metadata?.channel || verified.artist || 'Official')}</em> dikunci sebagai sumber utama lagu ini.</div>
+          `;
+          if (this.unverifyStreamBtn) this.unverifyStreamBtn.style.display = "inline-flex";
+        } else {
+          this.streamCandidatesStatusNotice.className = "stream-status-notice unverified";
+          this.streamCandidatesStatusNotice.innerHTML = `
+            <iconsax-icon name="info-circle" type="linear" size="18" color="currentColor"></iconsax-icon>
+            <div>Lagu ini menggunakan pencarian otomatis. Pilih rekaman resmi di bawah ini untuk mengunci sumber audio yang benar.</div>
+          `;
+          if (this.unverifyStreamBtn) this.unverifyStreamBtn.style.display = "none";
+        }
+      }
+
+      // 2. Query candidates
+      const currentVid = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : track.id);
+      let candidates = [];
+      if (window.electronAPI && typeof window.electronAPI.getStreamCandidates === "function") {
+        candidates = await window.electronAPI.getStreamCandidates({
+          title: track.title,
+          artist: track.artist,
+          currentId: currentVid
+        });
+      }
+
+      if (this.streamCandidatesLoading) this.streamCandidatesLoading.style.display = "none";
+
+      if (!candidates || candidates.length === 0) {
+        if (this.streamCandidatesList) {
+          this.streamCandidatesList.innerHTML = `
+            <div style="text-align: center; padding: 32px 16px; color: var(--color-text-tertiary); font-size: 13px;">
+              Tidak ada kandidat alternatif yang ditemukan untuk lagu ini.
+            </div>
+          `;
+        }
+        return;
+      }
+
+      if (this.streamCandidatesList) {
+        this.streamCandidatesList.innerHTML = "";
+        candidates.forEach(c => {
+          const item = document.createElement("div");
+          item.className = "stream-candidate-item";
+          if (c.isCurrent) item.classList.add("is-current");
+          if (c.isVerified) item.classList.add("is-verified");
+
+          const tagHtml = c.isVerified
+            ? '<span class="candidate-tag verified">✓ Terverifikasi</span>'
+            : (c.isCurrent ? '<span class="candidate-tag current">Sedang Diputar</span>' : `<span class="candidate-tag">${c.type === 'video' ? 'Video' : 'Lagu'}</span>`);
+
+          item.innerHTML = `
+            <img src="${c.artwork || this.DEFAULT_TRACK_ART}" class="candidate-art" alt="${this.escapeHtml(c.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            <div class="candidate-info">
+              <div class="candidate-title" title="${this.escapeHtml(c.title)}">${this.escapeHtml(c.title)}</div>
+              <div class="candidate-meta">
+                <span>${this.escapeHtml(c.artist || 'Artist')}</span>
+                <span>•</span>
+                <span>${c.duration || '--:--'}</span>
+                ${tagHtml}
+              </div>
+            </div>
+            <div class="candidate-actions">
+              ${c.isVerified
+                ? '<button class="candidate-btn active-verified" disabled>✓ Terkunci</button>'
+                : `<button class="candidate-btn btn-pick-candidate" data-vid="${c.videoId}">${c.isCurrent ? 'Kunci Sumber Ini' : 'Pilih & Kunci'}</button>`
+              }
+            </div>
+          `;
+
+          const pickBtn = item.querySelector(".btn-pick-candidate");
+          if (pickBtn) {
+            pickBtn.addEventListener("click", async (e) => {
+              e.stopPropagation();
+              pickBtn.textContent = "Mengunci...";
+              pickBtn.disabled = true;
+
+              if (window.electronAPI && typeof window.electronAPI.verifyStreamCandidate === "function") {
+                await window.electronAPI.verifyStreamCandidate({
+                  title: track.title,
+                  artist: track.artist,
+                  candidateId: c.videoId,
+                  metadata: {
+                    duration: c.duration,
+                    channel: c.artist,
+                    artwork: c.artwork
+                  }
+                });
+
+                track.video_id = c.videoId;
+                track.artwork_url = c.artwork || track.artwork_url;
+                if (c.durationSec && c.durationSec > 0) {
+                  track.duration_secs = c.durationSec;
+                }
+
+                // If currently playing track, reload immediately to play verified audio
+                const isCurrentPlaying = (this.tracks[this.currentTrackIndex]?.id === track.id || this.tracks[this.currentTrackIndex]?.title === track.title);
+                if (isCurrentPlaying) {
+                  this.loadTrack(this.currentTrackIndex, true);
+                }
+
+                this.showToast(`Sumber audio dikunci: ${c.title}`);
+                this.updateVerificationBadge(track);
+                if (this.streamCandidatesModal) this.streamCandidatesModal.style.display = "none";
+              }
+            });
+          }
+
+          this.streamCandidatesList.appendChild(item);
+        });
+      }
+    } catch (err) {
+      if (this.streamCandidatesLoading) this.streamCandidatesLoading.style.display = "none";
+      if (this.streamCandidatesList) {
+        this.streamCandidatesList.innerHTML = `
+          <div style="text-align: center; padding: 24px; color: #FF6B6B; font-size: 13px;">
+            Gagal mengambil kandidat audio: ${this.escapeHtml(err.message)}
+          </div>
+        `;
       }
     }
   }

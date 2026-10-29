@@ -33,6 +33,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   downloadYtDlpBinary: () => ipcRenderer.invoke('download-yt-dlp-binary'),
   savePlaybackSession: (session) => ipcRenderer.invoke('save-playback-session', session),
   loadPlaybackSession: () => ipcRenderer.invoke('load-playback-session'),
+  getVerifiedStream: (data) => ipcRenderer.invoke('get-verified-stream', data),
+  verifyStreamCandidate: (data) => ipcRenderer.invoke('verify-stream-candidate', data),
+  unverifyStream: (data) => ipcRenderer.invoke('unverify-stream', data),
+  getStreamCandidates: (data) => ipcRenderer.invoke('get-stream-candidates', data),
   onAppBeforeClose: (callback) => {
     ipcRenderer.on('app-before-close', () => {
       if (typeof callback === 'function') callback();

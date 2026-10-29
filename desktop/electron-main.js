@@ -484,6 +484,87 @@ function saveStreamCache() {
 
 loadStreamCache();
 
+// =========================================================
+// Stream Verification Storage & Management (Nuclear Feature)
+// =========================================================
+const verifiedStreamsFile = path.join(os.homedir(), '.config', 'sorafy', 'verified_streams.json');
+let verifiedStreamsCache = null;
+
+function getTrackVerifyKey(title, artist) {
+  const clean = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  return `${clean(artist)}:${clean(title)}`;
+}
+
+function loadVerifiedStreams() {
+  if (verifiedStreamsCache) return verifiedStreamsCache;
+  try {
+    if (fs.existsSync(verifiedStreamsFile)) {
+      const data = JSON.parse(fs.readFileSync(verifiedStreamsFile, 'utf8'));
+      verifiedStreamsCache = data.verifications || {};
+      return verifiedStreamsCache;
+    }
+  } catch (e) {
+    console.warn('Failed to load verified_streams.json:', e.message);
+  }
+  verifiedStreamsCache = {};
+  return verifiedStreamsCache;
+}
+
+function saveVerifiedStreams() {
+  try {
+    const dir = path.dirname(verifiedStreamsFile);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(verifiedStreamsFile, JSON.stringify({
+      version: 1,
+      updatedAt: Date.now(),
+      verifications: verifiedStreamsCache || {}
+    }, null, 2), 'utf8');
+  } catch (e) {
+    console.warn('Failed to save verified_streams.json:', e.message);
+  }
+}
+
+function getVerifiedStream(title, artist) {
+  if (!title) return null;
+  const verifications = loadVerifiedStreams();
+  const key = getTrackVerifyKey(title, artist);
+  return verifications[key] || null;
+}
+
+function setVerifiedStream(title, artist, candidateId, metadata = {}) {
+  if (!title || !candidateId) return false;
+  const verifications = loadVerifiedStreams();
+  const key = getTrackVerifyKey(title, artist);
+  verifications[key] = {
+    verifiedId: candidateId,
+    title,
+    artist: artist || '',
+    source: metadata.source || 'youtube',
+    verifiedAt: Date.now(),
+    metadata: {
+      duration: metadata.duration || '',
+      channel: metadata.channel || '',
+      artwork: metadata.artwork || ''
+    }
+  };
+  saveVerifiedStreams();
+  return true;
+}
+
+function removeVerifiedStream(title, artist) {
+  if (!title) return false;
+  const verifications = loadVerifiedStreams();
+  const key = getTrackVerifyKey(title, artist);
+  if (verifications[key]) {
+    delete verifications[key];
+    saveVerifiedStreams();
+    return true;
+  }
+  return false;
+}
+
+loadVerifiedStreams();
+
 // Strict filters & matching algorithms (ported directly from Android MusicStreamSource.kt)
 const BANNED_LANGUAGES = new Set([
   'hindi', 'punjabi', 'bhojpuri', 'tamil', 'telugu', 'marathi',
@@ -2073,14 +2154,25 @@ ipcMain.handle('resolve-direct-video', async (event, videoId) => {
 });
 
 ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, isVideo }) => {
-  const cacheKey = (videoId ? `vid_${videoId}` : `${artist} - ${title}`).toLowerCase().trim();
+  // 0. Check if user verified a stream for this track (Nuclear Stream Verification)
+  const verified = getVerifiedStream(title, artist);
+  let isVerified = false;
+  let vid = videoId;
+  if (verified && verified.verifiedId) {
+    vid = verified.verifiedId;
+    isVerified = true;
+  }
+
+  const cacheKey = (vid ? `vid_${vid}` : `${artist} - ${title}`).toLowerCase().trim();
   const cached = streamCache.get(cacheKey);
   if (cached && cached.expireAt > Date.now()) {
     // If cache key is for a videoId, but contains a JioSaavn fallback, purge it immediately
-    if (videoId && cached.data?.provider?.includes('JioSaavn')) {
+    if (vid && cached.data?.provider?.includes('JioSaavn')) {
       streamCache.delete(cacheKey);
     } else {
       const stream = { ...cached.data };
+      stream.isVerified = isVerified;
+      if (verified) stream.verifiedData = verified;
       if (localProxyPort > 0 && stream.url && stream.url.includes('googlevideo.com')) {
         const raw = stream.rawUrl || stream.url;
         stream.url = `http://127.0.0.1:${localProxyPort}/stream?url=${encodeURIComponent(raw)}`;
@@ -2088,8 +2180,6 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
       return stream;
     }
   }
-
-  let vid = videoId;
 
   // 1. If videoId is not provided, strictly search YouTube Music for the official track by the official artist
   if (!vid && title && artist) {
@@ -2103,6 +2193,8 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
   if (vid) {
     const dlpStream = await resolveYtDlpStream(vid);
     if (dlpStream && dlpStream.url) {
+      dlpStream.isVerified = isVerified;
+      if (verified) dlpStream.verifiedData = verified;
       streamCache.set(cacheKey, { data: dlpStream, expireAt: Date.now() + 45 * 60 * 1000 });
       saveStreamCache();
       return dlpStream;
@@ -2110,6 +2202,8 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
 
     const innerStream = await resolveInnerTubeStream(vid);
     if (innerStream && innerStream.url) {
+      innerStream.isVerified = isVerified;
+      if (verified) innerStream.verifiedData = verified;
       streamCache.set(cacheKey, { data: innerStream, expireAt: Date.now() + 45 * 60 * 1000 });
       saveStreamCache();
       return innerStream;
@@ -2117,7 +2211,7 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
   }
 
   // 3. Fallback to JioSaavn ONLY if no videoId was specified AND candidate strictly matches official artist
-  if (!videoId && !isVideo && title && artist) {
+  if (!videoId && !isVideo && title && artist && !isVerified) {
     try {
       const saavnStream = await resolveJioSaavnStream(title, artist);
       if (saavnStream && saavnStream.url) {
@@ -2129,6 +2223,66 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
   }
 
   return null;
+});
+
+// Stream Verification IPC Endpoints
+ipcMain.handle('get-verified-stream', (event, { title, artist }) => {
+  return getVerifiedStream(title, artist);
+});
+
+ipcMain.handle('verify-stream-candidate', async (event, { title, artist, candidateId, metadata }) => {
+  const success = setVerifiedStream(title, artist, candidateId, metadata);
+  const cacheKey = (candidateId ? `vid_${candidateId}` : `${artist} - ${title}`).toLowerCase().trim();
+  streamCache.delete(cacheKey);
+  streamCache.delete(`${(artist || '').toLowerCase().trim()} - ${(title || '').toLowerCase().trim()}`);
+  return { success, verified: getVerifiedStream(title, artist) };
+});
+
+ipcMain.handle('unverify-stream', async (event, { title, artist }) => {
+  const success = removeVerifiedStream(title, artist);
+  const cacheKey = `${(artist || '').toLowerCase().trim()} - ${(title || '').toLowerCase().trim()}`;
+  streamCache.delete(cacheKey);
+  return { success };
+});
+
+ipcMain.handle('get-stream-candidates', async (event, { title, artist, currentId }) => {
+  if (!title) return [];
+  try {
+    const q = `${artist || ''} ${title}`.trim();
+    const [songResults, videoResults] = await Promise.all([
+      searchYouTubeMusicInnerTube(q, 'song').catch(() => []),
+      searchYouTubeMusicInnerTube(q, 'video').catch(() => [])
+    ]);
+
+    const verified = getVerifiedStream(title, artist);
+    const seen = new Set();
+    const candidates = [];
+
+    const addCandidate = (item, type) => {
+      const vid = item.videoId || item.id;
+      if (!vid || seen.has(vid)) return;
+      seen.add(vid);
+      candidates.push({
+        videoId: vid,
+        title: item.title || title,
+        artist: item.artist || item.subtitle || artist || '',
+        duration: item.duration || '',
+        durationSec: item.durationSec || 0,
+        artwork: item.artwork || item.cover || '',
+        type, // 'song' | 'video'
+        isCurrent: Boolean(currentId && (vid === currentId || vid === String(currentId).replace(/^yt_/, ''))),
+        isVerified: Boolean(verified && verified.verifiedId === vid)
+      });
+    };
+
+    for (const s of (songResults || [])) addCandidate(s, 'song');
+    for (const v of (videoResults || [])) addCandidate(v, 'video');
+
+    return candidates;
+  } catch (err) {
+    console.warn('get-stream-candidates error:', err.message);
+    return [];
+  }
 });
 
 // =========================================================
