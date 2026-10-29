@@ -135,6 +135,16 @@ const DEFAULT_PLUGINS = [
     is_enabled: true
   },
   {
+    id: "mcp_server",
+    name: "Model Context Protocol (MCP)",
+    version: "2.0.0",
+    author: "Anthropic / Model Context Protocol",
+    description: "Built-in Streamable HTTP & SSE MCP server on port 8800. Enables AI assistants (Claude, Cursor, Windsurf) to play music, manage queue, and inspect lyrics.",
+    category: "Tools & Utilities",
+    icon: '<iconsax-icon name="cpu" type="bold" size="24" color="#00E599"></iconsax-icon>',
+    is_enabled: true
+  },
+  {
     id: "lastfm",
     name: "Last.fm Scrobbler",
     version: "1.0.0",
@@ -1821,6 +1831,23 @@ class SoraFyDesktopApp {
       });
     }
 
+    const copyMcpBtn = document.getElementById("copyMcpConfigBtn");
+    if (copyMcpBtn) {
+      copyMcpBtn.addEventListener("click", () => {
+        const configJson = JSON.stringify({
+          mcpServers: {
+            sorafy: {
+              url: "http://127.0.0.1:8800/mcp"
+            }
+          }
+        }, null, 2);
+        navigator.clipboard.writeText(configJson);
+        copyMcpBtn.textContent = "Tersalin!";
+        setTimeout(() => { if (copyMcpBtn) copyMcpBtn.textContent = "Salin Config AI"; }, 2000);
+        this.showToast("Konfigurasi MCP tersalin ke clipboard!");
+      });
+    }
+
     if (this.settingExportBackupBtn) {
       this.settingExportBackupBtn.addEventListener("click", () => this.handleDataBackup());
     }
@@ -2561,6 +2588,10 @@ class SoraFyDesktopApp {
         const act = action.action;
         if (act === 'toggle-play') {
           this.togglePlayPause();
+        } else if (act === 'play') {
+          if (this.audio && this.audio.paused) this.togglePlayPause();
+        } else if (act === 'pause') {
+          if (this.audio && !this.audio.paused) this.togglePlayPause();
         } else if (act === 'next') {
           this.playNext();
         } else if (act === 'prev') {
@@ -2586,6 +2617,14 @@ class SoraFyDesktopApp {
             this.renderQueue();
             this.syncJamState();
           }
+        } else if (act === 'clear-queue') {
+          if (this.tracks) {
+            const cur = this.tracks[this.currentTrackIndex];
+            this.tracks = cur ? [cur] : [];
+            this.currentTrackIndex = 0;
+            this.renderQueue();
+            this.syncJamState();
+          }
         } else if (act === 'play-track-now' && action.track) {
           const t = action.track;
           const newTrack = {
@@ -2593,8 +2632,8 @@ class SoraFyDesktopApp {
             video_id: t.videoId || t.id,
             title: t.title,
             artist: t.artist || '',
-            artwork_url: t.artwork || t.cover || this.DEFAULT_TRACK_ART,
-            duration_secs: t.durationSec || 0
+            artwork_url: t.artwork || t.artwork_url || t.cover || this.DEFAULT_TRACK_ART,
+            duration_secs: t.durationSec || t.duration_secs || 0
           };
           this.tracks.splice(this.currentTrackIndex + 1, 0, newTrack);
           this.loadTrack(this.currentTrackIndex + 1, true);
@@ -2605,11 +2644,31 @@ class SoraFyDesktopApp {
             video_id: t.videoId || t.id,
             title: t.title,
             artist: t.artist || '',
-            artwork_url: t.artwork || t.cover || this.DEFAULT_TRACK_ART,
-            duration_secs: t.durationSec || 0
+            artwork_url: t.artwork || t.artwork_url || t.cover || this.DEFAULT_TRACK_ART,
+            duration_secs: t.durationSec || t.duration_secs || 0
           };
           this.addToQueue(newTrack);
           this.syncJamState();
+        } else if (act === 'import-playlist-result' && action.playlist) {
+          const res = action.playlist;
+          if (res && res.tracks && res.tracks.length > 0) {
+            const playlistTitle = res.customName || res.title || `Imported ${res.provider || 'Playlist'}`;
+            const newPlaylist = {
+              id: `pl_imp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+              name: playlistTitle,
+              title: playlistTitle,
+              author: `Imported ${res.provider || 'External'}`,
+              description: `Imported via MCP from ${res.provider || 'Link'} (${res.tracks.length} tracks).`,
+              artwork_url: res.tracks[0]?.artwork_url || this.DEFAULT_TRACK_ART,
+              tracks: res.tracks,
+              track_count: `${res.tracks.length} Tracks`,
+              createdAt: Date.now()
+            };
+            this.userPlaylists.unshift(newPlaylist);
+            this.saveUserPlaylists();
+            this.renderUserPlaylists();
+            this.showToast(`MCP: Imported "${playlistTitle}" (${res.tracks.length} tracks)!`);
+          }
         }
       });
     }

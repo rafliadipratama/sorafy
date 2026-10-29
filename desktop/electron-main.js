@@ -196,36 +196,61 @@ function resolveYtDlpVideoStream(videoId) {
 
 function postInnerTube(endpoint, payload, ua = null) {
   return new Promise((resolve) => {
+    let settled = false;
+    const finish = (data) => {
+      if (!settled) {
+        settled = true;
+        resolve(data);
+      }
+    };
+    const timer = setTimeout(() => finish(null), 8000);
+
     try {
       const postData = typeof payload === 'string' ? payload : JSON.stringify(payload);
       const url = endpoint.startsWith('http') ? endpoint : `https://music.youtube.com/youtubei/v1/${endpoint}`;
       const defaultUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
 
-      const req = electronNet.request({
-        method: 'POST',
-        url
-      });
-      req.setHeader('Content-Type', 'application/json');
-      req.setHeader('User-Agent', ua || defaultUa);
+      let req;
+      if (electronNet && typeof electronNet.request === 'function' && app.isReady()) {
+        try {
+          req = electronNet.request({ method: 'POST', url });
+          req.setHeader('Content-Type', 'application/json');
+          req.setHeader('User-Agent', ua || defaultUa);
+        } catch (_) {
+          req = null;
+        }
+      }
+
+      if (!req) {
+        req = https.request(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': ua || defaultUa
+          }
+        });
+      }
 
       req.on('response', (res) => {
-        res.on('error', () => resolve(null));
+        res.on('error', () => { clearTimeout(timer); finish(null); });
         let body = '';
         res.on('data', chunk => body += chunk);
         res.on('end', () => {
+          clearTimeout(timer);
           try {
-            resolve(JSON.parse(body));
+            finish(JSON.parse(body));
           } catch (_) {
-            resolve(null);
+            finish(null);
           }
         });
       });
 
-      req.on('error', () => resolve(null));
+      req.on('error', () => { clearTimeout(timer); finish(null); });
       req.write(postData);
       req.end();
     } catch (_) {
-      resolve(null);
+      clearTimeout(timer);
+      finish(null);
     }
   });
 }
@@ -603,6 +628,482 @@ function startJamServer() {
 }
 
 startJamServer();
+
+// =========================================================
+// SoraFy Model Context Protocol (MCP) Server (localhost:8800)
+// Streamable HTTP & SSE Transport for AI Assistants (Claude, Cursor, Windsurf)
+// =========================================================
+let mcpServer = null;
+let mcpPort = 8800;
+const mcpSseClients = new Map();
+
+function getMcpToolsDefinitions() {
+  return [
+    {
+      name: 'sorafy_get_player_state',
+      description: 'Get current SoraFy playback state, currently playing song, time progress, duration, volume, and playback queue length.',
+      inputSchema: {
+        type: 'object',
+        properties: {}
+      }
+    },
+    {
+      name: 'sorafy_control_playback',
+      description: 'Control music playback in SoraFy: play, pause, toggle, next, previous, seek to position (seconds), or set volume (0.0 to 1.0).',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          action: {
+            type: 'string',
+            enum: ['play', 'pause', 'toggle', 'next', 'previous', 'seek', 'set_volume'],
+            description: 'Playback control action to execute'
+          },
+          value: {
+            type: 'number',
+            description: 'Seek position in seconds (for "seek") or volume level from 0.0 to 1.0 (for "set_volume")'
+          }
+        },
+        required: ['action']
+      }
+    },
+    {
+      name: 'sorafy_search_and_play',
+      description: 'Search YouTube Music catalog in SoraFy and immediately play or queue the top matching song.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Song title, artist name, or keywords'
+          },
+          playImmediately: {
+            type: 'boolean',
+            description: 'True to immediately play track (default), False to append to queue'
+          }
+        },
+        required: ['query']
+      }
+    },
+    {
+      name: 'sorafy_manage_queue',
+      description: 'Manage playback queue: list upcoming tracks, remove a track by index, or clear upcoming queue.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          action: {
+            type: 'string',
+            enum: ['list', 'clear', 'remove'],
+            description: 'Queue action to perform'
+          },
+          index: {
+            type: 'number',
+            description: 'Zero-based index of track to remove when action is "remove"'
+          }
+        },
+        required: ['action']
+      }
+    },
+    {
+      name: 'sorafy_get_lyrics',
+      description: 'Get synchronized karaoke lyrics or plain text lyrics for currently playing song or a specific YouTube Music videoId.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          videoId: {
+            type: 'string',
+            description: 'Optional video ID. If omitted, returns lyrics for the currently playing track.'
+          }
+        }
+      }
+    },
+    {
+      name: 'sorafy_import_playlist',
+      description: 'Import a public playlist or album from Spotify, Apple Music, or YouTube into SoraFy.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          url: {
+            type: 'string',
+            description: 'URL of the Spotify, Apple Music, or YouTube playlist/album'
+          },
+          customName: {
+            type: 'string',
+            description: 'Optional custom playlist title'
+          }
+        },
+        required: ['url']
+      }
+    }
+  ];
+}
+
+async function executeMcpTool(name, args = {}) {
+  switch (name) {
+    case 'sorafy_get_player_state': {
+      const cur = jamPlayerState.currentTrack;
+      return {
+        isPlaying: Boolean(jamPlayerState.isPlaying),
+        currentTime: Math.round(jamPlayerState.currentTime || 0),
+        duration: Math.round(jamPlayerState.duration || (cur?.duration_secs || 0)),
+        progressPercent: jamPlayerState.duration > 0 ? Math.round(((jamPlayerState.currentTime || 0) / jamPlayerState.duration) * 100) : 0,
+        volume: jamPlayerState.volume,
+        repeatMode: jamPlayerState.repeatMode || 'off',
+        isShuffle: Boolean(jamPlayerState.isShuffle),
+        queueLength: (jamPlayerState.queue || []).length,
+        currentTrack: cur ? {
+          id: cur.id || cur.video_id,
+          title: cur.title,
+          artist: cur.artist || '',
+          album: cur.album || '',
+          durationSecs: cur.duration_secs || 0,
+          artworkUrl: cur.artwork_url || cur.artwork || cur.cover || ''
+        } : null
+      };
+    }
+
+    case 'sorafy_control_playback': {
+      const action = args.action;
+      if (!action) throw new Error('Action is required');
+
+      let dispatched = null;
+      if (action === 'play') {
+        if (!jamPlayerState.isPlaying) dispatched = { action: 'toggle-play' };
+      } else if (action === 'pause') {
+        if (jamPlayerState.isPlaying) dispatched = { action: 'toggle-play' };
+      } else if (action === 'toggle') {
+        dispatched = { action: 'toggle-play' };
+      } else if (action === 'next') {
+        dispatched = { action: 'next' };
+      } else if (action === 'previous') {
+        dispatched = { action: 'prev' };
+      } else if (action === 'seek') {
+        if (typeof args.value !== 'number') throw new Error('Value must be a number (seconds)');
+        dispatched = { action: 'seek', value: args.value };
+      } else if (action === 'set_volume') {
+        if (typeof args.value !== 'number') throw new Error('Value must be a number between 0.0 and 1.0');
+        dispatched = { action: 'volume', value: Math.max(0, Math.min(1, args.value)) };
+      } else {
+        throw new Error(`Unsupported action: ${action}`);
+      }
+
+      if (dispatched && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', dispatched);
+      }
+
+      return {
+        success: true,
+        action,
+        value: args.value ?? null,
+        message: `Playback action "${action}" sent to SoraFy`
+      };
+    }
+
+    case 'sorafy_search_and_play': {
+      const query = (args.query || '').trim();
+      if (!query) throw new Error('Query is required');
+
+      const items = await searchYouTubeMusicInnerTube(query, 'song');
+      if (!items || items.length === 0) {
+        throw new Error(`No matching song found for "${query}"`);
+      }
+
+      const top = items[0];
+      const track = {
+        id: top.id || top.videoId || `yt_${top.videoId}`,
+        video_id: top.videoId || (top.id ? top.id.replace('yt_', '') : ''),
+        title: top.title,
+        artist: top.artist || '',
+        album: top.album || '',
+        artwork_url: top.artwork || top.artwork_url || top.cover || '',
+        duration_secs: top.durationSec || top.duration_secs || 0
+      };
+
+      const playImmediately = args.playImmediately !== false;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', {
+          action: playImmediately ? 'play-track-now' : 'add-queue',
+          track
+        });
+      }
+
+      return {
+        success: true,
+        mode: playImmediately ? 'playing_now' : 'added_to_queue',
+        track: {
+          title: track.title,
+          artist: track.artist,
+          durationSecs: track.duration_secs,
+          videoId: track.video_id
+        }
+      };
+    }
+
+    case 'sorafy_manage_queue': {
+      const action = args.action;
+      if (!action) throw new Error('Action is required');
+
+      if (action === 'list') {
+        const queue = jamPlayerState.queue || [];
+        const cur = jamPlayerState.currentTrack;
+        return {
+          total: queue.length,
+          tracks: queue.map((t, idx) => ({
+            index: idx,
+            title: t.title,
+            artist: t.artist || '',
+            durationSecs: t.duration_secs || 0,
+            isCurrent: cur ? (t.id === cur.id || t.title === cur.title) : false
+          }))
+        };
+      } else if (action === 'clear') {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'clear-queue' });
+        }
+        return { success: true, message: 'Upcoming queue cleared' };
+      } else if (action === 'remove') {
+        if (typeof args.index !== 'number') throw new Error('Index is required for remove');
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'remove-index', value: args.index });
+        }
+        return { success: true, message: `Removed track at index ${args.index}` };
+      } else {
+        throw new Error(`Unsupported queue action: ${action}`);
+      }
+    }
+
+    case 'sorafy_get_lyrics': {
+      if (args.videoId) {
+        const lrc = await fetchYouTubeMusicLyrics(args.videoId);
+        return {
+          source: 'YouTube Music InnerTube',
+          videoId: args.videoId,
+          hasLyrics: Boolean(lrc),
+          synced: Boolean(lrc && lrc.synced),
+          lines: lrc ? lrc.lines || [] : []
+        };
+      }
+
+      const cur = jamPlayerState.currentTrack;
+      const lines = jamPlayerState.lyrics || [];
+      return {
+        track: cur ? `${cur.artist} - ${cur.title}` : 'No track playing',
+        hasLyrics: lines.length > 0,
+        synced: lines.some(l => l.time > 0),
+        linesCount: lines.length,
+        lines
+      };
+    }
+
+    case 'sorafy_import_playlist': {
+      const url = (args.url || '').trim();
+      if (!url) throw new Error('Playlist URL is required');
+
+      let res = null;
+      if (url.includes('spotify.com') || url.startsWith('spotify:')) {
+        res = await fetchSpotifyPlaylistOrAlbum(url);
+      } else if (url.includes('music.apple.com')) {
+        res = await fetchAppleMusicPlaylistOrAlbum(url);
+      } else if (url.includes('music.youtube.com') || url.includes('youtube.com') || url.includes('youtu.be')) {
+        res = await fetchYouTubePlaylist(url);
+      } else {
+        throw new Error('Unsupported playlist platform. Supported: Spotify, Apple Music, YouTube.');
+      }
+
+      if (!res || !res.tracks || res.tracks.length === 0) {
+        throw new Error('Failed to extract playlist or playlist contains 0 tracks');
+      }
+
+      const customName = args.customName || res.title;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', {
+          action: 'import-playlist-result',
+          playlist: { ...res, customName }
+        });
+      }
+
+      return {
+        success: true,
+        title: customName,
+        provider: res.provider || 'External',
+        trackCount: res.tracks.length,
+        firstThreeTracks: res.tracks.slice(0, 3).map(t => `${t.artist} - ${t.title}`)
+      };
+    }
+
+    default:
+      throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
+function startMcpServer() {
+  if (mcpServer) return;
+
+  mcpServer = http.createServer(async (req, res) => {
+    const reqUrl = new URL(req.url, `http://127.0.0.1:${mcpPort}`);
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204);
+      return res.end();
+    }
+
+    // Health / Discovery endpoint
+    if (req.method === 'GET' && (reqUrl.pathname === '/' || reqUrl.pathname === '/health' || reqUrl.pathname === '/status')) {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({
+        name: 'sorafy-mcp',
+        version: '2.0.0',
+        status: 'online',
+        transport: ['streamable-http', 'sse'],
+        mcpUrl: `http://127.0.0.1:${mcpPort}/mcp`,
+        tools: getMcpToolsDefinitions().map(t => t.name)
+      }));
+    }
+
+    // SSE Transport (for SSE-based MCP clients)
+    if (req.method === 'GET' && (reqUrl.pathname === '/sse' || (reqUrl.pathname === '/mcp' && req.headers.accept?.includes('text/event-stream')))) {
+      const sessionId = Math.random().toString(36).substring(2, 10);
+      res.writeHead(200, {
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache, no-transform',
+        'Connection': 'keep-alive'
+      });
+
+      res.write(`event: endpoint\ndata: /mcp?sessionId=${sessionId}\n\n`);
+      mcpSseClients.set(sessionId, res);
+
+      req.on('close', () => {
+        mcpSseClients.delete(sessionId);
+      });
+      return;
+    }
+
+    // JSON-RPC 2.0 (Streamable HTTP / POST)
+    if (req.method === 'POST' && (reqUrl.pathname === '/mcp' || reqUrl.pathname === '/')) {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        let request;
+        try {
+          request = JSON.parse(body);
+        } catch (_) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({
+            jsonrpc: '2.0',
+            id: null,
+            error: { code: -32700, message: 'Parse error: Invalid JSON' }
+          }));
+        }
+
+        const id = request.id !== undefined ? request.id : null;
+        const method = request.method;
+        const params = request.params || {};
+
+        const sendResponse = (result, error = null) => {
+          const respObj = { jsonrpc: '2.0', id };
+          if (error) {
+            respObj.error = error;
+          } else {
+            respObj.result = result;
+          }
+
+          const sessionId = reqUrl.searchParams.get('sessionId');
+          if (sessionId && mcpSseClients.has(sessionId)) {
+            try {
+              mcpSseClients.get(sessionId).write(`event: message\ndata: ${JSON.stringify(respObj)}\n\n`);
+            } catch (_) {}
+          }
+
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(respObj));
+        };
+
+        if (method === 'initialize') {
+          return sendResponse({
+            protocolVersion: '2024-11-05',
+            capabilities: {
+              tools: { listChanged: false }
+            },
+            serverInfo: {
+              name: 'sorafy-mcp',
+              version: '2.0.0'
+            }
+          });
+        }
+
+        if (method === 'notifications/initialized') {
+          res.writeHead(204);
+          return res.end();
+        }
+
+        if (method === 'ping') {
+          return sendResponse({});
+        }
+
+        if (method === 'tools/list') {
+          return sendResponse({
+            tools: getMcpToolsDefinitions()
+          });
+        }
+
+        if (method === 'tools/call') {
+          const toolName = params.name;
+          const args = params.arguments || {};
+          try {
+            const toolResult = await executeMcpTool(toolName, args);
+            return sendResponse({
+              content: [
+                {
+                  type: 'text',
+                  text: typeof toolResult === 'string' ? toolResult : JSON.stringify(toolResult, null, 2)
+                }
+              ],
+              isError: false
+            });
+          } catch (toolErr) {
+            return sendResponse({
+              content: [
+                {
+                  type: 'text',
+                  text: `Error executing ${toolName}: ${toolErr.message}`
+                }
+              ],
+              isError: true
+            });
+          }
+        }
+
+        return sendResponse(null, {
+          code: -32601,
+          message: `Method not found: ${method}`
+        });
+      });
+      return;
+    }
+
+    res.writeHead(404);
+    res.end('Not found');
+  });
+
+  const tryListen = (port) => {
+    mcpServer.once('error', (err) => {
+      if (err.code === 'EADDRINUSE' && port < 8809) {
+        tryListen(port + 1);
+      }
+    });
+    mcpServer.listen(port, '127.0.0.1', () => {
+      mcpPort = port;
+      console.log(`[SoraFy MCP] Model Context Protocol server running at http://127.0.0.1:${mcpPort}/mcp`);
+    });
+  };
+
+  tryListen(mcpPort);
+}
+
+startMcpServer();
 
 // Persistent stream cache on disk for instant 0ms playback across sessions
 const cacheDir = path.join(os.homedir(), '.config', 'sorafy', 'cache');
@@ -2479,6 +2980,15 @@ ipcMain.on('update-jam-state', (event, state) => {
   if (!state || typeof state !== 'object') return;
   jamPlayerState = { ...jamPlayerState, ...state };
   broadcastJamState();
+});
+
+ipcMain.handle('get-mcp-info', async () => {
+  return {
+    enabled: Boolean(mcpServer),
+    port: mcpPort,
+    mcpUrl: `http://127.0.0.1:${mcpPort}/mcp`,
+    sseUrl: `http://127.0.0.1:${mcpPort}/sse`
+  };
 });
 
 // =========================================================
