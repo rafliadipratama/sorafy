@@ -13,6 +13,18 @@ app.commandLine.appendSwitch('disable-features', 'Vulkan');
 app.commandLine.appendSwitch('disable-dev-shm-usage');
 app.commandLine.appendSwitch('log-level', '3'); // Suppress harmless Chromium Ozone/Vulkan warnings
 
+// Disable QUIC and HTTP/3 protocol to prevent net::ERR_QUIC_PROTOCOL_ERROR on Google / YouTube streams
+app.commandLine.appendSwitch('disable-quic');
+app.commandLine.appendSwitch('disable-http2-grease');
+
+// Catch unhandled exceptions and promise rejections gracefully so they never spawn modal error dialogs
+process.on('uncaughtException', (err) => {
+  console.warn('[Main Process] Handled uncaughtException:', err && err.message ? err.message : err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.warn('[Main Process] Handled unhandledRejection:', reason && reason.message ? reason.message : reason);
+});
+
 // Guarantee single-instance execution (prevent duplicate processes, zombie audio, and LevelDB collisions)
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
@@ -193,6 +205,7 @@ function postInnerTube(endpoint, payload, ua = null) {
       req.setHeader('User-Agent', ua || defaultUa);
 
       req.on('response', (res) => {
+        res.on('error', () => resolve(null));
         let body = '';
         res.on('data', chunk => body += chunk);
         res.on('end', () => {
@@ -224,6 +237,7 @@ function getVisitorData() {
       });
       req.setHeader('User-Agent', APPLE_UA);
       req.on('response', (res) => {
+        res.on('error', () => resolve(null));
         let b = '';
         res.on('data', c => b += c);
         res.on('end', () => {
@@ -365,6 +379,12 @@ const localAudioProxy = http.createServer((req, res) => {
     }
 
     upReq.on('response', (upRes) => {
+      upRes.on('error', (err) => {
+        console.warn('localAudioProxy upstream response error:', err?.message || err);
+        if (!res.headersSent) res.writeHead(502);
+        res.end();
+      });
+
       const mimeMatch = target.match(/mime=([^&]+)/);
       let detectedMime = upRes.headers['content-type'] || 'audio/mp4';
       if (Array.isArray(detectedMime)) detectedMime = detectedMime[0];
@@ -396,9 +416,14 @@ const localAudioProxy = http.createServer((req, res) => {
       }
     });
 
-    upReq.on('error', () => {
+    upReq.on('error', (err) => {
+      console.warn('localAudioProxy upstream request error:', err?.message || err);
       if (!res.headersSent) res.writeHead(502);
       res.end();
+    });
+
+    res.on('error', () => {
+      try { (upReq.destroy || upReq.abort).call(upReq); } catch (_) {}
     });
 
     req.on('close', () => {
