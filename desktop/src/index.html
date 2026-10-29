@@ -1431,18 +1431,54 @@
 
         <!-- Tab Appearance & Theme (Nuclear Feature 6) -->
         <div class="settings-tab-pane" id="settingsTabAppearance" style="display: none;">
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_theme">Interface Theme</span>
-              <span class="setting-desc" data-i18n="setting_theme_desc">Pilih palet tema tampilan keseluruhan aplikasi.</span>
+          <div class="setting-item" style="flex-direction: column; align-items: stretch; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+              <div class="setting-info">
+                <span class="setting-title" data-i18n="setting_theme">Interface Theme</span>
+                <span class="setting-desc" data-i18n="setting_theme_desc">Pilih palet tema tampilan keseluruhan aplikasi.</span>
+              </div>
+              <select class="settings-select" id="settingThemeSelect">
+                <option value="emerald" selected>SoraFy Emerald (Default Dark)</option>
+                <option value="arctic">Arctic Obsidian (Monochrome)</option>
+                <option value="cyber">Lagoon Cyber (Blue / Cyan)</option>
+                <option value="purple">Aurora Purple (Dark Violet)</option>
+                <option value="light">Oasis Light (Mode Terang)</option>
+              </select>
             </div>
-            <select class="settings-select" id="settingThemeSelect">
-              <option value="emerald" selected>SoraFy Emerald (Default Dark)</option>
-              <option value="arctic">Arctic Obsidian (Monochrome)</option>
-              <option value="cyber">Lagoon Cyber (Blue / Cyan)</option>
-              <option value="purple">Aurora Purple (Dark Violet)</option>
-              <option value="light">Oasis Light (Mode Terang)</option>
-            </select>
+
+            <!-- Visual Theme Presets Grid -->
+            <div class="theme-presets-grid" id="themePresetsGrid">
+              <div class="theme-preset-card active" data-theme="emerald" title="SoraFy Emerald (Default Dark)">
+                <div class="theme-preview-pill" style="background: #07080A;">
+                  <div class="theme-preview-dot" style="background: #00E599;"></div>
+                </div>
+                <span class="theme-card-title">Emerald</span>
+              </div>
+              <div class="theme-preset-card" data-theme="arctic" title="Arctic Obsidian (Pure Dark)">
+                <div class="theme-preview-pill" style="background: #000000;">
+                  <div class="theme-preview-dot" style="background: #E0E0E0;"></div>
+                </div>
+                <span class="theme-card-title">Arctic</span>
+              </div>
+              <div class="theme-preset-card" data-theme="cyber" title="Lagoon Cyber (Cyan / Blue)">
+                <div class="theme-preview-pill" style="background: #060B12;">
+                  <div class="theme-preview-dot" style="background: #00D2FF;"></div>
+                </div>
+                <span class="theme-card-title">Cyber</span>
+              </div>
+              <div class="theme-preset-card" data-theme="purple" title="Aurora Purple (Deep Violet)">
+                <div class="theme-preview-pill" style="background: #0B0714;">
+                  <div class="theme-preview-dot" style="background: #A855F7;"></div>
+                </div>
+                <span class="theme-card-title">Purple</span>
+              </div>
+              <div class="theme-preset-card" data-theme="light" title="Oasis Light (Mode Terang)">
+                <div class="theme-preview-pill" style="background: #F8F9FA;">
+                  <div class="theme-preview-dot" style="background: #00B377;"></div>
+                </div>
+                <span class="theme-card-title">Oasis Light</span>
+              </div>
+            </div>
           </div>
 
           <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">

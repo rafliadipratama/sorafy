@@ -1583,6 +1583,7 @@ class SoraFyDesktopApp {
     this.settingCookieStatus = document.getElementById("settingCookieStatus");
     this.settingLanguage = document.getElementById("settingLanguage");
     this.settingThemeSelect = document.getElementById("settingThemeSelect");
+    this.themePresetsGrid = document.getElementById("themePresetsGrid");
     this.settingAccentColorPicker = document.getElementById("settingAccentColorPicker");
     this.settingResetAccentBtn = document.getElementById("settingResetAccentBtn");
     this.accentSwatchesRow = document.getElementById("accentSwatchesRow");
@@ -1671,6 +1672,14 @@ class SoraFyDesktopApp {
     // Update Theme dropdown in Settings
     if (this.settingThemeSelect) {
       this.settingThemeSelect.value = key;
+    }
+
+    // Update Theme preset cards active state
+    if (this.themePresetsGrid) {
+      const cards = this.themePresetsGrid.querySelectorAll(".theme-preset-card");
+      cards.forEach(card => {
+        card.classList.toggle("active", card.dataset.theme === key);
+      });
     }
 
     // Update color picker input
@@ -2096,6 +2105,21 @@ class SoraFyDesktopApp {
         this.applyTheme(themeKey, this.appSettings.customAccent);
         const name = THEME_PRESETS[themeKey]?.name || themeKey;
         this.showToast(this.currentLanguage === 'id' ? `Tema antarmuka diubah ke ${name}` : `Interface theme changed to ${name}`);
+      });
+    }
+
+    if (this.themePresetsGrid) {
+      const cards = this.themePresetsGrid.querySelectorAll(".theme-preset-card");
+      cards.forEach(card => {
+        card.addEventListener("click", () => {
+          const themeKey = card.dataset.theme;
+          if (!themeKey) return;
+          this.appSettings.theme = themeKey;
+          persistSettings();
+          this.applyTheme(themeKey, this.appSettings.customAccent);
+          const name = THEME_PRESETS[themeKey]?.name || themeKey;
+          this.showToast(this.currentLanguage === 'id' ? `Tema antarmuka diubah ke ${name}` : `Interface theme changed to ${name}`);
+        });
       });
     }
 
