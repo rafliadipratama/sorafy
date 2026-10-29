@@ -1129,6 +1129,452 @@ function startMcpServer() {
 
 startMcpServer();
 
+// =========================================================
+// MPD (Music Player Daemon) Protocol Server (Nuclear Feature 7)
+// =========================================================
+let mpdServer = null;
+let mpdPort = 6600;
+const mpdClients = new Set();
+const mpdIdleClients = new Set();
+
+function notifyMpdIdle(subsystems = ['player']) {
+  if (mpdIdleClients.size === 0) return;
+  for (const client of Array.from(mpdIdleClients)) {
+    try {
+      let matches = false;
+      if (!client.subsystems || client.subsystems.size === 0) {
+        matches = true;
+      } else {
+        for (const sub of subsystems) {
+          if (client.subsystems.has(sub)) {
+            matches = true;
+            break;
+          }
+        }
+      }
+      if (matches && !client.socket.destroyed) {
+        const out = subsystems.map(s => `changed: ${s}\n`).join('') + 'OK\n';
+        client.socket.write(out);
+        mpdIdleClients.delete(client);
+      }
+    } catch (_) {
+      mpdIdleClients.delete(client);
+    }
+  }
+}
+
+function handleMpdCommand(cmdLine, socket, clientState) {
+  const trimmed = cmdLine.trim();
+  if (!trimmed) return '';
+
+  const spaceIdx = trimmed.indexOf(' ');
+  const cmd = (spaceIdx === -1 ? trimmed : trimmed.substring(0, spaceIdx)).toLowerCase();
+  const rawArgs = spaceIdx === -1 ? '' : trimmed.substring(spaceIdx + 1).trim();
+
+  const parseArgs = (str) => {
+    const args = [];
+    const regex = /[^\s"']+|"([^"]*)"|'([^']*)'/g;
+    let match;
+    while ((match = regex.exec(str)) !== null) {
+      args.push(match[1] || match[2] || match[0]);
+    }
+    return args;
+  };
+  const args = parseArgs(rawArgs);
+
+  const cur = jamPlayerState.currentTrack;
+  const queue = jamPlayerState.queue || [];
+  const currentIdx = queue.findIndex(t => (t.id && cur && t.id === cur.id) || (t.video_id && cur && t.video_id === cur.video_id));
+  const activeIdx = currentIdx !== -1 ? currentIdx : 0;
+
+  switch (cmd) {
+    case 'ping':
+      return 'OK\n';
+
+    case 'status': {
+      const vol = Math.round((jamPlayerState.volume !== undefined ? jamPlayerState.volume : 0.85) * 100);
+      const rep = jamPlayerState.repeatMode === 'track' ? 1 : 0;
+      const rnd = jamPlayerState.isShuffle ? 1 : 0;
+      const state = jamPlayerState.isPlaying ? 'play' : ((jamPlayerState.currentTime || 0) > 0 ? 'pause' : 'stop');
+      const curTime = jamPlayerState.currentTime || 0;
+      const dur = jamPlayerState.duration || (cur?.duration_secs || 0);
+
+      let out = `volume: ${vol}\n`;
+      out += `repeat: ${rep}\n`;
+      out += `random: ${rnd}\n`;
+      out += `single: ${rep}\n`;
+      out += `consume: 0\n`;
+      out += `playlist: 1\n`;
+      out += `playlistlength: ${queue.length}\n`;
+      out += `mixrampdb: 0.000000\n`;
+      out += `state: ${state}\n`;
+      if (cur) {
+        out += `song: ${activeIdx}\n`;
+        out += `songid: ${activeIdx + 1}\n`;
+        out += `time: ${Math.floor(curTime)}:${Math.floor(dur)}\n`;
+        out += `elapsed: ${curTime.toFixed(3)}\n`;
+        out += `duration: ${dur.toFixed(3)}\n`;
+        out += `bitrate: 160\n`;
+        out += `audio: 48000:24:2\n`;
+      }
+      out += 'OK\n';
+      return out;
+    }
+
+    case 'currentsong': {
+      if (!cur) return 'OK\n';
+      const dur = jamPlayerState.duration || (cur.duration_secs || 0);
+      let out = `file: ${cur.video_id || cur.id || 'unknown'}\n`;
+      out += `Title: ${cur.title || 'Unknown Title'}\n`;
+      out += `Artist: ${cur.artist || 'Unknown Artist'}\n`;
+      if (cur.album) out += `Album: ${cur.album}\n`;
+      out += `Time: ${Math.floor(dur)}\n`;
+      out += `duration: ${dur.toFixed(3)}\n`;
+      out += `Pos: ${activeIdx}\n`;
+      out += `Id: ${activeIdx + 1}\n`;
+      out += 'OK\n';
+      return out;
+    }
+
+    case 'playlistinfo':
+    case 'playlistid': {
+      let out = '';
+      const filterPos = args[0] !== undefined ? parseInt(args[0], 10) : -1;
+      queue.forEach((t, i) => {
+        if (filterPos !== -1 && i !== filterPos && (cmd === 'playlistid' ? (i + 1) !== filterPos : true)) return;
+        const dur = t.duration_secs || 0;
+        out += `file: ${t.video_id || t.id || 'track_' + i}\n`;
+        out += `Title: ${t.title || 'Unknown'}\n`;
+        out += `Artist: ${t.artist || 'Unknown'}\n`;
+        if (t.album) out += `Album: ${t.album}\n`;
+        out += `Time: ${Math.floor(dur)}\n`;
+        out += `duration: ${dur.toFixed(3)}\n`;
+        out += `Pos: ${i}\n`;
+        out += `Id: ${i + 1}\n`;
+      });
+      out += 'OK\n';
+      return out;
+    }
+
+    case 'plchanges':
+    case 'plchangesposid':
+      return 'OK\n';
+
+    case 'play': {
+      if (args[0] !== undefined) {
+        const targetPos = parseInt(args[0], 10);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'play-index', value: targetPos });
+        }
+      } else {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'play' });
+        }
+      }
+      return 'OK\n';
+    }
+
+    case 'playid': {
+      if (args[0] !== undefined) {
+        const targetId = parseInt(args[0], 10);
+        const pos = Math.max(0, targetId - 1);
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'play-index', value: pos });
+        }
+      } else {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'play' });
+        }
+      }
+      return 'OK\n';
+    }
+
+    case 'pause': {
+      if (args[0] === '1') {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'pause' });
+        }
+      } else if (args[0] === '0') {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'play' });
+        }
+      } else {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('jam-action', { action: 'toggle-play' });
+        }
+      }
+      return 'OK\n';
+    }
+
+    case 'stop': {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'stop' });
+      }
+      return 'OK\n';
+    }
+
+    case 'next': {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'next' });
+      }
+      return 'OK\n';
+    }
+
+    case 'previous': {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'prev' });
+      }
+      return 'OK\n';
+    }
+
+    case 'seek': {
+      const pos = parseInt(args[0], 10);
+      const time = parseFloat(args[1] || '0');
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        if (!isNaN(pos) && pos !== activeIdx) {
+          mainWindow.webContents.send('jam-action', { action: 'play-index', value: pos });
+        }
+        mainWindow.webContents.send('jam-action', { action: 'seek', value: time });
+      }
+      return 'OK\n';
+    }
+
+    case 'seekcur': {
+      const time = parseFloat(args[0] || '0');
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'seek', value: time });
+      }
+      return 'OK\n';
+    }
+
+    case 'seekid': {
+      const id = parseInt(args[0], 10);
+      const time = parseFloat(args[1] || '0');
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        if (!isNaN(id) && (id - 1) !== activeIdx) {
+          mainWindow.webContents.send('jam-action', { action: 'play-index', value: Math.max(0, id - 1) });
+        }
+        mainWindow.webContents.send('jam-action', { action: 'seek', value: time });
+      }
+      return 'OK\n';
+    }
+
+    case 'setvol': {
+      const targetVol = Math.max(0, Math.min(100, parseInt(args[0], 10))) / 100;
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'volume', value: targetVol });
+      }
+      return 'OK\n';
+    }
+
+    case 'volume': {
+      const diff = parseInt(args[0], 10) / 100;
+      const current = jamPlayerState.volume !== undefined ? jamPlayerState.volume : 0.85;
+      const newVol = Math.max(0, Math.min(1, current + diff));
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'volume', value: newVol });
+      }
+      return 'OK\n';
+    }
+
+    case 'repeat': {
+      const rep = args[0] === '1';
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'set-repeat', value: rep ? 'track' : 'off' });
+      }
+      return 'OK\n';
+    }
+
+    case 'random': {
+      const rnd = args[0] === '1';
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'set-shuffle', value: rnd });
+      }
+      return 'OK\n';
+    }
+
+    case 'single':
+    case 'consume':
+      return 'OK\n';
+
+    case 'clear': {
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'clear-queue' });
+      }
+      return 'OK\n';
+    }
+
+    case 'delete': {
+      const pos = parseInt(args[0], 10);
+      if (!isNaN(pos) && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'remove-index', value: pos });
+      }
+      return 'OK\n';
+    }
+
+    case 'deleteid': {
+      const id = parseInt(args[0], 10);
+      if (!isNaN(id) && mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('jam-action', { action: 'remove-index', value: Math.max(0, id - 1) });
+      }
+      return 'OK\n';
+    }
+
+    case 'outputs':
+      return 'outputid: 0\noutputname: SoraFy Sound Engine\noutputenabled: 1\nattribute: volume=1\nOK\n';
+
+    case 'tagtypes':
+      return 'tagtype: Artist\ntagtype: Title\ntagtype: Album\ntagtype: Track\ntagtype: Genre\nOK\n';
+
+    case 'stats': {
+      const uptime = Math.floor(process.uptime());
+      const playtime = Math.floor(jamPlayerState.currentTime || 0);
+      let out = `artists: 1\n`;
+      out += `albums: 1\n`;
+      out += `songs: ${queue.length}\n`;
+      out += `uptime: ${uptime}\n`;
+      out += `playtime: ${playtime}\n`;
+      out += `db_playtime: 0\n`;
+      out += `db_update: ${Math.floor(Date.now() / 1000)}\n`;
+      out += 'OK\n';
+      return out;
+    }
+
+    case 'urlhandlers':
+      return 'handler: http://\nhandler: https://\nOK\n';
+
+    case 'decoders':
+      return 'plugin: opus\nsuffix: opus\nmime_type: audio/opus\nplugin: flac\nsuffix: flac\nmime_type: audio/flac\nplugin: mp3\nsuffix: mp3\nmime_type: audio/mpeg\nOK\n';
+
+    case 'commands':
+      return 'command: status\ncommand: currentsong\ncommand: play\ncommand: pause\ncommand: stop\ncommand: next\ncommand: previous\ncommand: playlistinfo\ncommand: playlistid\ncommand: setvol\ncommand: volume\ncommand: repeat\ncommand: random\ncommand: clear\ncommand: delete\ncommand: outputs\ncommand: stats\ncommand: idle\ncommand: noidle\ncommand: ping\ncommand: close\nOK\n';
+
+    case 'notcommands':
+      return 'OK\n';
+
+    case 'idle': {
+      clientState.isIdle = true;
+      clientState.subsystems = new Set(args.map(a => a.toLowerCase()));
+      mpdIdleClients.add(clientState);
+      return null;
+    }
+
+    case 'noidle': {
+      if (clientState.isIdle) {
+        clientState.isIdle = false;
+        mpdIdleClients.delete(clientState);
+      }
+      return 'OK\n';
+    }
+
+    case 'close': {
+      socket.end();
+      return '';
+    }
+
+    default:
+      return 'OK\n';
+  }
+}
+
+function startMpdServer() {
+  if (mpdServer) return;
+
+  mpdServer = net.createServer((socket) => {
+    socket.setEncoding('utf8');
+    socket.write('OK MPD 0.23.5\n');
+
+    const clientState = {
+      socket,
+      buffer: '',
+      isIdle: false,
+      subsystems: new Set(),
+      inCommandList: false,
+      commandListOk: false,
+      commandList: []
+    };
+    mpdClients.add(clientState);
+
+    socket.on('data', (chunk) => {
+      clientState.buffer += chunk;
+      let newlineIdx;
+      while ((newlineIdx = clientState.buffer.indexOf('\n')) !== -1) {
+        const line = clientState.buffer.substring(0, newlineIdx).replace(/\r$/, '');
+        clientState.buffer = clientState.buffer.substring(newlineIdx + 1);
+
+        if (!line.trim()) continue;
+
+        if (clientState.isIdle) {
+          if (line.trim().toLowerCase() === 'noidle') {
+            clientState.isIdle = false;
+            mpdIdleClients.delete(clientState);
+            socket.write('OK\n');
+          }
+          continue;
+        }
+
+        if (line.trim() === 'command_list_begin') {
+          clientState.inCommandList = true;
+          clientState.commandListOk = false;
+          clientState.commandList = [];
+          continue;
+        } else if (line.trim() === 'command_list_ok_begin') {
+          clientState.inCommandList = true;
+          clientState.commandListOk = true;
+          clientState.commandList = [];
+          continue;
+        } else if (line.trim() === 'command_list_end') {
+          clientState.inCommandList = false;
+          for (const cmdItem of clientState.commandList) {
+            const res = handleMpdCommand(cmdItem, socket, clientState);
+            if (res !== null) {
+              if (clientState.commandListOk) {
+                const modified = res.endsWith('OK\n') ? res.slice(0, -3) + 'list_OK\n' : res;
+                socket.write(modified);
+              } else {
+                const modified = res.endsWith('OK\n') ? res.slice(0, -3) : res;
+                socket.write(modified);
+              }
+            }
+          }
+          socket.write('OK\n');
+          continue;
+        }
+
+        if (clientState.inCommandList) {
+          clientState.commandList.push(line);
+          continue;
+        }
+
+        const resp = handleMpdCommand(line, socket, clientState);
+        if (resp !== null && !socket.destroyed) {
+          socket.write(resp);
+        }
+      }
+    });
+
+    socket.on('error', () => {
+      mpdClients.delete(clientState);
+      mpdIdleClients.delete(clientState);
+    });
+
+    socket.on('close', () => {
+      mpdClients.delete(clientState);
+      mpdIdleClients.delete(clientState);
+    });
+  });
+
+  mpdServer.on('error', (err) => {
+    console.warn(`[SoraFy MPD] Port ${mpdPort} note:`, err.message);
+  });
+
+  mpdServer.listen(mpdPort, '127.0.0.1', () => {
+    console.log(`[SoraFy MPD] Music Player Daemon socket running at 127.0.0.1:${mpdPort}`);
+  });
+}
+
+startMpdServer();
+
 // Persistent stream cache on disk for instant 0ms playback across sessions
 const cacheDir = path.join(os.homedir(), '.config', 'sorafy', 'cache');
 const cacheFile = path.join(cacheDir, 'stream_cache.json');
@@ -3054,6 +3500,7 @@ ipcMain.on('update-jam-state', (event, state) => {
   if (!state || typeof state !== 'object') return;
   jamPlayerState = { ...jamPlayerState, ...state };
   broadcastJamState();
+  notifyMpdIdle(['player', 'mixer', 'playlist']);
 });
 
 ipcMain.handle('get-mcp-info', async () => {

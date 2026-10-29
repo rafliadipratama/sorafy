@@ -153,6 +153,16 @@ const DEFAULT_PLUGINS = [
     category: "Social & Integration",
     icon: '<iconsax-icon name="chart-2" type="bold" size="24" color="#E11D48"></iconsax-icon>',
     is_enabled: true
+  },
+  {
+    id: "mpd_daemon",
+    name: "Music Player Daemon (MPD)",
+    version: "0.23.5",
+    author: "MPD Protocol Spec",
+    description: "Built-in TCP socket server on port 6600. Allows standard Linux audio tools (mpc, ncmpcpp, mpDris2) to control playback and view library/queue.",
+    category: "Tools & Utilities",
+    icon: '<iconsax-icon name="setting-4" type="bold" size="24" color="#38BDF8"></iconsax-icon>',
+    is_enabled: true
   }
 ];
 
@@ -2245,6 +2255,16 @@ class SoraFyDesktopApp {
       });
     }
 
+    const copyMpdBtn = document.getElementById("copyMpdCmdBtn");
+    if (copyMpdBtn) {
+      copyMpdBtn.addEventListener("click", () => {
+        navigator.clipboard.writeText("mpc -h 127.0.0.1 status");
+        copyMpdBtn.textContent = "Tersalin!";
+        setTimeout(() => { if (copyMpdBtn) copyMpdBtn.textContent = "Salin Perintah"; }, 2000);
+        this.showToast("Perintah MPD tersalin ke clipboard!");
+      });
+    }
+
     if (this.settingExportBackupBtn) {
       this.settingExportBackupBtn.addEventListener("click", () => this.handleDataBackup());
     }
@@ -3007,8 +3027,26 @@ class SoraFyDesktopApp {
           this.playPrevious();
         } else if (act === 'toggle-shuffle') {
           this.toggleShuffle();
+        } else if (act === 'set-shuffle') {
+          this.isShuffled = !!action.value;
+          if (this.shuffleBtn) this.shuffleBtn.classList.toggle("active", this.isShuffled);
+          this.syncJamState();
         } else if (act === 'toggle-repeat') {
           this.toggleRepeat();
+        } else if (act === 'set-repeat') {
+          this.repeatMode = action.value === 'track' ? 2 : (action.value === 'context' ? 1 : 0);
+          if (this.repeatIcon) {
+            this.repeatIcon.setAttribute("color", this.repeatMode > 0 ? "var(--color-brand-primary)" : "currentColor");
+          }
+          this.syncJamState();
+        } else if (act === 'stop') {
+          if (this.audio) {
+            this.audio.pause();
+            this.audio.currentTime = 0;
+            this.isPlaying = false;
+            if (this.playPauseIcon) this.playPauseIcon.setAttribute("name", "play");
+            this.syncJamState();
+          }
         } else if (act === 'seek' && typeof action.value === 'number') {
           if (this.audio) {
             this.audio.currentTime = action.value;
