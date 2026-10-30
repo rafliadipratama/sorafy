@@ -37,5 +37,12 @@ const {
 </head>
 <body class="bg-canvas text-primary selection:bg-[#00E599] selection:text-black">
   <slot />
+  <script is:inline>
+    // Ensure the landing page always opens at the very top hero banner when visiting without hash
+    if (!window.location.hash && 'scrollRestoration' in history) {
+      history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
+    }
+  </script>
 </body>
 </html>
