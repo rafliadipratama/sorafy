@@ -204,14 +204,14 @@
   const heroDownloadBtn = document.getElementById('heroDownloadBtn');
 
   // Terminal elements
-  const termTabs = document.querySelectorAll('.term-tab');
+  const termTabs = document.querySelectorAll('.terminal-tab-btn');
   const termCodes = document.querySelectorAll('.terminal-code');
   const copyBtn = document.getElementById('terminalCopyBtn');
   const copyLabel = document.getElementById('copyBtnLabel');
 
   // Download platform elements
   const dlTabs = document.querySelectorAll('.dl-tab');
-  const dlPanes = document.querySelectorAll('.download-pane');
+  const dlPanes = document.querySelectorAll('.dl-pane');
 
   // FAQ items
   const faqItems = document.querySelectorAll('.faq-item');
@@ -276,7 +276,7 @@
    */
   function selectDownloadPlatform(platform) {
     dlTabs.forEach(function (t) {
-      if (t.getAttribute('data-dl-tab') === platform) {
+      if (t.getAttribute('data-platform') === platform) {
         t.classList.add('active');
         t.setAttribute('aria-selected', 'true');
       } else {
@@ -288,8 +288,10 @@
     dlPanes.forEach(function (p) {
       if (p.id === 'pane' + platform.charAt(0).toUpperCase() + platform.slice(1)) {
         p.classList.add('active');
+        p.style.display = 'block';
       } else {
         p.classList.remove('active');
+        p.style.display = 'none';
       }
     });
   }
@@ -328,7 +330,7 @@
   function initTerminalShowcase() {
     termTabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
-        const target = this.getAttribute('data-term-tab');
+        const target = this.getAttribute('data-tab');
 
         termTabs.forEach(function (t) { t.classList.remove('active'); });
         this.classList.add('active');
@@ -419,7 +421,7 @@
   function initDownloadTabs() {
     dlTabs.forEach(function (tab) {
       tab.addEventListener('click', function () {
-        const platform = this.getAttribute('data-dl-tab');
+        const platform = this.getAttribute('data-platform');
         selectDownloadPlatform(platform);
       });
     });
