@@ -1,0 +1,120 @@
+---
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  lang: 'en' | 'id';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const basePath = lang === 'id' ? '/id' : '';
+---
+
+<header class="sticky top-0 z-50 bg-[#0B0D10]/90 backdrop-blur-md border-b border-subtle transition-colors" id="header">
+  <div class="max-w-7xl mx-auto px-6 h-17 flex items-center justify-between">
+    <!-- Brand Logo -->
+    <a href={basePath || '/'} class="flex items-center gap-3 group" aria-label="SoraFy Home">
+      <img src="/assets/logo.png" alt="SoraFy Logo" class="w-8 h-8 rounded-md object-contain" />
+      <span class="text-xl font-extrabold tracking-tight text-white group-hover:text-[#00E599] transition-colors">sorafy</span>
+    </a>
+
+    <!-- Desktop Navigation -->
+    <nav class="hidden md:flex items-center gap-7">
+      <a href="#features" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">{t('nav_features')}</a>
+      <a href="#superpowers" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">{t('nav_superpowers')}</a>
+      <a href="#downloads" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">{t('nav_downloads')}</a>
+      <a href="#comparison" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">{t('nav_comparison')}</a>
+      <a href="#faq" class="text-sm font-medium text-neutral-400 hover:text-white transition-colors">{t('nav_faq')}</a>
+    </nav>
+
+    <!-- Header Actions -->
+    <div class="flex items-center gap-3.5">
+      <!-- Language Switcher Pill -->
+      <div class="flex items-center gap-1 bg-surface border border-subtle px-2.5 py-1 rounded-full text-xs font-semibold">
+        <a 
+          href="/" 
+          class={`px-1 transition-colors ${lang === 'en' ? 'text-[#00E599] font-bold' : 'text-neutral-500 hover:text-neutral-300'}`}
+          aria-current={lang === 'en' ? 'page' : undefined}
+        >
+          EN
+        </a>
+        <span class="text-neutral-600 text-[10px]">/</span>
+        <a 
+          href="/id" 
+          class={`px-1 transition-colors ${lang === 'id' ? 'text-[#00E599] font-bold' : 'text-neutral-500 hover:text-neutral-300'}`}
+          aria-current={lang === 'id' ? 'page' : undefined}
+        >
+          ID
+        </a>
+      </div>
+
+      <!-- GitHub Stars Badge -->
+      <a 
+        href="https://github.com/rafliadipratama/sorafy" 
+        target="_blank" 
+        rel="noopener noreferrer" 
+        class="hidden sm:inline-flex items-center gap-2 bg-surface hover:bg-surface-elevated border border-subtle hover:border-medium px-3 py-1.5 rounded-md text-xs font-medium text-white transition-all"
+        title="Star SoraFy on GitHub"
+      >
+        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        <span>GitHub</span>
+        <span class="text-[#00E599] font-bold text-[11px] font-mono-code">★ Star</span>
+      </a>
+
+      <!-- Download Button -->
+      <a 
+        href="#downloads" 
+        class="bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-xs px-4 py-2 rounded-md transition-all shadow-sm"
+      >
+        {t('btn_header_download')}
+      </a>
+
+      <!-- Mobile Hamburger Button -->
+      <button 
+        type="button" 
+        class="md:hidden text-neutral-400 hover:text-white p-1" 
+        id="mobileMenuBtn" 
+        aria-label="Toggle Navigation Menu"
+        aria-expanded="false"
+      >
+        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Mobile Navigation Drawer -->
+  <div class="hidden md:hidden bg-surface border-b border-subtle px-6 py-4" id="mobileDrawer">
+    <nav class="flex flex-col gap-3">
+      <a href="#features" class="text-sm font-medium text-neutral-300 hover:text-white py-1">{t('nav_features')}</a>
+      <a href="#superpowers" class="text-sm font-medium text-neutral-300 hover:text-white py-1">{t('nav_superpowers')}</a>
+      <a href="#downloads" class="text-sm font-medium text-neutral-300 hover:text-white py-1">{t('nav_downloads')}</a>
+      <a href="#comparison" class="text-sm font-medium text-neutral-300 hover:text-white py-1">{t('nav_comparison')}</a>
+      <a href="#faq" class="text-sm font-medium text-neutral-300 hover:text-white py-1">{t('nav_faq')}</a>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  const mobileDrawer = document.getElementById('mobileDrawer');
+
+  if (mobileMenuBtn && mobileDrawer) {
+    mobileMenuBtn.addEventListener('click', () => {
+      const isExpanded = mobileMenuBtn.getAttribute('aria-expanded') === 'true';
+      mobileMenuBtn.setAttribute('aria-expanded', String(!isExpanded));
+      mobileDrawer.classList.toggle('hidden');
+    });
+
+    const links = mobileDrawer.querySelectorAll('a');
+    links.forEach(l => {
+      l.addEventListener('click', () => {
+        mobileDrawer.classList.add('hidden');
+        mobileMenuBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+  }
+</script>

@@ -1,0 +1,89 @@
+---
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  lang: 'en' | 'id';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section class="py-24 border-t border-subtle bg-container-alt" id="comparison">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <span class="text-xs font-bold uppercase tracking-wider text-[#00E599] inline-block mb-3">
+        {t('comp_eyebrow')}
+      </span>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
+        {t('comp_title')}
+      </h2>
+      <p class="text-neutral-400 text-base leading-relaxed">
+        {t('comp_desc')}
+      </p>
+    </div>
+
+    <div class="overflow-x-auto bg-surface border border-subtle rounded-2xl">
+      <table class="w-full border-collapse text-left text-sm">
+        <thead>
+          <tr class="bg-surface-elevated border-b border-subtle">
+            <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-neutral-400">{t('comp_col_feature')}</th>
+            <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-[#00E599] bg-[#00E599]/5">SoraFy</th>
+            <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-neutral-400">Spotify Free</th>
+            <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-neutral-400">YouTube Music (Web)</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-subtle">
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_cost')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">100% Free Forever</td>
+            <td class="p-4 sm:p-5 text-neutral-400">Free with limitations</td>
+            <td class="p-4 sm:p-5 text-neutral-400">Free with video ads</td>
+          </tr>
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_ads')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Zero Ads</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Frequent unskippable ads</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Frequent visual & audio ads</td>
+          </tr>
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_login')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Not Required</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Account Mandatory</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Google Account Required</td>
+          </tr>
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_import')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Direct 1-Click Import</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Walled Garden</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Manual Rebuilding</td>
+          </tr>
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_eq')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">7-Band Parametric + Normalization</td>
+            <td class="p-4 sm:p-5 text-neutral-400">Basic 6-Band</td>
+            <td class="p-4 sm:p-5 text-neutral-500">No Equalizer on Web</td>
+          </tr>
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_offline')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Automatic LRU Cache + MP3</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Paid Premium Only</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Paid Premium Only</td>
+          </tr>
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_protocols')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Native Port 6600 & 8800</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Not Supported</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Not Supported</td>
+          </tr>
+          <tr>
+            <td class="p-4 sm:p-5 font-medium text-white">{t('comp_privacy')}</td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Zero Cloud Telemetry</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Extensive Ad-Tracking</td>
+            <td class="p-4 sm:p-5 text-neutral-500">Google Activity Tracking</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

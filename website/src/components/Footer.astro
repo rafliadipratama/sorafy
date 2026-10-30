@@ -1,0 +1,88 @@
+---
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  lang: 'en' | 'id';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<footer class="border-t border-subtle bg-[#07090C] pt-16 pb-8">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
+      <!-- Brand Column -->
+      <div class="flex flex-col gap-4 md:col-span-1">
+        <div class="flex items-center gap-2.5">
+          <img src="/assets/logo.png" alt="SoraFy" class="w-7 h-7 rounded object-contain" />
+          <span class="text-lg font-extrabold tracking-tight text-white">sorafy</span>
+        </div>
+        <p class="text-xs text-neutral-400 leading-relaxed">
+          {t('footer_desc')}
+        </p>
+        <p class="text-[11px] text-neutral-500 font-mono-code">
+          {t('footer_license')}
+        </p>
+      </div>
+
+      <!-- Platforms Column -->
+      <div class="flex flex-col gap-3">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-white">{t('footer_col_platform')}</h4>
+        <ul class="flex flex-col gap-2 text-xs text-neutral-400">
+          <li><a href="#downloads" class="hover:text-[#00E599] transition-colors">Windows (Installer & Portable)</a></li>
+          <li><a href="#downloads" class="hover:text-[#00E599] transition-colors">Linux (AppImage, deb, rpm)</a></li>
+          <li><a href="#downloads" class="hover:text-[#00E599] transition-colors">macOS (Apple Silicon & Intel)</a></li>
+          <li><a href="#downloads" class="hover:text-[#00E599] transition-colors">Android (Native APK)</a></li>
+        </ul>
+      </div>
+
+      <!-- Features Column -->
+      <div class="flex flex-col gap-3">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-white">{t('footer_col_features')}</h4>
+        <ul class="flex flex-col gap-2 text-xs text-neutral-400">
+          <li><a href="#features" class="hover:text-[#00E599] transition-colors">{t('feat_import_title')}</a></li>
+          <li><a href="#features" class="hover:text-[#00E599] transition-colors">{t('feat_lyrics_title')}</a></li>
+          <li><a href="#features" class="hover:text-[#00E599] transition-colors">{t('feat_eq_title')}</a></li>
+          <li><a href="#superpowers" class="hover:text-[#00E599] transition-colors">{t('super_mpd_title')}</a></li>
+          <li><a href="#superpowers" class="hover:text-[#00E599] transition-colors">{t('super_jam_title')}</a></li>
+        </ul>
+      </div>
+
+      <!-- Project Column -->
+      <div class="flex flex-col gap-3">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-white">{t('footer_col_project')}</h4>
+        <ul class="flex flex-col gap-2 text-xs text-neutral-400">
+          <li>
+            <a href="https://github.com/rafliadipratama/sorafy" target="_blank" rel="noopener noreferrer" class="hover:text-[#00E599] transition-colors">
+              GitHub Repository
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/rafliadipratama/sorafy/releases" target="_blank" rel="noopener noreferrer" class="hover:text-[#00E599] transition-colors">
+              Release Archive
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/rafliadipratama/sorafy/issues" target="_blank" rel="noopener noreferrer" class="hover:text-[#00E599] transition-colors">
+              Bug Reports & Issues
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/rafliadipratama/sorafy/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="hover:text-[#00E599] transition-colors">
+              GPL-3.0 License
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="pt-6 border-t border-subtle flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-neutral-400">
+      <span>© {new Date().getFullYear()} SoraFy Contributors. Open-source under GPL-3.0.</span>
+      <a href="#" class="text-neutral-400 hover:text-[#00E599] font-medium transition-colors">
+        {t('footer_back_to_top')}
+      </a>
+    </div>
+  </div>
+</footer>

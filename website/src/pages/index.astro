@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+import AnnouncementBar from '../components/AnnouncementBar.astro';
+import Header from '../components/Header.astro';
+import Hero from '../components/Hero.astro';
+import Features from '../components/Features.astro';
+import Superpowers from '../components/Superpowers.astro';
+import Downloads from '../components/Downloads';
+import Comparison from '../components/Comparison.astro';
+import FAQ from '../components/FAQ.astro';
+import Footer from '../components/Footer.astro';
+import { useTranslations } from '../i18n/ui';
+
+const lang = 'en';
+const t = useTranslations(lang);
+---
+
+<Layout lang={lang}>
+  <AnnouncementBar lang={lang} />
+  <Header lang={lang} />
+  <main>
+    <Hero lang={lang} />
+    <Features lang={lang} />
+    <Superpowers lang={lang} />
+    <Downloads
+      client:visible
+      lang={lang}
+      eyebrow={t('dl_eyebrow')}
+      title={t('dl_title')}
+      desc={t('dl_desc')}
+      recommendedText={t('dl_recommended')}
+      universalText={t('dl_universal')}
+    />
+    <Comparison lang={lang} />
+    <FAQ lang={lang} />
+  </main>
+  <Footer lang={lang} />
+</Layout>

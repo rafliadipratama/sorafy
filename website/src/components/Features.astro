@@ -1,0 +1,92 @@
+---
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  lang: 'en' | 'id';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section class="py-24 border-t border-subtle" id="features">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="text-center max-w-2xl mx-auto mb-14">
+      <span class="text-xs font-bold uppercase tracking-wider text-[#00E599] inline-block mb-3">
+        {t('features_eyebrow')}
+      </span>
+      <h2 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4">
+        {t('features_title')}
+      </h2>
+      <p class="text-neutral-400 text-base leading-relaxed">
+        {t('features_desc')}
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <!-- Pillar 1: Universal Importer -->
+      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
+        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_import_title')}</h3>
+        <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_import_desc')}</p>
+        <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Spotify Hub</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Apple Music</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Zero Login Required</span>
+        </div>
+      </article>
+
+      <!-- Pillar 2: Synced Lyrics -->
+      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
+        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_lyrics_title')}</h3>
+        <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_lyrics_desc')}</p>
+        <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">LRCLIB</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Romaji / Hangul</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Timing Calibration</span>
+        </div>
+      </article>
+
+      <!-- Pillar 3: Parametric Equalizer Studio -->
+      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
+        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_eq_title')}</h3>
+        <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_eq_desc')}</p>
+        <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Parametric DSP</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Volume Normalization</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Crossfade</span>
+        </div>
+      </article>
+
+      <!-- Pillar 4: Offline Caching & Downloads -->
+      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
+        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+        </div>
+        <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_cache_title')}</h3>
+        <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_cache_desc')}</p>
+        <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">LRU Cache</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">yt-dlp Companion</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Offline Playback</span>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>

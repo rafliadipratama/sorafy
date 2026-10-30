@@ -23,6 +23,8 @@ node_modules/
 # Electron / Web distribution builds
 dist/
 **/dist/
+.astro/
+**/.astro/
 
 # Bundled binaries downloaded dynamically during build
 desktop/bin/
