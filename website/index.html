@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoraFy — Free, High-Fidelity Music Streaming Player</title>
+  <meta name="description" content="SoraFy is a free, open-source high-fidelity music streaming app without ads or tracking. Search any song, sync real-time lyrics, import playlists, and control playback from your phone and terminal.">
+  <link rel="icon" href="assets/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="assets/logo.png">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="SoraFy — Free, High-Fidelity Music Streaming Player">
+  <meta property="og:description" content="No subscriptions, no ads, no telemetry. High-resolution music streaming with synchronized lyrics, 7-band parametric EQ, and terminal MPD control.">
+  <meta property="og:image" content="assets/logo_monogram.png">
+
+  <!-- Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-canvas text-primary selection-brand">
+
+  <!-- Announcement Bar -->
+  <aside class="announcement-bar" role="region" aria-label="Announcement">
+    <div class="container announcement-inner">
+      <span class="announcement-pill" data-i18n="announcement_pill">Open Source</span>
+      <span class="announcement-text" data-i18n="announcement_text">SoraFy v2.0 is live with Linux MPD Daemon, AI Model Context Protocol, and Phone Jam Remote.</span>
+      <a href="#downloads" class="announcement-link" data-i18n="announcement_link">Get v2.0 &rarr;</a>
+    </div>
+  </aside>
+
+  <!-- Sticky Header Navigation -->
+  <header class="site-header" id="header">
+    <div class="container header-inner">
+      <a href="#" class="brand-link" aria-label="SoraFy Home">
+        <img src="assets/logo.png" alt="SoraFy Logo" class="brand-logo">
+        <span class="brand-wordmark">sorafy</span>
+      </a>
+
+      <nav class="nav-links" id="navLinks">
+        <a href="#features" class="nav-item" data-i18n="nav_features">Features</a>
+        <a href="#superpowers" class="nav-item" data-i18n="nav_superpowers">Integrations</a>
+        <a href="#downloads" class="nav-item" data-i18n="nav_downloads">Downloads</a>
+        <a href="#comparison" class="nav-item" data-i18n="nav_comparison">Comparison</a>
+        <a href="#faq" class="nav-item" data-i18n="nav_faq">FAQ</a>
+      </nav>
+
+      <div class="header-actions">
+        <!-- Language Switcher Pill -->
+        <div class="lang-switch-group" role="group" aria-label="Language selection">
+          <button class="lang-btn active" id="langEnBtn" data-lang="en" aria-pressed="true">EN</button>
+          <span class="lang-divider">/</span>
+          <button class="lang-btn" id="langIdBtn" data-lang="id" aria-pressed="false">ID</button>
+        </div>
+
+        <!-- GitHub Stars Badge -->
+        <a href="https://github.com/rafliadipratama/sorafy" target="_blank" rel="noopener noreferrer" class="github-badge" title="Star on GitHub">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          <span class="github-label">GitHub</span>
+          <span class="github-star-count">&#9733; Star</span>
+        </a>
+
+        <!-- Primary Download Button -->
+        <a href="#downloads" class="btn btn-primary btn-sm" data-i18n="btn_header_download">
+          Download
+        </a>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" id="mobileMenuBtn" aria-label="Toggle navigation menu" aria-expanded="false">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer Menu -->
+  <div class="mobile-drawer" id="mobileDrawer">
+    <nav class="mobile-nav-links">
+      <a href="#features" class="mobile-nav-item" data-i18n="nav_features">Features</a>
+      <a href="#superpowers" class="mobile-nav-item" data-i18n="nav_superpowers">Integrations</a>
+      <a href="#downloads" class="mobile-nav-item" data-i18n="nav_downloads">Downloads</a>
+      <a href="#comparison" class="mobile-nav-item" data-i18n="nav_comparison">Comparison</a>
+      <a href="#faq" class="mobile-nav-item" data-i18n="nav_faq">FAQ</a>
+    </nav>
+    <div class="mobile-drawer-footer">
+      <a href="#downloads" class="btn btn-primary btn-full" data-i18n="btn_header_download">Download Free</a>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- Hero Section -->
+    <section class="hero-section" id="hero">
+      <div class="container hero-container">
+        <div class="hero-content">
+          <div class="badge-tag">
+            <span class="badge-dot"></span>
+            <span data-i18n="hero_badge">Desktop & Mobile • Zero Telemetry • 100% Free</span>
+          </div>
+
+          <h1 class="hero-headline" data-i18n="hero_title">
+            Music streaming without subscriptions, accounts, or telemetry.
+          </h1>
+
+          <p class="hero-subhead" data-i18n="hero_desc">
+            SoraFy streams high-fidelity music from open sources across the web. Import your Spotify and Apple Music playlists, sing along with real-time synchronized lyrics, fine-tune sound with DSP EQ, and control playback right from your phone or terminal.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#downloads" class="btn btn-primary btn-lg" id="heroDownloadBtn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+              <span data-i18n="btn_hero_download">Download Free for Desktop</span>
+            </a>
+            <a href="https://github.com/rafliadipratama/sorafy" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+              <span data-i18n="btn_hero_github">View Source Code</span>
+            </a>
+          </div>
+
+          <div class="hero-platforms-bar">
+            <span class="platforms-label" data-i18n="hero_available_on">Available on:</span>
+            <div class="platform-chips">
+              <span class="platform-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+                Windows
+              </span>
+              <span class="platform-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12.003 0c-2.73 0-5.26 1.05-7.14 2.93A10.07 10.07 0 001.93 10.07c0 2.24.72 4.3 1.96 5.99L2 24l8.1-1.85c.62.15 1.26.23 1.9.23 2.73 0 5.26-1.05 7.14-2.93a10.07 10.07 0 002.93-7.14c0-2.73-1.05-5.26-2.93-7.14A10.07 10.07 0 0012.003 0z"/></svg>
+                Linux (AppImage / deb / rpm)
+              </span>
+              <span class="platform-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.77 1.06-1.85.94-2.93-.91.04-2.02.61-2.67 1.38-.58.67-1.09 1.76-.95 2.82 1.02.08 2.05-.5 2.68-1.27z"/></svg>
+                macOS
+              </span>
+              <span class="platform-chip">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9992.4482.9992.9993.0001.5511-.4482.9997-.9992.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4116 13.8533 8.084 12 8.084s-3.5902.3276-5.1368.8657L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9974 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/></svg>
+                Android
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Interface Showcase (High-fidelity CSS Mockup, no video bloat) -->
+        <div class="hero-preview-wrapper">
+          <div class="app-window-frame">
+            <div class="window-titlebar">
+              <div class="window-dots">
+                <span class="window-dot dot-red"></span>
+                <span class="window-dot dot-yellow"></span>
+                <span class="window-dot dot-green"></span>
+              </div>
+              <div class="window-title">SoraFy Desktop — High-Fidelity Music Streaming</div>
+              <div class="window-status-pill">
+                <span class="status-indicator"></span>
+                Port 8800 Active
+              </div>
+            </div>
+
+            <div class="window-content-grid">
+              <!-- Mini Sidebar -->
+              <div class="mockup-sidebar">
+                <div class="mockup-brand">
+                  <img src="assets/logo.png" alt="SoraFy" class="mockup-logo">
+                  <span>sorafy</span>
+                </div>
+                <div class="mockup-nav-group">
+                  <div class="mockup-nav-item active">
+                    <span class="nav-icon">&#9658;</span> <span data-i18n="mockup_nav_home">Home</span>
+                  </div>
+                  <div class="mockup-nav-item">
+                    <span class="nav-icon">&#9678;</span> <span data-i18n="mockup_nav_explore">Explore</span>
+                  </div>
+                  <div class="mockup-nav-item">
+                    <span class="nav-icon">&#9881;</span> <span data-i18n="mockup_nav_equalizer">DSP Studio</span>
+                  </div>
+                  <div class="mockup-nav-item">
+                    <span class="nav-icon">&#128202;</span> <span data-i18n="mockup_nav_stats">Listening Recap</span>
+                  </div>
+                </div>
+                <div class="mockup-sidebar-bottom">
+                  <div class="mockup-sub-badge">Opus 160kbps HD</div>
+                </div>
+              </div>
+
+              <!-- Main Stage -->
+              <div class="mockup-main">
+                <div class="mockup-header-search">
+                  <span class="search-icon">&#128269;</span>
+                  <span class="search-placeholder" data-i18n="mockup_search_placeholder">Search songs, artists, or paste Spotify / Apple Music link...</span>
+                </div>
+
+                <!-- Now Playing Spotlight Banner -->
+                <div class="mockup-hero-track">
+                  <div class="track-artwork-box">
+                    <div class="art-gradient"></div>
+                    <span class="art-play-badge">&#9658;</span>
+                  </div>
+                  <div class="track-meta">
+                    <span class="meta-tag" data-i18n="mockup_now_playing">NOW PLAYING</span>
+                    <h3 class="track-title">Satu Bulan</h3>
+                    <p class="track-artist">Bernadya • Sialnya, Hidup Harus Tetap Berjalan</p>
+                    <div class="track-badges-row">
+                      <span class="chip-badge">Lossless Match</span>
+                      <span class="chip-badge">Synced Lyrics</span>
+                      <span class="chip-badge">EQ Parametric Active</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Equalizer Curve Mini-Viz -->
+                <div class="mockup-eq-preview">
+                  <div class="eq-header">
+                    <span data-i18n="mockup_eq_title">7-Band Parametric EQ Active Curve</span>
+                    <span class="eq-preset-name">Bass Boost + Vocal Air</span>
+                  </div>
+                  <div class="eq-bars-row">
+                    <div class="eq-bar"><div class="eq-bar-fill" style="height: 78%;"></div><span>32Hz</span></div>
+                    <div class="eq-bar"><div class="eq-bar-fill" style="height: 65%;"></div><span>64Hz</span></div>
+                    <div class="eq-bar"><div class="eq-bar-fill" style="height: 45%;"></div><span>125Hz</span></div>
+                    <div class="eq-bar"><div class="eq-bar-fill" style="height: 52%;"></div><span>500Hz</span></div>
+                    <div class="eq-bar"><div class="eq-bar-fill" style="height: 70%;"></div><span>2kHz</span></div>
+                    <div class="eq-bar"><div class="eq-bar-fill" style="height: 82%;"></div><span>8kHz</span></div>
+                    <div class="eq-bar"><div class="eq-bar-fill" style="height: 90%;"></div><span>16kHz</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Synced Lyrics Sidebar -->
+              <div class="mockup-lyrics">
+                <div class="lyrics-topbar">
+                  <span class="lyrics-title" data-i18n="mockup_lyrics_title">Synchronized Lyrics</span>
+                  <span class="lyrics-source">LRCLIB Sync</span>
+                </div>
+                <div class="lyrics-lines">
+                  <div class="lyric-line passed">Belum ada satu bulan</div>
+                  <div class="lyric-line passed">Ku yakin masih ada yang tertinggal</div>
+                  <div class="lyric-line active">
+                    <span class="active-pulse">&#9835;</span> Dan belum ada satu bulan
+                  </div>
+                  <div class="lyric-line upcoming">Ku dengar kamu sudah ada yang baru</div>
+                  <div class="lyric-line upcoming">Cepat juga kamu melupakan</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Transport Bar -->
+            <div class="mockup-transport">
+              <div class="transport-track">
+                <div class="transport-thumb"></div>
+                <div class="transport-info">
+                  <span class="t-title">Satu Bulan</span>
+                  <span class="t-sub">Bernadya</span>
+                </div>
+              </div>
+              <div class="transport-controls">
+                <span class="ctrl-btn">&#9198;</span>
+                <span class="ctrl-btn play">&#9646;&#9646;</span>
+                <span class="ctrl-btn">&#9197;</span>
+                <div class="progress-bar-wrap">
+                  <span class="time">1:42</span>
+                  <div class="bar-bg"><div class="bar-fill" style="width: 48%;"></div></div>
+                  <span class="time">3:28</span>
+                </div>
+              </div>
+              <div class="transport-extras">
+                <span class="extra-badge">Jam Active</span>
+                <span class="extra-badge">MPD: 6600</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Core Pillars Section -->
+    <section class="section-padding" id="features">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow" data-i18n="features_eyebrow">Everything You Need</span>
+          <h2 class="section-title" data-i18n="features_title">A modern player built without commercial compromises.</h2>
+          <p class="section-desc" data-i18n="features_desc">
+            No forced algorithm feeds, no audio compression degradation, and no data surveillance. Pure audio playback designed around your tastes.
+          </p>
+        </div>
+
+        <div class="features-grid">
+          <!-- Pillar 1: Universal Importer -->
+          <article class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </div>
+            <h3 class="feature-title" data-i18n="feat_import_title">Universal Playlist Importer</h3>
+            <p class="feature-desc" data-i18n="feat_import_desc">
+              Import playlists directly from Spotify, Apple Music, and YouTube without logging in or handing over credentials. SoraFy resolves and matches each song automatically against high-fidelity audio streams.
+            </p>
+            <div class="feature-tags">
+              <span class="tech-tag">Spotify Hub</span>
+              <span class="tech-tag">Apple Music</span>
+              <span class="tech-tag">Zero Login Required</span>
+            </div>
+          </article>
+
+          <!-- Pillar 2: Synced Lyrics -->
+          <article class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+            </div>
+            <h3 class="feature-title" data-i18n="feat_lyrics_title">Word-by-Word Synchronized Lyrics</h3>
+            <p class="feature-desc" data-i18n="feat_lyrics_desc">
+              Sing along with millisecond-accurate lyrics fetched from LRCLIB and Musixmatch. Features automatic Furigana and Romaji romanization for Japanese and Korean songs, plus manual sync calibration controls.
+            </p>
+            <div class="feature-tags">
+              <span class="tech-tag">LRCLIB</span>
+              <span class="tech-tag">Romaji / Hangul</span>
+              <span class="tech-tag">Timing Calibration</span>
+            </div>
+          </article>
+
+          <!-- Pillar 3: Parametric Equalizer Studio -->
+          <article class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            </div>
+            <h3 class="feature-title" data-i18n="feat_eq_title">7-Band Parametric Equalizer</h3>
+            <p class="feature-desc" data-i18n="feat_eq_desc">
+              Take complete acoustic command over your audio output. Real-time Web Audio DSP filters let you boost sub-bass, enhance vocal clarity, adjust stereo surround, and normalize volume spikes across different albums.
+            </p>
+            <div class="feature-tags">
+              <span class="tech-tag">Parametric DSP</span>
+              <span class="tech-tag">Volume Normalization</span>
+              <span class="tech-tag">Crossfade</span>
+            </div>
+          </article>
+
+          <!-- Pillar 4: Offline Caching & Downloads -->
+          <article class="feature-card">
+            <div class="feature-icon-box">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            </div>
+            <h3 class="feature-title" data-i18n="feat_cache_title">Smart Local Cache & Offline Play</h3>
+            <p class="feature-desc" data-i18n="feat_cache_desc">
+              Tracks you stream are cached automatically using an LRU eviction strategy so you can listen seamlessly on flights or during network outages. Download complete MP3 tracks for permanent offline archives.
+            </p>
+            <div class="feature-tags">
+              <span class="tech-tag">LRU Cache</span>
+              <span class="tech-tag">yt-dlp Companion</span>
+              <span class="tech-tag">Offline Playback</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Power Integrations / Nuclear Capabilities Section -->
+    <section class="section-padding bg-container-alt" id="superpowers">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow" data-i18n="super_eyebrow">Advanced Integrations</span>
+          <h2 class="section-title" data-i18n="super_title">Engineered for developers, audiophiles, and power users.</h2>
+          <p class="section-desc" data-i18n="super_desc">
+            SoraFy exposes native protocols so your music player integrates seamlessly into your terminal workflows, home Wi-Fi, and AI coding assistants.
+          </p>
+        </div>
+
+        <div class="superpowers-grid">
+          <!-- Superpower 1: SoraFy Jam Mobile Remote -->
+          <div class="super-card">
+            <div class="super-header">
+              <div class="super-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>
+              </div>
+              <span class="super-port">Port 4120</span>
+            </div>
+            <h3 class="super-title" data-i18n="super_jam_title">SoraFy Jam • Phone Remote Control</h3>
+            <p class="super-desc" data-i18n="super_jam_desc">
+              Control playback from anywhere in your room. Scan a QR code from your mobile phone to open an instant browser remote—pause, skip, adjust volume, and view real-time lyrics over your local Wi-Fi.
+            </p>
+          </div>
+
+          <!-- Superpower 2: MPD Protocol Daemon -->
+          <div class="super-card">
+            <div class="super-header">
+              <div class="super-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline><line x1="12" y1="19" x2="20" y2="19"></line></svg>
+              </div>
+              <span class="super-port">Port 6600</span>
+            </div>
+            <h3 class="super-title" data-i18n="super_mpd_title">Music Player Daemon (MPD Protocol)</h3>
+            <p class="super-desc" data-i18n="super_mpd_desc">
+              Native protocol socket compatibility on TCP 6600. Control your desktop music streaming using traditional Linux CLI tools like <code>ncmpcpp</code>, <code>mpc</code>, or status bar widgets without touching a mouse.
+            </p>
+          </div>
+
+          <!-- Superpower 3: AI Model Context Protocol (MCP) -->
+          <div class="super-card">
+            <div class="super-header">
+              <div class="super-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </div>
+              <span class="super-port">Port 8800</span>
+            </div>
+            <h3 class="super-title" data-i18n="super_mcp_title">Model Context Protocol (AI MCP)</h3>
+            <p class="super-desc" data-i18n="super_mcp_desc">
+              Connect Claude Code, Cursor, Windsurf, or custom LLM agents directly to your music environment. AI assistants can inspect the current playback, enqueue songs, search catalogs, and adjust audio state.
+            </p>
+          </div>
+
+          <!-- Superpower 4: Privacy-First Listening Recap -->
+          <div class="super-card">
+            <div class="super-header">
+              <div class="super-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M6 20V10M18 20V4"></path></svg>
+              </div>
+              <span class="super-port">100% Offline</span>
+            </div>
+            <h3 class="super-title" data-i18n="super_recap_title">Private Habits & Music Recap</h3>
+            <p class="super-desc" data-i18n="super_recap_desc">
+              Track your top artists, most streamed songs, and weekly equalizer activity rhythms without uploading your personal listening habits to cloud servers. All analytics are stored in a local, transparent JSON file.
+            </p>
+          </div>
+
+          <!-- Superpower 5: Discord Rich Presence -->
+          <div class="super-card">
+            <div class="super-header">
+              <div class="super-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              </div>
+              <span class="super-port">Discord RPC</span>
+            </div>
+            <h3 class="super-title" data-i18n="super_discord_title">Discord Rich Presence</h3>
+            <p class="super-desc" data-i18n="super_discord_desc">
+              Broadcast your active track, album artwork, artist names, and real-time seek duration straight to your Discord gaming profile with zero setup required.
+            </p>
+          </div>
+
+          <!-- Superpower 6: Custom Theming Engine -->
+          <div class="super-card">
+            <div class="super-header">
+              <div class="super-icon-wrap">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 10 10 0 0 0 0-20"></path></svg>
+              </div>
+              <span class="super-port">5 Presets</span>
+            </div>
+            <h3 class="super-title" data-i18n="super_theme_title">Custom Theming & Design Tokens</h3>
+            <p class="super-desc" data-i18n="super_theme_desc">
+              Match your desktop aesthetic with 5 carefully tuned themes (SoraFy Emerald, Arctic Obsidian, Lagoon Cyber, Aurora Purple, Oasis Light) or pick your own custom brand accent.
+            </p>
+          </div>
+        </div>
+
+        <!-- Terminal & Code Integration Demo -->
+        <div class="terminal-showcase-box">
+          <div class="terminal-nav-bar">
+            <div class="terminal-tabs">
+              <button class="terminal-tab-btn active" data-tab="mpd">MPD Client (Terminal)</button>
+              <button class="terminal-tab-btn" data-tab="mcp">AI Claude / Cursor MCP</button>
+              <button class="terminal-tab-btn" data-tab="jam">Jam Remote (Local Wi-Fi)</button>
+            </div>
+            <button class="terminal-copy-btn" id="terminalCopyBtn" title="Copy snippet to clipboard">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+              <span id="copyBtnLabel">Copy</span>
+            </button>
+          </div>
+
+          <div class="terminal-body" id="terminalBody">
+            <pre class="terminal-code active" id="codeMpd"><code><span class="tok-comment"># Control SoraFy playback from Linux terminal via standard mpc</span>
+$ mpc -h 127.0.0.1 status
+<span class="tok-string">Bernadya - Satu Bulan</span>
+[playing] #1/24   1:42/3:28 (48%)
+volume: 85%   repeat: off   random: on
+
+<span class="tok-comment"># Or launch full TUI visualizer ncmpcpp directly</span>
+$ ncmpcpp -h 127.0.0.1 -p 6600</code></pre>
+
+            <pre class="terminal-code" id="codeMcp" style="display: none;"><code><span class="tok-comment">// Add SoraFy Model Context Protocol to claude_desktop_config.json</span>
+{
+  <span class="tok-key">"mcpServers"</span>: {
+    <span class="tok-key">"sorafy"</span>: {
+      <span class="tok-key">"url"</span>: <span class="tok-string">"http://127.0.0.1:8800/mcp"</span>,
+      <span class="tok-key">"type"</span>: <span class="tok-string">"sse"</span>
+    }
+  }
+}</code></pre>
+
+            <pre class="terminal-code" id="codeJam" style="display: none;"><code><span class="tok-comment"># SoraFy Jam server automatically pairs mobile devices on port 4120</span>
+$ curl -s http://127.0.0.1:4120/api/status | jq
+{
+  <span class="tok-key">"active"</span>: <span class="tok-bool">true</span>,
+  <span class="tok-key">"title"</span>: <span class="tok-string">"Satu Bulan"</span>,
+  <span class="tok-key">"artist"</span>: <span class="tok-string">"Bernadya"</span>,
+  <span class="tok-key">"pairing_qr"</span>: <span class="tok-string">"http://192.168.1.100:4120"</span>
+}</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Multi-Platform Downloads Section -->
+    <section class="section-padding" id="downloads">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow" data-i18n="dl_eyebrow">Install SoraFy</span>
+          <h2 class="section-title" data-i18n="dl_title">Download for your preferred operating system.</h2>
+          <p class="section-desc" data-i18n="dl_desc">
+            Free forever. No telemetry, no hidden accounts, and zero background ads. Choose your platform below.
+          </p>
+        </div>
+
+        <!-- Download Tabs -->
+        <div class="download-tabs-container">
+          <div class="download-platform-selector">
+            <button class="dl-tab active" data-platform="windows">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.401H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/></svg>
+              <span>Windows</span>
+            </button>
+            <button class="dl-tab" data-platform="linux">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12.003 0c-2.73 0-5.26 1.05-7.14 2.93A10.07 10.07 0 001.93 10.07c0 2.24.72 4.3 1.96 5.99L2 24l8.1-1.85c.62.15 1.26.23 1.9.23 2.73 0 5.26-1.05 7.14-2.93a10.07 10.07 0 002.93-7.14c0-2.73-1.05-5.26-2.93-7.14A10.07 10.07 0 0012.003 0z"/></svg>
+              <span>Linux</span>
+            </button>
+            <button class="dl-tab" data-platform="macos">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.63-.77 1.06-1.85.94-2.93-.91.04-2.02.61-2.67 1.38-.58.67-1.09 1.76-.95 2.82 1.02.08 2.05-.5 2.68-1.27z"/></svg>
+              <span>macOS</span>
+            </button>
+            <button class="dl-tab" data-platform="android">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 15.3414c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.551 0 .9992.4482.9992.9993.0001.5511-.4482.9997-.9992.9997m-11.046 0c-.5511 0-.9993-.4486-.9993-.9997s.4482-.9993.9993-.9993c.5511 0 .9993.4482.9993.9993 0 .5511-.4482.9997-.9993.9997m11.4045-6.02l1.9973-3.4592a.416.416 0 00-.1521-.5676.416.416 0 00-.5676.1521l-2.0223 3.503C15.5902 8.4116 13.8533 8.084 12 8.084s-3.5902.3276-5.1368.8657L4.8409 5.4467a.4161.4161 0 00-.5677-.1521.4157.4157 0 00-.1521.5676l1.9974 3.4592C2.6889 11.1867.3432 14.6589 0 18.761h24c-.3432-4.1021-2.6889-7.5743-6.1185-9.4396"/></svg>
+              <span>Android</span>
+            </button>
+          </div>
+
+          <!-- Windows Content Pane -->
+          <div class="dl-pane active" id="paneWindows">
+            <div class="dl-cards-grid">
+              <div class="dl-card primary-card">
+                <div class="dl-card-badge" data-i18n="dl_recommended">Recommended</div>
+                <h3 class="dl-package-name">SoraFy for Windows (.exe)</h3>
+                <p class="dl-package-desc">Standard Windows installer with desktop shortcuts, auto-updater, and start menu integration.</p>
+                <div class="dl-meta-list">
+                  <span>Version: 2.0.0</span>
+                  <span>Windows 10 / 11 (64-bit)</span>
+                </div>
+                <a href="https://github.com/rafliadipratama/sorafy/releases/latest" class="btn btn-primary btn-full" target="_blank" rel="noopener noreferrer">
+                  Download Installer (.exe)
+                </a>
+              </div>
+
+              <div class="dl-card">
+                <h3 class="dl-package-name">Windows Portable (.zip)</h3>
+                <p class="dl-package-desc">No installation required. Extract anywhere and launch immediately from flash drives or external disks.</p>
+                <div class="dl-meta-list">
+                  <span>Version: 2.0.0</span>
+                  <span>Standalone Portable</span>
+                </div>
+                <a href="https://github.com/rafliadipratama/sorafy/releases/latest" class="btn btn-secondary btn-full" target="_blank" rel="noopener noreferrer">
+                  Download Portable (.zip)
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Linux Content Pane -->
+          <div class="dl-pane" id="paneLinux" style="display: none;">
+            <div class="dl-cards-grid">
+              <div class="dl-card primary-card">
+                <div class="dl-card-badge" data-i18n="dl_universal">Universal Linux</div>
+                <h3 class="dl-package-name">AppImage Package</h3>
+                <p class="dl-package-desc">Self-contained executable for Ubuntu, Fedora, Arch, Debian, openSUSE, and any standard Linux distribution.</p>
+                <div class="dl-meta-list">
+                  <span>Executable AppImage</span>
+                  <span>glibc 2.31+</span>
+                </div>
+                <a href="https://github.com/rafliadipratama/sorafy/releases/latest" class="btn btn-primary btn-full" target="_blank" rel="noopener noreferrer">
+                  Download AppImage
+                </a>
+              </div>
+
+              <div class="dl-card">
+                <h3 class="dl-package-name">Debian / Ubuntu (.deb)</h3>
+                <p class="dl-package-desc">Native package for Debian, Ubuntu, Linux Mint, and Pop!_OS with system package manager integration.</p>
+                <div class="dl-meta-list">
+                  <span>Native .deb</span>
+                  <span>Apt compatible</span>
+                </div>
+                <a href="https://github.com/rafliadipratama/sorafy/releases/latest" class="btn btn-secondary btn-full" target="_blank" rel="noopener noreferrer">
+                  Download .deb Package
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- macOS Content Pane -->
+          <div class="dl-pane" id="paneMacos" style="display: none;">
+            <div class="dl-cards-grid">
+              <div class="dl-card primary-card">
+                <div class="dl-card-badge">Apple Silicon</div>
+                <h3 class="dl-package-name">macOS (Apple Silicon M1/M2/M3/M4)</h3>
+                <p class="dl-package-desc">Native ARM64 DMG bundle optimized for Apple Silicon MacBooks, Mac mini, and Mac Studio.</p>
+                <div class="dl-meta-list">
+                  <span>macOS 12.0 Monterey or later</span>
+                  <span>Native ARM64</span>
+                </div>
+                <a href="https://github.com/rafliadipratama/sorafy/releases/latest" class="btn btn-primary btn-full" target="_blank" rel="noopener noreferrer">
+                  Download Apple Silicon DMG
+                </a>
+              </div>
+
+              <div class="dl-card">
+                <h3 class="dl-package-name">macOS Intel (.dmg)</h3>
+                <p class="dl-package-desc">Standard x86_64 DMG package for Intel-powered Apple Mac computers.</p>
+                <div class="dl-meta-list">
+                  <span>macOS 11.0 Big Sur or later</span>
+                  <span>Intel x86_64</span>
+                </div>
+                <a href="https://github.com/rafliadipratama/sorafy/releases/latest" class="btn btn-secondary btn-full" target="_blank" rel="noopener noreferrer">
+                  Download Intel DMG
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Android Content Pane -->
+          <div class="dl-pane" id="paneAndroid" style="display: none;">
+            <div class="dl-cards-grid">
+              <div class="dl-card primary-card">
+                <div class="dl-card-badge">Jetpack Compose Native</div>
+                <h3 class="dl-package-name">SoraFy for Android (.apk)</h3>
+                <p class="dl-package-desc">Built with Jetpack Compose Material 3 and Media3 audio notification controls for phones and tablets.</p>
+                <div class="dl-meta-list">
+                  <span>Android 8.0 Oreo or later</span>
+                  <span>arm64-v8a</span>
+                </div>
+                <a href="https://github.com/rafliadipratama/sorafy/releases/latest" class="btn btn-primary btn-full" target="_blank" rel="noopener noreferrer">
+                  Download Android APK
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section class="section-padding bg-container-alt" id="comparison">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow" data-i18n="comp_eyebrow">Comparison</span>
+          <h2 class="section-title" data-i18n="comp_title">How SoraFy compares to commercial streaming.</h2>
+          <p class="section-desc" data-i18n="comp_desc">
+            A direct, honest overview of where SoraFy excels compared to proprietary corporate platforms.
+          </p>
+        </div>
+
+        <div class="comparison-table-wrap">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th data-i18n="comp_col_feature">Feature</th>
+                <th class="col-highlight">SoraFy</th>
+                <th>Spotify Free</th>
+                <th>YouTube Music (Web)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_cost">Cost & Subscription</td>
+                <td class="col-highlight value-positive">100% Free Forever</td>
+                <td class="value-muted">Free with limitations</td>
+                <td class="value-muted">Free with video ads</td>
+              </tr>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_ads">Audio & Banner Ads</td>
+                <td class="col-highlight value-positive">Zero Ads</td>
+                <td class="value-negative">Frequent unskippable ads</td>
+                <td class="value-negative">Frequent visual & audio ads</td>
+              </tr>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_login">Account / Registration</td>
+                <td class="col-highlight value-positive">Not Required</td>
+                <td class="value-negative">Account Mandatory</td>
+                <td class="value-negative">Google Account Required</td>
+              </tr>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_import">Spotify / Apple Import</td>
+                <td class="col-highlight value-positive">Direct 1-Click Import</td>
+                <td class="value-negative">Walled Garden</td>
+                <td class="value-negative">Manual Rebuilding</td>
+              </tr>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_eq">Parametric DSP Equalizer</td>
+                <td class="col-highlight value-positive">7-Band Parametric + Normalization</td>
+                <td class="value-muted">Basic 6-Band</td>
+                <td class="value-negative">No Equalizer on Web</td>
+              </tr>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_offline">Offline Storage</td>
+                <td class="col-highlight value-positive">Automatic LRU Cache + MP3</td>
+                <td class="value-negative">Paid Premium Only</td>
+                <td class="value-negative">Paid Premium Only</td>
+              </tr>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_protocols">Terminal MPD & AI MCP</td>
+                <td class="col-highlight value-positive">Native Port 6600 & 8800</td>
+                <td class="value-negative">Not Supported</td>
+                <td class="value-negative">Not Supported</td>
+              </tr>
+              <tr>
+                <td class="feature-cell" data-i18n="comp_privacy">Privacy & Telemetry</td>
+                <td class="col-highlight value-positive">Zero Cloud Telemetry</td>
+                <td class="value-negative">Extensive Ad-Tracking</td>
+                <td class="value-negative">Google Activity Tracking</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Accordion Section -->
+    <section class="section-padding" id="faq">
+      <div class="container">
+        <div class="section-header">
+          <span class="section-eyebrow" data-i18n="faq_eyebrow">FAQ</span>
+          <h2 class="section-title" data-i18n="faq_title">Frequently Asked Questions</h2>
+          <p class="section-desc" data-i18n="faq_desc">
+            Direct, factual answers without technical obfuscation or corporate spin.
+          </p>
+        </div>
+
+        <div class="faq-accordion-list">
+          <!-- Q1 -->
+          <details class="faq-item" open>
+            <summary class="faq-question">
+              <span data-i18n="faq_q1">Where does SoraFy get its music?</span>
+              <span class="faq-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p data-i18n="faq_a1">
+                SoraFy indexes and streams audio from public, open-web audio repositories including YouTube Music and community databases, selecting highest-bitrate Opus and AAC audio streams. It does not run illegal torrent swarms or host proprietary copyrighted files on private servers.
+              </p>
+            </div>
+          </details>
+
+          <!-- Q2 -->
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span data-i18n="faq_q2">Is SoraFy safe and privacy-friendly?</span>
+              <span class="faq-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p data-i18n="faq_a2">
+                Yes. SoraFy is completely open source under the GPL-3.0 license. The entire codebase is auditable on GitHub. There are no tracking scripts, analytics cookies, device fingerprinting, or telemetry beacons. Your listening history and saved playlists are stored in a local JSON database on your computer.
+              </p>
+            </div>
+          </details>
+
+          <!-- Q3 -->
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span data-i18n="faq_q3">How does playlist importing work without logging in?</span>
+              <span class="faq-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p data-i18n="faq_a3">
+                SoraFy parses public metadata (track titles, artists, and album order) from Spotify and Apple Music URLs using public embed APIs. It then resolves each track against high-fidelity audio streams in seconds, without requiring you to share Spotify passwords or OAuth tokens.
+              </p>
+            </div>
+          </details>
+
+          <!-- Q4 -->
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span data-i18n="faq_q4">What is the Music Player Daemon (MPD) protocol socket?</span>
+              <span class="faq-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p data-i18n="faq_a4">
+                MPD is the standard Linux audio protocol supported by terminal clients like ncmpcpp, mpc, and window manager status bars. SoraFy runs an embedded MPD daemon on port 6600, allowing power users to send commands like <code>mpc next</code>, <code>mpc toggle</code>, or control playback via keyboard hotkeys.
+              </p>
+            </div>
+          </details>
+
+          <!-- Q5 -->
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span data-i18n="faq_q5">How does the SoraFy Jam phone remote work?</span>
+              <span class="faq-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p data-i18n="faq_a5">
+                When you click the mobile icon in SoraFy, the app serves a lightweight local web controller on port 4120. Scan the QR code with your smartphone on the same local Wi-Fi network—no app store download is required on your phone.
+              </p>
+            </div>
+          </details>
+
+          <!-- Q6 -->
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span data-i18n="faq_q6">Can I listen to music completely offline?</span>
+              <span class="faq-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p data-i18n="faq_a6">
+                Yes. Songs you stream are automatically stored in your local LRU cache quota. You can also right-click any track and select "Download Track (MP3)" to save permanent audio files to your computer using the built-in yt-dlp companion.
+              </p>
+            </div>
+          </details>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-col brand-col">
+        <div class="brand-link">
+          <img src="assets/logo.png" alt="SoraFy Logo" class="brand-logo">
+          <span class="brand-wordmark">sorafy</span>
+        </div>
+        <p class="footer-desc" data-i18n="footer_desc">
+          High-fidelity music streaming for desktop and mobile. Free, open source, and built with privacy by design.
+        </p>
+        <div class="footer-license" data-i18n="footer_license">
+          Released under GNU General Public License v3.0 (GPL-3.0).
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-heading" data-i18n="footer_col_platform">Platforms</h4>
+        <ul class="footer-links">
+          <li><a href="#downloads">Windows (Installer & Portable)</a></li>
+          <li><a href="#downloads">Linux (AppImage, deb, rpm)</a></li>
+          <li><a href="#downloads">macOS (Apple Silicon & Intel)</a></li>
+          <li><a href="#downloads">Android (APK)</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-heading" data-i18n="footer_col_features">Features</h4>
+        <ul class="footer-links">
+          <li><a href="#features" data-i18n="feat_import_title">Universal Importer</a></li>
+          <li><a href="#features" data-i18n="feat_lyrics_title">Synchronized Lyrics</a></li>
+          <li><a href="#features" data-i18n="feat_eq_title">7-Band Parametric EQ</a></li>
+          <li><a href="#superpowers" data-i18n="super_mpd_title">Linux MPD Protocol</a></li>
+          <li><a href="#superpowers" data-i18n="super_jam_title">SoraFy Jam Remote</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h4 class="footer-heading" data-i18n="footer_col_project">Project</h4>
+        <ul class="footer-links">
+          <li><a href="https://github.com/rafliadipratama/sorafy" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
+          <li><a href="https://github.com/rafliadipratama/sorafy/releases" target="_blank" rel="noopener noreferrer">Releases & Changelog</a></li>
+          <li><a href="https://github.com/rafliadipratama/sorafy/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">GPL-3.0 License</a></li>
+          <li><a href="https://github.com/rafliadipratama/sorafy/issues" target="_blank" rel="noopener noreferrer">Report an Issue</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <div class="footer-copy">
+        &copy; 2026 SoraFy Project. Built for the community with free and open-source principles.
+      </div>
+      <div class="footer-bottom-links">
+        <a href="#hero" class="back-to-top" data-i18n="footer_back_to_top">&uarr; Back to top</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
