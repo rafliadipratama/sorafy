@@ -1,0 +1,16 @@
+PackageIdentifier: RafliAdiPratama.SoraFy
+PackageVersion: 2.0.0
+MinimumOSVersion: 10.0.0.0
+InstallerType: nullsoft
+InstallModes:
+  - interactive
+  - silent
+  - silentWithProgress
+Installers:
+  - Architecture: x64
+    InstallerUrl: https://github.com/rafliadipratama/sorafy/releases/download/v2.0.0/SoraFy-Setup-2.0.0.exe
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+    Scope: user
+    UpgradeBehavior: install
+ManifestType: installer
+ManifestVersion: 1.6.0

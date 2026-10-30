@@ -1,0 +1,36 @@
+name: sorafy
+base: core22
+version: '2.0.0'
+summary: High-fidelity music streaming player with MPD, AI MCP & Jam Remote
+description: |
+  SoraFy is a modern, high-fidelity music streaming player featuring
+  universal playlist importing (Spotify, Apple Music, YouTube),
+  word-by-word synchronized lyrics, 7-band parametric EQ, Linux MPD daemon,
+  AI Model Context Protocol server, and phone Jam remote.
+
+grade: stable
+confinement: strict
+
+apps:
+  sorafy:
+    command: sorafy
+    desktop: usr/share/applications/sorafy.desktop
+    extensions: [gnome]
+    plugs:
+      - audio-playback
+      - network
+      - network-bind
+      - home
+      - removable-media
+      - opengl
+      - wayland
+      - x11
+
+parts:
+  sorafy:
+    plugin: dump
+    source: dist/sorafy_2.0.0_amd64.deb
+    source-type: deb
+    stage-packages:
+      - libasound2
+      - libnss3

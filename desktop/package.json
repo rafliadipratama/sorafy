@@ -10,7 +10,8 @@
     "build:mac": "electron-builder --mac",
     "build:dmg": "electron-builder --mac dmg",
     "build:linux": "electron-builder --linux AppImage",
-    "build:linux:all": "electron-builder --linux AppImage deb rpm",
+    "build:linux:all": "electron-builder --linux AppImage deb rpm snap",
+    "build:snap": "electron-builder --linux snap",
     "build:win": "electron-builder --win nsis",
     "dist": "electron-builder",
     "tauri": "tauri",
@@ -72,7 +73,8 @@
       "target": [
         "AppImage",
         "deb",
-        "rpm"
+        "rpm",
+        "snap"
       ],
       "category": "Audio",
       "extraResources": [
@@ -80,6 +82,19 @@
           "from": "bin/linux/yt-dlp",
           "to": "bin/yt-dlp"
         }
+      ]
+    },
+    "snap": {
+      "grade": "stable",
+      "confinement": "strict",
+      "summary": "High-fidelity music streaming player with MPD, AI MCP & Jam Remote",
+      "plugs": [
+        "default",
+        "audio-playback",
+        "network",
+        "network-bind",
+        "home",
+        "removable-media"
       ]
     },
     "deb": {

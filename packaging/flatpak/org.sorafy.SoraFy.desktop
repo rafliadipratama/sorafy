@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=SoraFy
+Comment=High-fidelity cross-platform music streaming player
+Exec=sorafy %U
+Terminal=false
+Type=Application
+Icon=org.sorafy.SoraFy
+StartupWMClass=sorafy
+Categories=AudioVideo;Audio;Player;Music;
+MimeType=x-scheme-handler/sorafy;
+Keywords=music;player;audio;streaming;lyrics;mpd;

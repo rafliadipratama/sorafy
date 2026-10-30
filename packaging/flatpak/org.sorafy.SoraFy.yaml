@@ -1,0 +1,44 @@
+app-id: org.sorafy.SoraFy
+runtime: org.freedesktop.Platform
+runtime-version: '23.08'
+sdk: org.freedesktop.Sdk
+base: org.electronjs.Electron2.BaseApp
+base-version: '23.08'
+command: sorafy
+separate-locales: false
+
+finish-args:
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --share=network
+  - --device=dri
+  - --filesystem=xdg-music:ro
+  - --filesystem=xdg-download
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.mpris.MediaPlayer2.*
+
+modules:
+  - name: sorafy
+    buildsystem: simple
+    build-commands:
+      - install -Dm755 sorafy.sh /app/bin/sorafy
+      - cp -r * /app/lib/sorafy
+      - install -Dm644 org.sorafy.SoraFy.desktop /app/share/applications/org.sorafy.SoraFy.desktop
+      - install -Dm644 org.sorafy.SoraFy.metainfo.xml /app/share/metainfo/org.sorafy.SoraFy.metainfo.xml
+      - install -Dm644 icon.png /app/share/icons/hicolor/512x512/apps/org.sorafy.SoraFy.png
+    sources:
+      - type: archive
+        url: https://github.com/rafliadipratama/sorafy/releases/download/v2.0.0/sorafy_2.0.0_amd64.deb
+        sha256: 0000000000000000000000000000000000000000000000000000000000000000
+      - type: script
+        dest-filename: sorafy.sh
+        commands:
+          - exec zypak-wrapper /app/lib/sorafy/usr/bin/sorafy "$@"
+      - type: file
+        path: org.sorafy.SoraFy.desktop
+      - type: file
+        path: org.sorafy.SoraFy.metainfo.xml
+      - type: file
+        path: icon.png

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>org.sorafy.SoraFy</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <name>SoraFy</name>
+  <summary>High-fidelity music streaming player with MPD, AI MCP &amp; Jam Remote</summary>
+  <developer_name>Rafli Adi Pratama</developer_name>
+
+  <description>
+    <p>
+      SoraFy is a modern music player built for audiophiles, power users, and everyday listeners.
+      It matches songs with lossless and high-quality streams without requiring user account logins.
+    </p>
+    <p>Key features include:</p>
+    <ul>
+      <li>Universal playlist importing from Spotify and Apple Music</li>
+      <li>Millisecond-synchronized synchronized lyrics powered by LRCLIB</li>
+      <li>7-band Parametric Web Audio Equalizer studio</li>
+      <li>Native Linux MPD (Music Player Daemon) server on port 6600</li>
+      <li>AI Model Context Protocol (MCP) server for Claude &amp; Cursor on port 8800</li>
+      <li>Local Wi-Fi Jam remote playback controller on port 4120</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">org.sorafy.SoraFy.desktop</launchable>
+
+  <url type="homepage">https://sorafy.org</url>
+  <url type="bugtracker">https://github.com/rafliadipratama/sorafy/issues</url>
+  <url type="vcs-browser">https://github.com/rafliadipratama/sorafy</url>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="2.0.0" date="2026-10-30">
+      <description>
+        <p>SoraFy 2.0.0 initial multiplatform release featuring MPD daemon, AI MCP support, and Jam Remote.</p>
+      </description>
+    </release>
+  </releases>
+</component>

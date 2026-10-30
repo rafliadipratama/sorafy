@@ -1,0 +1,26 @@
+PackageIdentifier: RafliAdiPratama.SoraFy
+PackageVersion: 2.0.0
+PackageLocale: en-US
+Publisher: Rafli Adi Pratama
+PublisherUrl: https://github.com/rafliadipratama
+PublisherSupportUrl: https://github.com/rafliadipratama/sorafy/issues
+Author: Rafli Adi Pratama
+PackageName: SoraFy
+PackageUrl: https://github.com/rafliadipratama/sorafy
+License: GPL-3.0
+LicenseUrl: https://github.com/rafliadipratama/sorafy/blob/main/LICENSE
+Copyright: Copyright (c) 2024 Rafli Adi Pratama
+ShortDescription: High-fidelity cross-platform music streaming player with MPD, AI MCP & Jam Remote
+Description: SoraFy is a modern, high-fidelity music streaming player with lossless playback matching, word-by-word synchronized lyrics, 7-band parametric EQ, Linux MPD daemon, Model Context Protocol (AI MCP), and local Wi-Fi Jam remote.
+Moniker: sorafy
+Tags:
+  - music
+  - audio
+  - player
+  - streaming
+  - mpd
+  - lyrics
+  - flac
+ReleaseNotesUrl: https://github.com/rafliadipratama/sorafy/releases/tag/v2.0.0
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
