@@ -1,6 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import AnnouncementBar from '../components/AnnouncementBar.astro';
 import Header from '../components/Header.astro';
 import Hero from '../components/Hero.astro';
 import Features from '../components/Features.astro';
@@ -16,7 +15,6 @@ const t = useTranslations(lang);
 ---
 
 <Layout lang={lang}>
-  <AnnouncementBar lang={lang} />
   <Header lang={lang} />
   <main>
     <Hero lang={lang} />

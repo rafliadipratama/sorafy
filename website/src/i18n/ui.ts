@@ -7,16 +7,12 @@ export const defaultLang = 'en';
 
 export const ui = {
   en: {
-    announcement_pill: "Open Source",
-    announcement_text: "SoraFy v2.0 is live with Linux MPD Daemon, AI Model Context Protocol, and Phone Jam Remote.",
-    announcement_link: "Get v2.0 →",
     nav_features: "Features",
     nav_superpowers: "Integrations",
     nav_downloads: "Downloads",
     nav_comparison: "Comparison",
     nav_faq: "FAQ",
     btn_header_download: "Download",
-    hero_badge: "Desktop & Mobile • Zero Telemetry • 100% Free",
     hero_title: "Music streaming without subscriptions, accounts, or telemetry.",
     hero_desc: "SoraFy streams high-fidelity music from open sources across the web. Import your Spotify and Apple Music playlists, sing along with real-time synchronized lyrics, fine-tune sound with DSP EQ, and control playback right from your phone or terminal.",
     btn_hero_download: "Download Free for Desktop",
@@ -96,16 +92,12 @@ export const ui = {
     footer_back_to_top: "↑ Back to top"
   },
   id: {
-    announcement_pill: "Sumber Terbuka",
-    announcement_text: "SoraFy v2.0 telah rilis dengan Linux MPD Daemon, AI Model Context Protocol, dan Phone Jam Remote.",
-    announcement_link: "Unduh v2.0 →",
     nav_features: "Fitur",
     nav_superpowers: "Integrasi",
     nav_downloads: "Unduhan",
     nav_comparison: "Perbandingan",
     nav_faq: "FAQ",
     btn_header_download: "Unduh",
-    hero_badge: "Desktop & Mobile • Bebas Telemetri • 100% Gratis",
     hero_title: "Streaming musik bebas langganan, tanpa akun, dan tanpa telemetri.",
     hero_desc: "SoraFy memutar audio high-fidelity dari berbagai sumber terbuka di web. Impor daftar putar Spotify dan Apple Music Anda, bernyanyi dengan lirik tersinkronisasi presisi, atur tata suara lewat Equalizer parametrik DSP, dan kendalikan pemutaran langsung dari ponsel atau terminal.",
     btn_hero_download: "Unduh Gratis untuk Desktop",
