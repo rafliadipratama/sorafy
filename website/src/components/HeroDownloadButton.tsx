@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { DocumentDownload } from 'iconsax-react';
 
 interface Props {
   defaultText: string;
@@ -30,7 +30,7 @@ export default function HeroDownloadButton({ defaultText, lang }: Props) {
       href="#downloads"
       className="inline-flex items-center justify-center gap-2.5 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-base px-6 py-3.5 rounded-lg transition-all shadow-md hover:-translate-y-0.5"
     >
-      <Download className="w-5 h-5 stroke-[2.2]" />
+      <DocumentDownload size={20} variant="Bold" />
       <span>{buttonLabel}</span>
     </a>
   );

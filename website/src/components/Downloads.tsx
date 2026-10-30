@@ -1,5 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Download } from 'lucide-react';
+import { DocumentDownload } from 'iconsax-react';
+import {
+  OfficialWindowsIcon,
+  OfficialLinuxIcon,
+  OfficialAppleIcon,
+  OfficialAndroidIcon,
+} from './OfficialIcons';
 
 interface Props {
   lang: 'en' | 'id';
@@ -60,6 +66,7 @@ export default function Downloads({
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
+              <OfficialWindowsIcon className="w-4 h-4 shrink-0" />
               <span>Windows</span>
             </button>
 
@@ -72,6 +79,7 @@ export default function Downloads({
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
+              <OfficialLinuxIcon className="w-4 h-4 shrink-0" />
               <span>Linux</span>
             </button>
 
@@ -84,6 +92,7 @@ export default function Downloads({
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
+              <OfficialAppleIcon className="w-4 h-4 shrink-0" />
               <span>macOS</span>
             </button>
 
@@ -96,6 +105,7 @@ export default function Downloads({
                   : 'text-neutral-400 hover:text-white'
               }`}
             >
+              <OfficialAndroidIcon className="w-4 h-4 shrink-0" />
               <span>Android</span>
             </button>
           </div>
@@ -126,7 +136,7 @@ export default function Downloads({
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
                   <span>Download Installer (.exe)</span>
                 </a>
               </div>
@@ -148,7 +158,7 @@ export default function Downloads({
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-surface-elevated hover:bg-surface-subtle border border-subtle hover:border-medium text-white font-semibold text-sm py-3 rounded-lg transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
                   <span>Download Portable (.zip)</span>
                 </a>
               </div>
@@ -178,7 +188,7 @@ export default function Downloads({
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
                   <span>Download AppImage</span>
                 </a>
               </div>
@@ -200,7 +210,7 @@ export default function Downloads({
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-surface-elevated hover:bg-surface-subtle border border-subtle hover:border-medium text-white font-semibold text-sm py-3 rounded-lg transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
                   <span>Download .deb Package</span>
                 </a>
               </div>
@@ -230,7 +240,7 @@ export default function Downloads({
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
                   <span>Download Apple Silicon DMG</span>
                 </a>
               </div>
@@ -252,7 +262,7 @@ export default function Downloads({
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-surface-elevated hover:bg-surface-subtle border border-subtle hover:border-medium text-white font-semibold text-sm py-3 rounded-lg transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
                   <span>Download Intel DMG</span>
                 </a>
               </div>
@@ -282,7 +292,7 @@ export default function Downloads({
                   rel="noopener noreferrer"
                   className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
                 >
-                  <Download className="w-4 h-4" />
+                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
                   <span>Download Android APK</span>
                 </a>
               </div>

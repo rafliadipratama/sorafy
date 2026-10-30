@@ -1,5 +1,16 @@
 ---
 import { useTranslations } from '../i18n/ui';
+import { 
+  Home2, 
+  Discover, 
+  SliderHorizontal, 
+  Chart21, 
+  SearchNormal1, 
+  Play, 
+  Pause, 
+  Previous, 
+  Next 
+} from 'iconsax-react';
 
 interface Props {
   lang: 'en' | 'id';
@@ -40,19 +51,19 @@ const t = useTranslations(lang);
 
           <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2 px-2 py-1.5 rounded bg-surface-subtle text-[#00E599] font-bold text-[11px]">
-              <span>►</span>
+              <Home2 size={13} variant="Bold" className="shrink-0" />
               <span>{t('mockup_nav_home')}</span>
             </div>
             <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
-              <span>◎</span>
+              <Discover size={13} variant="Linear" className="shrink-0" />
               <span>{t('mockup_nav_explore')}</span>
             </div>
             <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
-              <span>⚙</span>
+              <SliderHorizontal size={13} variant="Linear" className="shrink-0" />
               <span>{t('mockup_nav_equalizer')}</span>
             </div>
             <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
-              <span>📊</span>
+              <Chart21 size={13} variant="Linear" className="shrink-0" />
               <span>{t('mockup_nav_stats')}</span>
             </div>
           </div>
@@ -67,14 +78,14 @@ const t = useTranslations(lang);
       <div class="p-4 flex flex-col gap-3">
         <!-- Search Bar -->
         <div class="flex items-center gap-2 bg-surface border border-subtle px-2.5 py-1.5 rounded-lg text-[11px] text-neutral-500">
-          <span>🔍</span>
+          <SearchNormal1 size={12} variant="Linear" className="text-neutral-500 shrink-0" />
           <span class="truncate">{t('mockup_search_placeholder')}</span>
         </div>
 
         <!-- Spotlight Track -->
         <div class="flex items-center gap-3 bg-surface border border-subtle rounded-xl p-3">
           <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center border border-subtle shrink-0 text-[#00E599]">
-            <span class="text-xs">►</span>
+            <Play size={14} variant="Bold" className="text-[#00E599]" />
           </div>
           <div class="min-w-0 flex-1">
             <span class="text-[9px] font-bold text-[#00E599] tracking-wider block uppercase">
@@ -133,9 +144,15 @@ const t = useTranslations(lang);
     <!-- Bottom Transport Bar -->
     <div class="h-11 bg-surface-elevated border-t border-subtle flex items-center justify-between px-3">
       <div class="flex items-center gap-2">
-        <span class="text-[11px] text-neutral-400">⏮</span>
-        <span class="text-xs text-[#00E599]">❚❚</span>
-        <span class="text-[11px] text-neutral-400">⏭</span>
+        <button type="button" class="text-neutral-400 hover:text-white transition-colors" aria-label="Previous">
+          <Previous size={12} variant="Bold" />
+        </button>
+        <button type="button" class="text-[#00E599] hover:text-[#00B377] transition-colors" aria-label="Pause">
+          <Pause size={14} variant="Bold" />
+        </button>
+        <button type="button" class="text-neutral-400 hover:text-white transition-colors" aria-label="Next">
+          <Next size={12} variant="Bold" />
+        </button>
         <span class="text-[10px] font-mono-code text-neutral-400 ml-1">1:42 / 3:28</span>
       </div>
       <div class="flex items-center gap-1.5">
@@ -169,10 +186,10 @@ const t = useTranslations(lang);
       </div>
 
       <!-- Controls -->
-      <div class="flex items-center justify-center gap-3 text-neutral-300 py-1 bg-surface-elevated rounded-md border border-subtle text-[11px]">
-        <span class="cursor-pointer">⏮</span>
-        <span class="text-[#00E599] font-bold cursor-pointer">❚❚</span>
-        <span class="cursor-pointer">⏭</span>
+      <div class="flex items-center justify-center gap-3.5 text-neutral-300 py-1 bg-surface-elevated rounded-md border border-subtle text-[11px]">
+        <Previous size={11} variant="Bold" className="cursor-pointer hover:text-white transition-colors" />
+        <Pause size={13} variant="Bold" className="text-[#00E599] cursor-pointer hover:text-[#00B377] transition-colors" />
+        <Next size={11} variant="Bold" className="cursor-pointer hover:text-white transition-colors" />
       </div>
     </div>
   </div>

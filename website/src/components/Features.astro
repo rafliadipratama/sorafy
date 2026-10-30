@@ -1,5 +1,7 @@
 ---
 import { useTranslations } from '../i18n/ui';
+import { ImportCurve, Microphone2, SliderHorizontal, Folder2 } from 'iconsax-react';
+import { OfficialSpotifyIcon, OfficialAppleMusicIcon } from './OfficialIcons';
 
 interface Props {
   lang: 'en' | 'id';
@@ -27,15 +29,19 @@ const t = useTranslations(lang);
       <!-- Pillar 1: Universal Importer -->
       <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
         <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-          </svg>
+          <ImportCurve size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_import_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_import_desc')}</p>
         <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Spotify Hub</span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Apple Music</span>
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">
+            <OfficialSpotifyIcon className="w-3.5 h-3.5 text-[#1DB954]" />
+            <span>Spotify Hub</span>
+          </span>
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">
+            <OfficialAppleMusicIcon className="w-3.5 h-3.5 text-[#FC3C44]" />
+            <span>Apple Music</span>
+          </span>
           <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Zero Login Required</span>
         </div>
       </article>
@@ -43,9 +49,7 @@ const t = useTranslations(lang);
       <!-- Pillar 2: Synced Lyrics -->
       <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
         <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-          </svg>
+          <Microphone2 size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_lyrics_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_lyrics_desc')}</p>
@@ -59,9 +63,7 @@ const t = useTranslations(lang);
       <!-- Pillar 3: Parametric Equalizer Studio -->
       <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
         <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-          </svg>
+          <SliderHorizontal size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_eq_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_eq_desc')}</p>
@@ -75,9 +77,7 @@ const t = useTranslations(lang);
       <!-- Pillar 4: Offline Caching & Downloads -->
       <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
         <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
-          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
-          </svg>
+          <Folder2 size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_cache_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_cache_desc')}</p>

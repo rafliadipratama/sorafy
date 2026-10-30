@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Check } from 'lucide-react';
+import { Copy, TickCircle } from 'iconsax-react';
 
 interface Props {
   lang: 'en' | 'id';
@@ -100,7 +100,7 @@ $ curl -s http://192.168.1.100:4120/api/state | jq
           }`}
           title="Copy snippet"
         >
-          {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+          {copied ? <TickCircle size={15} variant="Bold" className="text-[#00E599]" /> : <Copy size={15} variant="Linear" />}
           <span>{copied ? (lang === 'id' ? 'Tersalin!' : 'Copied!') : (lang === 'id' ? 'Salin' : 'Copy')}</span>
         </button>
       </div>
