@@ -10,7 +10,10 @@ const t = useTranslations(lang);
 const basePath = lang === 'id' ? '/id' : '';
 ---
 
-<header class="sticky top-0 z-50 bg-[#0B0D10]/90 backdrop-blur-md border-b border-subtle transition-colors" id="header">
+<header class="sticky top-0 z-50 bg-[#0B0D10]/85 backdrop-blur-md transition-colors relative" id="header">
+  <!-- Translucent wallpaper-inspired gradient border -->
+  <div class="absolute bottom-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-[#00E599]/40 via-[#06B6D4]/35 via-[#F43F5E]/35 to-[#F59E0B]/30 opacity-80 pointer-events-none"></div>
+
   <div class="max-w-7xl mx-auto px-6 h-17 flex items-center justify-between">
     <!-- Brand Logo -->
     <a href={basePath || '/'} class="flex items-center gap-3 group" aria-label="SoraFy Home">

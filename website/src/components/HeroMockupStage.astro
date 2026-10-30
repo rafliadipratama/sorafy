@@ -1,0 +1,179 @@
+---
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  lang: 'en' | 'id';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<div class="relative w-full max-w-2xl mx-auto rotate-1 group">
+  <!-- Desktop Player Window Box -->
+  <div class="bg-surface border-2 border-subtle hover:border-[#00E599]/30 rounded-2xl overflow-hidden shadow-2xl transition-all">
+    <!-- Window Titlebar -->
+    <div class="h-9 bg-surface-elevated border-b border-subtle flex items-center justify-between px-3.5">
+      <div class="flex items-center gap-1.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-[#FF5F56] inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] inline-block"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-[#27C93F] inline-block"></span>
+      </div>
+      <div class="text-[11px] font-semibold text-neutral-400 truncate max-w-[200px]">
+        SoraFy Desktop — High-Fidelity
+      </div>
+      <div class="flex items-center gap-1 text-[10px] font-mono-code text-[#00E599] bg-emerald-subtle border border-emerald-subtle px-2 py-0.5 rounded-full">
+        <span class="w-1.5 h-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
+        <span>Port 8800</span>
+      </div>
+    </div>
+
+    <!-- App Body (Compact Grid) -->
+    <div class="grid grid-cols-[140px_1fr] sm:grid-cols-[150px_1fr] min-h-[360px] bg-canvas">
+      <!-- Mini Sidebar -->
+      <div class="flex flex-col justify-between bg-surface border-r border-subtle p-3 text-xs">
+        <div>
+          <div class="flex items-center gap-1.5 mb-4">
+            <img src="/assets/logo.png" alt="SoraFy" class="w-5 h-5 rounded object-contain" />
+            <span class="font-bold text-xs text-white">sorafy</span>
+          </div>
+
+          <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2 px-2 py-1.5 rounded bg-surface-subtle text-[#00E599] font-bold text-[11px]">
+              <span>►</span>
+              <span>{t('mockup_nav_home')}</span>
+            </div>
+            <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
+              <span>◎</span>
+              <span>{t('mockup_nav_explore')}</span>
+            </div>
+            <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
+              <span>⚙</span>
+              <span>{t('mockup_nav_equalizer')}</span>
+            </div>
+            <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
+              <span>📊</span>
+              <span>{t('mockup_nav_stats')}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-subtle">
+          <span class="text-[9px] font-mono-code text-neutral-500">Opus 160kbps</span>
+        </div>
+      </div>
+
+      <!-- Main Stage Content -->
+      <div class="p-4 flex flex-col gap-3">
+        <!-- Search Bar -->
+        <div class="flex items-center gap-2 bg-surface border border-subtle px-2.5 py-1.5 rounded-lg text-[11px] text-neutral-500">
+          <span>🔍</span>
+          <span class="truncate">{t('mockup_search_placeholder')}</span>
+        </div>
+
+        <!-- Spotlight Track -->
+        <div class="flex items-center gap-3 bg-surface border border-subtle rounded-xl p-3">
+          <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center border border-subtle shrink-0 text-[#00E599]">
+            <span class="text-xs">►</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <span class="text-[9px] font-bold text-[#00E599] tracking-wider block uppercase">
+              {t('mockup_now_playing')}
+            </span>
+            <h4 class="text-xs font-bold text-white truncate">Satu Bulan</h4>
+            <p class="text-[10px] text-neutral-400 truncate">Bernadya • Sialnya, Hidup Harus Tetap Berjalan</p>
+            <div class="flex gap-1 mt-1">
+              <span class="text-[9px] font-semibold px-1 py-0.2 bg-surface-elevated border border-subtle rounded text-[#00E599]">Lossless</span>
+              <span class="text-[9px] font-semibold px-1 py-0.2 bg-surface-elevated border border-subtle rounded text-neutral-300">Synced LRC</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 7-Band Parametric EQ Curve Mini-Viz -->
+        <div class="bg-surface border border-subtle rounded-xl p-3">
+          <div class="flex justify-between items-center text-[11px] mb-2">
+            <span class="text-neutral-400 font-medium">{t('mockup_eq_title')}</span>
+            <span class="text-[#00E599] font-bold text-[10px]">Bass Boost + Air</span>
+          </div>
+
+          <div class="flex items-end justify-between h-12 px-1 border-b border-dashed border-subtle pb-1">
+            <div class="flex flex-col items-center gap-0.5 w-4 h-full justify-end">
+              <div class="w-full bg-[#00E599] rounded-t" style="height: 80%;"></div>
+              <span class="text-[8px] font-mono-code text-neutral-500">32</span>
+            </div>
+            <div class="flex flex-col items-center gap-0.5 w-4 h-full justify-end">
+              <div class="w-full bg-[#00E599] rounded-t" style="height: 65%;"></div>
+              <span class="text-[8px] font-mono-code text-neutral-500">64</span>
+            </div>
+            <div class="flex flex-col items-center gap-0.5 w-4 h-full justify-end">
+              <div class="w-full bg-[#00E599] rounded-t" style="height: 45%;"></div>
+              <span class="text-[8px] font-mono-code text-neutral-500">125</span>
+            </div>
+            <div class="flex flex-col items-center gap-0.5 w-4 h-full justify-end">
+              <div class="w-full bg-[#00E599] rounded-t" style="height: 55%;"></div>
+              <span class="text-[8px] font-mono-code text-neutral-500">500</span>
+            </div>
+            <div class="flex flex-col items-center gap-0.5 w-4 h-full justify-end">
+              <div class="w-full bg-[#00E599] rounded-t" style="height: 72%;"></div>
+              <span class="text-[8px] font-mono-code text-neutral-500">2k</span>
+            </div>
+            <div class="flex flex-col items-center gap-0.5 w-4 h-full justify-end">
+              <div class="w-full bg-[#00E599] rounded-t" style="height: 85%;"></div>
+              <span class="text-[8px] font-mono-code text-neutral-500">8k</span>
+            </div>
+            <div class="flex flex-col items-center gap-0.5 w-4 h-full justify-end">
+              <div class="w-full bg-[#00E599] rounded-t" style="height: 90%;"></div>
+              <span class="text-[8px] font-mono-code text-neutral-500">16k</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Transport Bar -->
+    <div class="h-11 bg-surface-elevated border-t border-subtle flex items-center justify-between px-3">
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] text-neutral-400">⏮</span>
+        <span class="text-xs text-[#00E599]">❚❚</span>
+        <span class="text-[11px] text-neutral-400">⏭</span>
+        <span class="text-[10px] font-mono-code text-neutral-400 ml-1">1:42 / 3:28</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="text-[9px] font-mono-code px-1.5 py-0.5 rounded bg-surface border border-subtle text-neutral-400">Jam: 4120</span>
+        <span class="text-[9px] font-mono-code px-1.5 py-0.5 rounded bg-surface border border-subtle text-neutral-400">MPD: 6600</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Mobile Mockup: SoraFy Jam Phone Remote -->
+  <div class="absolute -bottom-7 -left-3 sm:-left-6 z-20 w-[42%] max-w-[210px] -rotate-6 transition-transform group-hover:-rotate-3 shadow-2xl">
+    <div class="bg-surface border-2 border-medium hover:border-[#00E599] rounded-2xl overflow-hidden p-2.5 shadow-2xl bg-canvas/95 backdrop-blur-md">
+      <!-- Notch & Header -->
+      <div class="flex items-center justify-between border-b border-subtle pb-1.5 mb-2">
+        <div class="flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
+          <span class="text-[9px] font-bold text-white uppercase tracking-wider">SORAFY JAM</span>
+        </div>
+        <span class="text-[8px] font-mono-code text-[#00E599] bg-emerald-subtle px-1 rounded">WiFi</span>
+      </div>
+
+      <!-- Phone Track Card -->
+      <div class="w-full aspect-square rounded-lg bg-gradient-to-tr from-neutral-900 via-neutral-800 to-neutral-700 border border-subtle flex items-center justify-center mb-2 shadow-inner">
+        <img src="/assets/logo.png" alt="SoraFy" class="w-10 h-10 object-contain drop-shadow" />
+      </div>
+
+      <!-- Track Info -->
+      <div class="text-center mb-2">
+        <p class="text-[10px] font-bold text-white truncate">Satu Bulan</p>
+        <p class="text-[8px] text-neutral-400 truncate">Bernadya</p>
+      </div>
+
+      <!-- Controls -->
+      <div class="flex items-center justify-center gap-3 text-neutral-300 py-1 bg-surface-elevated rounded-md border border-subtle text-[11px]">
+        <span class="cursor-pointer">⏮</span>
+        <span class="text-[#00E599] font-bold cursor-pointer">❚❚</span>
+        <span class="cursor-pointer">⏭</span>
+      </div>
+    </div>
+  </div>
+</div>
