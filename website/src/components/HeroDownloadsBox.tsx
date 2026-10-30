@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, TickCircle, Star1 } from 'iconsax-react';
+import { Copy, TickCircle } from 'iconsax-react';
 import {
   OfficialAppleIcon,
   OfficialWindowsIcon,
@@ -144,12 +144,8 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
         </div>
       </div>
 
-      {/* GitHub Learn More Button with Star Badge */}
-      <div className="relative z-10 mt-6">
-        <span className="pointer-events-none absolute -top-2.5 -right-3 z-20 rotate-6 rounded-md px-2 py-0.5 text-[11px] font-black whitespace-nowrap bg-amber-400 text-neutral-950 shadow-md flex items-center gap-1">
-          <Star1 size={12} variant="Bold" className="shrink-0" />
-          <span>★ Star</span>
-        </span>
+      {/* GitHub Learn More Button */}
+      <div className="mt-6">
         <a
           href="https://github.com/rafliadipratama/sorafy"
           target="_blank"

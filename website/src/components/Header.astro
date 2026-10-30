@@ -1,7 +1,7 @@
 ---
 import { useTranslations } from '../i18n/ui';
 import { OfficialGithubIcon } from './OfficialIcons';
-import { Star1, HambergerMenu } from 'iconsax-react';
+import { HambergerMenu } from 'iconsax-react';
 
 interface Props {
   lang: 'en' | 'id';
@@ -53,20 +53,16 @@ const basePath = lang === 'id' ? '/id' : '';
         </a>
       </div>
 
-      <!-- GitHub Stars Badge -->
+      <!-- GitHub Link -->
       <a 
         href="https://github.com/rafliadipratama/sorafy" 
         target="_blank" 
         rel="noopener noreferrer" 
         class="hidden sm:inline-flex items-center gap-2 bg-surface hover:bg-surface-elevated border border-subtle hover:border-medium px-3 py-1.5 rounded-md text-xs font-medium text-white transition-all"
-        title="Star SoraFy on GitHub"
+        title="SoraFy on GitHub"
       >
         <OfficialGithubIcon className="w-3.5 h-3.5 text-white shrink-0" />
         <span>GitHub</span>
-        <span class="inline-flex items-center gap-1 text-[#00E599] font-bold text-[11px] font-mono-code">
-          <Star1 size={11} variant="Bold" className="text-amber-400" />
-          <span>Star</span>
-        </span>
       </a>
 
       <!-- Download Button -->
