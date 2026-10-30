@@ -889,9 +889,12 @@ const I18N_DICTIONARY = {
     nav_home: "Home",
     nav_explore: "Explore",
     nav_plugins: "Plugins & Extensions",
-    nav_equalizer: "Equalizer DSP",
+    nav_equalizer: "DSP Equalizer",
     nav_stats: "Listening Stats",
     nav_settings: "Settings",
+    nav_downloads: "Downloads",
+    nav_library: "Your Library",
+    library_title: "Your Library",
     sidebar_playlists: "My Playlists",
     quick_picks: "Quick Picks",
     quick_picks_sub: "START RADIO FROM A SONG",
@@ -905,6 +908,136 @@ const I18N_DICTIONARY = {
     recommended_albums_sub: "Based on songs and artists you listen to frequently",
     music_videos: "Music Videos",
     offline_notice: "You are currently offline. Local cache playback is active.",
+
+    // Explore View
+    explore_charts_title: "Top Charts & Trending",
+    explore_charts_desc: "The most streamed songs in Indonesia and around the world",
+    explore_moods_title: "Moods & Genres",
+    explore_moods_desc: "Music carefully curated for every feeling and occasion",
+    explore_new_releases_title: "New Releases",
+    explore_new_releases_desc: "Fresh albums and tracks released this week",
+    explore_charts: "Top Charts",
+    explore_new_releases: "New Releases",
+    explore_moods: "Moods & Genres",
+    explore_trends_sub: "The most played songs right now",
+    explore_top_charts: "Top Charts & Trending",
+    explore_all_categories: "All Moods & Genres",
+    explore_new_albums: "New Album Releases",
+    explore_see_all: "See All",
+
+    // Search and Categories
+    search_placeholder: "Search songs, artists, music videos, or playlists...",
+    popular_suggestions: "Popular Suggestions:",
+    category_all: "All",
+    category_pop_indo: "Indonesian Pop",
+    category_relax: "Relax & Chill",
+    category_indie: "Indie",
+    category_focus: "Focus & Study",
+    category_workout: "Workout & Energy",
+    category_sleep: "Sleep & Rest",
+    genre_pop: "Indonesian Pop",
+    genre_chill: "Relax & Chill",
+    genre_indie: "Indie",
+    genre_focus: "Focus & Study",
+    genre_workout: "Workout & Energy",
+    col_title_artist: "Title & Artist",
+    col_duration: "Duration",
+    search_results_title: "Search Results",
+    search_top_result: "Top Result",
+    search_related_artists: "Related Artists",
+    search_albums_eps: "Official Albums & EPs",
+    search_videos_live: "Music Videos & Live Sessions",
+    search_playlists_collections: "Playlists & Collections",
+    search_songs_list: "Songs",
+    tab_all: "All",
+    songs: "Songs",
+    artists: "Artists",
+    albums: "Albums",
+    videos: "Videos",
+    playlists: "Playlists",
+    tab_liked_songs: "Liked Songs",
+    tab_downloads: "Downloads",
+    tab_albums: "Albums",
+    tab_artists: "Artists",
+    tab_playlists: "Playlists",
+
+    // Artist & Playlist Screen
+    btn_back: "Back",
+    artist_popular_tracks: "Popular Tracks",
+    artist_videos_title: "Official Music Videos & Live Sessions",
+    artist_albums_title: "Albums & Discography",
+    artist_fans_like: "Fans Also Like",
+    btn_play_all: "Play All",
+    btn_shuffle: "Shuffle",
+    btn_like_album: "Like Album",
+    btn_liked_album: "Liked Album",
+    liked_albums_empty: "No liked albums yet. Browse albums and click the heart icon to save them to your library.",
+    followed_artists_empty: "You are not following any artists yet. Click '+ Follow' on an artist profile to tune your recommendations.",
+    downloads_title: "Downloaded Music",
+    downloads_empty_title: "No downloaded tracks yet",
+    downloads_empty_desc: "Right-click any song while online and choose 'Download Track (MP3)' to listen offline anytime.",
+    btn_open_folder: "Open Folder",
+    btn_view_downloads: "View Downloads",
+    no_tracks: "No tracks in this playlist yet.",
+
+    // Listening Stats & Music Recap
+    stats_main_title: "Listening Stats & Recap",
+    stats_sub_title: "Track habits, favorite artists, and listening rhythm privately.",
+    stats_range_all: "All Time",
+    stats_range_1y: "1 Year",
+    stats_range_30d: "30 Days",
+    stats_range_7d: "7 Days",
+    stats_badge_top_artist: "👑 TOP ARTIST",
+    stats_badge_top_track: "🔥 FAVORITE TRACK",
+    stats_badge_vibe: "✨ LISTENING VIBE",
+    stats_total_time: "Total Listening Time",
+    stats_total_tracks: "Tracks Played",
+    stats_unique_artists: "Unique Artists",
+    stats_daily_average: "Daily Average",
+    stats_activity_chart_title: "Weekly Music Activity Rhythm",
+    stats_activity_chart_desc: "Daily listening duration visualized as an audio equalizer rhythm.",
+    stats_day_rhythm_title: "Listening Habit Character",
+    stats_day_rhythm_desc: "When you stream music most frequently across the 24-hour day.",
+    stats_top_artists_title: "Top 10 Most Streamed Artists",
+    stats_top_tracks_title: "Top 10 Favorite Tracks",
+    stats_recent_history_title: "Recently Played History",
+    stats_recent_history_desc: "Tracks that recently finished streaming.",
+    stats_clear_btn: "Clear History",
+
+    // Screen Player & Drawers
+    player_mode_song: "Song",
+    player_mode_video: "Video",
+    audio_mode: "Audio Mode",
+    side_tab_lyrics: "Lyrics",
+    side_tab_queue: "Queue",
+    side_queue_clear: "Clear",
+    side_clear_queue: "Clear",
+    side_queue_now_playing: "NOW PLAYING",
+    queue_now_playing: "NOW PLAYING",
+    side_queue_up_next: "UP NEXT",
+    queue_next: "UP NEXT",
+    side_lyrics_search_placeholder: "Search lyrics or jump to line...",
+    lyrics_search_placeholder: "Search lyrics or jump to line...",
+    lyrics_search_done: "Done",
+    select_track_prompt: "Select a track to play",
+
+    // Bottom Player Tooltips
+    tooltip_expand: "Open Fullscreen Player",
+    tooltip_sidebar_import: "Import Hub: Spotify, Apple Music & YouTube",
+    tooltip_sidebar_create: "Create New Playlist",
+    tooltip_verify_stream: "Verify Audio Recording (Candidate)",
+    tooltip_like: "Like Track",
+    tooltip_shuffle: "Shuffle",
+    tooltip_prev: "Previous",
+    tooltip_play_pause: "Play / Pause",
+    tooltip_next: "Next",
+    tooltip_repeat: "Repeat",
+    tooltip_jam: "SoraFy Jam (Phone Remote Control)",
+    tooltip_sleep_timer: "Sleep Timer",
+    tooltip_mute: "Mute / Unmute",
+
+    // Settings Modal
+    settings_title: "SoraFy Settings",
     settings_tab_audio: "Audio & Quality",
     settings_tab_appearance: "Appearance & Theme",
     settings_tab_system: "System",
@@ -935,47 +1068,90 @@ const I18N_DICTIONARY = {
     setting_cache_quota_desc: "Automatically evict oldest streams when cache exceeds this limit.",
     setting_cookies_title: "YouTube Cookies (Anti-Bot Bypass)",
     setting_cookies_desc: "Import Netscape cookies.txt to bypass YouTube age gates and IP bot blocks.",
+    setting_cookies_hint: "Tip: Export cookies with browser extension 'Get cookies.txt LOCALLY' if YouTube restricts access.",
+    setting_ytdlp_title: "Audio Engine Companion (yt-dlp)",
+    setting_ytdlp_desc: "Enables local offline MP3 downloads and unlimited 1000+ track playlist imports.",
     setting_backup_all: "Backup All Data",
     setting_backup_all_desc: "Save your custom playlists, liked tracks, listening history, and sound preferences to a secure JSON file.",
     setting_restore_data: "Restore Data",
     setting_restore_data_desc: "Restore your playlists, liked tracks, and listening profile from a previously saved JSON file.",
+    setting_mcp_title: "Model Context Protocol (MCP Server)",
+    setting_mcp_desc: "Local AI integration for Claude Code, Cursor, Windsurf, and AI assistants.",
+    btn_copy_ai_config: "Copy AI Config",
+    setting_mpd_title: "Music Player Daemon (MPD Protocol)",
+    setting_mpd_desc: "Integrate Linux terminal controls for ncmpcpp, mpc, and mpDris2.",
+    btn_copy_cmd: "Copy Command",
     btn_clear_cache: "Clear Cache",
     btn_import_cookies: "Import cookies.txt",
+    btn_check_engine: "Check / Download Engine",
     btn_backup_data: "Backup Data (.json)",
     btn_restore_data: "Restore Data",
-    nav_downloads: "Downloads",
-    nav_library: "Your Library",
-    library_title: "Your Library",
-    tab_all: "All",
-    tab_liked_songs: "Liked Songs",
-    tab_downloads: "Downloads",
-    tab_albums: "Albums",
-    tab_artists: "Artists",
-    tab_playlists: "Playlists",
-    liked_albums_empty: "No liked albums yet. Browse albums and click the heart icon to save them to your library.",
-    followed_artists_empty: "You are not following any artists yet. Click '+ Follow' on an artist profile to tune your recommendations.",
-    btn_like_album: "Like Album",
-    btn_liked_album: "Liked Album",
-    downloads_title: "Downloaded Music",
-    downloads_empty_title: "No downloaded tracks yet",
-    downloads_empty_desc: "Right-click any song while online and choose 'Download Track (MP3)' to listen offline anytime.",
-    btn_open_folder: "Open Folder",
-    btn_view_downloads: "View Downloads",
-    btn_play_all: "Play All",
-    btn_shuffle: "Shuffle",
-    setting_ytdlp_title: "Audio Engine Companion (yt-dlp)",
-    setting_ytdlp_desc: "Enables local offline MP3 downloads and unlimited 1000+ track playlist imports.",
-    setting_cookies_hint: "Tip: Export cookies with browser extension 'Get cookies.txt LOCALLY' if YouTube restricts access.",
-    btn_check_engine: "Check / Download Engine",
-    search_placeholder: "Search songs, artists, music videos, or playlists...",
-    popular_suggestions: "Popular Suggestions:",
-    songs: "Songs",
-    artists: "Artists",
-    albums: "Albums",
-    videos: "Videos",
-    playlists: "Playlists",
+
+    // Modals
+    import_hub_title: "Import Playlists & Albums",
+    import_hub_desc: "Seamlessly import tracks from your favorite streaming platforms without any login required.",
+    import_hub_label: "Playlist or Album URL:",
+    btn_cancel: "Cancel",
+    btn_close: "Close",
+    import_hub_start: "Start Import",
+    create_playlist_title: "+ Create New Playlist",
+    create_playlist_desc: "Name your playlist to organize favorite tracks, chill sessions, or focus mixes.",
+    create_playlist_placeholder: "Playlist Name (e.g., Evening Vibes, Deep Focus)",
+    create_playlist_desc_placeholder: "Optional description...",
+    create_playlist_btn: "Create Playlist",
+    edit_playlist_title: "Edit Playlist Details",
+    edit_playlist_desc: "Update your playlist's name and description.",
+    edit_playlist_placeholder: "Playlist Name",
+    btn_save: "Save Changes",
+    add_to_playlist_title: "Add to Playlist",
+    btn_done: "Done",
+
+    // Sleep Timer
+    sleep_timer_title: "Sleep Timer",
+    sleep_timer_desc: "Playback will stop automatically after the timer expires.",
+    timer_turn_off: "Turn off timer",
+    timer_off: "Turn off timer",
+    timer_15m: "15 Minutes",
+    timer_30m: "30 Minutes",
+    timer_45m: "45 Minutes",
+    timer_60m: "60 Minutes",
+    timer_end_song: "End of this song",
+
+    // Shortcuts
+    shortcut_play_pause: "Play / Pause Track",
+    shortcut_mute: "Mute / Unmute Volume",
+    shortcut_next: "Next Track",
+    shortcut_prev: "Previous Track",
+    shortcut_seek: "Seek Forward / Backward (5s)",
+    shortcut_volume: "Volume Up / Down (5%)",
+    shortcut_search: "Focus Search Bar",
+    shortcut_lyrics: "Open / Close Lyrics Drawer",
+    shortcut_close: "Close Fullscreen Player / Modal",
+
+    // About
+    about_version: "Version 2.0.0 • GPL-3.0 License",
+    about_desc: "High-resolution streaming music player with real-time synchronized lyrics, DSP equalizer, and multi-platform playlist import.",
+    btn_check_update: "Check for Updates",
+
+    // Context Menu
+    ctx_play_next: "Play Next",
+    ctx_add_queue: "Add to Queue",
+    ctx_play_now: "Play Now",
+    ctx_view_artist: "View Artist Profile",
+    ctx_add_playlist: "Add to Playlist",
+    ctx_like_track: "Like Track",
+    ctx_download_track: "Download Track (MP3)",
+    ctx_choose_stream: "Choose Audio Recording (Candidates)",
+
+    // Stream Verification & Jam
+    stream_verify_title: "Audio Stream Verification",
+    stream_verify_subtitle: "Select verified audio stream for this track",
+    stream_searching: "Searching for alternative audio streams...",
+    btn_remove_verification: "Remove Verification (Reset to Auto)",
+    jam_modal_title: "SoraFy Jam • Mobile Remote Control",
+    jam_modal_desc: "Control music from your smartphone over local Wi-Fi",
+
     unit_seconds: "s",
-    no_tracks: "No tracks in this playlist yet.",
     toast_playing: "Playing",
     toast_added_to_playlist: "Added to playlist",
     toast_removed_from_playlist: "Removed from playlist"
@@ -984,22 +1160,12 @@ const I18N_DICTIONARY = {
     nav_home: "Beranda",
     nav_explore: "Jelajah",
     nav_plugins: "Plugin & Ekstensi",
-    nav_equalizer: "Equalizer DSP",
+    nav_equalizer: "DSP Equalizer",
     nav_downloads: "Lagu Tersimpan",
     nav_library: "Koleksi Saya",
     nav_stats: "Statistik Mendengar",
-    library_title: "Koleksi Saya",
-    tab_all: "Semua",
-    tab_liked_songs: "Lagu Disukai",
-    tab_downloads: "Lagu Terunduh",
-    tab_albums: "Album Favorit",
-    tab_artists: "Artis Diikuti",
-    tab_playlists: "Playlist",
-    liked_albums_empty: "Belum ada album favorit. Jelajahi album dan klik ikon hati untuk menyimpannya di koleksi Anda.",
-    followed_artists_empty: "Anda belum mengikuti artis apa pun. Klik '+ Follow' di profil artis untuk menyesuaikan rekomendasi beranda Anda.",
-    btn_like_album: "Sukai Album",
-    btn_liked_album: "Album Disukai",
     nav_settings: "Pengaturan",
+    library_title: "Koleksi Saya",
     sidebar_playlists: "Playlist Saya",
     quick_picks: "Pilihan Cepat",
     quick_picks_sub: "MULAI RADIO DARI LAGU",
@@ -1013,6 +1179,136 @@ const I18N_DICTIONARY = {
     recommended_albums_sub: "Berdasarkan musik yang sering kamu dengarkan",
     music_videos: "Video Musik",
     offline_notice: "Anda sedang offline. Pemutaran cache lokal aktif.",
+
+    // Explore View
+    explore_charts_title: "Tangga Lagu & Tren Teratas",
+    explore_charts_desc: "Lagu paling banyak diputar di Indonesia dan seluruh dunia",
+    explore_moods_title: "Suasana Hati & Genre",
+    explore_moods_desc: "Musik pilihan untuk setiap suasana dan momen Anda",
+    explore_new_releases_title: "Rilisan Album & Single Baru",
+    explore_new_releases_desc: "Album dan karya musik terbaru yang dirilis minggu ini",
+    explore_charts: "Tangga Lagu",
+    explore_new_releases: "Rilisan Baru",
+    explore_moods: "Suasana Hati & Genre",
+    explore_trends_sub: "Lagu yang paling banyak diputar saat ini",
+    explore_top_charts: "Tangga Lagu & Tren Teratas",
+    explore_all_categories: "Semua Suasana Hati & Genre",
+    explore_new_albums: "Rilisan Album Baru",
+    explore_see_all: "Lihat Semua",
+
+    // Search and Categories
+    search_placeholder: "Cari lagu, artis, video musik, atau playlist...",
+    popular_suggestions: "Saran Populer:",
+    category_all: "Semua",
+    category_pop_indo: "Pop Indonesia",
+    category_relax: "Santai & Tenang",
+    category_indie: "Indie",
+    category_focus: "Fokus & Belajar",
+    category_workout: "Olahraga & Semangat",
+    category_sleep: "Tidur & Istirahat",
+    genre_pop: "Pop Indonesia",
+    genre_chill: "Santai & Tenang",
+    genre_indie: "Indie",
+    genre_focus: "Fokus & Belajar",
+    genre_workout: "Olahraga & Semangat",
+    col_title_artist: "Judul Lagu & Artis",
+    col_duration: "Durasi",
+    search_results_title: "Hasil Pencarian",
+    search_top_result: "Hasil Teratas",
+    search_related_artists: "Artis Terkait",
+    search_albums_eps: "Album & EP Resmi",
+    search_videos_live: "Video Musik & Sesi Live",
+    search_playlists_collections: "Playlist & Koleksi",
+    search_songs_list: "Lagu",
+    tab_all: "Semua",
+    songs: "Lagu",
+    artists: "Artis",
+    albums: "Album",
+    videos: "Video",
+    playlists: "Playlist",
+    tab_liked_songs: "Lagu Disukai",
+    tab_downloads: "Lagu Terunduh",
+    tab_albums: "Album Favorit",
+    tab_artists: "Artis Diikuti",
+    tab_playlists: "Playlist",
+
+    // Artist & Playlist Screen
+    btn_back: "Kembali",
+    artist_popular_tracks: "Lagu Populer",
+    artist_videos_title: "Video Musik Resmi & Sesi Live",
+    artist_albums_title: "Album & Diskografi",
+    artist_fans_like: "Penggemar Juga Menyukai",
+    btn_play_all: "Putar Semua",
+    btn_shuffle: "Acak",
+    btn_like_album: "Sukai Album",
+    btn_liked_album: "Album Disukai",
+    liked_albums_empty: "Belum ada album favorit. Jelajahi album dan klik ikon hati untuk menyimpannya di koleksi Anda.",
+    followed_artists_empty: "Anda belum mengikuti artis apa pun. Klik '+ Follow' di profil artis untuk menyesuaikan rekomendasi beranda Anda.",
+    downloads_title: "Lagu Tersimpan",
+    downloads_empty_title: "Belum ada lagu yang diunduh",
+    downloads_empty_desc: "Klik kanan lagu saat online dan pilih 'Download Track (MP3)' untuk mendengarkan secara offline kapan saja.",
+    btn_open_folder: "Buka Folder",
+    btn_view_downloads: "Lihat Unduhan",
+    no_tracks: "Belum ada lagu di playlist ini.",
+
+    // Listening Stats & Music Recap
+    stats_main_title: "Statistik & Kilas Musik",
+    stats_sub_title: "Pantau kebiasaan, artis favorit, dan ritme mendengarkan musik Anda secara privat.",
+    stats_range_all: "Semua Waktu",
+    stats_range_1y: "1 Tahun",
+    stats_range_30d: "30 Hari",
+    stats_range_7d: "7 Hari",
+    stats_badge_top_artist: "👑 ARTIS TERATAS",
+    stats_badge_top_track: "🔥 LAGU TERFAVORIT",
+    stats_badge_vibe: "✨ VIBE MENDENGAR",
+    stats_total_time: "Total Waktu Dengar",
+    stats_total_tracks: "Lagu Diputar",
+    stats_unique_artists: "Artis Berbeda",
+    stats_daily_average: "Rata-Rata Harian",
+    stats_activity_chart_title: "Aktivitas Musik Mingguan",
+    stats_activity_chart_desc: "Durasi waktu mendengarkan musik per hari dalam format equalizer ritme audio.",
+    stats_day_rhythm_title: "Karakter Waktu Mendengar",
+    stats_day_rhythm_desc: "Pola waktu kapan Anda paling sering memutar musik dalam 24 jam.",
+    stats_top_artists_title: "Top 10 Artis Terbanyak Diputar",
+    stats_top_tracks_title: "Top 10 Lagu Terfavorit",
+    stats_recent_history_title: "Riwayat Putar Terakhir",
+    stats_recent_history_desc: "Daftar lagu yang baru saja selesai Anda putar.",
+    stats_clear_btn: "Bersihkan Riwayat",
+
+    // Screen Player & Drawers
+    player_mode_song: "Lagu",
+    player_mode_video: "Video",
+    audio_mode: "Mode Audio",
+    side_tab_lyrics: "Lirik",
+    side_tab_queue: "Antrean",
+    side_queue_clear: "Kosongkan",
+    side_clear_queue: "Kosongkan",
+    side_queue_now_playing: "SEDANG DIPUTAR",
+    queue_now_playing: "SEDANG DIPUTAR",
+    side_queue_up_next: "BERIKUTNYA",
+    queue_next: "BERIKUTNYA",
+    side_lyrics_search_placeholder: "Cari lirik atau lompat ke baris...",
+    lyrics_search_placeholder: "Cari lirik atau lompat ke baris...",
+    lyrics_search_done: "Selesai",
+    select_track_prompt: "Pilih lagu untuk memutar",
+
+    // Bottom Player Tooltips
+    tooltip_expand: "Buka Pemutar Layar Penuh",
+    tooltip_sidebar_import: "Impor: Spotify, Apple Music & YouTube",
+    tooltip_sidebar_create: "Buat Playlist Baru",
+    tooltip_verify_stream: "Periksa / Verifikasi Rekaman Audio",
+    tooltip_like: "Sukai Lagu",
+    tooltip_shuffle: "Acak",
+    tooltip_prev: "Sebelumnya",
+    tooltip_play_pause: "Putar / Jeda",
+    tooltip_next: "Berikutnya",
+    tooltip_repeat: "Ulangi",
+    tooltip_jam: "SoraFy Jam (Kontrol Remote HP)",
+    tooltip_sleep_timer: "Pengatur Waktu Tidur",
+    tooltip_mute: "Bisu / Nyalakan Suara",
+
+    // Settings Modal
+    settings_title: "Pengaturan SoraFy",
     settings_tab_audio: "Audio & Kualitas",
     settings_tab_appearance: "Tampilan & Tema",
     settings_tab_system: "Sistem",
@@ -1050,40 +1346,83 @@ const I18N_DICTIONARY = {
     setting_backup_all_desc: "Simpan semua playlist kustom, lagu favorit, riwayat, dan preferensi ke file JSON yang aman.",
     setting_restore_data: "Pulihkan Data",
     setting_restore_data_desc: "Pulihkan playlist, lagu favorit, dan riwayat Anda dari file JSON cadangan.",
+    setting_mcp_title: "Model Context Protocol (Server MCP)",
+    setting_mcp_desc: "Integrasi AI lokal untuk Claude Code, Cursor, Windsurf, dan asisten AI.",
+    btn_copy_ai_config: "Salin Config AI",
+    setting_mpd_title: "Music Player Daemon (Protokol MPD)",
+    setting_mpd_desc: "Integrasi kontrol terminal Linux untuk ncmpcpp, mpc, dan mpDris2.",
+    btn_copy_cmd: "Salin Perintah",
     btn_clear_cache: "Bersihkan Cache",
     btn_import_cookies: "Impor cookies.txt",
     btn_check_engine: "Periksa / Unduh Mesin",
     btn_backup_data: "Cadangkan Data (.json)",
     btn_restore_data: "Pulihkan Data",
-    downloads_title: "Lagu Tersimpan",
-    downloads_empty_title: "Belum ada lagu yang diunduh",
-    downloads_empty_desc: "Klik kanan lagu saat online dan pilih 'Download Track (MP3)' untuk mendengarkan secara offline kapan saja.",
-    btn_open_folder: "Buka Folder",
-    btn_view_downloads: "Lihat Unduhan",
-    btn_play_all: "Putar Semua",
-    btn_shuffle: "Acak",
-    setting_cache_storage_desc: "Bersihkan cache streaming audio dan gambar album untuk menghemat ruang disk.",
-    setting_cache_quota: "Batas Kuota Cache (LRU)",
-    setting_cache_quota_desc: "Hapus otomatis stream terlama saat cache melebihi batas ini.",
-    setting_cookies_title: "Cookie YouTube (Anti-Bot & Verifikasi)",
-    setting_cookies_desc: "Impor file cookies.txt untuk melewati pembatasan verifikasi atau batas usia YouTube.",
-    setting_backup_all: "Cadangkan Semua Data",
-    setting_backup_all_desc: "Simpan semua playlist kustom, lagu favorit, riwayat, dan preferensi ke file JSON yang aman.",
-    setting_restore_data: "Pulihkan Data",
-    setting_restore_data_desc: "Pulihkan playlist, lagu favorit, dan riwayat Anda dari file JSON cadangan.",
-    btn_clear_cache: "Bersihkan Cache",
-    btn_import_cookies: "Impor cookies.txt",
-    btn_backup_data: "Cadangkan Data (.json)",
-    btn_restore_data: "Pulihkan Data",
-    search_placeholder: "Cari lagu, artis, video musik, atau playlist...",
-    popular_suggestions: "Saran Populer:",
-    songs: "Lagu",
-    artists: "Artis",
-    albums: "Album",
-    videos: "Video",
-    playlists: "Playlist",
+
+    // Modals
+    import_hub_title: "Impor Playlist & Album",
+    import_hub_desc: "Impor lagu dari platform streaming favorit Anda secara mulus tanpa login.",
+    import_hub_label: "URL Playlist atau Album:",
+    btn_cancel: "Batal",
+    btn_close: "Tutup",
+    import_hub_start: "Mulai Impor",
+    create_playlist_title: "+ Buat Playlist Baru",
+    create_playlist_desc: "Beri nama playlist untuk merapikan lagu favorit, sesi santai, atau fokus.",
+    create_playlist_placeholder: "Nama Playlist (contoh: Santai Sore, Fokus Kerja)",
+    create_playlist_desc_placeholder: "Deskripsi opsional...",
+    create_playlist_btn: "Buat Playlist",
+    edit_playlist_title: "Ubah Detail Playlist",
+    edit_playlist_desc: "Perbarui nama dan deskripsi playlist Anda.",
+    edit_playlist_placeholder: "Nama Playlist",
+    btn_save: "Simpan Perubahan",
+    add_to_playlist_title: "Tambah ke Playlist",
+    btn_done: "Selesai",
+
+    // Sleep Timer
+    sleep_timer_title: "Pengatur Waktu Tidur",
+    sleep_timer_desc: "Pemutaran musik akan berhenti otomatis setelah waktu timer habis.",
+    timer_turn_off: "Matikan timer",
+    timer_off: "Matikan timer",
+    timer_15m: "15 Menit",
+    timer_30m: "30 Menit",
+    timer_45m: "45 Menit",
+    timer_60m: "60 Menit",
+    timer_end_song: "Akhir lagu ini",
+
+    // Shortcuts
+    shortcut_play_pause: "Putar / Jeda Lagu",
+    shortcut_mute: "Bisu / Nyalakan Suara",
+    shortcut_next: "Lagu Berikutnya",
+    shortcut_prev: "Lagu Sebelumnya",
+    shortcut_seek: "Maju / Mundur (5 dtk)",
+    shortcut_volume: "Volume Naik / Turun (5%)",
+    shortcut_search: "Fokus Kolom Pencarian",
+    shortcut_lyrics: "Buka / Tutup Panel Lirik",
+    shortcut_close: "Tutup Layar Penuh / Dialog",
+
+    // About
+    about_version: "Versi 2.0.0 • Lisensi GPL-3.0",
+    about_desc: "Pemutar musik streaming resolusi tinggi dengan lirik tersinkronisasi, DSP equalizer, dan pengimpor playlist lintas platform.",
+    btn_check_update: "Periksa Pembaruan",
+
+    // Context Menu
+    ctx_play_next: "Putar Berikutnya",
+    ctx_add_queue: "Tambah ke Antrean",
+    ctx_play_now: "Putar Sekarang",
+    ctx_view_artist: "Lihat Profil Artis",
+    ctx_add_playlist: "Tambah ke Playlist",
+    ctx_like_track: "Sukai Lagu",
+    ctx_download_track: "Unduh Lagu (MP3)",
+    ctx_choose_stream: "Pilih Rekaman Audio (Candidates)",
+
+    // Stream Verification & Jam
+    stream_verify_title: "Verifikasi Sumber Audio",
+    stream_verify_subtitle: "Pilih rekaman audio yang benar untuk lagu ini",
+    stream_searching: "Mencari kandidat audio alternatif...",
+    btn_remove_verification: "Hapus Verifikasi (Reset ke Otomatis)",
+    jam_modal_title: "SoraFy Jam • Remote Control HP",
+    jam_modal_desc: "Kendalikan musik dari smartphone Anda di jaringan Wi-Fi lokal",
+
     unit_seconds: " dtk",
-    no_tracks: "Belum ada lagu di playlist ini.",
     toast_playing: "Memutar",
     toast_added_to_playlist: "Ditambahkan ke playlist",
     toast_removed_from_playlist: "Dihapus dari playlist"
@@ -1319,15 +1658,28 @@ class SoraFyDesktopApp {
     this.artistViewContainer = document.getElementById("artistViewContainer");
     this.playlistViewContainer = document.getElementById("playlistViewContainer");
 
-    // Listening Statistics & Analytics View Elements (Nuclear Feature)
+    // Listening Statistics & Analytics View Elements (Music Recap & Habits Style)
     this.statsViewContainer = document.getElementById("statsViewContainer");
     this.statsTimeFilterPills = document.getElementById("statsTimeFilterPills");
+    this.statsTopArtistCard = document.getElementById("statsTopArtistCard");
+    this.statsTopArtistImg = document.getElementById("statsTopArtistImg");
+    this.statsTopArtistName = document.getElementById("statsTopArtistName");
+    this.statsTopArtistMeta = document.getElementById("statsTopArtistMeta");
+    this.statsTopTrackCard = document.getElementById("statsTopTrackCard");
+    this.statsTopTrackImg = document.getElementById("statsTopTrackImg");
+    this.statsTopTrackTitle = document.getElementById("statsTopTrackTitle");
+    this.statsTopTrackMeta = document.getElementById("statsTopTrackMeta");
+    this.statsVibeCard = document.getElementById("statsVibeCard");
+    this.statsVibeEmoji = document.getElementById("statsVibeEmoji");
+    this.statsVibeTitle = document.getElementById("statsVibeTitle");
+    this.statsVibeDesc = document.getElementById("statsVibeDesc");
     this.statsTotalTime = document.getElementById("statsTotalTime");
     this.statsTotalTracks = document.getElementById("statsTotalTracks");
     this.statsUniqueArtists = document.getElementById("statsUniqueArtists");
-    this.statsPeakHour = document.getElementById("statsPeakHour");
-    this.statsHeatmapWrapper = document.getElementById("statsHeatmapWrapper");
-    this.statsHourlyChart = document.getElementById("statsHourlyChart");
+    this.statsDailyAvg = document.getElementById("statsDailyAvg");
+    this.statsPeakDayBadge = document.getElementById("statsPeakDayBadge");
+    this.statsActivityBars = document.getElementById("statsActivityBars");
+    this.statsDaySegmentsGrid = document.getElementById("statsDaySegmentsGrid");
     this.statsTopArtistsList = document.getElementById("statsTopArtistsList");
     this.statsTopTracksList = document.getElementById("statsTopTracksList");
     this.statsRecentScrobblesList = document.getElementById("statsRecentScrobblesList");
@@ -1614,11 +1966,30 @@ class SoraFyDesktopApp {
     localStorage.setItem("sorafy_language", this.currentLanguage);
     if (this.appSettings) this.appSettings.language = this.currentLanguage;
 
+    // 1. Text elements with data-i18n
     document.querySelectorAll("[data-i18n]").forEach(el => {
       const key = el.getAttribute("data-i18n");
       const translation = this.t(key);
       if (translation) {
         el.textContent = translation;
+      }
+    });
+
+    // 2. Tooltip attributes with data-i18n-title
+    document.querySelectorAll("[data-i18n-title]").forEach(el => {
+      const key = el.getAttribute("data-i18n-title");
+      const translation = this.t(key);
+      if (translation) {
+        el.setAttribute("title", translation);
+      }
+    });
+
+    // 3. Placeholders with data-i18n-placeholder
+    document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+      const key = el.getAttribute("data-i18n-placeholder");
+      const translation = this.t(key);
+      if (translation) {
+        el.setAttribute("placeholder", translation);
       }
     });
 
@@ -1633,6 +2004,13 @@ class SoraFyDesktopApp {
 
     if (this.settingLanguage) {
       this.settingLanguage.value = this.currentLanguage;
+    }
+
+    // Dynamic views update
+    if (this.currentView === "stats") {
+      this.renderStatsView();
+    } else if (this.currentView === "library" && typeof this.updateLibraryView === "function") {
+      this.updateLibraryView();
     }
   }
 
@@ -10231,10 +10609,14 @@ class SoraFyDesktopApp {
 
     if (this.statsClearHistoryBtn) {
       this.statsClearHistoryBtn.addEventListener("click", async () => {
-        if (!confirm("Apakah Anda yakin ingin menghapus seluruh riwayat analitik mendengar?")) return;
+        const isId = (this.currentLanguage === "id");
+        const confirmMsg = isId
+          ? "Apakah Anda yakin ingin menghapus seluruh riwayat analitik mendengar?"
+          : "Are you sure you want to clear your listening history and analytics?";
+        if (!confirm(confirmMsg)) return;
         if (window.electronAPI && typeof window.electronAPI.clearListeningStats === "function") {
           await window.electronAPI.clearListeningStats();
-          this.showToast("Riwayat analitik berhasil dibersihkan");
+          this.showToast(isId ? "Riwayat analitik berhasil dibersihkan" : "Listening analytics cleared successfully");
           this.renderStatsView();
         }
       });
@@ -10264,6 +10646,7 @@ class SoraFyDesktopApp {
     try {
       const res = await window.electronAPI.getListeningStats();
       const allEvents = (res && res.success && Array.isArray(res.events)) ? res.events : [];
+      const isId = (this.currentLanguage === "id");
 
       // Filter based on selected time range
       const now = Date.now();
@@ -10276,11 +10659,16 @@ class SoraFyDesktopApp {
         filteredEvents = allEvents.filter(e => e.timestamp >= now - 365 * 86400000);
       }
 
-      // Calculate Metrics
+      // Calculate Metrics & Time-of-Day Habits
       let totalSeconds = 0;
       const artistsMap = new Map();
       const tracksMap = new Map();
-      const hourCounts = new Array(24).fill(0);
+      const timeOfDayCounts = {
+        morning: { count: 0, seconds: 0 },   // 06:00 - 12:00
+        afternoon: { count: 0, seconds: 0 }, // 12:00 - 17:00
+        evening: { count: 0, seconds: 0 },   // 17:00 - 21:00
+        night: { count: 0, seconds: 0 }      // 21:00 - 06:00
+      };
 
       filteredEvents.forEach((e) => {
         const secs = (e.durationSeconds && e.durationSeconds > 0) ? e.durationSeconds : (e.secondsListened || 180);
@@ -10311,53 +10699,178 @@ class SoraFyDesktopApp {
 
         const d = new Date(e.timestamp);
         const h = d.getHours();
-        hourCounts[h] += 1;
+        if (h >= 6 && h < 12) {
+          timeOfDayCounts.morning.count += 1;
+          timeOfDayCounts.morning.seconds += secs;
+        } else if (h >= 12 && h < 17) {
+          timeOfDayCounts.afternoon.count += 1;
+          timeOfDayCounts.afternoon.seconds += secs;
+        } else if (h >= 17 && h < 21) {
+          timeOfDayCounts.evening.count += 1;
+          timeOfDayCounts.evening.seconds += secs;
+        } else {
+          timeOfDayCounts.night.count += 1;
+          timeOfDayCounts.night.seconds += secs;
+        }
       });
 
-      // 1. Metric: Total Time
+      // Sorted artists & tracks
+      const sortedArtists = Array.from(artistsMap.entries())
+        .map(([name, data]) => ({ name, count: data.count, seconds: data.seconds, artwork: data.artwork }))
+        .sort((a, b) => b.count - a.count);
+
+      const sortedTracks = Array.from(tracksMap.values())
+        .sort((a, b) => b.count - a.count);
+
+      // --- SPOTLIGHT 1: Top Artist (#1) ---
+      const topArtist = sortedArtists[0];
+      if (this.statsTopArtistCard) {
+        if (topArtist) {
+          const avatar = topArtist.artwork || getArtistAvatar(topArtist.name);
+          if (this.statsTopArtistImg) this.statsTopArtistImg.src = avatar;
+          if (this.statsTopArtistName) this.statsTopArtistName.textContent = topArtist.name;
+          if (this.statsTopArtistMeta) {
+            const mins = Math.round(topArtist.seconds / 60);
+            this.statsTopArtistMeta.textContent = isId
+              ? `${topArtist.count} putaran • ${mins} menit`
+              : `${topArtist.count} plays • ${mins} mins`;
+          }
+          this.statsTopArtistCard.style.cursor = "pointer";
+          this.statsTopArtistCard.onclick = () => this.openArtistDetail(topArtist.name);
+        } else {
+          if (this.statsTopArtistImg) this.statsTopArtistImg.src = "assets/logo.png";
+          if (this.statsTopArtistName) this.statsTopArtistName.textContent = isId ? "Belum ada artis" : "No artists yet";
+          if (this.statsTopArtistMeta) this.statsTopArtistMeta.textContent = isId ? "0 putaran • 0 menit" : "0 plays • 0 mins";
+          this.statsTopArtistCard.onclick = null;
+          this.statsTopArtistCard.style.cursor = "default";
+        }
+      }
+
+      // --- SPOTLIGHT 2: Top Track (#1) ---
+      const topTrack = sortedTracks[0];
+      if (this.statsTopTrackCard) {
+        if (topTrack) {
+          const art = topTrack.artworkUrl || "assets/logo.png";
+          if (this.statsTopTrackImg) this.statsTopTrackImg.src = art;
+          if (this.statsTopTrackTitle) this.statsTopTrackTitle.textContent = topTrack.title;
+          if (this.statsTopTrackMeta) {
+            this.statsTopTrackMeta.textContent = isId
+              ? `${topTrack.artist} • ${topTrack.count} putaran`
+              : `${topTrack.artist} • ${topTrack.count} plays`;
+          }
+          this.statsTopTrackCard.style.cursor = "pointer";
+          this.statsTopTrackCard.onclick = () => {
+            const trackObj = {
+              id: topTrack.trackId ? (topTrack.trackId.startsWith("yt_") ? topTrack.trackId : `yt_${topTrack.trackId}`) : `yt_${Date.now()}`,
+              video_id: topTrack.trackId ? topTrack.trackId.replace(/^yt_/, "") : "",
+              title: topTrack.title,
+              artist: topTrack.artist,
+              artwork_url: topTrack.artworkUrl || "assets/logo.png",
+              duration_secs: topTrack.seconds || 180
+            };
+            this.playTrackNow(trackObj);
+          };
+        } else {
+          if (this.statsTopTrackImg) this.statsTopTrackImg.src = "assets/logo.png";
+          if (this.statsTopTrackTitle) this.statsTopTrackTitle.textContent = isId ? "Belum ada lagu" : "No tracks yet";
+          if (this.statsTopTrackMeta) this.statsTopTrackMeta.textContent = isId ? "0 putaran" : "0 plays";
+          this.statsTopTrackCard.onclick = null;
+          this.statsTopTrackCard.style.cursor = "default";
+        }
+      }
+
+      // --- SPOTLIGHT 3: Listening Personality / Time Vibe ---
+      if (this.statsVibeCard) {
+        let maxPeriod = "";
+        let maxPeriodCount = 0;
+        Object.entries(timeOfDayCounts).forEach(([period, data]) => {
+          if (data.count > maxPeriodCount) {
+            maxPeriodCount = data.count;
+            maxPeriod = period;
+          }
+        });
+
+        if (maxPeriodCount === 0) {
+          if (this.statsVibeEmoji) this.statsVibeEmoji.textContent = "🎧";
+          if (this.statsVibeTitle) this.statsVibeTitle.textContent = isId ? "Penjelajah Nada" : "Music Explorer";
+          if (this.statsVibeDesc) this.statsVibeDesc.textContent = isId
+            ? "Putar lebih banyak lagu untuk melihat profil karakter kebiasaan Anda."
+            : "Stream more songs to unveil your unique listening habit persona.";
+        } else if (maxPeriod === "morning") {
+          if (this.statsVibeEmoji) this.statsVibeEmoji.textContent = "🌅";
+          if (this.statsVibeTitle) this.statsVibeTitle.textContent = isId ? "Penyemangat Pagi" : "Morning Motivator";
+          if (this.statsVibeDesc) this.statsVibeDesc.textContent = isId
+            ? "Mendengarkan lagu di pagi hari adalah ritual harian favorit Anda."
+            : "Starting your morning with vibrant tunes is your signature ritual.";
+        } else if (maxPeriod === "afternoon") {
+          if (this.statsVibeEmoji) this.statsVibeEmoji.textContent = "☀️";
+          if (this.statsVibeTitle) this.statsVibeTitle.textContent = isId ? "Fokus Siang Hari" : "Afternoon Focus";
+          if (this.statsVibeDesc) this.statsVibeDesc.textContent = isId
+            ? "Musik menemani produktivitas dan momen konsentrasi di tengah hari."
+            : "Music fuels your productivity and focus throughout the busy day.";
+        } else if (maxPeriod === "evening") {
+          if (this.statsVibeEmoji) this.statsVibeEmoji.textContent = "🌆";
+          if (this.statsVibeTitle) this.statsVibeTitle.textContent = isId ? "Pelepas Penat Sore" : "Sunset Unwind";
+          if (this.statsVibeDesc) this.statsVibeDesc.textContent = isId
+            ? "Sore hari adalah momen terbaik Anda untuk bersantai dan relaksasi."
+            : "Late afternoon chill sessions help you unwind after a long day.";
+        } else {
+          if (this.statsVibeEmoji) this.statsVibeEmoji.textContent = "🌙";
+          if (this.statsVibeTitle) this.statsVibeTitle.textContent = isId ? "Penikmat Larut Malam" : "Midnight Dreamer";
+          if (this.statsVibeDesc) this.statsVibeDesc.textContent = isId
+            ? "Menikmati harmoni musik di saat malam hening dan damai."
+            : "Immersed in deep, serene melodies under the peaceful midnight sky.";
+        }
+      }
+
+      // --- 4 METRIC CARDS ---
+      // 1. Total Time
       if (this.statsTotalTime) {
         const totalMinutes = Math.round(totalSeconds / 60);
         if (totalMinutes < 60) {
-          this.statsTotalTime.textContent = `${totalMinutes} Menit`;
+          this.statsTotalTime.textContent = isId ? `${totalMinutes} Menit` : `${totalMinutes} Mins`;
         } else {
           const hours = Math.floor(totalMinutes / 60);
           const mins = totalMinutes % 60;
-          this.statsTotalTime.textContent = `${hours} Jam ${mins} Menit`;
+          this.statsTotalTime.textContent = isId ? `${hours} Jam ${mins} Menit` : `${hours}h ${mins}m`;
         }
       }
 
-      // 2. Metric: Total Tracks
+      // 2. Total Tracks
       if (this.statsTotalTracks) {
-        this.statsTotalTracks.textContent = `${filteredEvents.length} Putaran`;
+        this.statsTotalTracks.textContent = isId
+          ? `${filteredEvents.length} Putaran`
+          : `${filteredEvents.length} Plays`;
       }
 
-      // 3. Metric: Unique Artists
+      // 3. Unique Artists
       if (this.statsUniqueArtists) {
-        this.statsUniqueArtists.textContent = `${artistsMap.size} Artis`;
+        this.statsUniqueArtists.textContent = isId
+          ? `${artistsMap.size} Artis`
+          : `${artistsMap.size} Artists`;
       }
 
-      // 4. Metric: Peak Listening Hour
-      if (this.statsPeakHour) {
-        let maxCount = -1;
-        let peakH = -1;
-        hourCounts.forEach((cnt, h) => {
-          if (cnt > maxCount) {
-            maxCount = cnt;
-            peakH = h;
+      // 4. Daily Average
+      if (this.statsDailyAvg) {
+        let daysCount = 7;
+        if (this.currentStatsRange === "30d") daysCount = 30;
+        else if (this.currentStatsRange === "1y") daysCount = 365;
+        else if (this.currentStatsRange === "all") {
+          if (filteredEvents.length > 0) {
+            const earliest = Math.min(...filteredEvents.map(e => e.timestamp || Date.now()));
+            daysCount = Math.max(1, Math.ceil((Date.now() - earliest) / 86400000));
+          } else {
+            daysCount = 1;
           }
-        });
-        if (peakH !== -1 && maxCount > 0) {
-          const hStr = String(peakH).padStart(2, "0");
-          const nextH = String((peakH + 1) % 24).padStart(2, "0");
-          this.statsPeakHour.textContent = `${hStr}:00 - ${nextH}:00`;
-        } else {
-          this.statsPeakHour.textContent = "--:--";
         }
+        const totalMins = Math.round(totalSeconds / 60);
+        const avg = Math.round(totalMins / daysCount);
+        this.statsDailyAvg.textContent = isId ? `${avg} Menit / Hari` : `${avg} Mins / Day`;
       }
 
       // Render Sub-components
-      this.renderHeatmap(allEvents);
-      this.renderHourlyChart(hourCounts);
+      this.renderActivityBars(allEvents, filteredEvents);
+      this.renderDaySegments(timeOfDayCounts, filteredEvents.length);
       this.renderRankings(artistsMap, tracksMap);
       this.renderRecentScrobbles(allEvents);
     } catch (err) {
@@ -10365,18 +10878,79 @@ class SoraFyDesktopApp {
     }
   }
 
-  renderHeatmap(allEvents) {
-    if (!this.statsHeatmapWrapper) return;
-    this.statsHeatmapWrapper.innerHTML = "";
+  renderActivityBars(allEvents, filteredEvents) {
+    if (!this.statsActivityBars) return;
+    this.statsActivityBars.innerHTML = "";
+    const isId = (this.currentLanguage === "id");
 
+    const daysId = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+    const daysEn = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const fullDaysId = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const fullDaysEn = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    const monthNamesId = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+    const monthNamesEn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // Build map for each calendar date: YYYY-MM-DD -> { minutes, count }
     const dayMap = new Map();
-    allEvents.forEach((e) => {
+    filteredEvents.forEach((e) => {
       const d = new Date(e.timestamp);
       const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       const m = Math.round(((e.durationSeconds && e.durationSeconds > 0) ? e.durationSeconds : (e.secondsListened || 180)) / 60);
-      dayMap.set(k, (dayMap.get(k) || 0) + m);
+      const prev = dayMap.get(k) || { minutes: 0, count: 0 };
+      prev.minutes += m;
+      prev.count += 1;
+      dayMap.set(k, prev);
     });
 
+    // 7 Days: from 6 days ago up to today
+    const daysData = [];
+    let maxMinutes = 1;
+    let peakDayInfo = null;
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const stats = dayMap.get(key) || { minutes: 0, count: 0 };
+      if (stats.minutes > maxMinutes) {
+        maxMinutes = stats.minutes;
+      }
+      const dayIdx = d.getDay();
+      const monthIdx = d.getMonth();
+      const dayName = isId ? daysId[dayIdx] : daysEn[dayIdx];
+      const fullDayName = isId ? fullDaysId[dayIdx] : fullDaysEn[dayIdx];
+      const dateStr = `${d.getDate()} ${isId ? monthNamesId[monthIdx] : monthNamesEn[monthIdx]}`;
+
+      daysData.push({
+        date: d,
+        key,
+        dayName,
+        fullDayName,
+        dateStr,
+        minutes: stats.minutes,
+        count: stats.count
+      });
+    }
+
+    // Find peak day
+    let peakMinutes = 0;
+    daysData.forEach((item) => {
+      if (item.minutes > peakMinutes) {
+        peakMinutes = item.minutes;
+        peakDayInfo = item;
+      }
+    });
+
+    // Update peak day badge
+    if (this.statsPeakDayBadge) {
+      if (peakDayInfo && peakDayInfo.minutes > 0) {
+        this.statsPeakDayBadge.innerHTML = `<span>⭐ ${isId ? 'Hari Teraktif' : 'Peak Day'}: ${peakDayInfo.fullDayName} (${peakDayInfo.minutes} ${isId ? 'Menit' : 'Mins'})</span>`;
+      } else {
+        this.statsPeakDayBadge.innerHTML = `<span>${isId ? 'Hari Teraktif: Belum ada data' : 'Peak Day: No data yet'}</span>`;
+      }
+    }
+
+    // Floating Tooltip
     let tooltip = document.getElementById("statsFloatingTooltip");
     if (!tooltip) {
       tooltip = document.createElement("div");
@@ -10385,162 +10959,132 @@ class SoraFyDesktopApp {
       document.body.appendChild(tooltip);
     }
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    const dayOfWeek = today.getDay(); // 0 is Sun
+    // Render 7 equalizer bars
+    daysData.forEach((item) => {
+      const isPeak = (peakDayInfo && item.key === peakDayInfo.key && item.minutes > 0);
+      const heightPct = item.minutes > 0 ? Math.max(10, Math.round((item.minutes / maxMinutes) * 100)) : 8;
 
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - (52 * 7 + dayOfWeek));
-    startDate.setHours(0, 0, 0, 0);
-
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
-    const monthsRow = document.createElement("div");
-    monthsRow.className = "heatmap-months-row";
-
-    let lastMonth = -1;
-    for (let w = 0; w < 53; w++) {
-      const weekStart = new Date(startDate);
-      weekStart.setDate(startDate.getDate() + w * 7);
-      const m = weekStart.getMonth();
-      if (m !== lastMonth && w < 51) {
-        lastMonth = m;
-        const mSpan = document.createElement("span");
-        mSpan.textContent = monthNames[m];
-        mSpan.style.left = `${w * 15}px`;
-        monthsRow.appendChild(mSpan);
-      }
-    }
-    this.statsHeatmapWrapper.appendChild(monthsRow);
-
-    const heatmapBody = document.createElement("div");
-    heatmapBody.className = "heatmap-body";
-
-    const weekdays = document.createElement("div");
-    weekdays.className = "heatmap-weekdays";
-    weekdays.innerHTML = `<span>Min</span><span>Rab</span><span>Sab</span>`;
-    heatmapBody.appendChild(weekdays);
-
-    const grid = document.createElement("div");
-    grid.className = "heatmap-grid";
-
-    for (let w = 0; w < 53; w++) {
-      for (let d = 0; d < 7; d++) {
-        const cellDate = new Date(startDate);
-        cellDate.setDate(startDate.getDate() + (w * 7 + d));
-
-        if (cellDate > today) {
-          const emptyCell = document.createElement("div");
-          emptyCell.style.width = "12px";
-          emptyCell.style.height = "12px";
-          emptyCell.style.visibility = "hidden";
-          grid.appendChild(emptyCell);
-          continue;
-        }
-
-        const dateStr = `${cellDate.getFullYear()}-${String(cellDate.getMonth() + 1).padStart(2, "0")}-${String(cellDate.getDate()).padStart(2, "0")}`;
-        const minutes = dayMap.get(dateStr) || 0;
-
-        const cell = document.createElement("div");
-        cell.className = "heatmap-cell";
-
-        if (minutes === 0) {
-          cell.style.background = "rgba(255, 255, 255, 0.05)";
-        } else if (minutes <= 30) {
-          cell.style.background = "rgba(0, 229, 153, 0.25)";
-        } else if (minutes <= 90) {
-          cell.style.background = "rgba(0, 229, 153, 0.50)";
-        } else if (minutes <= 180) {
-          cell.style.background = "rgba(0, 229, 153, 0.75)";
-        } else {
-          cell.style.background = "rgba(0, 229, 153, 1.0)";
-        }
-
-        const dateDisplay = cellDate.toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "short",
-          year: "numeric"
-        });
-
-        cell.addEventListener("mouseenter", (e) => {
-          tooltip.innerHTML = `<strong>${dateDisplay}</strong><br>${minutes > 0 ? `${minutes} menit didengarkan` : 'Tidak ada aktivitas'}`;
-          tooltip.style.display = "block";
-          tooltip.style.left = `${e.clientX + 12}px`;
-          tooltip.style.top = `${e.clientY - 28}px`;
-        });
-
-        cell.addEventListener("mousemove", (e) => {
-          tooltip.style.left = `${e.clientX + 12}px`;
-          tooltip.style.top = `${e.clientY - 28}px`;
-        });
-
-        cell.addEventListener("mouseleave", () => {
-          tooltip.style.display = "none";
-        });
-
-        grid.appendChild(cell);
-      }
-    }
-
-    heatmapBody.appendChild(grid);
-    this.statsHeatmapWrapper.appendChild(heatmapBody);
-  }
-
-  renderHourlyChart(hourCounts) {
-    if (!this.statsHourlyChart) return;
-    this.statsHourlyChart.innerHTML = "";
-
-    const maxCount = Math.max(1, ...hourCounts);
-    let tooltip = document.getElementById("statsFloatingTooltip");
-
-    hourCounts.forEach((count, h) => {
       const col = document.createElement("div");
-      col.className = "hourly-col";
+      col.className = "activity-bar-col";
 
-      const barWrap = document.createElement("div");
-      barWrap.className = "hourly-bar-wrap";
+      const val = document.createElement("span");
+      val.className = "activity-bar-val";
+      val.textContent = item.minutes > 0 ? `${item.minutes}m` : "0";
 
-      const bar = document.createElement("div");
-      bar.className = "hourly-bar";
-      const heightPct = count > 0 ? Math.max(5, Math.round((count / maxCount) * 100)) : 3;
-      bar.style.height = `${heightPct}%`;
+      const track = document.createElement("div");
+      track.className = "activity-bar-track";
 
-      if (count === maxCount && count > 0) {
-        bar.classList.add("peak");
-      }
+      const fill = document.createElement("div");
+      fill.className = `activity-bar-fill ${isPeak ? 'peak' : ''}`;
+      fill.style.height = `${heightPct}%`;
 
-      barWrap.appendChild(bar);
-      col.appendChild(barWrap);
+      track.appendChild(fill);
 
-      const label = document.createElement("div");
-      label.className = "hourly-col-label";
-      label.textContent = (h % 3 === 0) ? String(h).padStart(2, "0") : "";
+      const label = document.createElement("span");
+      label.className = "activity-bar-label";
+      label.textContent = item.dayName;
+
+      const dateSub = document.createElement("span");
+      dateSub.className = "activity-bar-date";
+      dateSub.textContent = item.dateStr;
+
+      col.appendChild(val);
+      col.appendChild(track);
       col.appendChild(label);
+      col.appendChild(dateSub);
 
       col.addEventListener("mouseenter", (e) => {
         if (!tooltip) return;
-        const hLabel = `${String(h).padStart(2, "0")}:00 - ${String((h + 1) % 24).padStart(2, "0")}:00`;
-        tooltip.innerHTML = `<strong>${hLabel}</strong><br>${count} lagu diputar`;
+        const msg = isId
+          ? `<strong>${item.fullDayName}, ${item.dateStr}</strong><br>${item.minutes} menit (${item.count} lagu diputar)`
+          : `<strong>${item.fullDayName}, ${item.dateStr}</strong><br>${item.minutes} minutes (${item.count} tracks played)`;
+        tooltip.innerHTML = msg;
         tooltip.style.display = "block";
         tooltip.style.left = `${e.clientX + 12}px`;
-        tooltip.style.top = `${e.clientY - 28}px`;
+        tooltip.style.top = `${e.clientY - 30}px`;
       });
 
       col.addEventListener("mousemove", (e) => {
         if (!tooltip) return;
         tooltip.style.left = `${e.clientX + 12}px`;
-        tooltip.style.top = `${e.clientY - 28}px`;
+        tooltip.style.top = `${e.clientY - 30}px`;
       });
 
       col.addEventListener("mouseleave", () => {
-        if (!tooltip) return;
-        tooltip.style.display = "none";
+        if (tooltip) tooltip.style.display = "none";
       });
 
-      this.statsHourlyChart.appendChild(col);
+      this.statsActivityBars.appendChild(col);
+    });
+  }
+
+  renderDaySegments(timeOfDayCounts, totalTracks) {
+    if (!this.statsDaySegmentsGrid) return;
+    this.statsDaySegmentsGrid.innerHTML = "";
+    const isId = (this.currentLanguage === "id");
+
+    const segments = [
+      {
+        key: "morning",
+        icon: "🌅",
+        title: isId ? "Pagi Hari" : "Morning",
+        hours: "06:00 - 12:00",
+        data: timeOfDayCounts.morning
+      },
+      {
+        key: "afternoon",
+        icon: "☀️",
+        title: isId ? "Siang Hari" : "Afternoon",
+        hours: "12:00 - 17:00",
+        data: timeOfDayCounts.afternoon
+      },
+      {
+        key: "evening",
+        icon: "🌆",
+        title: isId ? "Sore Hari" : "Evening",
+        hours: "17:00 - 21:00",
+        data: timeOfDayCounts.evening
+      },
+      {
+        key: "night",
+        icon: "🌙",
+        title: isId ? "Larut Malam" : "Late Night",
+        hours: "21:00 - 06:00",
+        data: timeOfDayCounts.night
+      }
+    ];
+
+    segments.forEach((seg) => {
+      const pct = (totalTracks > 0) ? Math.round((seg.data.count / totalTracks) * 100) : 0;
+      const mins = Math.round(seg.data.seconds / 60);
+
+      const card = document.createElement("div");
+      card.className = "day-segment-card";
+
+      card.innerHTML = `
+        <div class="day-segment-header">
+          <div class="day-segment-title">
+            <span>${seg.icon}</span>
+            <span>${seg.title}</span>
+          </div>
+          <span class="day-segment-badge">${pct}%</span>
+        </div>
+        <div class="day-segment-progress">
+          <div class="day-segment-progress-fill" style="width: ${pct}%;"></div>
+        </div>
+        <div class="day-segment-meta">
+          <span>${seg.hours}</span>
+          <span>${seg.data.count} ${isId ? 'lagu' : 'tracks'} • ${mins} ${isId ? 'mnt' : 'min'}</span>
+        </div>
+      `;
+
+      this.statsDaySegmentsGrid.appendChild(card);
     });
   }
 
   renderRankings(artistsMap, tracksMap) {
+    const isId = (this.currentLanguage === "id");
+
     // 1. Top Artists
     if (this.statsTopArtistsList) {
       this.statsTopArtistsList.innerHTML = "";
@@ -10550,7 +11094,7 @@ class SoraFyDesktopApp {
         .slice(0, 10);
 
       if (sortedArtists.length === 0) {
-        this.statsTopArtistsList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">Belum ada data artis.</div>`;
+        this.statsTopArtistsList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">${isId ? 'Belum ada data artis.' : 'No artist data yet.'}</div>`;
       } else {
         sortedArtists.forEach((item, idx) => {
           const div = document.createElement("div");
@@ -10558,15 +11102,16 @@ class SoraFyDesktopApp {
 
           const rankClass = idx === 0 ? "top1" : idx === 1 ? "top2" : idx === 2 ? "top3" : "";
           const avatar = item.artwork || getArtistAvatar(item.name);
+          const mins = Math.round(item.seconds / 60);
 
           div.innerHTML = `
             <div class="ranking-rank ${rankClass}">#${idx + 1}</div>
             <img class="ranking-art artist" src="${this.escapeHtml(avatar)}" onerror="this.src='assets/logo.png'">
             <div class="ranking-info">
               <div class="ranking-title">${this.escapeHtml(item.name)}</div>
-              <div class="ranking-sub">${Math.round(item.seconds / 60)} menit didengar</div>
+              <div class="ranking-sub">${mins} ${isId ? 'menit didengar' : 'mins streamed'}</div>
             </div>
-            <div class="ranking-badge">${item.count} putar</div>
+            <div class="ranking-badge">${item.count} ${isId ? 'putar' : 'plays'}</div>
           `;
 
           div.addEventListener("click", () => {
@@ -10586,7 +11131,7 @@ class SoraFyDesktopApp {
         .slice(0, 10);
 
       if (sortedTracks.length === 0) {
-        this.statsTopTracksList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">Belum ada data lagu.</div>`;
+        this.statsTopTracksList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">${isId ? 'Belum ada data lagu.' : 'No track data yet.'}</div>`;
       } else {
         sortedTracks.forEach((item, idx) => {
           const div = document.createElement("div");
@@ -10602,7 +11147,7 @@ class SoraFyDesktopApp {
               <div class="ranking-title">${this.escapeHtml(item.title)}</div>
               <div class="ranking-sub">${this.escapeHtml(item.artist)}</div>
             </div>
-            <div class="ranking-badge">${item.count} putar</div>
+            <div class="ranking-badge">${item.count} ${isId ? 'putar' : 'plays'}</div>
           `;
 
           div.addEventListener("click", () => {
@@ -10626,10 +11171,11 @@ class SoraFyDesktopApp {
   renderRecentScrobbles(allEvents) {
     if (!this.statsRecentScrobblesList) return;
     this.statsRecentScrobblesList.innerHTML = "";
+    const isId = (this.currentLanguage === "id");
 
     const recent = [...allEvents].reverse().slice(0, 10);
     if (recent.length === 0) {
-      this.statsRecentScrobblesList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">Belum ada lagu yang baru diputar.</div>`;
+      this.statsRecentScrobblesList.innerHTML = `<div style="color: var(--color-text-tertiary); font-size: 13px; padding: 12px 0;">${isId ? 'Belum ada lagu yang baru diputar.' : 'No recently played tracks.'}</div>`;
       return;
     }
 
@@ -10667,18 +11213,21 @@ class SoraFyDesktopApp {
 
   formatTimeAgo(timestamp) {
     if (!timestamp) return "";
+    const isId = (this.currentLanguage === "id");
     const diff = Math.max(0, Date.now() - timestamp);
     const secs = Math.floor(diff / 1000);
-    if (secs < 60) return "Baru saja";
+    if (secs < 60) return isId ? "Baru saja" : "Just now";
     const mins = Math.floor(secs / 60);
-    if (mins < 60) return `${mins} mnt lalu`;
+    if (mins < 60) return isId ? `${mins} mnt lalu` : `${mins}m ago`;
     const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours} jam lalu`;
+    if (hours < 24) return isId ? `${hours} jam lalu` : `${hours}h ago`;
     const days = Math.floor(hours / 24);
-    if (days === 1) return "Kemarin";
-    if (days < 30) return `${days} hari lalu`;
+    if (days === 1) return isId ? "Kemarin" : "Yesterday";
+    if (days < 30) return isId ? `${days} hari lalu` : `${days}d ago`;
     const months = Math.floor(days / 30);
-    return `${months} bln lalu`;
+    if (months === 1) return isId ? "1 bulan lalu" : "1 month ago";
+    if (months < 12) return isId ? `${months} bulan lalu` : `${months} months ago`;
+    return new Date(timestamp).toLocaleDateString(isId ? "id-ID" : "en-US", { month: "short", day: "numeric" });
   }
 }
 

@@ -73,10 +73,10 @@
       <div class="sidebar-section-header-row">
         <div class="sidebar-section-title" data-i18n="sidebar_playlists">My Playlists</div>
         <div style="display: flex; align-items: center; gap: 4px;">
-          <button class="sidebar-add-playlist-btn" id="sidebarImportPlaylistBtn" title="Import Hub: Spotify, Apple Music & YouTube">
+          <button class="sidebar-add-playlist-btn" id="sidebarImportPlaylistBtn" title="Import Hub: Spotify, Apple Music & YouTube" data-i18n-title="tooltip_sidebar_import">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           </button>
-          <button class="sidebar-add-playlist-btn" id="sidebarCreatePlaylistBtn" title="Create New Playlist">
+          <button class="sidebar-add-playlist-btn" id="sidebarCreatePlaylistBtn" title="Create New Playlist" data-i18n-title="tooltip_sidebar_create">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
         </div>
@@ -93,7 +93,7 @@
         <div class="search-container-col">
           <div class="search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="searchInput" placeholder="Search songs, artists, music videos, or playlists...">
+            <input type="text" id="searchInput" placeholder="Search songs, artists, music videos, or playlists..." data-i18n-placeholder="search_placeholder">
             <button id="searchClearBtn" class="search-clear-btn" style="display: none;" title="Clear Search">
               <iconsax-icon name="close-circle" type="linear" size="18" color="currentColor"></iconsax-icon>
             </button>
@@ -101,7 +101,7 @@
 
           <!-- Suggestion Pick Chips -->
           <div class="suggestion-picks" id="searchSuggestions">
-            <span class="suggestion-label">Popular Suggestions:</span>
+            <span class="suggestion-label" data-i18n="popular_suggestions">Popular Suggestions:</span>
             <button class="suggestion-chip" data-query="Global Top Hits 50">Global Top Hits</button>
             <button class="suggestion-chip" data-query="Top 50 Pop Indonesia">Top 50 Indonesia</button>
             <button class="suggestion-chip" data-artist="Bernadya">Bernadya</button>
@@ -115,23 +115,23 @@
 
           <!-- Search Filter Tabs (All, Songs, Artists, Albums, Videos, Playlists) -->
           <div class="search-filter-tabs" id="searchFilterTabs">
-            <button class="filter-tab-btn active" data-search-filter="all">All</button>
-            <button class="filter-tab-btn" data-search-filter="song">Songs</button>
-            <button class="filter-tab-btn" data-search-filter="artist">Artists</button>
-            <button class="filter-tab-btn" data-search-filter="album">Albums</button>
-            <button class="filter-tab-btn" data-search-filter="video">Videos</button>
-            <button class="filter-tab-btn" data-search-filter="playlist">Playlists</button>
+            <button class="filter-tab-btn active" data-search-filter="all" data-i18n="tab_all">All</button>
+            <button class="filter-tab-btn" data-search-filter="song" data-i18n="songs">Songs</button>
+            <button class="filter-tab-btn" data-search-filter="artist" data-i18n="artists">Artists</button>
+            <button class="filter-tab-btn" data-search-filter="album" data-i18n="albums">Albums</button>
+            <button class="filter-tab-btn" data-search-filter="video" data-i18n="videos">Videos</button>
+            <button class="filter-tab-btn" data-search-filter="playlist" data-i18n="playlists">Playlists</button>
           </div>
         </div>
 
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%;">
           <div class="category-chips">
-            <button class="chip active" data-category="all">All</button>
-            <button class="chip" data-category="pop">Indonesian Pop</button>
-            <button class="chip" data-category="chill">Relax & Chill</button>
-            <button class="chip" data-category="indie">Indie</button>
-            <button class="chip" data-category="fokus">Focus & Study</button>
-            <button class="chip" data-category="workout">Workout</button>
+            <button class="chip active" data-category="all" data-i18n="tab_all">All</button>
+            <button class="chip" data-category="pop" data-i18n="genre_pop">Pop Indonesia</button>
+            <button class="chip" data-category="chill" data-i18n="genre_chill">Relax & Chill</button>
+            <button class="chip" data-category="indie" data-i18n="genre_indie">Indie</button>
+            <button class="chip" data-category="fokus" data-i18n="genre_focus">Focus & Study</button>
+            <button class="chip" data-category="workout" data-i18n="genre_workout">Workout</button>
           </div>
         </div>
       </header>
@@ -280,8 +280,8 @@
           </div>
           <div class="track-list-header">
             <span style="width: 28px; text-align: center;">#</span>
-            <span style="flex: 1; padding-left: 56px;">Title & Artist</span>
-            <span style="width: 70px; text-align: right;">Duration</span>
+            <span style="flex: 1; padding-left: 56px;" data-i18n="col_title_artist">Title & Artist</span>
+            <span style="width: 70px; text-align: right;" data-i18n="col_duration">Duration</span>
           </div>
           <div class="track-list" id="trackGrid">
             <!-- Populated dynamically via JS -->
@@ -296,15 +296,15 @@
           <div class="explore-pill-grid">
             <button class="explore-nav-pill active" data-explore-tab="charts">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
-              <span>Charts</span>
+              <span data-i18n="explore_charts">Charts</span>
             </button>
             <button class="explore-nav-pill" data-explore-tab="new-releases">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-              <span>New Releases</span>
+              <span data-i18n="explore_new_releases">New Releases</span>
             </button>
             <button class="explore-nav-pill" data-explore-tab="moods">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
-              <span>Moods & Genres</span>
+              <span data-i18n="explore_moods">Moods & Genres</span>
             </button>
           </div>
         </div>
@@ -313,8 +313,8 @@
         <section class="explore-section" id="exploreChartsSection" style="margin-top: 24px;">
           <div class="section-title">
             <div style="display: flex; flex-direction: column; gap: 2px;">
-              <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-brand-primary); font-weight: 700;">POPULAR TRENDS</span>
-              <span style="font-size: 20px; font-weight: 800;">Top Charts (Top 50)</span>
+              <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-brand-primary); font-weight: 700;" data-i18n="explore_trends_sub">POPULAR TRENDS</span>
+              <span style="font-size: 20px; font-weight: 800;" data-i18n="explore_top_charts">Top Charts (Top 50)</span>
             </div>
             <div class="carousel-nav-arrows">
               <button class="carousel-arrow-btn" id="chartsPrevBtn" title="Previous">
@@ -333,8 +333,8 @@
         <!-- 2. Mood & Genre Category Cards Grid -->
         <section class="explore-section" id="exploreMoodsSection" style="margin-top: 32px;">
           <div class="section-title">
-            <span style="font-size: 20px; font-weight: 800;">Moods & Genres</span>
-            <span class="section-sub-action">All Categories</span>
+            <span style="font-size: 20px; font-weight: 800;" data-i18n="explore_moods">Moods & Genres</span>
+            <span class="section-sub-action" data-i18n="explore_all_categories">All Categories</span>
           </div>
           <div class="mood-genre-grid" id="moodGenreGrid">
             <!-- Populated dynamically with colorful cards -->
@@ -344,8 +344,8 @@
         <!-- 3. New Releases & Trending Albums -->
         <section class="explore-section" id="exploreNewReleasesSection" style="margin-top: 32px;">
           <div class="section-title">
-            <span style="font-size: 20px; font-weight: 800;">New Albums & Singles</span>
-            <span class="section-sub-action">See All</span>
+            <span style="font-size: 20px; font-weight: 800;" data-i18n="explore_new_albums">New Albums & Singles</span>
+            <span class="section-sub-action" data-i18n="explore_see_all">See All</span>
           </div>
           <div class="curated-playlists-row" id="exploreNewReleasesRow">
             <!-- Populated dynamically with new album releases -->
@@ -356,14 +356,14 @@
       <!-- Multi-Type Search Results View Container -->
       <div id="searchResultsContainer" style="display: none;">
         <div class="search-results-header">
-          <h2 id="searchResultsTitle" style="font-size: 20px; font-weight: 800;">Search Results</h2>
+          <h2 id="searchResultsTitle" style="font-size: 20px; font-weight: 800;" data-i18n="search_results_title">Search Results</h2>
           <span id="searchResultsCount" style="font-size: 13px; color: var(--color-text-secondary);"></span>
         </div>
 
         <!-- Top Result Section (Apple Music & Spotify inspired, matches mobile) -->
         <div id="searchTopResultSection" style="display: none; margin-bottom: 28px;">
           <div class="section-title">
-            <span>Top Result</span>
+            <span data-i18n="search_top_result">Top Result</span>
           </div>
           <div id="searchTopResultCard" class="top-result-card">
             <!-- Populated dynamically -->
@@ -373,7 +373,7 @@
         <!-- Artists Grid Results (When searching artists or 'all') -->
         <div id="searchArtistsSection" style="display: none; margin-bottom: 28px;">
           <div class="section-title">
-            <span>Related Artists</span>
+            <span data-i18n="search_related_artists">Related Artists</span>
           </div>
           <div id="searchArtistHeroSlot" style="width: 100%; min-width: 0;"></div>
           <div class="artist-results-grid" id="searchArtistsGrid">
@@ -384,7 +384,7 @@
         <!-- Albums Grid Results (When searching albums or 'all') -->
         <div id="searchAlbumsSection" style="display: none; margin-bottom: 28px;">
           <div class="section-title">
-            <span>Official Albums & EPs</span>
+            <span data-i18n="search_albums_eps">Official Albums & EPs</span>
           </div>
           <div class="album-grid" id="searchAlbumsGrid">
             <!-- Populated dynamically -->
@@ -394,7 +394,7 @@
         <!-- Videos Grid Results (When searching videos or 'all') -->
         <div id="searchVideosSection" style="display: none; margin-bottom: 28px;">
           <div class="section-title">
-            <span>Music Videos & Live Sessions</span>
+            <span data-i18n="search_videos_live">Music Videos & Live Sessions</span>
           </div>
           <div class="video-grid" id="searchVideosGrid">
             <!-- Populated dynamically -->
@@ -404,7 +404,7 @@
         <!-- Playlists Grid Results (When searching playlists or 'all') -->
         <div id="searchPlaylistsSection" style="display: none; margin-bottom: 28px;">
           <div class="section-title">
-            <span>Playlists & Collections</span>
+            <span data-i18n="search_playlists_collections">Playlists & Collections</span>
           </div>
           <div class="curated-playlists-row" id="searchPlaylistsGrid">
             <!-- Populated dynamically -->
@@ -414,7 +414,7 @@
         <!-- Songs List Results -->
         <div id="searchSongsSection">
           <div class="section-title">
-            <span>Songs</span>
+            <span data-i18n="songs">Songs</span>
           </div>
           <div class="track-list" id="searchSongsList">
             <!-- Populated dynamically -->
@@ -427,7 +427,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <button class="back-nav-btn" id="artistBackBtn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Back
+            <span data-i18n="btn_back">Back</span>
           </button>
         </div>
 
@@ -468,7 +468,7 @@
         <!-- 1. Popular Tracks -->
         <section class="artist-section" style="margin-top: 24px;">
           <div class="section-title">
-            <span>Popular Tracks</span>
+            <span data-i18n="artist_popular_tracks">Popular Tracks</span>
             <span class="section-sub-action" id="artistPopularCount">Top 5 Tracks</span>
           </div>
           <div class="track-list" id="artistTopTracksList">
@@ -479,7 +479,7 @@
         <!-- 2. Official Music Videos & Live Sessions (16:9 Widescreen) -->
         <section class="artist-section" id="artistVideosSection" style="margin-top: 28px;">
           <div class="section-title">
-            <span>Official Music Videos & Live Sessions</span>
+            <span data-i18n="artist_videos_title">Official Music Videos & Live Sessions</span>
             <span class="section-sub-action" id="artistVideoCountLabel">0 Videos</span>
           </div>
           <div class="video-grid" id="artistVideosGrid">
@@ -490,7 +490,7 @@
         <!-- 3. Albums & Discography -->
         <section class="artist-section" id="artistAlbumsSection" style="margin-top: 28px;">
           <div class="section-title">
-            <span>Albums & Discography</span>
+            <span data-i18n="artist_albums_title">Albums & Discography</span>
             <span class="section-sub-action" id="artistAlbumCountLabel">0 Albums</span>
           </div>
           <div class="album-grid" id="artistAlbumsRow">
@@ -501,7 +501,7 @@
         <!-- 4. Fans Also Like -->
         <section class="artist-section" id="artistPeersSection" style="margin-top: 28px;">
           <div class="section-title">
-            <span>Fans Also Like</span>
+            <span data-i18n="artist_fans_like">Fans Also Like</span>
           </div>
           <div class="artist-peers-row" id="artistPeerRow">
             <!-- Populated dynamically via JS -->
@@ -514,7 +514,7 @@
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
           <button class="back-nav-btn" id="playlistBackBtn">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            Back
+            <span data-i18n="btn_back">Back</span>
           </button>
         </div>
 
@@ -786,29 +786,71 @@
         </section>
       </div>
 
-      <!-- Listening Statistics & Analytics View (Nuclear Feature) -->
+      <!-- Listening Statistics & Analytics View (Music Recap & Habits Style) -->
       <div id="statsViewContainer" style="display: none;">
         <div class="stats-header">
           <div class="stats-header-titles">
-            <h1 class="stats-main-title">Listening Analytics</h1>
-            <p class="stats-sub-title">Visualisasi kebiasaan mendengarkan musik Anda secara lokal dan privat.</p>
+            <h1 class="stats-main-title" data-i18n="stats_main_title">Statistik & Kilas Musik</h1>
+            <p class="stats-sub-title" data-i18n="stats_sub_title">Pantau kebiasaan, artis favorit, dan ritme mendengarkan musik Anda secara privat.</p>
           </div>
           <div class="stats-filter-pills" id="statsTimeFilterPills">
-            <button class="stats-pill active" data-range="all">Sepanjang Waktu</button>
-            <button class="stats-pill" data-range="1y">1 Tahun</button>
-            <button class="stats-pill" data-range="30d">30 Hari</button>
-            <button class="stats-pill" data-range="7d">7 Hari</button>
+            <button class="stats-pill active" data-range="all" data-i18n="stats_range_all">Semua Waktu</button>
+            <button class="stats-pill" data-range="1y" data-i18n="stats_range_1y">1 Tahun</button>
+            <button class="stats-pill" data-range="30d" data-i18n="stats_range_30d">30 Hari</button>
+            <button class="stats-pill" data-range="7d" data-i18n="stats_range_7d">7 Hari</button>
           </div>
         </div>
 
-        <!-- 4 Metric Cards Row -->
+        <!-- Music Highlights Showcase (Spotify Wrapped / Apple Music Replay style) -->
+        <div class="stats-hero-grid" id="statsHeroGrid">
+          <!-- Spotlight 1: #1 Top Artist -->
+          <div class="stats-hero-card" id="statsTopArtistCard">
+            <div class="stats-hero-badge" data-i18n="stats_badge_top_artist">👑 ARTIS TERATAS</div>
+            <div class="stats-hero-media">
+              <img id="statsTopArtistImg" src="assets/logo.png" alt="Top Artist" class="stats-hero-artist-img" onerror="this.src='assets/logo.png'">
+            </div>
+            <div class="stats-hero-info">
+              <h3 id="statsTopArtistName" class="stats-hero-title">Belum ada artis</h3>
+              <p id="statsTopArtistMeta" class="stats-hero-sub">0 putaran • 0 menit</p>
+            </div>
+          </div>
+
+          <!-- Spotlight 2: #1 Top Track -->
+          <div class="stats-hero-card" id="statsTopTrackCard">
+            <div class="stats-hero-badge" data-i18n="stats_badge_top_track">🔥 LAGU TERFAVORIT</div>
+            <div class="stats-hero-media">
+              <img id="statsTopTrackImg" src="assets/logo.png" alt="Top Track" class="stats-hero-track-img" onerror="this.src='assets/logo.png'">
+              <div class="stats-hero-play-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+              </div>
+            </div>
+            <div class="stats-hero-info">
+              <h3 id="statsTopTrackTitle" class="stats-hero-title">Belum ada lagu</h3>
+              <p id="statsTopTrackMeta" class="stats-hero-sub">0 putaran</p>
+            </div>
+          </div>
+
+          <!-- Spotlight 3: Listening Personality / Time Vibe -->
+          <div class="stats-hero-card" id="statsVibeCard">
+            <div class="stats-hero-badge" data-i18n="stats_badge_vibe">✨ VIBE MENDENGAR</div>
+            <div class="stats-vibe-icon-wrap" id="statsVibeIconWrap">
+              <span id="statsVibeEmoji" style="font-size: 38px;">🎧</span>
+            </div>
+            <div class="stats-hero-info">
+              <h3 id="statsVibeTitle" class="stats-hero-title">Eksplorasi Musik</h3>
+              <p id="statsVibeDesc" class="stats-hero-sub">Putar lebih banyak lagu untuk melihat profil kebiasaan Anda.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Music Metric Cards Row -->
         <div class="stats-metrics-grid">
           <div class="metric-card">
             <div class="metric-icon-wrap" style="color: #00E599; background: rgba(0, 229, 153, 0.12);">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
             </div>
             <div class="metric-content">
-              <span class="metric-label">Total Waktu Dengar</span>
+              <span class="metric-label" data-i18n="stats_total_time">Total Waktu Dengar</span>
               <span class="metric-value" id="statsTotalTime">0 Menit</span>
             </div>
           </div>
@@ -817,7 +859,7 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             </div>
             <div class="metric-content">
-              <span class="metric-label">Lagu Diputar</span>
+              <span class="metric-label" data-i18n="stats_total_tracks">Lagu Diputar</span>
               <span class="metric-value" id="statsTotalTracks">0 Putaran</span>
             </div>
           </div>
@@ -826,7 +868,7 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
             </div>
             <div class="metric-content">
-              <span class="metric-label">Artis Unik</span>
+              <span class="metric-label" data-i18n="stats_unique_artists">Artis Berbeda</span>
               <span class="metric-value" id="statsUniqueArtists">0 Artis</span>
             </div>
           </div>
@@ -835,57 +877,49 @@
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
             </div>
             <div class="metric-content">
-              <span class="metric-label">Jam Dengar Terbanyak</span>
-              <span class="metric-value" id="statsPeakHour">--:--</span>
+              <span class="metric-label" data-i18n="stats_daily_average">Rata-Rata Harian</span>
+              <span class="metric-value" id="statsDailyAvg">0 Menit/Hari</span>
             </div>
           </div>
         </div>
 
-        <!-- GitHub-Style Contribution Heatmap -->
+        <!-- Weekly Music Rhythm Equalizer Chart (Friendly Non-IT Music Layout) -->
         <div class="stats-panel-box">
           <div class="stats-panel-header">
             <div>
-              <h3 class="stats-panel-title">Aktivitas Mendengarkan (12 Bulan Terakhir)</h3>
-              <p class="stats-panel-desc">Jumlah menit mendengarkan musik setiap hari dalam 52 minggu terakhir.</p>
+              <h3 class="stats-panel-title" data-i18n="stats_activity_chart_title">Aktivitas Musik Mingguan</h3>
+              <p class="stats-panel-desc" data-i18n="stats_activity_chart_desc">Durasi waktu mendengarkan musik per hari dalam format equalizer ritme audio.</p>
             </div>
-            <div class="heatmap-legend">
-              <span class="legend-label">Sedikit</span>
-              <div class="legend-box" style="background: rgba(255, 255, 255, 0.05);" title="0 menit"></div>
-              <div class="legend-box" style="background: rgba(0, 229, 153, 0.25);" title="1-30 menit"></div>
-              <div class="legend-box" style="background: rgba(0, 229, 153, 0.50);" title="31-90 menit"></div>
-              <div class="legend-box" style="background: rgba(0, 229, 153, 0.75);" title="91-180 menit"></div>
-              <div class="legend-box" style="background: rgba(0, 229, 153, 1.0);" title="> 180 menit"></div>
-              <span class="legend-label">Banyak</span>
+            <div class="stats-active-day-badge" id="statsPeakDayBadge">
+              <span>Hari Paling Aktif: --</span>
             </div>
           </div>
-          <div class="heatmap-scroll-container">
-            <div class="heatmap-wrapper" id="statsHeatmapWrapper">
-              <!-- Rendered via JS -->
-            </div>
+          <div class="activity-bars-container" id="statsActivityBars">
+            <!-- 7 Rounded Audio Equalizer Rhythm Bars rendered via JS -->
           </div>
         </div>
 
-        <!-- 24-Hour Listening Distribution Chart -->
+        <!-- 4 Day Segments: Time of Day Listening Breakdown -->
         <div class="stats-panel-box">
           <div class="stats-panel-header">
             <div>
-              <h3 class="stats-panel-title">Distribusi Jam Dengar (24 Jam)</h3>
-              <p class="stats-panel-desc">Pola waktu kapan Anda paling aktif memutar musik sepanjang hari.</p>
+              <h3 class="stats-panel-title" data-i18n="stats_day_rhythm_title">Karakter Waktu Mendengar</h3>
+              <p class="stats-panel-desc" data-i18n="stats_day_rhythm_desc">Pola waktu kapan Anda paling sering memutar musik dalam 24 jam.</p>
             </div>
           </div>
-          <div class="hourly-chart-container" id="statsHourlyChart">
-            <!-- 24 vertical bars rendered via JS -->
+          <div class="day-segments-grid" id="statsDaySegmentsGrid">
+            <!-- 4 Cards: Pagi, Siang, Sore, Malam -->
           </div>
         </div>
 
-        <!-- Two-Column Rankings: Top Artists & Top Tracks -->
+        <!-- Two-Column Leaderboards: Top Artists & Top Tracks -->
         <div class="stats-rankings-grid">
           <div class="stats-panel-box">
-            <h3 class="stats-panel-title">Top 10 Artis Terbanyak Diputar</h3>
+            <h3 class="stats-panel-title" data-i18n="stats_top_artists_title">Top 10 Artis Terbanyak Diputar</h3>
             <div class="rankings-list" id="statsTopArtistsList"></div>
           </div>
           <div class="stats-panel-box">
-            <h3 class="stats-panel-title">Top 10 Lagu Terfavorit</h3>
+            <h3 class="stats-panel-title" data-i18n="stats_top_tracks_title">Top 10 Lagu Terfavorit</h3>
             <div class="rankings-list" id="statsTopTracksList"></div>
           </div>
         </div>
@@ -894,12 +928,12 @@
         <div class="stats-panel-box" style="margin-top: 24px; margin-bottom: 40px;">
           <div class="stats-panel-header">
             <div>
-              <h3 class="stats-panel-title">Riwayat Putar Terakhir</h3>
-              <p class="stats-panel-desc">Daftar lagu yang baru saja selesai Anda putar.</p>
+              <h3 class="stats-panel-title" data-i18n="stats_recent_history_title">Riwayat Putar Terakhir</h3>
+              <p class="stats-panel-desc" data-i18n="stats_recent_history_desc">Daftar lagu yang baru saja selesai Anda putar.</p>
             </div>
             <button class="stats-clear-btn" id="statsClearHistoryBtn" title="Hapus Riwayat">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              <span>Bersihkan Riwayat</span>
+              <span data-i18n="stats_clear_btn">Bersihkan Riwayat</span>
             </button>
           </div>
           <div class="recent-scrobbles-table" id="statsRecentScrobblesList"></div>
@@ -912,28 +946,28 @@
         <div class="screen-player-topbar">
           <button class="back-nav-btn" id="screenPlayerBackBtn">
             <iconsax-icon name="arrow-left" type="linear" size="18" color="currentColor"></iconsax-icon>
-            Back
+            <span data-i18n="btn_back">Back</span>
           </button>
           
           <!-- Audio vs Video Mode Switcher Pill (YouTube Music style) -->
           <div class="screen-player-mode-pill">
             <button class="player-mode-btn active" id="modeAudioBtn" data-mode="audio">
               <iconsax-icon name="music" type="bold" size="14" color="currentColor"></iconsax-icon>
-              Song
+              <span data-i18n="player_mode_song">Song</span>
             </button>
             <button class="player-mode-btn" id="modeVideoBtn" data-mode="video">
               <iconsax-icon name="video-play" type="bold" size="14" color="currentColor"></iconsax-icon>
-              Video
+              <span data-i18n="player_mode_video">Video</span>
             </button>
           </div>
 
           <!-- Right Top Action Buttons -->
           <div class="screen-player-top-actions">
             <span class="audio-badge" id="screenPlayerBadge">Opus HD</span>
-            <button class="control-btn" id="screenPlayerToggleLyricsBtn" title="Toggle Lyrics">
+            <button class="control-btn" id="screenPlayerToggleLyricsBtn" title="Toggle Lyrics" data-i18n-title="side_tab_lyrics">
               <iconsax-icon name="music-filter" type="linear" size="18" color="currentColor"></iconsax-icon>
             </button>
-            <button class="control-btn" id="screenPlayerToggleQueueBtn" title="Queue">
+            <button class="control-btn" id="screenPlayerToggleQueueBtn" title="Queue" data-i18n-title="side_tab_queue">
               <iconsax-icon name="music-playlist" type="linear" size="18" color="currentColor"></iconsax-icon>
             </button>
           </div>
@@ -992,7 +1026,7 @@
                     <div class="video-overlay-right-controls">
                       <button class="video-badge-mode-btn" id="videoOverlaySwitchAudioBtn" title="Switch to Audio Only">
                         <iconsax-icon name="music" type="bold" size="14" color="#00E599"></iconsax-icon>
-                        <span>Audio Mode</span>
+                        <span data-i18n="audio_mode">Audio Mode</span>
                       </button>
                     </div>
                   </div>
@@ -1004,19 +1038,22 @@
             <div class="screen-player-info-row">
               <div class="screen-player-meta">
                 <h1 class="screen-player-title" id="screenPlayerTitle">SoraFy Desktop</h1>
-                <div class="screen-player-artist" id="screenPlayerArtist">Select a track to play</div>
+                <div class="screen-player-artist" id="screenPlayerArtist" data-i18n="select_track_prompt">Select a track to play</div>
               </div>
               <div class="screen-player-actions">
-                <button class="screen-action-btn" id="screenJamRemoteBtn" title="SoraFy Jam (Remote Control HP)">
+                <button class="screen-action-btn" id="screenJamRemoteBtn" title="SoraFy Jam (Remote Control HP)" data-i18n-title="tooltip_jam">
                   <iconsax-icon name="mobile" type="linear" size="22" color="currentColor"></iconsax-icon>
                 </button>
-                <button class="verify-stream-btn" id="screenVerifyStreamBtn" title="Check / Verify Audio Stream (Pilih Rekaman Audio)">
+                <button class="verify-stream-btn" id="screenVerifyStreamBtn" title="Check / Verify Audio Stream (Pilih Rekaman Audio)" data-i18n-title="tooltip_verify_stream">
                   <iconsax-icon id="screenVerifyStreamIcon" name="shield-tick" type="linear" size="22" color="currentColor"></iconsax-icon>
                 </button>
-                <button class="heart-btn" id="screenPlayerLikeBtn" title="Like Track">
+                <button class="heart-btn" id="screenPlayerLikeBtn" title="Like Track" data-i18n-title="tooltip_like">
                   <iconsax-icon name="heart" type="linear" size="22" color="currentColor"></iconsax-icon>
                 </button>
                 <button class="control-btn" id="screenPlayerAddToPlaylistBtn" title="Add to Playlist">
+                  <iconsax-icon name="add" type="linear" size="22" color="currentColor"></iconsax-icon>
+                </button>
+              </div>
                   <iconsax-icon name="add" type="linear" size="22" color="currentColor"></iconsax-icon>
                 </button>
               </div>
@@ -1032,10 +1069,10 @@
       <div class="lyrics-header">
         <div class="side-panel-tabs">
           <button class="side-tab-btn active" id="tabLyricsBtn">
-            Lyrics
+            <span data-i18n="side_tab_lyrics">Lyrics</span>
           </button>
           <button class="side-tab-btn" id="tabQueueBtn">
-            Queue
+            <span data-i18n="side_tab_queue">Queue</span>
             <span class="queue-count-badge" id="queueBadge">0</span>
           </button>
         </div>
@@ -1044,8 +1081,8 @@
           <button class="control-btn" id="lyricsSearchToggleBtn" style="display: none;" title="Search within lyrics">
             <iconsax-icon name="search-normal-1" type="linear" size="16" color="currentColor"></iconsax-icon>
           </button>
-          <button class="queue-clear-btn" id="clearQueueBtn" style="display: none;" title="Clear Queue">Clear</button>
-          <button class="control-btn" id="closeSideDrawerBtn" title="Close Panel">
+          <button class="queue-clear-btn" id="clearQueueBtn" style="display: none;" title="Clear Queue" data-i18n="side_clear_queue">Clear</button>
+          <button class="control-btn" id="closeSideDrawerBtn" title="Close Panel" data-i18n-title="btn_close">
             <iconsax-icon name="close-circle" type="linear" size="18" color="currentColor"></iconsax-icon>
           </button>
         </div>
@@ -1055,7 +1092,7 @@
       <div class="lyrics-search-bar" id="lyricsSearchBar" style="display: none;">
         <div class="lyrics-search-input-wrap">
           <iconsax-icon class="lyrics-search-icon" name="search-normal-1" type="linear" size="14" color="currentColor"></iconsax-icon>
-          <input type="text" class="lyrics-search-input" id="lyricsSearchInput" placeholder="Find in lyrics..." autocomplete="off" spellcheck="false">
+          <input type="text" class="lyrics-search-input" id="lyricsSearchInput" placeholder="Find in lyrics..." data-i18n-placeholder="lyrics_search_placeholder" autocomplete="off" spellcheck="false">
           <button id="lyricsClearBtn" class="lyrics-search-clear-btn" style="display: none;" title="Clear search">
             <iconsax-icon name="close-circle" type="bold" size="12" color="currentColor"></iconsax-icon>
           </button>
@@ -1070,7 +1107,7 @@
               <iconsax-icon name="arrow-down-1" type="linear" size="14" color="currentColor"></iconsax-icon>
             </button>
           </div>
-          <button class="lyrics-search-close-btn" id="lyricsSearchCloseBtn" title="Close search (Esc)">Done</button>
+          <button class="lyrics-search-close-btn" id="lyricsSearchCloseBtn" title="Close search (Esc)" data-i18n="lyrics_search_done">Done</button>
         </div>
       </div>
 
@@ -1097,7 +1134,7 @@
       <!-- Tab Content 2: Drag & Drop Responsive Queue -->
       <div class="queue-scroll-container" id="queueContainer" style="display: none;">
         <div class="queue-section">
-          <div class="queue-section-title">Now Playing</div>
+          <div class="queue-section-title" data-i18n="queue_now_playing">Now Playing</div>
           <div class="queue-now-playing" id="queueNowPlaying">
             <!-- Current track card -->
           </div>
@@ -1105,7 +1142,7 @@
 
         <div class="queue-section" style="margin-top: 16px;">
           <div class="queue-section-header">
-            <span class="queue-section-title">Up Next</span>
+            <span class="queue-section-title" data-i18n="queue_next">Up Next</span>
             <span class="queue-drag-hint">Drag to reorder</span>
           </div>
           <div class="queue-list" id="queueList">
@@ -1120,7 +1157,7 @@
   <!-- Bottom Persistent Music Player -->
   <footer class="bottom-player">
     <div class="current-track-info" id="bottomPlayerTrackInfo">
-      <div class="player-artwork-box" id="playerArtworkBox" title="Click artwork to open Fullscreen Player">
+      <div class="player-artwork-box" id="playerArtworkBox" title="Click artwork to open Fullscreen Player" data-i18n-title="tooltip_expand">
         <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 24 24' fill='none' stroke='%235F6368' stroke-width='1.5'%3E%3Cpath d='M9 18V5l12-2v13'%3E%3C/path%3E%3Ccircle cx='6' cy='18' r='3'%3E%3C/circle%3E%3Ccircle cx='18' cy='16' r='3'%3E%3C/circle%3E%3C/svg%3E" alt="Track Artwork" class="player-artwork" id="playerArtwork">
         <div class="player-artwork-expand-overlay">
           <iconsax-icon name="maximize-4" type="bold" size="18" color="#FFFFFF"></iconsax-icon>
@@ -1128,12 +1165,12 @@
       </div>
       <div class="player-track-details">
         <span class="player-title" id="playerTitle">SoraFy Desktop</span>
-        <div class="player-artist" id="playerArtist">Select a track to play</div>
+        <div class="player-artist" id="playerArtist" data-i18n="select_track_prompt">Select a track to play</div>
       </div>
-      <button class="verify-stream-btn" id="verifyStreamBtn" title="Check / Verify Audio Stream (Pilih Rekaman Audio)">
+      <button class="verify-stream-btn" id="verifyStreamBtn" title="Check / Verify Audio Stream (Pilih Rekaman Audio)" data-i18n-title="tooltip_verify_stream">
         <iconsax-icon id="verifyStreamIcon" name="shield-tick" type="linear" size="20" color="currentColor"></iconsax-icon>
       </button>
-      <button class="heart-btn" id="likeBtn" title="Like Track">
+      <button class="heart-btn" id="likeBtn" title="Like Track" data-i18n-title="tooltip_like">
         <iconsax-icon name="heart" type="linear" size="20" color="currentColor"></iconsax-icon>
       </button>
     </div>
@@ -1141,19 +1178,19 @@
     <!-- Center Controls & Squiggly Wave Seekbar -->
     <div class="player-center">
       <div class="transport-controls">
-        <button class="control-btn" id="shuffleBtn" title="Shuffle">
+        <button class="control-btn" id="shuffleBtn" title="Shuffle" data-i18n-title="tooltip_shuffle">
           <iconsax-icon name="shuffle" type="linear" size="18" color="currentColor"></iconsax-icon>
         </button>
-        <button class="control-btn" id="prevBtn" title="Previous">
+        <button class="control-btn" id="prevBtn" title="Previous" data-i18n-title="tooltip_prev">
           <iconsax-icon name="previous" type="bold" size="20" color="currentColor"></iconsax-icon>
         </button>
-        <button class="play-pause-btn" id="playPauseBtn" title="Play / Pause">
+        <button class="play-pause-btn" id="playPauseBtn" title="Play / Pause" data-i18n-title="tooltip_play_pause">
           <iconsax-icon id="playPauseIcon" name="play" type="bold" size="22" color="#000000"></iconsax-icon>
         </button>
-        <button class="control-btn" id="nextBtn" title="Next">
+        <button class="control-btn" id="nextBtn" title="Next" data-i18n-title="tooltip_next">
           <iconsax-icon name="next" type="bold" size="20" color="currentColor"></iconsax-icon>
         </button>
-        <button class="control-btn" id="repeatBtn" title="Repeat">
+        <button class="control-btn" id="repeatBtn" title="Repeat" data-i18n-title="tooltip_repeat">
           <iconsax-icon id="repeatIcon" name="repeate-music" type="linear" size="18" color="currentColor"></iconsax-icon>
         </button>
       </div>
@@ -1170,29 +1207,29 @@
 
     <!-- Right Controls: Lyrics, Queue, Sleep Timer, Fullscreen & Volume Control -->
     <div class="player-right">
-      <button class="control-btn" id="jamRemoteBtn" title="SoraFy Jam (Remote Control HP)">
+      <button class="control-btn" id="jamRemoteBtn" title="SoraFy Jam (Remote Control HP)" data-i18n-title="tooltip_jam">
         <iconsax-icon name="mobile" type="linear" size="18" color="currentColor"></iconsax-icon>
       </button>
 
-      <button class="control-btn" id="sleepTimerBtn" title="Sleep Timer" style="position: relative;">
+      <button class="control-btn" id="sleepTimerBtn" title="Sleep Timer" data-i18n-title="tooltip_sleep_timer" style="position: relative;">
         <iconsax-icon name="timer-1" type="linear" size="18" color="currentColor"></iconsax-icon>
         <span class="sleep-timer-badge" id="sleepTimerBadge" style="display: none;"></span>
       </button>
 
-      <button class="control-btn" id="toggleLyricsBtn" title="Lyrics">
+      <button class="control-btn" id="toggleLyricsBtn" title="Lyrics" data-i18n-title="side_tab_lyrics">
         <iconsax-icon name="music-filter" type="linear" size="20" color="currentColor"></iconsax-icon>
       </button>
 
-      <button class="control-btn" id="toggleQueueBtn" title="Queue">
-        <iconsax-icon name="music-playlist" type="linear" size="20" color="currentColor"></iconsax-icon>
+      <button class="control-btn" id="toggleQueueBtn" title="Queue" data-i18n-title="side_tab_queue">
+        <iconsax-icon name="music-playlist" type="linear" size="18" color="currentColor"></iconsax-icon>
       </button>
 
-      <button class="control-btn" id="expandPlayerBtn" title="Open Fullscreen Player">
+      <button class="control-btn" id="expandPlayerBtn" title="Open Fullscreen Player" data-i18n-title="tooltip_expand">
         <iconsax-icon name="maximize-4" type="linear" size="18" color="currentColor"></iconsax-icon>
       </button>
 
       <div class="volume-bar">
-        <button class="control-btn volume-icon-btn" id="volumeMuteBtn" title="Mute / Unmute">
+        <button class="control-btn volume-icon-btn" id="volumeMuteBtn" title="Mute / Unmute" data-i18n-title="tooltip_mute">
           <iconsax-icon id="volumeIcon" name="volume-high" type="linear" size="18" color="currentColor"></iconsax-icon>
         </button>
         <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.85" title="Volume">
@@ -1205,12 +1242,12 @@
   <div id="unifiedImportModal" class="modal-backdrop" style="display: none;">
     <div class="modal-card import-modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 18px; font-weight: 700;">Import Playlists & Albums</h3>
-        <button class="control-btn" id="closeUnifiedImportModalBtn" title="Close">
+        <h3 style="font-size: 18px; font-weight: 700;" data-i18n="import_hub_title">Import Playlists & Albums</h3>
+        <button class="control-btn" id="closeUnifiedImportModalBtn" title="Close" data-i18n-title="btn_close">
           <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
         </button>
       </div>
-      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 6px; line-height: 1.5;">
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 6px; line-height: 1.5;" data-i18n="import_hub_desc">
         Seamlessly import tracks from your favorite streaming platforms without any login required.
       </p>
 
@@ -1241,7 +1278,7 @@
       </div>
 
       <div style="margin-top: 14px;">
-        <label id="unifiedImportLabel" style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; display: block;">
+        <label id="unifiedImportLabel" style="font-size: 12px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 6px; display: block;" data-i18n="import_hub_label">
           Spotify Playlist or Album URL:
         </label>
         <input type="text" id="unifiedImportUrlInput" class="modal-input" placeholder="https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M">
@@ -1253,8 +1290,8 @@
       </div>
 
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
-        <button class="hero-secondary-btn" id="cancelUnifiedImportBtn">Cancel</button>
-        <button class="hero-play-btn" id="submitUnifiedImportBtn">Start Import</button>
+        <button class="hero-secondary-btn" id="cancelUnifiedImportBtn" data-i18n="btn_cancel">Cancel</button>
+        <button class="hero-play-btn" id="submitUnifiedImportBtn" data-i18n="import_hub_start">Start Import</button>
       </div>
     </div>
   </div>
@@ -1263,19 +1300,19 @@
   <div id="createPlaylistModal" class="modal-backdrop" style="display: none;">
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 18px; font-weight: 700;">+ Create New Playlist</h3>
-        <button class="control-btn" id="closeCreatePlaylistModalBtn" title="Close">
+        <h3 style="font-size: 18px; font-weight: 700;" data-i18n="create_playlist_title">+ Create New Playlist</h3>
+        <button class="control-btn" id="closeCreatePlaylistModalBtn" title="Close" data-i18n-title="btn_close">
           <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
         </button>
       </div>
-      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 8px;">
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 8px;" data-i18n="create_playlist_desc">
         Name your playlist to organize favorite tracks, chill sessions, or focus mixes.
       </p>
-      <input type="text" id="playlistNameInput" class="modal-input" placeholder="Playlist Name (e.g., Evening Vibes, Deep Focus)">
-      <textarea id="playlistDescInput" class="modal-input" style="height: 70px; resize: none; margin-top: 10px;" placeholder="Optional description..."></textarea>
+      <input type="text" id="playlistNameInput" class="modal-input" placeholder="Playlist Name (e.g., Evening Vibes, Deep Focus)" data-i18n-placeholder="create_playlist_placeholder">
+      <textarea id="playlistDescInput" class="modal-input" style="height: 70px; resize: none; margin-top: 10px;" placeholder="Optional description..." data-i18n-placeholder="create_playlist_desc_placeholder"></textarea>
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-        <button class="hero-secondary-btn" id="cancelCreatePlaylistBtn">Cancel</button>
-        <button class="hero-play-btn" id="submitCreatePlaylistBtn">Create Playlist</button>
+        <button class="hero-secondary-btn" id="cancelCreatePlaylistBtn" data-i18n="btn_cancel">Cancel</button>
+        <button class="hero-play-btn" id="submitCreatePlaylistBtn" data-i18n="create_playlist_btn">Create Playlist</button>
       </div>
     </div>
   </div>
@@ -1284,19 +1321,19 @@
   <div id="editPlaylistModal" class="modal-backdrop" style="display: none;">
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 18px; font-weight: 700;">Edit Playlist Details</h3>
-        <button class="control-btn" id="closeEditPlaylistModalBtn" title="Close">
+        <h3 style="font-size: 18px; font-weight: 700;" data-i18n="edit_playlist_title">Edit Playlist Details</h3>
+        <button class="control-btn" id="closeEditPlaylistModalBtn" title="Close" data-i18n-title="btn_close">
           <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
         </button>
       </div>
-      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 8px;">
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 8px;" data-i18n="edit_playlist_desc">
         Update your playlist's name and description.
       </p>
-      <input type="text" id="editPlaylistNameInput" class="modal-input" placeholder="Playlist Name">
-      <textarea id="editPlaylistDescInput" class="modal-input" style="height: 70px; resize: none; margin-top: 10px;" placeholder="Optional description..."></textarea>
+      <input type="text" id="editPlaylistNameInput" class="modal-input" placeholder="Playlist Name" data-i18n-placeholder="edit_playlist_placeholder">
+      <textarea id="editPlaylistDescInput" class="modal-input" style="height: 70px; resize: none; margin-top: 10px;" placeholder="Optional description..." data-i18n-placeholder="create_playlist_desc_placeholder"></textarea>
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-        <button class="hero-secondary-btn" id="cancelEditPlaylistBtn">Cancel</button>
-        <button class="hero-play-btn" id="submitEditPlaylistBtn">Save Changes</button>
+        <button class="hero-secondary-btn" id="cancelEditPlaylistBtn" data-i18n="btn_cancel">Cancel</button>
+        <button class="hero-play-btn" id="submitEditPlaylistBtn" data-i18n="btn_save">Save Changes</button>
       </div>
     </div>
   </div>
@@ -1305,8 +1342,8 @@
   <div id="addToPlaylistModal" class="modal-backdrop" style="display: none;">
     <div class="modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 18px; font-weight: 700;">Add to Playlist</h3>
-        <button class="control-btn" id="closeAddToPlaylistModalBtn" title="Close">
+        <h3 style="font-size: 18px; font-weight: 700;" data-i18n="add_to_playlist_title">Add to Playlist</h3>
+        <button class="control-btn" id="closeAddToPlaylistModalBtn" title="Close" data-i18n-title="btn_close">
           <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
         </button>
       </div>
@@ -1317,8 +1354,8 @@
         <!-- Populated dynamically via JS -->
       </div>
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-        <button class="hero-secondary-btn" id="modalCreateNewPlaylistBtn">+ Create New Playlist</button>
-        <button class="hero-outline-btn" id="cancelAddToPlaylistBtn">Done</button>
+        <button class="hero-secondary-btn" id="modalCreateNewPlaylistBtn" data-i18n="create_playlist_title">+ Create New Playlist</button>
+        <button class="hero-outline-btn" id="cancelAddToPlaylistBtn" data-i18n="btn_done">Done</button>
       </div>
     </div>
   </div>
@@ -1329,39 +1366,39 @@
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <iconsax-icon name="timer-1" type="bold" size="20" color="#00E599"></iconsax-icon>
-          <h3 style="font-size: 17px; font-weight: 700; margin: 0;">Sleep Timer</h3>
+          <h3 style="font-size: 17px; font-weight: 700; margin: 0;" data-i18n="sleep_timer_title">Sleep Timer</h3>
         </div>
-        <button class="control-btn" id="closeSleepTimerModalBtn" title="Close">
+        <button class="control-btn" id="closeSleepTimerModalBtn" title="Close" data-i18n-title="btn_close">
           <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
         </button>
       </div>
-      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 6px;">
+      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 6px;" data-i18n="sleep_timer_desc">
         Music will gently fade out and pause when the timer expires.
       </p>
 
       <div class="sleep-timer-options" id="sleepTimerOptions">
         <button class="sleep-timer-btn active" data-minutes="0">
-          <span>Off</span>
+          <span data-i18n="timer_off">Off</span>
           <span class="timer-check">✓</span>
         </button>
         <button class="sleep-timer-btn" data-minutes="15">
-          <span>15 Minutes</span>
+          <span data-i18n="timer_15m">15 Minutes</span>
           <span class="timer-check"></span>
         </button>
         <button class="sleep-timer-btn" data-minutes="30">
-          <span>30 Minutes</span>
+          <span data-i18n="timer_30m">30 Minutes</span>
           <span class="timer-check"></span>
         </button>
         <button class="sleep-timer-btn" data-minutes="45">
-          <span>45 Minutes</span>
+          <span data-i18n="timer_45m">45 Minutes</span>
           <span class="timer-check"></span>
         </button>
         <button class="sleep-timer-btn" data-minutes="60">
-          <span>60 Minutes</span>
+          <span data-i18n="timer_60m">60 Minutes</span>
           <span class="timer-check"></span>
         </button>
         <button class="sleep-timer-btn" data-minutes="-1">
-          <span>End of this song</span>
+          <span data-i18n="timer_end_song">End of this song</span>
           <span class="timer-check"></span>
         </button>
       </div>
@@ -1374,7 +1411,7 @@
       <div class="settings-modal-header">
         <div style="display: flex; align-items: center; gap: 10px;">
           <iconsax-icon name="setting-2" type="bold" size="22" color="#00E599"></iconsax-icon>
-          <h3 style="font-size: 18px; font-weight: 700; margin: 0;">SoraFy Settings</h3>
+          <h3 style="font-size: 18px; font-weight: 700; margin: 0;" data-i18n="settings_title">SoraFy Settings</h3>
         </div>
         <button class="control-btn" id="closeSettingsModalBtn" title="Close">
           <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
@@ -1520,8 +1557,8 @@
           <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
               <div class="setting-info">
-                <span class="setting-title">Model Context Protocol (MCP Server)</span>
-                <span class="setting-desc">Local AI integration for Claude Code, Cursor, Windsurf, and AI assistants.</span>
+                <span class="setting-title" data-i18n="setting_mcp_title">Model Context Protocol (MCP Server)</span>
+                <span class="setting-desc" data-i18n="setting_mcp_desc">Local AI integration for Claude Code, Cursor, Windsurf, and AI assistants.</span>
               </div>
               <span class="badge" style="background: rgba(0, 229, 153, 0.15); color: #00E599; border: 1px solid rgba(0, 229, 153, 0.3); font-size: 11px; padding: 4px 8px; border-radius: 6px;">
                 Port 8800 Active
@@ -1529,7 +1566,7 @@
             </div>
             <div style="width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
               <code id="mcpServerUrlCode" style="color: #00E599; font-size: 12px; font-family: monospace;">http://127.0.0.1:8800/mcp</code>
-              <button class="hero-secondary-btn" id="copyMcpConfigBtn" style="padding: 4px 10px; font-size: 11px;">
+              <button class="hero-secondary-btn" id="copyMcpConfigBtn" style="padding: 4px 10px; font-size: 11px;" data-i18n="btn_copy_ai_config">
                 Salin Config AI
               </button>
             </div>
@@ -1538,8 +1575,8 @@
           <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
               <div class="setting-info">
-                <span class="setting-title">Music Player Daemon (MPD Protocol)</span>
-                <span class="setting-desc">Integrasi kontrol terminal Linux untuk ncmpcpp, mpc, dan mpDris2.</span>
+                <span class="setting-title" data-i18n="setting_mpd_title">Music Player Daemon (MPD Protocol)</span>
+                <span class="setting-desc" data-i18n="setting_mpd_desc">Integrasi kontrol terminal Linux untuk ncmpcpp, mpc, dan mpDris2.</span>
               </div>
               <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 11px; padding: 4px 8px; border-radius: 6px;">
                 Port 6600 Active
@@ -1547,7 +1584,7 @@
             </div>
             <div style="width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
               <code style="color: #38BDF8; font-size: 12px; font-family: monospace;">mpc -h 127.0.0.1 status</code>
-              <button class="hero-secondary-btn" id="copyMpdCmdBtn" style="padding: 4px 10px; font-size: 11px;">
+              <button class="hero-secondary-btn" id="copyMpdCmdBtn" style="padding: 4px 10px; font-size: 11px;" data-i18n="btn_copy_cmd">
                 Salin Perintah
               </button>
             </div>
@@ -1624,39 +1661,39 @@
         <div class="settings-tab-pane" id="settingsTabShortcuts" style="display: none;">
           <div class="shortcuts-grid">
             <div class="shortcut-row">
-              <span class="shortcut-desc">Play / Pause Track</span>
+              <span class="shortcut-desc" data-i18n="shortcut_play_pause">Play / Pause Track</span>
               <kbd class="shortcut-kbd">Space</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Mute / Unmute Volume</span>
+              <span class="shortcut-desc" data-i18n="shortcut_mute">Mute / Unmute Volume</span>
               <kbd class="shortcut-kbd">M</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Next Track</span>
+              <span class="shortcut-desc" data-i18n="shortcut_next">Next Track</span>
               <kbd class="shortcut-kbd">Ctrl + →</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Previous Track</span>
+              <span class="shortcut-desc" data-i18n="shortcut_prev">Previous Track</span>
               <kbd class="shortcut-kbd">Ctrl + ←</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Seek Forward / Backward (5s)</span>
+              <span class="shortcut-desc" data-i18n="shortcut_seek">Seek Forward / Backward (5s)</span>
               <kbd class="shortcut-kbd">→ / ←</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Volume Up / Down (5%)</span>
+              <span class="shortcut-desc" data-i18n="shortcut_volume">Volume Up / Down (5%)</span>
               <kbd class="shortcut-kbd">↑ / ↓</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Focus Search Bar</span>
+              <span class="shortcut-desc" data-i18n="shortcut_search">Focus Search Bar</span>
               <kbd class="shortcut-kbd">Ctrl + F</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Open / Close Lyrics Drawer</span>
+              <span class="shortcut-desc" data-i18n="shortcut_lyrics">Open / Close Lyrics Drawer</span>
               <kbd class="shortcut-kbd">L</kbd>
             </div>
             <div class="shortcut-row">
-              <span class="shortcut-desc">Close Fullscreen Player / Modal</span>
+              <span class="shortcut-desc" data-i18n="shortcut_close">Close Fullscreen Player / Modal</span>
               <kbd class="shortcut-kbd">Esc</kbd>
             </div>
           </div>
@@ -1667,14 +1704,14 @@
           <div style="text-align: center; padding: 20px 0;">
             <img src="assets/logo.png" alt="SoraFy Logo" style="width: 64px; height: 64px; border-radius: 16px; margin-bottom: 12px;" onerror="this.style.display='none'">
             <div style="font-size: 20px; font-weight: 800; color: #FFFFFF;">SoraFy Desktop</div>
-            <div style="font-size: 13px; color: var(--color-text-secondary); margin-top: 4px;">Version 1.0.0 (Linux x64) • GPL-3.0 License</div>
-            <p style="font-size: 13px; color: var(--color-text-secondary); max-width: 380px; margin: 12px auto 20px; line-height: 1.5;">
+            <div style="font-size: 13px; color: var(--color-text-secondary); margin-top: 4px;" data-i18n="about_version">Version 1.0.0 (Linux x64) • GPL-3.0 License</div>
+            <p style="font-size: 13px; color: var(--color-text-secondary); max-width: 380px; margin: 12px auto 20px; line-height: 1.5;" data-i18n="about_desc">
               High-resolution streaming music player with real-time synchronized lyrics, DSP equalizer, and multi-platform playlist import.
             </p>
             <div style="display: flex; justify-content: center; gap: 12px;">
               <button class="hero-secondary-btn" id="checkUpdateBtn" style="padding: 8px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
                 <iconsax-icon name="refresh" type="linear" size="16" color="currentColor"></iconsax-icon>
-                <span>Check for Updates</span>
+                <span data-i18n="btn_check_update">Check for Updates</span>
               </button>
             </div>
             <div id="updateStatusText" style="font-size: 12px; color: var(--color-text-secondary); margin-top: 10px;"></div>
@@ -1688,38 +1725,38 @@
   <div id="trackContextMenu" class="context-menu" style="display: none;">
     <div class="context-menu-item" data-action="play-next">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
-      <span>Play Next</span>
+      <span data-i18n="ctx_play_next">Play Next</span>
     </div>
     <div class="context-menu-item" data-action="add-queue">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-      <span>Add to Queue</span>
+      <span data-i18n="ctx_add_queue">Add to Queue</span>
     </div>
     <div class="context-menu-divider"></div>
     <div class="context-menu-item" data-action="play-now">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-      <span>Play Now</span>
+      <span data-i18n="ctx_play_now">Play Now</span>
     </div>
     <div class="context-menu-item" data-action="artist-profile">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-      <span>View Artist Profile</span>
+      <span data-i18n="ctx_view_artist">View Artist Profile</span>
     </div>
     <div class="context-menu-item" data-action="add-playlist">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-      <span>Add to Playlist</span>
+      <span data-i18n="ctx_add_playlist">Add to Playlist</span>
     </div>
     <div class="context-menu-item" data-action="toggle-like">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-      <span id="contextMenuLikeText">Like Track</span>
+      <span id="contextMenuLikeText" data-i18n="ctx_like_track">Like Track</span>
     </div>
     <div class="context-menu-divider"></div>
     <div class="context-menu-item" data-action="download-track">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-      <span>Download Track (MP3)</span>
+      <span data-i18n="ctx_download_track">Download Track (MP3)</span>
     </div>
     <div class="context-menu-divider"></div>
     <div class="context-menu-item" data-action="stream-candidates">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-      <span>Pilih Rekaman Audio (Candidates)</span>
+      <span data-i18n="ctx_choose_stream">Pilih Rekaman Audio (Candidates)</span>
     </div>
   </div>
 
@@ -1730,8 +1767,8 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <iconsax-icon name="shield-tick" type="bold" size="26" color="#00E599"></iconsax-icon>
           <div>
-            <h3 class="modal-title" style="margin: 0; font-size: 16px; font-weight: 700;">Verifikasi Sumber Audio</h3>
-            <div id="streamCandidatesSubtitle" style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;">Pilih rekaman audio yang benar untuk lagu ini</div>
+            <h3 class="modal-title" style="margin: 0; font-size: 16px; font-weight: 700;" data-i18n="stream_verify_title">Verifikasi Sumber Audio</h3>
+            <div id="streamCandidatesSubtitle" style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;" data-i18n="stream_verify_subtitle">Pilih rekaman audio yang benar untuk lagu ini</div>
           </div>
         </div>
         <button class="modal-close-btn" id="closeStreamCandidatesBtn">
@@ -1744,17 +1781,17 @@
 
         <div id="streamCandidatesLoading" class="stream-candidates-loading" style="display: none;">
           <div class="stream-spinner"></div>
-          <span>Mencari kandidat audio alternatif...</span>
+          <span data-i18n="stream_searching">Mencari kandidat audio alternatif...</span>
         </div>
 
         <div id="streamCandidatesList" class="stream-candidates-list"></div>
       </div>
 
       <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
-        <button class="btn btn-secondary" id="unverifyStreamBtn" style="display: none; color: #FF6B6B; border-color: rgba(255, 107, 107, 0.3);">
+        <button class="btn btn-secondary" id="unverifyStreamBtn" style="display: none; color: #FF6B6B; border-color: rgba(255, 107, 107, 0.3);" data-i18n="btn_remove_verification">
           Hapus Verifikasi (Reset ke Otomatis)
         </button>
-        <button class="btn btn-secondary" id="cancelStreamCandidatesBtn" style="margin-left: auto;">Tutup</button>
+        <button class="btn btn-secondary" id="cancelStreamCandidatesBtn" style="margin-left: auto;" data-i18n="btn_close">Tutup</button>
       </div>
     </div>
   </div>
@@ -1766,8 +1803,8 @@
         <div style="display: flex; align-items: center; gap: 12px;">
           <iconsax-icon name="mobile" type="bold" size="26" color="#00E599"></iconsax-icon>
           <div>
-            <h3 class="modal-title" style="margin: 0; font-size: 16px; font-weight: 700;">SoraFy Jam • Remote Control HP</h3>
-            <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;">Kendalikan musik dari smartphone Anda di jaringan Wi-Fi lokal</div>
+            <h3 class="modal-title" style="margin: 0; font-size: 16px; font-weight: 700;" data-i18n="jam_modal_title">SoraFy Jam • Remote Control HP</h3>
+            <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;" data-i18n="jam_modal_desc">Kendalikan musik dari smartphone Anda di jaringan Wi-Fi lokal</div>
           </div>
         </div>
         <button class="modal-close-btn" id="closeJamModalBtn">
