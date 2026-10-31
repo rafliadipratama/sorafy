@@ -1546,7 +1546,60 @@
               <span class="setting-desc" data-i18n="setting_discord_rpc_desc">Show your currently playing track on your Discord profile.</span>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" id="settingDiscordRpc" checked>
+              <input type="checkbox" id="settingDiscordRpc" aria-label="Discord Rich Presence" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item discord-setting">
+            <label class="setting-info" for="settingDiscordActivityName">
+              <span class="setting-title" data-i18n="setting_discord_activity_name">Activity Name</span>
+              <span class="setting-desc" data-i18n="setting_discord_activity_name_desc">The name after Listening to, for example Sorafy or Music.</span>
+            </label>
+            <input class="settings-select discord-name-input" type="text" id="settingDiscordActivityName" maxlength="128" placeholder="Sorafy" value="Sorafy">
+          </div>
+
+          <div class="setting-item discord-setting">
+            <label class="setting-info" for="settingDiscordDisplayName">
+              <span class="setting-title" data-i18n="setting_discord_display_name">Display Name</span>
+              <span class="setting-desc" data-i18n="setting_discord_display_name_desc">Choose what appears in your Discord activity status.</span>
+            </label>
+            <select class="settings-select" id="settingDiscordDisplayName">
+              <option value="activity" data-i18n="setting_discord_activity_name">Activity Name</option>
+              <option value="artist" data-i18n="setting_discord_artist_name">Artist Name</option>
+              <option value="title" data-i18n="setting_discord_song_title">Song Title</option>
+            </select>
+          </div>
+
+          <div class="setting-item">
+            <label class="setting-info" for="settingDiscordHideWhenPaused">
+              <span class="setting-title" data-i18n="setting_discord_hide_paused">Hide When Paused</span>
+              <span class="setting-desc" data-i18n="setting_discord_hide_paused_desc">Hide your activity while playback is paused.</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingDiscordHideWhenPaused" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <label class="setting-info" for="settingDiscordShowLogo">
+              <span class="setting-title" data-i18n="setting_discord_show_logo">Show Logo</span>
+              <span class="setting-desc" data-i18n="setting_discord_show_logo_desc">Show the SoraFy logo beside the cover, or on its own.</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingDiscordShowLogo" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <label class="setting-info" for="settingDiscordShowCover">
+              <span class="setting-title" data-i18n="setting_discord_show_cover">Show Cover</span>
+              <span class="setting-desc" data-i18n="setting_discord_show_cover_desc">Show the current track's cover art.</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="settingDiscordShowCover" checked>
               <span class="toggle-slider"></span>
             </label>
           </div>

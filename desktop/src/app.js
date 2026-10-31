@@ -1062,6 +1062,18 @@ const I18N_DICTIONARY = {
     setting_notifications_desc: "Show pop-up notification when track changes in background.",
     setting_discord_rpc: "Discord Rich Presence",
     setting_discord_rpc_desc: "Show your currently playing track on your Discord profile.",
+    setting_discord_activity_name: "Activity Name",
+    setting_discord_activity_name_desc: "The name after Listening to, for example Sorafy or Music.",
+    setting_discord_display_name: "Display Name",
+    setting_discord_display_name_desc: "Choose what appears in your Discord activity status.",
+    setting_discord_artist_name: "Artist Name",
+    setting_discord_song_title: "Song Title",
+    setting_discord_hide_paused: "Hide When Paused",
+    setting_discord_hide_paused_desc: "Hide your activity while playback is paused.",
+    setting_discord_show_logo: "Show Logo",
+    setting_discord_show_logo_desc: "Show the SoraFy logo beside the cover, or on its own.",
+    setting_discord_show_cover: "Show Cover",
+    setting_discord_show_cover_desc: "Show the current track's cover art.",
     setting_cache_storage: "Audio Cache & Storage",
     setting_cache_storage_desc: "Clear cached audio streams and artworks to free disk space.",
     setting_cache_quota: "Max Cache Quota (LRU)",
@@ -1333,6 +1345,18 @@ const I18N_DICTIONARY = {
     setting_notifications_desc: "Tampilkan notifikasi pop-up saat lagu berganti di latar belakang.",
     setting_discord_rpc: "Discord Rich Presence",
     setting_discord_rpc_desc: "Tampilkan lagu yang sedang diputar di profil Discord Anda.",
+    setting_discord_activity_name: "Nama Aktivitas",
+    setting_discord_activity_name_desc: "Nama setelah Listening to, misalnya Sorafy atau Music.",
+    setting_discord_display_name: "Nama yang Ditampilkan",
+    setting_discord_display_name_desc: "Pilih nama yang muncul di status aktivitas Discord.",
+    setting_discord_artist_name: "Nama Artis",
+    setting_discord_song_title: "Judul Lagu",
+    setting_discord_hide_paused: "Sembunyikan Saat Dijeda",
+    setting_discord_hide_paused_desc: "Sembunyikan aktivitas saat pemutaran dijeda.",
+    setting_discord_show_logo: "Tampilkan Logo",
+    setting_discord_show_logo_desc: "Tampilkan logo SoraFy di samping cover, atau sebagai gambar utama.",
+    setting_discord_show_cover: "Tampilkan Cover",
+    setting_discord_show_cover_desc: "Tampilkan cover lagu yang sedang diputar.",
     setting_cache_storage: "Penyimpanan & Cache Audio",
     setting_cache_storage_desc: "Bersihkan cache streaming audio dan gambar album untuk menghemat ruang disk.",
     setting_cache_quota: "Batas Kuota Cache (LRU)",
@@ -1928,6 +1952,11 @@ class SoraFyDesktopApp {
     this.settingCloseToTray = document.getElementById("settingCloseToTray");
     this.settingNotifications = document.getElementById("settingNotifications");
     this.settingDiscordRpc = document.getElementById("settingDiscordRpc");
+    this.settingDiscordActivityName = document.getElementById("settingDiscordActivityName");
+    this.settingDiscordDisplayName = document.getElementById("settingDiscordDisplayName");
+    this.settingDiscordHideWhenPaused = document.getElementById("settingDiscordHideWhenPaused");
+    this.settingDiscordShowLogo = document.getElementById("settingDiscordShowLogo");
+    this.settingDiscordShowCover = document.getElementById("settingDiscordShowCover");
     this.settingClearCacheBtn = document.getElementById("settingClearCacheBtn");
     this.settingCacheQuota = document.getElementById("settingCacheQuota");
     this.settingSelectCookieBtn = document.getElementById("settingSelectCookieBtn");
@@ -2238,8 +2267,13 @@ class SoraFyDesktopApp {
   // Discord Rich Presence Integration
   // =========================================================================
   updateDiscordPresence(track) {
-    if (!track || !window.electronAPI || typeof window.electronAPI.updateDiscordPresence !== 'function') return;
-    if (this.appSettings && this.appSettings.discordRpc === false) return;
+    if (!window.electronAPI || typeof window.electronAPI.updateDiscordPresence !== 'function') return;
+    const settings = this.appSettings || {};
+    const playing = this.audio ? !this.audio.paused && !this.audio.ended : this.isPlaying;
+    if (!track || settings.discordRpc === false || (!playing && settings.discordHideWhenPaused !== false)) {
+      window.electronAPI.clearDiscordPresence?.();
+      return;
+    }
 
     try {
       const startTimestamp = Math.floor(Date.now() / 1000) - Math.floor(this.audio ? (this.audio.currentTime || 0) : 0);
@@ -2247,16 +2281,40 @@ class SoraFyDesktopApp {
         ? startTimestamp + track.duration_secs
         : undefined;
 
+      const coverUrl = track.artwork_url || track.cover_url || track.thumbnail_url || '';
+      const fallbackLogo = 'https://raw.githubusercontent.com/rafliadipratama/sorafy/main/shared/assets/logo_monogram.png';
+      const ytUrl = track.id && !track.id.startsWith('local_')
+        ? `https://www.youtube.com/watch?v=${track.id.replace(/^yt:/, '')}`
+        : null;
+
+      const buttons = [];
+      if (ytUrl) {
+        buttons.push({ label: 'Dengarkan di YouTube', url: ytUrl });
+      }
+      buttons.push({ label: 'Dapatkan SoraFy', url: 'https://github.com/rafliadipratama/sorafy' });
+
+      const assets = {};
+      if (settings.discordShowCover !== false && /^https?:\/\//i.test(coverUrl)) {
+        assets.large_image = coverUrl;
+        assets.large_text = track.title ? `${track.title} - ${track.artist || ''}` : 'SoraFy Desktop';
+        if (settings.discordShowLogo !== false) {
+          assets.small_image = fallbackLogo;
+          assets.small_text = 'SoraFy';
+        }
+      } else if (settings.discordShowLogo !== false) {
+        assets.large_image = fallbackLogo;
+        assets.large_text = 'SoraFy';
+      }
+
       window.electronAPI.updateDiscordPresence({
+        type: 2,
+        name: String(settings.discordActivityName || 'Sorafy').trim().substring(0, 128) || 'Sorafy',
+        status_display_type: settings.discordDisplayName === 'artist' ? 1 : settings.discordDisplayName === 'title' ? 2 : 0,
         details: track.title || 'Mendengarkan Musik',
         state: track.artist || 'SoraFy Music',
-        timestamps: this.isPlaying ? { start: startTimestamp, end: endTimestamp } : undefined,
-        assets: {
-          large_image: track.artwork_url || 'sorafy_logo',
-          large_text: track.title ? `${track.title} - ${track.artist}` : 'SoraFy Desktop',
-          small_image: this.isPlaying ? 'play' : 'pause',
-          small_text: this.isPlaying ? 'Memutar' : 'Dijeda'
-        }
+        timestamps: playing ? { start: startTimestamp, end: endTimestamp } : undefined,
+        assets: Object.keys(assets).length ? assets : undefined,
+        buttons: buttons.slice(0, 2)
       });
     } catch (_) {}
   }
@@ -2375,6 +2433,11 @@ class SoraFyDesktopApp {
       closeToTray: false,
       notifications: true,
       discordRpc: true,
+      discordActivityName: 'Sorafy',
+      discordDisplayName: 'activity',
+      discordHideWhenPaused: true,
+      discordShowLogo: true,
+      discordShowCover: true,
       audioQuality: 'high',
       volumeNormalization: false,
       crossfadeDuration: 0,
@@ -2423,6 +2486,11 @@ class SoraFyDesktopApp {
     if (this.settingCloseToTray) this.settingCloseToTray.checked = !!this.appSettings.closeToTray;
     if (this.settingNotifications) this.settingNotifications.checked = this.appSettings.notifications !== false;
     if (this.settingDiscordRpc) this.settingDiscordRpc.checked = this.appSettings.discordRpc !== false;
+    if (this.settingDiscordActivityName) this.settingDiscordActivityName.value = this.appSettings.discordActivityName;
+    if (this.settingDiscordDisplayName) this.settingDiscordDisplayName.value = this.appSettings.discordDisplayName;
+    if (this.settingDiscordHideWhenPaused) this.settingDiscordHideWhenPaused.checked = this.appSettings.discordHideWhenPaused !== false;
+    if (this.settingDiscordShowLogo) this.settingDiscordShowLogo.checked = this.appSettings.discordShowLogo !== false;
+    if (this.settingDiscordShowCover) this.settingDiscordShowCover.checked = this.appSettings.discordShowCover !== false;
 
     if (this.navSettings) {
       this.navSettings.addEventListener("click", () => {
@@ -2593,15 +2661,33 @@ class SoraFyDesktopApp {
     }
 
     if (this.settingDiscordRpc) {
-      this.settingDiscordRpc.addEventListener("change", (e) => {
+      this.settingDiscordRpc.addEventListener("change", async (e) => {
         this.appSettings.discordRpc = e.target.checked;
-        persistSettings();
+        await persistSettings();
         if (!e.target.checked && window.electronAPI && typeof window.electronAPI.clearDiscordPresence === 'function') {
           window.electronAPI.clearDiscordPresence();
         } else if (e.target.checked) {
           const cur = this.tracks[this.currentTrackIndex];
           if (cur) this.updateDiscordPresence(cur);
         }
+      });
+    }
+
+    for (const [control, key] of [
+      [this.settingDiscordActivityName, 'discordActivityName'],
+      [this.settingDiscordDisplayName, 'discordDisplayName'],
+      [this.settingDiscordHideWhenPaused, 'discordHideWhenPaused'],
+      [this.settingDiscordShowLogo, 'discordShowLogo'],
+      [this.settingDiscordShowCover, 'discordShowCover']
+    ]) {
+      control?.addEventListener('change', async () => {
+        this.appSettings[key] = control.type === 'checkbox' ? control.checked : control.value.trim();
+        if (key === 'discordActivityName') {
+          this.appSettings[key] = this.appSettings[key] || 'Sorafy';
+          control.value = this.appSettings[key];
+        }
+        await persistSettings();
+        this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
       });
     }
 
@@ -3623,6 +3709,7 @@ class SoraFyDesktopApp {
 
     this.audio.addEventListener("play", () => {
       this.showPlayerBuffering(false);
+      this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
       if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
         if (this.screenPlayerNativeVideo.paused) {
           this.screenPlayerNativeVideo.play().catch(() => {});
@@ -3630,11 +3717,13 @@ class SoraFyDesktopApp {
       }
     });
     this.audio.addEventListener("pause", () => {
+      this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
       if (this.screenPlayerNativeVideo && !this.screenPlayerNativeVideo.paused) {
         this.screenPlayerNativeVideo.pause();
       }
       this.savePlaybackSession();
     });
+    this.audio.addEventListener("seeked", () => this.updateDiscordPresence(this.tracks[this.currentTrackIndex]));
 
     // Playback session persistence hooks (on window close, unload, pagehide, and Electron app-before-close)
     window.addEventListener("beforeunload", () => this.savePlaybackSession());
