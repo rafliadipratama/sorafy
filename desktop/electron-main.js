@@ -7,6 +7,11 @@ const fs = require('fs');
 const os = require('os');
 const net = require('net');
 const des = require('des.js');
+require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
+
+if (!/^\d{17,20}$/.test((process.env.DISCORD_CLIENT_ID || '').trim())) {
+  console.warn('[Discord RPC] Set a valid DISCORD_CLIENT_ID in desktop/.env to enable Rich Presence.');
+}
 let QRCode;
 try {
   QRCode = require('qrcode');
@@ -2659,6 +2664,11 @@ const DEFAULT_SETTINGS = {
   closeToTray: false,
   notifications: true,
   discordRpc: true,
+  discordActivityName: 'Sorafy',
+  discordDisplayName: 'activity',
+  discordHideWhenPaused: true,
+  discordShowLogo: true,
+  discordShowCover: true,
   audioQuality: 'high',
   volumeNormalization: false,
   crossfadeDuration: 0,
@@ -2826,56 +2836,138 @@ function saveListeningStatsDisk(stats) {
 
 // Zero-dependency Native Discord Rich Presence (IPC Socket)
 class DiscordRpcClient {
-  constructor(clientId = '1343717202353160232') {
-    this.clientId = clientId;
+  constructor(clientId = process.env.DISCORD_CLIENT_ID || '') {
+    const value = String(clientId).trim();
+    this.clientId = /^\d{17,20}$/.test(value) ? value : null;
     this.socket = null;
     this.isConnected = false;
+    this.isReady = false;
     this.currentActivity = null;
     this.reconnectTimer = null;
+    this.incomingBuffer = Buffer.alloc(0);
   }
 
-  getSocketPath(id = 0) {
+  getClientId() {
+    return this.clientId;
+  }
+
+  getCandidateSocketPaths() {
     if (process.platform === 'win32') {
-      return `\\\\?\\pipe\\discord-ipc-${id}`;
+      return Array.from({ length: 8 }, (_, i) => `\\\\?\\pipe\\discord-ipc-${i}`);
     }
     const env = process.env;
-    const prefix = env.XDG_RUNTIME_DIR || env.TMPDIR || env.TMP || env.TEMP || '/tmp';
-    return path.join(prefix, `discord-ipc-${id}`);
+    const prefixes = [
+      env.XDG_RUNTIME_DIR,
+      env.XDG_RUNTIME_DIR ? path.join(env.XDG_RUNTIME_DIR, 'app/com.discordapp.Discord') : null,
+      env.XDG_RUNTIME_DIR ? path.join(env.XDG_RUNTIME_DIR, 'snap.discord') : null,
+      env.TMPDIR,
+      env.TMP,
+      env.TEMP,
+      '/tmp'
+    ].filter(Boolean);
+
+    const paths = [];
+    for (const prefix of prefixes) {
+      for (let i = 0; i < 8; i++) {
+        paths.push(path.join(prefix, `discord-ipc-${i}`));
+      }
+    }
+
+    // Filter only existing sockets on Unix to avoid slow connection timeouts
+    const existing = paths.filter((p) => {
+      try {
+        return fs.existsSync(p);
+      } catch (_) {
+        return false;
+      }
+    });
+
+    return existing.length > 0 ? existing : paths.slice(0, 4);
   }
 
   connect() {
-    if (this.socket || this.isConnected) return;
+    if (!this.getClientId() || this.socket || this.isConnected || loadAppSettings().discordRpc === false) return;
+    clearTimeout(this.reconnectTimer);
+    const candidatePaths = this.getCandidateSocketPaths();
+
     const tryConnect = (idx) => {
-      if (idx > 3) {
-        this.scheduleReconnect(30000);
+      if (idx >= candidatePaths.length) {
+        console.log('[Discord RPC] Tidak menemukan socket Discord aktif. Pastikan aplikasi Discord desktop sedang berjalan.');
+        this.scheduleReconnect(15000);
         return;
       }
+
+      const sockPath = candidatePaths[idx];
       try {
-        const sockPath = this.getSocketPath(idx);
+        console.log(`[Discord RPC] Mencoba menghubungkan ke socket: ${sockPath}`);
         const sock = net.connect(sockPath);
+        this.socket = sock;
 
         sock.once('connect', () => {
-          this.socket = sock;
+          if (this.socket !== sock) return;
           this.isConnected = true;
+          this.isReady = false;
+          this.incomingBuffer = Buffer.alloc(0);
+          console.log(`[Discord RPC] Terhubung ke socket Discord (${sockPath}). Mengirim handshake...`);
           this.sendHandshake();
-          if (this.currentActivity) {
-            this.sendActivity(this.currentActivity);
+        });
+
+        sock.on('data', (data) => {
+          if (this.socket !== sock) return;
+          this.incomingBuffer = Buffer.concat([this.incomingBuffer, data]);
+          while (this.incomingBuffer.length >= 8) {
+            const op = this.incomingBuffer.readInt32LE(0);
+            const len = this.incomingBuffer.readInt32LE(4);
+            if (this.incomingBuffer.length < 8 + len) break;
+
+            const bodyStr = this.incomingBuffer.slice(8, 8 + len).toString('utf-8');
+            this.incomingBuffer = this.incomingBuffer.slice(8 + len);
+
+            try {
+              const msg = JSON.parse(bodyStr);
+              if (op === 1 && msg.evt === 'READY') {
+                this.isReady = true;
+                const userTag = msg.data && msg.data.user ? `${msg.data.user.username}#${msg.data.user.discriminator || '0'}` : 'User';
+                console.log(`[Discord RPC] Handshake BERHASIL! Terhubung sebagai: ${userTag}`);
+                if (this.currentActivity) {
+                  this.sendActivity(this.currentActivity);
+                }
+              } else if (op === 1 && msg.evt === 'ERROR') {
+                console.warn('[Discord RPC] Discord melaporkan error:', msg.data);
+              } else if (op === 1 && msg.cmd === 'SET_ACTIVITY') {
+                console.log('[Discord RPC] Status Rich Presence berhasil diperbarui di profil Discord!');
+              } else if (op === 2) {
+                console.warn('[Discord RPC] Discord menutup koneksi (Opcode 2/Close):', bodyStr);
+                sock.destroy();
+              } else if (op === 3) {
+                this.send(4, msg.data || {});
+              }
+            } catch (err) {
+              console.warn('[Discord RPC] Gagal mem-parse respon frame:', err);
+            }
           }
         });
 
-        sock.on('error', () => {
+        sock.on('error', (err) => {
+          if (this.socket !== sock) return;
           sock.destroy();
           if (!this.isConnected) {
+            this.socket = null;
             tryConnect(idx + 1);
           }
         });
 
         sock.on('close', () => {
+          if (this.socket !== sock) return;
+          if (this.isConnected) {
+            console.log('[Discord RPC] Koneksi socket Discord terputus. Menjadwalkan koneksi ulang...');
+          }
           this.socket = null;
           this.isConnected = false;
+          this.isReady = false;
           this.scheduleReconnect(15000);
         });
-      } catch (_) {
+      } catch (err) {
         tryConnect(idx + 1);
       }
     };
@@ -2903,48 +2995,97 @@ class DiscordRpcClient {
       packet.writeInt32LE(len, 4);
       packet.write(payload, 8, len, 'utf-8');
       this.socket.write(packet);
-    } catch (_) {}
+    } catch (err) {
+      console.warn('[Discord RPC] Gagal mengirim paket ke socket:', err);
+    }
   }
 
   sendHandshake() {
-    this.send(0, { v: 1, client_id: this.clientId });
+    const cid = this.getClientId();
+    this.send(0, { v: 1, client_id: cid });
+  }
+
+  sanitizeActivity(act) {
+    if (!act) return null;
+    const clean = {};
+    if (act.name) clean.name = String(act.name).trim().substring(0, 128);
+    if ([0, 1, 2].includes(act.status_display_type)) clean.status_display_type = act.status_display_type;
+    if (typeof act.type === 'number') clean.type = act.type;
+    if (act.details) clean.details = String(act.details).trim().substring(0, 128);
+    if (act.state) clean.state = String(act.state).trim().substring(0, 128);
+    if (act.timestamps && (act.timestamps.start || act.timestamps.end)) {
+      clean.timestamps = {};
+      if (typeof act.timestamps.start === 'number') clean.timestamps.start = Math.floor(act.timestamps.start);
+      if (typeof act.timestamps.end === 'number') clean.timestamps.end = Math.floor(act.timestamps.end);
+    }
+    if (act.assets) {
+      clean.assets = {};
+      if (act.assets.large_image) clean.assets.large_image = String(act.assets.large_image);
+      if (act.assets.large_text) clean.assets.large_text = String(act.assets.large_text).trim().substring(0, 128);
+      if (act.assets.small_image) clean.assets.small_image = String(act.assets.small_image);
+      if (act.assets.small_text) clean.assets.small_text = String(act.assets.small_text).trim().substring(0, 128);
+    }
+    if (Array.isArray(act.buttons) && act.buttons.length > 0) {
+      const validButtons = [];
+      for (const b of act.buttons.slice(0, 2)) {
+        if (b && b.label && b.url && /^https?:\/\//i.test(b.url)) {
+          validButtons.push({
+            label: String(b.label).trim().substring(0, 32),
+            url: String(b.url).trim()
+          });
+        }
+      }
+      if (validButtons.length > 0) {
+        clean.buttons = validButtons;
+      }
+    }
+    return clean;
   }
 
   sendActivity(activity) {
-    this.setActivity(activity);
-  }
-
-  setActivity(activity) {
-    this.currentActivity = activity;
     if (!this.isConnected) {
-      this.connect();
+      if (activity) this.connect();
+      return;
+    }
+    if (!this.isReady) {
       return;
     }
     const nonce = Math.random().toString(36).substring(2);
+    const sanitized = this.sanitizeActivity(activity);
+    console.log('[Discord RPC] Mengirim data aktivitas baru:', sanitized ? sanitized.details : '(clear)');
     this.send(1, {
       cmd: 'SET_ACTIVITY',
       args: {
         pid: process.pid,
-        activity: activity || null
+        activity: sanitized
       },
       nonce
     });
   }
 
+  setActivity(activity) {
+    this.currentActivity = activity;
+    this.sendActivity(activity);
+  }
+
   clearActivity() {
     this.currentActivity = null;
-    this.setActivity(null);
+    this.sendActivity(null);
   }
 
   disconnect() {
     clearTimeout(this.reconnectTimer);
+    this.currentActivity = null;
     if (this.socket) {
+      const socket = this.socket;
       try {
-        this.clearActivity();
-        this.socket.destroy();
+        this.sendActivity(null);
+        this.socket = null;
+        socket.end();
       } catch (_) {}
       this.socket = null;
       this.isConnected = false;
+      this.isReady = false;
     }
   }
 }
