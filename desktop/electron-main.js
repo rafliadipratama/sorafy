@@ -2669,6 +2669,8 @@ const DEFAULT_SETTINGS = {
   discordHideWhenPaused: true,
   discordShowLogo: true,
   discordShowCover: true,
+  discordShowYouTubeButton: true,
+  discordShowSorafyButton: true,
   audioQuality: 'high',
   volumeNormalization: false,
   crossfadeDuration: 0,

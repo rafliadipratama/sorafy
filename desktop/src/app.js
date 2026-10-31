@@ -1074,6 +1074,10 @@ const I18N_DICTIONARY = {
     setting_discord_show_logo_desc: "Show the SoraFy logo beside the cover, or on its own.",
     setting_discord_show_cover: "Show Cover",
     setting_discord_show_cover_desc: "Show the current track's cover art.",
+    setting_discord_youtube_button: "Show YouTube Music Button",
+    setting_discord_youtube_button_desc: "Show the listening link in your Discord activity.",
+    setting_discord_sorafy_button: "Show Get SoraFy Button",
+    setting_discord_sorafy_button_desc: "Show the SoraFy download link in your Discord activity.",
     setting_cache_storage: "Audio Cache & Storage",
     setting_cache_storage_desc: "Clear cached audio streams and artworks to free disk space.",
     setting_cache_quota: "Max Cache Quota (LRU)",
@@ -1357,6 +1361,10 @@ const I18N_DICTIONARY = {
     setting_discord_show_logo_desc: "Tampilkan logo SoraFy di samping cover, atau sebagai gambar utama.",
     setting_discord_show_cover: "Tampilkan Cover",
     setting_discord_show_cover_desc: "Tampilkan cover lagu yang sedang diputar.",
+    setting_discord_youtube_button: "Tampilkan Tombol YouTube Music",
+    setting_discord_youtube_button_desc: "Tampilkan tombol Dengarkan di YouTube Music di aktivitas Discord.",
+    setting_discord_sorafy_button: "Tampilkan Tombol Dapatkan SoraFy",
+    setting_discord_sorafy_button_desc: "Tampilkan tautan unduhan SoraFy di aktivitas Discord.",
     setting_cache_storage: "Penyimpanan & Cache Audio",
     setting_cache_storage_desc: "Bersihkan cache streaming audio dan gambar album untuk menghemat ruang disk.",
     setting_cache_quota: "Batas Kuota Cache (LRU)",
@@ -1957,6 +1965,8 @@ class SoraFyDesktopApp {
     this.settingDiscordHideWhenPaused = document.getElementById("settingDiscordHideWhenPaused");
     this.settingDiscordShowLogo = document.getElementById("settingDiscordShowLogo");
     this.settingDiscordShowCover = document.getElementById("settingDiscordShowCover");
+    this.settingDiscordShowYouTubeButton = document.getElementById("settingDiscordShowYouTubeButton");
+    this.settingDiscordShowSorafyButton = document.getElementById("settingDiscordShowSorafyButton");
     this.settingClearCacheBtn = document.getElementById("settingClearCacheBtn");
     this.settingCacheQuota = document.getElementById("settingCacheQuota");
     this.settingSelectCookieBtn = document.getElementById("settingSelectCookieBtn");
@@ -2284,14 +2294,16 @@ class SoraFyDesktopApp {
       const coverUrl = track.artwork_url || track.cover_url || track.thumbnail_url || '';
       const fallbackLogo = 'https://raw.githubusercontent.com/rafliadipratama/sorafy/main/shared/assets/logo_monogram.png';
       const ytUrl = track.id && !track.id.startsWith('local_')
-        ? `https://www.youtube.com/watch?v=${track.id.replace(/^yt:/, '')}`
+        ? `https://music.youtube.com/watch?v=${track.id.replace(/^yt:/, '')}`
         : null;
 
       const buttons = [];
-      if (ytUrl) {
-        buttons.push({ label: 'Dengarkan di YouTube', url: ytUrl });
+      if (ytUrl && settings.discordShowYouTubeButton !== false) {
+        buttons.push({ label: 'Dengarkan di YouTube Music', url: ytUrl });
       }
-      buttons.push({ label: 'Dapatkan SoraFy', url: 'https://github.com/rafliadipratama/sorafy' });
+      if (settings.discordShowSorafyButton !== false) {
+        buttons.push({ label: 'Dapatkan SoraFy', url: 'https://github.com/rafliadipratama/sorafy' });
+      }
 
       const assets = {};
       if (settings.discordShowCover !== false && /^https?:\/\//i.test(coverUrl)) {
@@ -2438,6 +2450,8 @@ class SoraFyDesktopApp {
       discordHideWhenPaused: true,
       discordShowLogo: true,
       discordShowCover: true,
+      discordShowYouTubeButton: true,
+      discordShowSorafyButton: true,
       audioQuality: 'high',
       volumeNormalization: false,
       crossfadeDuration: 0,
@@ -2491,6 +2505,8 @@ class SoraFyDesktopApp {
     if (this.settingDiscordHideWhenPaused) this.settingDiscordHideWhenPaused.checked = this.appSettings.discordHideWhenPaused !== false;
     if (this.settingDiscordShowLogo) this.settingDiscordShowLogo.checked = this.appSettings.discordShowLogo !== false;
     if (this.settingDiscordShowCover) this.settingDiscordShowCover.checked = this.appSettings.discordShowCover !== false;
+    if (this.settingDiscordShowYouTubeButton) this.settingDiscordShowYouTubeButton.checked = this.appSettings.discordShowYouTubeButton !== false;
+    if (this.settingDiscordShowSorafyButton) this.settingDiscordShowSorafyButton.checked = this.appSettings.discordShowSorafyButton !== false;
 
     if (this.navSettings) {
       this.navSettings.addEventListener("click", () => {
@@ -2678,7 +2694,9 @@ class SoraFyDesktopApp {
       [this.settingDiscordDisplayName, 'discordDisplayName'],
       [this.settingDiscordHideWhenPaused, 'discordHideWhenPaused'],
       [this.settingDiscordShowLogo, 'discordShowLogo'],
-      [this.settingDiscordShowCover, 'discordShowCover']
+      [this.settingDiscordShowCover, 'discordShowCover'],
+      [this.settingDiscordShowYouTubeButton, 'discordShowYouTubeButton'],
+      [this.settingDiscordShowSorafyButton, 'discordShowSorafyButton']
     ]) {
       control?.addEventListener('change', async () => {
         this.appSettings[key] = control.type === 'checkbox' ? control.checked : control.value.trim();
