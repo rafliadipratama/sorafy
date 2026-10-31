@@ -118,6 +118,19 @@ npm install
 npm start
 ```
 
+Untuk Discord Rich Presence, salin `desktop/.env.example` ke `desktop/.env`, lalu isi:
+
+```env
+DISCORD_CLIENT_ID=ID_APLIKASI_DISCORD_ANDA
+```
+
+Setiap developer dapat memakai ID sendiri. Restart aplikasi setelah mengganti ID.
+Variabel `DISCORD_CLIENT_ID` dari environment sistem didahulukan daripada `.env`.
+Jika ID kosong atau tidak valid, RPC tidak terhubung; fitur lain tetap berjalan.
+File `.env` diabaikan Git dan disertakan dalam paket rilis jika tersedia saat build.
+Gunakan file ini hanya untuk konfigurasi publik seperti Application ID, jangan isi token atau Client Secret.
+Untuk rilis, isi ID di `.env` sebelum menjalankan build; environment sistem pada mesin build saja tidak disertakan dalam paket.
+
 **Membangun Paket Rilis Desktop:**
 ```bash
 cd desktop

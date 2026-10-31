@@ -27,6 +27,7 @@
     "files": [
       "electron-main.js",
       "preload.js",
+      ".env",
       "src/**/*",
       "remote-web/**/*",
       "!src-tauri/**/*"
@@ -147,6 +148,7 @@
   },
   "dependencies": {
     "des.js": "^1.1.0",
+    "dotenv": "^18.0.9",
     "iconsax": "^0.1.1",
     "qrcode": "^1.5.4"
   }

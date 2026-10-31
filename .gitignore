@@ -20,6 +20,11 @@ target/
 node_modules/
 **/node_modules/
 
+# Local developer configuration
+.env
+.env.*
+!.env.example
+
 # Electron / Web distribution builds
 dist/
 **/dist/
@@ -29,3 +34,5 @@ dist/
 # Bundled binaries downloaded dynamically during build
 desktop/bin/
 **/desktop/bin/
+
+NUCLEAR_FEATURES_SPEC.md
