@@ -3701,20 +3701,27 @@ function makeHttpsRequest(urlStr, options = {}, postData = null) {
   });
 }
 
-function captureWebBearerToken(targetUrl, hostFilter, timeoutMs = 8000) {
+let cachedSpotifyBearerToken = null;
+let cachedSpotifyBearerExpires = 0;
+
+function captureWebBearerToken(targetUrl, hostFilter, timeoutMs = 25000) {
   return new Promise((resolve) => {
     let resolved = false;
-    const ses = session.fromPartition('scraper-' + Date.now());
+    const ses = session.fromPartition('persist:sorafy-web-scraper');
     let win = new BrowserWindow({
       show: false,
-      width: 800,
-      height: 600,
+      width: 1000,
+      height: 800,
       webPreferences: {
         session: ses,
         nodeIntegration: false,
         contextIsolation: true
       }
     });
+
+    try {
+      win.webContents.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36');
+    } catch (_) {}
 
     const cleanup = (token) => {
       if (resolved) return;
@@ -3725,7 +3732,10 @@ function captureWebBearerToken(targetUrl, hostFilter, timeoutMs = 8000) {
       resolve(token || null);
     };
 
-    const timer = setTimeout(() => cleanup(null), timeoutMs);
+    const timer = setTimeout(() => {
+      console.warn('captureWebBearerToken timed out after', timeoutMs, 'ms');
+      cleanup(null);
+    }, timeoutMs);
 
     ses.webRequest.onBeforeSendHeaders((details, callback) => {
       const auth = details.requestHeaders['authorization'] || details.requestHeaders['Authorization'];
@@ -3736,8 +3746,22 @@ function captureWebBearerToken(targetUrl, hostFilter, timeoutMs = 8000) {
       callback({ requestHeaders: details.requestHeaders });
     });
 
-    win.loadURL(targetUrl).catch(() => cleanup(null));
+    win.loadURL(targetUrl).catch((err) => {
+      console.warn('captureWebBearerToken loadURL notice (continuing):', err.message);
+    });
   });
+}
+
+async function getSpotifyBearerToken(seedId) {
+  if (cachedSpotifyBearerToken && Date.now() < cachedSpotifyBearerExpires) {
+    return cachedSpotifyBearerToken;
+  }
+  const token = await captureWebBearerToken(`https://open.spotify.com/playlist/${seedId}`, 'spotify', 25000);
+  if (token) {
+    cachedSpotifyBearerToken = token;
+    cachedSpotifyBearerExpires = Date.now() + (45 * 60 * 1000);
+  }
+  return token;
 }
 
 function fetchSpotifyOembedMeta(url) {
@@ -3872,7 +3896,7 @@ async function fetchSpotifyPlaylistOrAlbum(url) {
   // 1. Try GraphQL Pathfinder extraction for unlimited full playlist tracks (supporting 1000+ songs)
   if (type === 'playlist') {
     try {
-      const token = await captureWebBearerToken(`https://open.spotify.com/playlist/${id}`, 'spotify', 8000);
+      const token = await getSpotifyBearerToken(id);
       if (token) {
         let offset = 0;
         const LIMIT = 100;
@@ -3908,7 +3932,12 @@ async function fetchSpotifyPlaylistOrAlbum(url) {
             body
           });
 
-          if (!resp.ok) break;
+          if (!resp.ok) {
+            if (resp.status === 401 || resp.status === 403) {
+              cachedSpotifyBearerToken = null;
+            }
+            break;
+          }
           const json = await resp.json();
           const plData = json?.data?.playlistV2;
           const content = plData?.content;
