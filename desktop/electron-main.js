@@ -7,7 +7,9 @@ const fs = require('fs');
 const os = require('os');
 const net = require('net');
 const des = require('des.js');
-require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
+try {
+  require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
+} catch (_) {}
 
 if (!/^\d{17,20}$/.test((process.env.DISCORD_CLIENT_ID || '').trim())) {
   console.warn('[Discord RPC] Set a valid DISCORD_CLIENT_ID in desktop/.env to enable Rich Presence.');
@@ -476,29 +478,9 @@ localAudioProxy.listen(0, '127.0.0.1', () => {
 });
 
 // =========================================================
-// SoraFy Jam: Local LAN Remote Web Control & SSE Server
+// SoraFy Core Player State Cache (for MCP & MPD)
 // =========================================================
-function getLocalLanIp() {
-  const nets = os.networkInterfaces();
-  const candidates = [];
-  for (const name of Object.keys(nets)) {
-    const isVirtual = /^(docker|br-|veth|virbr|vmnet|vboxnet|tailscale|wg)/i.test(name);
-    for (const net of nets[name]) {
-      if (net.family === 'IPv4' && !net.internal) {
-        candidates.push({ name, ip: net.address, isVirtual });
-      }
-    }
-  }
-  const physical = candidates.find(c => !c.isVirtual);
-  if (physical) return physical.ip;
-  if (candidates.length > 0) return candidates[0].ip;
-  return '127.0.0.1';
-}
-
-let jamServer = null;
-let jamPort = 4120;
-const jamSseClients = new Set();
-let jamPlayerState = {
+let corePlayerState = {
   isPlaying: false,
   currentTime: 0,
   duration: 0,
@@ -509,130 +491,6 @@ let jamPlayerState = {
   isShuffle: false,
   repeatMode: 'off'
 };
-
-function broadcastJamState() {
-  if (jamSseClients.size === 0) return;
-  const payload = `data: ${JSON.stringify(jamPlayerState)}\n\n`;
-  for (const res of jamSseClients) {
-    try {
-      res.write(payload);
-    } catch (_) {
-      jamSseClients.delete(res);
-    }
-  }
-}
-
-function startJamServer() {
-  if (jamServer) return;
-  jamServer = http.createServer(async (req, res) => {
-    const reqUrl = new URL(req.url, `http://127.0.0.1:${jamPort}`);
-
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', '*');
-
-    if (req.method === 'OPTIONS') {
-      res.writeHead(204);
-      return res.end();
-    }
-
-    // 1. Static Web App
-    if (reqUrl.pathname === '/' || reqUrl.pathname === '/index.html') {
-      const candidates = [
-        path.join(__dirname, 'remote-web', 'index.html'),
-        path.join(process.resourcesPath || '', 'remote-web', 'index.html'),
-        path.join(process.resourcesPath || '', 'app', 'remote-web', 'index.html')
-      ];
-      for (const p of candidates) {
-        if (fs.existsSync(p)) {
-          res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-          return fs.createReadStream(p).pipe(res);
-        }
-      }
-      res.writeHead(404);
-      return res.end('SoraFy Jam Remote Web not found');
-    }
-
-    // 2. SSE Real-time Events Stream
-    if (reqUrl.pathname === '/api/events') {
-      res.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        'Connection': 'keep-alive'
-      });
-      res.write(`data: ${JSON.stringify(jamPlayerState)}\n\n`);
-      jamSseClients.add(res);
-
-      req.on('close', () => {
-        jamSseClients.delete(res);
-      });
-      return;
-    }
-
-    // 3. API Status Snapshot
-    if (reqUrl.pathname === '/api/status') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({
-        ...jamPlayerState,
-        lanIp: getLocalLanIp(),
-        port: jamPort,
-        jamUrl: `http://${getLocalLanIp()}:${jamPort}`
-      }));
-    }
-
-    // 4. API Search from Mobile Phone
-    if (reqUrl.pathname === '/api/search') {
-      const q = reqUrl.searchParams.get('q') || '';
-      try {
-        const items = await searchYouTubeMusicInnerTube(q, 'song');
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify(items || []));
-      } catch (err) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify([]));
-      }
-    }
-
-    // 5. API Playback Actions
-    if (reqUrl.pathname === '/api/action' && req.method === 'POST') {
-      let body = '';
-      req.on('data', chunk => body += chunk);
-      req.on('end', () => {
-        try {
-          const data = JSON.parse(body);
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.send('jam-action', data);
-          }
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true }));
-        } catch (e) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: e.message }));
-        }
-      });
-      return;
-    }
-
-    res.writeHead(404);
-    res.end('Not found');
-  });
-
-  const tryListen = (port) => {
-    jamServer.once('error', (err) => {
-      if (err.code === 'EADDRINUSE' && port < 4129) {
-        tryListen(port + 1);
-      }
-    });
-    jamServer.listen(port, '0.0.0.0', () => {
-      jamPort = port;
-      console.log(`[SoraFy Jam] Server running at http://${getLocalLanIp()}:${jamPort}`);
-    });
-  };
-
-  tryListen(jamPort);
-}
-
-startJamServer();
 
 // =========================================================
 // SoraFy Model Context Protocol (MCP) Server (localhost:8800)
@@ -758,16 +616,16 @@ function getMcpToolsDefinitions() {
 async function executeMcpTool(name, args = {}) {
   switch (name) {
     case 'sorafy_get_player_state': {
-      const cur = jamPlayerState.currentTrack;
+      const cur = corePlayerState.currentTrack;
       return {
-        isPlaying: Boolean(jamPlayerState.isPlaying),
-        currentTime: Math.round(jamPlayerState.currentTime || 0),
-        duration: Math.round(jamPlayerState.duration || (cur?.duration_secs || 0)),
-        progressPercent: jamPlayerState.duration > 0 ? Math.round(((jamPlayerState.currentTime || 0) / jamPlayerState.duration) * 100) : 0,
-        volume: jamPlayerState.volume,
-        repeatMode: jamPlayerState.repeatMode || 'off',
-        isShuffle: Boolean(jamPlayerState.isShuffle),
-        queueLength: (jamPlayerState.queue || []).length,
+        isPlaying: Boolean(corePlayerState.isPlaying),
+        currentTime: Math.round(corePlayerState.currentTime || 0),
+        duration: Math.round(corePlayerState.duration || (cur?.duration_secs || 0)),
+        progressPercent: corePlayerState.duration > 0 ? Math.round(((corePlayerState.currentTime || 0) / corePlayerState.duration) * 100) : 0,
+        volume: corePlayerState.volume,
+        repeatMode: corePlayerState.repeatMode || 'off',
+        isShuffle: Boolean(corePlayerState.isShuffle),
+        queueLength: (corePlayerState.queue || []).length,
         currentTrack: cur ? {
           id: cur.id || cur.video_id,
           title: cur.title,
@@ -785,9 +643,9 @@ async function executeMcpTool(name, args = {}) {
 
       let dispatched = null;
       if (action === 'play') {
-        if (!jamPlayerState.isPlaying) dispatched = { action: 'toggle-play' };
+        if (!corePlayerState.isPlaying) dispatched = { action: 'toggle-play' };
       } else if (action === 'pause') {
-        if (jamPlayerState.isPlaying) dispatched = { action: 'toggle-play' };
+        if (corePlayerState.isPlaying) dispatched = { action: 'toggle-play' };
       } else if (action === 'toggle') {
         dispatched = { action: 'toggle-play' };
       } else if (action === 'next') {
@@ -861,8 +719,8 @@ async function executeMcpTool(name, args = {}) {
       if (!action) throw new Error('Action is required');
 
       if (action === 'list') {
-        const queue = jamPlayerState.queue || [];
-        const cur = jamPlayerState.currentTrack;
+        const queue = corePlayerState.queue || [];
+        const cur = corePlayerState.currentTrack;
         return {
           total: queue.length,
           tracks: queue.map((t, idx) => ({
@@ -893,7 +751,7 @@ async function executeMcpTool(name, args = {}) {
       if (args.videoId) {
         const lrc = await fetchYouTubeMusicLyrics(args.videoId);
         return {
-          source: 'YouTube Music InnerTube',
+          source: 'InnerTube Engine',
           videoId: args.videoId,
           hasLyrics: Boolean(lrc),
           synced: Boolean(lrc && lrc.synced),
@@ -901,8 +759,8 @@ async function executeMcpTool(name, args = {}) {
         };
       }
 
-      const cur = jamPlayerState.currentTrack;
-      const lines = jamPlayerState.lyrics || [];
+      const cur = corePlayerState.currentTrack;
+      const lines = corePlayerState.lyrics || [];
       return {
         track: cur ? `${cur.artist} - ${cur.title}` : 'No track playing',
         hasLyrics: lines.length > 0,
@@ -1132,7 +990,7 @@ function startMcpServer() {
   tryListen(mcpPort);
 }
 
-startMcpServer();
+// startMcpServer();
 
 // =========================================================
 // MPD (Music Player Daemon) Protocol Server (Nuclear Feature 7)
@@ -1187,8 +1045,8 @@ function handleMpdCommand(cmdLine, socket, clientState) {
   };
   const args = parseArgs(rawArgs);
 
-  const cur = jamPlayerState.currentTrack;
-  const queue = jamPlayerState.queue || [];
+  const cur = corePlayerState.currentTrack;
+  const queue = corePlayerState.queue || [];
   const currentIdx = queue.findIndex(t => (t.id && cur && t.id === cur.id) || (t.video_id && cur && t.video_id === cur.video_id));
   const activeIdx = currentIdx !== -1 ? currentIdx : 0;
 
@@ -1197,12 +1055,12 @@ function handleMpdCommand(cmdLine, socket, clientState) {
       return 'OK\n';
 
     case 'status': {
-      const vol = Math.round((jamPlayerState.volume !== undefined ? jamPlayerState.volume : 0.85) * 100);
-      const rep = jamPlayerState.repeatMode === 'track' ? 1 : 0;
-      const rnd = jamPlayerState.isShuffle ? 1 : 0;
-      const state = jamPlayerState.isPlaying ? 'play' : ((jamPlayerState.currentTime || 0) > 0 ? 'pause' : 'stop');
-      const curTime = jamPlayerState.currentTime || 0;
-      const dur = jamPlayerState.duration || (cur?.duration_secs || 0);
+      const vol = Math.round((corePlayerState.volume !== undefined ? corePlayerState.volume : 0.85) * 100);
+      const rep = corePlayerState.repeatMode === 'track' ? 1 : 0;
+      const rnd = corePlayerState.isShuffle ? 1 : 0;
+      const state = corePlayerState.isPlaying ? 'play' : ((corePlayerState.currentTime || 0) > 0 ? 'pause' : 'stop');
+      const curTime = corePlayerState.currentTime || 0;
+      const dur = corePlayerState.duration || (cur?.duration_secs || 0);
 
       let out = `volume: ${vol}\n`;
       out += `repeat: ${rep}\n`;
@@ -1228,7 +1086,7 @@ function handleMpdCommand(cmdLine, socket, clientState) {
 
     case 'currentsong': {
       if (!cur) return 'OK\n';
-      const dur = jamPlayerState.duration || (cur.duration_secs || 0);
+      const dur = corePlayerState.duration || (cur.duration_secs || 0);
       let out = `file: ${cur.video_id || cur.id || 'unknown'}\n`;
       out += `Title: ${cur.title || 'Unknown Title'}\n`;
       out += `Artist: ${cur.artist || 'Unknown Artist'}\n`;
@@ -1374,7 +1232,7 @@ function handleMpdCommand(cmdLine, socket, clientState) {
 
     case 'volume': {
       const diff = parseInt(args[0], 10) / 100;
-      const current = jamPlayerState.volume !== undefined ? jamPlayerState.volume : 0.85;
+      const current = corePlayerState.volume !== undefined ? corePlayerState.volume : 0.85;
       const newVol = Math.max(0, Math.min(1, current + diff));
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send('jam-action', { action: 'volume', value: newVol });
@@ -1433,7 +1291,7 @@ function handleMpdCommand(cmdLine, socket, clientState) {
 
     case 'stats': {
       const uptime = Math.floor(process.uptime());
-      const playtime = Math.floor(jamPlayerState.currentTime || 0);
+      const playtime = Math.floor(corePlayerState.currentTime || 0);
       let out = `artists: 1\n`;
       out += `albums: 1\n`;
       out += `songs: ${queue.length}\n`;
@@ -1578,7 +1436,7 @@ function startMpdServer() {
   });
 }
 
-startMpdServer();
+// startMpdServer();
 
 // Persistent stream cache on disk for instant 0ms playback across sessions
 const cacheDir = path.join(os.homedir(), '.config', 'sorafy', 'cache');
@@ -1964,7 +1822,19 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                 const pageType = card.onTap?.browseEndpoint?.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType
                   || card.title?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType || '';
 
-                const isArtistCard = pageType === 'MUSIC_PAGE_TYPE_ARTIST' || sub.toLowerCase().includes('artis') || (browseId && browseId.startsWith('UC'));
+                const hasWatchVideo = Boolean(
+                  card.onTap?.watchEndpoint?.videoId ||
+                  card.buttons?.[0]?.buttonRenderer?.command?.watchEndpoint?.videoId ||
+                  card.thumbnailOverlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId
+                );
+
+                const isExplicitArtist = (pageType === 'MUSIC_PAGE_TYPE_ARTIST');
+                const subLower = sub.toLowerCase();
+                const isArtistSub = /\b(artis|artist|musisi|penyanyi|band)\b/i.test(subLower) && !/\b(saluran|channel)\b/i.test(subLower);
+                const hasSubscriberIndicator = /\b(\d+(?:[.,]\d+)?\s*(?:jt|rb|k|m|mil|bil|subscriber|pelanggan|pendengar|listeners))\b/i.test(subLower);
+
+                // An artist card CANNOT have a direct song watch endpoint on tap, must be an artist page type or explicit artist subtitle with subscribers
+                const isArtistCard = !hasWatchVideo && (isExplicitArtist || (isArtistSub && hasSubscriberIndicator));
                 const isPlaylistCard = pageType === 'MUSIC_PAGE_TYPE_PLAYLIST' || (browseId && (browseId.startsWith('VL') || browseId.startsWith('PL')));
 
                 // Extract 3 top tracks from the artist card shelf (exact matches to YouTube Music)
@@ -2127,7 +1997,14 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                   const pType = navEndpoint?.browseEndpoint?.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType
                     || renderer.flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.navigationEndpoint?.browseEndpoint?.browseEndpointContextSupportedConfigs?.browseEndpointContextMusicConfig?.pageType || '';
                   const subStr = subRuns.map(r => r.text).join('').toLowerCase();
-                  const isArt = (pType === 'MUSIC_PAGE_TYPE_ARTIST' || subStr.includes('artis') || artist.toLowerCase() === 'artist' || (browseId && browseId.startsWith('UC'))) && !browseId.startsWith('VL') && !browseId.startsWith('PL');
+                  
+                  const isExplicitArt = (pType === 'MUSIC_PAGE_TYPE_ARTIST');
+                  const isArtistBySub = /\b(artis|artist|band|musisi|penyanyi)\b/i.test(subStr) && !/\b(saluran biasa|channel)\b/i.test(subStr);
+                  const isNotUserChannel = (pType !== 'MUSIC_PAGE_TYPE_USER_CHANNEL');
+                  const hasSubscribers = /\b(\d+(?:[.,]\d+)?\s*(?:jt|rb|k|m|mil|bil|subscriber|pelanggan|pendengar|listeners))\b/i.test(subStr);
+
+                  // Filter out random non-artist channels and obscure accounts
+                  const isArt = (isExplicitArt || (isArtistBySub && hasSubscribers)) && isNotUserChannel && !browseId.startsWith('VL') && !browseId.startsWith('PL');
 
                   if (isArt) {
                     itemsList.push({
@@ -3204,10 +3081,16 @@ async function resolveArtistProfile(name) {
   try {
     const artists = await searchYouTubeMusicInnerTube(trimmed, 'artist');
     if (!artists || !artists.length) return null;
-    const match = artists.find(a => a.name.toLowerCase() === trimmed.toLowerCase()) || artists[0];
+    const match = artists.find(a => a.name.toLowerCase() === trimmed.toLowerCase());
+    if (!match) return null;
     let bio = null;
     if (match.browse_id) {
       bio = await browseYouTubeInnerTube(match.browse_id);
+    }
+    const tracks = (match.top_songs && match.top_songs.length) ? match.top_songs : (bio?.tracks || []);
+    const albums = bio?.albums || [];
+    if (tracks.length === 0 && albums.length === 0) {
+      return null;
     }
     const artName = bio?.name || match.name || trimmed;
     const artAvatar = bio?.avatar_url || match.avatar_url || '';
@@ -3220,8 +3103,8 @@ async function resolveArtistProfile(name) {
       banner_url: artAvatar,
       sub_label: match.sub_label || (bio?.sub_label || ''),
       description: bio?.description || '',
-      tracks: (match.top_songs && match.top_songs.length) ? match.top_songs : (bio?.tracks || []),
-      albums: bio?.albums || [],
+      tracks,
+      albums,
       videos: bio?.videos || [],
       peers: bio?.peers || []
     };
@@ -3299,6 +3182,112 @@ ipcMain.handle('search-yt-music', async (event, query, filterType = 'song') => {
 
 ipcMain.handle('fetch-yt-lyrics', async (event, videoId) => {
   return await fetchYouTubeMusicLyrics(videoId);
+});
+
+// Official YouTube Music Automix / Radio Queue Engine
+async function fetchYouTubeMusicRadioQueue(videoId, continuation = null) {
+  try {
+    let cleanVid = (videoId || '').replace(/^yt_/, '').trim();
+    if (!cleanVid && !continuation) return { tracks: [], continuation: null };
+
+    const payload = continuation ? {
+      continuation,
+      context: {
+        client: {
+          clientName: 'WEB_REMIX',
+          clientVersion: '1.20240318.01.00',
+          hl: 'id',
+          gl: 'ID'
+        }
+      }
+    } : {
+      videoId: cleanVid,
+      playlistId: 'RDAMVM' + cleanVid,
+      isAudioOnly: true,
+      context: {
+        client: {
+          clientName: 'WEB_REMIX',
+          clientVersion: '1.20240318.01.00',
+          hl: 'id',
+          gl: 'ID'
+        }
+      }
+    };
+
+    const json = await postInnerTube('next', payload);
+    if (!json) return { tracks: [], continuation: null };
+
+    let rawItems = [];
+    let nextCont = null;
+
+    if (continuation) {
+      const contObj = json.continuationContents?.playlistPanelContinuation;
+      rawItems = contObj?.contents || [];
+      nextCont = contObj?.continuations?.[0]?.nextRadioContinuationData?.continuation ||
+                 contObj?.continuations?.[0]?.nextContinuationData?.continuation || null;
+    } else {
+      const tabs = json.contents?.singleColumnMusicWatchNextResultsRenderer?.tabbedRenderer?.watchNextTabbedResultsRenderer?.tabs;
+      const panel = tabs?.[0]?.tabRenderer?.content?.musicQueueRenderer?.content?.playlistPanelRenderer;
+      rawItems = panel?.contents || [];
+      nextCont = panel?.continuations?.[0]?.nextRadioContinuationData?.continuation ||
+                 panel?.continuations?.[0]?.nextContinuationData?.continuation || null;
+    }
+
+    const tracks = [];
+    const seenVids = new Set();
+    if (cleanVid) seenVids.add(cleanVid);
+
+    for (const item of rawItems) {
+      const r = item.playlistPanelVideoRenderer;
+      if (!r || !r.videoId || seenVids.has(r.videoId)) continue;
+      seenVids.add(r.videoId);
+
+      const title = (r.title?.runs?.map(x => x.text).join('') || '').trim();
+      let artist = (r.shortBylineText?.runs?.map(x => x.text).join('') || '').trim();
+      if (!artist && r.longBylineText?.runs) {
+        const full = r.longBylineText.runs.map(x => x.text).join('');
+        artist = full.split(' • ')[0].trim();
+      }
+
+      // Duration in seconds
+      let durationSecs = 0;
+      const durStr = (r.lengthText?.runs?.[0]?.text || '').trim();
+      if (durStr) {
+        const parts = durStr.split(/[:.]/).map(Number);
+        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          durationSecs = parts[0] * 60 + parts[1];
+        } else if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+          durationSecs = parts[0] * 3600 + parts[1] * 60 + parts[2];
+        }
+      }
+
+      // Thumbnail artwork
+      const thumbs = r.thumbnail?.thumbnails || [];
+      let artwork = thumbs.length ? thumbs[thumbs.length - 1].url : '';
+      if (artwork.startsWith('//')) artwork = 'https:' + artwork;
+
+      tracks.push({
+        id: `yt_${r.videoId}`,
+        video_id: r.videoId,
+        title,
+        artist: artist || 'Unknown Artist',
+        album: 'Radio Automix',
+        artwork: artwork,
+        artwork_url: artwork,
+        duration_secs: durationSecs,
+        source: 'ytmusic_automix'
+      });
+    }
+
+    return { tracks, continuation: nextCont };
+  } catch (err) {
+    console.warn('fetchYouTubeMusicRadioQueue error:', err.message);
+    return { tracks: [], continuation: null };
+  }
+}
+
+ipcMain.handle('fetch-yt-radio-queue', async (event, videoId, continuationToken) => {
+  return await fetchYouTubeMusicRadioQueue(videoId, continuationToken);
 });
 
 ipcMain.handle('browse-yt', async (event, browseId) => {
@@ -3612,39 +3601,18 @@ ipcMain.handle('get-stream-candidates', async (event, { title, artist, currentId
   }
 });
 
-// SoraFy Jam IPC Endpoints (Nuclear Jam Feature)
-ipcMain.handle('get-jam-info', async () => {
-  const lanIp = getLocalLanIp();
-  const jamUrl = `http://${lanIp}:${jamPort}`;
-  let qrDataUrl = '';
-  if (QRCode) {
-    try {
-      qrDataUrl = await QRCode.toDataURL(jamUrl, {
-        margin: 1,
-        color: {
-          dark: '#00E599',
-          light: '#07080A'
-        },
-        width: 240
-      });
-    } catch (_) {}
-  }
-  return {
-    enabled: Boolean(jamServer),
-    lanIp,
-    port: jamPort,
-    jamUrl,
-    qrDataUrl,
-    clientCount: jamSseClients.size
-  };
-});
-
+// SoraFy Core Player State IPC Listener
 ipcMain.on('update-jam-state', (event, state) => {
   if (!state || typeof state !== 'object') return;
-  jamPlayerState = { ...jamPlayerState, ...state };
-  broadcastJamState();
+  corePlayerState = { ...corePlayerState, ...state };
   notifyMpdIdle(['player', 'mixer', 'playlist']);
 });
+ipcMain.on('update-player-state', (event, state) => {
+  if (!state || typeof state !== 'object') return;
+  corePlayerState = { ...corePlayerState, ...state };
+  notifyMpdIdle(['player', 'mixer', 'playlist']);
+});
+ipcMain.handle('get-jam-info', async () => ({ enabled: false }));
 
 ipcMain.handle('get-mcp-info', async () => {
   return {
@@ -3815,6 +3783,35 @@ function fetchSpotifyEmbedFallback(type, id, oembedMeta = null) {
           const json = JSON.parse(matchScript[1]);
           const entity = json.props?.pageProps?.state?.data?.entity;
           if (!entity) return reject(new Error('Spotify playlist not found or private.'));
+
+          if (type === 'track') {
+            const trackName = (entity.name || entity.title || oembedMeta?.title || '').trim() || 'Spotify Track';
+            const artistName = (entity.artists?.map(a => a.name).filter(Boolean).join(', ') || entity.subtitle || 'Various Artists').trim();
+            const durSecs = Math.round((entity.duration || 0) / 1000) || 180;
+            const cover = oembedMeta?.cover || entity.coverArt?.sources?.[0]?.url || 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=400&q=80';
+            const isExplicit = !!(entity.isExplicit || (entity.contentRatings && entity.contentRatings.labels && entity.contentRatings.labels.includes('EXPLICIT')));
+
+            const track = {
+              id: `spot_${id}_0_${Date.now()}`,
+              title: trackName,
+              artist: artistName,
+              album: entity.album?.name || '',
+              duration_secs: durSecs,
+              artwork_url: cover,
+              is_video: false,
+              is_explicit: isExplicit,
+              source_label: 'Spotify Match'
+            };
+
+            return resolve({
+              title: trackName,
+              artwork_url: cover,
+              provider: 'Spotify',
+              type: 'track',
+              tracks: [track]
+            });
+          }
+
           const title = (entity.name || entity.title || oembedMeta?.title || '').trim() || (type === 'album' ? 'Spotify Album' : 'Spotify Playlist');
           const playlistCover = entity.coverArt?.sources?.[0]?.url || oembedMeta?.cover || '';
           const rawTracks = entity.trackList || [];
@@ -3860,12 +3857,17 @@ function fetchSpotifyEmbedFallback(type, id, oembedMeta = null) {
 }
 
 async function fetchSpotifyPlaylistOrAlbum(url) {
-  const match = url.match(/(playlist|album)[/:]([a-zA-Z0-9]+)/);
-  if (!match) throw new Error('Invalid Spotify link format. Please paste a public playlist or album URL.');
+  const match = url.match(/(playlist|album|track)[/:]([a-zA-Z0-9]+)/);
+  if (!match) throw new Error('Format tautan Spotify tidak valid. Gunakan tautan publik playlist, album, atau track.');
   const [, type, id] = match;
 
   // Pre-fetch official metadata (title, cover) via Spotify oEmbed
   const oembedMeta = await fetchSpotifyOembedMeta(url);
+
+  // Fast-track resolution for single track
+  if (type === 'track') {
+    return fetchSpotifyEmbedFallback(type, id, oembedMeta);
+  }
 
   // 1. Try GraphQL Pathfinder extraction for unlimited full playlist tracks (supporting 1000+ songs)
   if (type === 'playlist') {

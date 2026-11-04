@@ -99,6 +99,21 @@
             </button>
           </div>
 
+          <!-- Spotify / External Link Instant Detector Banner -->
+          <div id="spotifyLinkBanner" class="spotify-link-banner" style="display: none;">
+            <div class="spotify-link-banner-left">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="12" fill="#1ED760"/>
+                <path d="M17.5 15.3c-.2.3-.6.4-.9.2-2.4-1.5-5.5-1.8-9.1-1-.4.1-.7-.2-.8-.5-.1-.4.2-.7.5-.8 4-1 7.4-.6 10.1 1.1.4.2.5.6.2 1zm1.2-2.6c-.3.4-.8.5-1.2.3-2.8-1.7-7-2.2-10.3-1.2-.4.1-.9-.1-1-.5-.1-.4.1-.9.5-1 3.8-1.1 8.4-.6 11.6 1.4.4.2.5.7.3 1.1zm.1-2.7c-3.3-2-8.9-2.2-12.1-1.2-.5.2-1.1-.1-1.2-.6-.2-.5.1-1.1.6-1.2 3.7-1.1 9.8-.9 13.6 1.4.5.3.6.9.3 1.4-.3.4-.9.6-1.4.3z" fill="#000000"/>
+              </svg>
+              <div class="spotify-link-banner-text">
+                <span class="spotify-link-banner-title" id="spotifyLinkBannerTitle">Tautan Spotify Terdeteksi</span>
+                <span class="spotify-link-banner-desc" id="spotifyLinkBannerDesc">Tekan Enter atau klik untuk mengambil metadata & impor ke SoraFy</span>
+              </div>
+            </div>
+            <button id="spotifyLinkBannerBtn" class="spotify-link-banner-action-btn">Impor Sekarang</button>
+          </div>
+
           <!-- Suggestion Pick Chips -->
           <div class="suggestion-picks" id="searchSuggestions">
             <span class="suggestion-label" data-i18n="popular_suggestions">Popular Suggestions:</span>
@@ -147,12 +162,12 @@
 
       <!-- Home View Container -->
       <div id="homeViewContainer">
-        <!-- 2. Quick Picks / Pilihan Cepat (YouTube Music Horizontal Swipe Style) -->
+        <!-- 2. Quick Picks / Putar Lagi (Horizontal Swipe Style) -->
         <section class="quick-picks-section" id="quickPicksSection" style="margin-bottom: 28px;">
           <div class="section-title">
             <div style="display: flex; flex-direction: column; gap: 2px;">
-              <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-text-secondary); font-weight: 700;">START RADIO FROM A SONG</span>
-              <span style="font-size: 22px; font-weight: 800;">Quick Picks</span>
+              <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--color-text-secondary); font-weight: 700;" data-i18n="quick_picks_sub">TERAKHIR DIDENGARKAN</span>
+              <span style="font-size: 22px; font-weight: 800;" data-i18n="quick_picks">Putar Lagi</span>
             </div>
             <div class="carousel-nav-arrows">
               <button class="carousel-arrow-btn" id="quickPicksPrevBtn" title="Previous">
@@ -168,15 +183,16 @@
           </div>
         </section>
 
-        <!-- 3. Section: "Forgotten favorites & discoveries" (YT Music Screenshot 1) -->
+        <!-- 3. Section: "Top Charts & Trending" (Official Spotify Charts) -->
         <section class="ytm-shelf-section" id="ytmOldFavoritesSection" style="margin-bottom: 34px;">
           <div class="section-title">
-            <div style="display: flex; flex-direction: column; gap: 2px;">
-              <span style="font-size: 22px; font-weight: 800;">Forgotten favorites & discoveries</span>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <span style="font-size: 22px; font-weight: 800;" data-i18n="section_top_charts">Tangga Lagu & Trending Terkini</span>
+              <span style="font-size: 13px; color: var(--color-text-secondary);" data-i18n="section_top_charts_sub">Tangga lagu resmi mingguan & harian terpopuler yang diperbarui otomatis</span>
             </div>
           </div>
           <div class="ytm-mix-cards-grid" id="ytmMixCardsGrid">
-            <!-- Populated dynamically via JS: 4 distinct mix cards -->
+            <!-- Populated dynamically via JS: 4 official Spotify chart cards -->
           </div>
         </section>
 
@@ -330,11 +346,11 @@
           </div>
         </section>
 
-        <!-- 2. Mood & Genre Category Cards Grid -->
+        <!-- 2. Mood & Genre Category Cards Grid (Spotify Browse All Layout) -->
         <section class="explore-section" id="exploreMoodsSection" style="margin-top: 32px;">
           <div class="section-title">
-            <span style="font-size: 20px; font-weight: 800;" data-i18n="explore_moods">Moods & Genres</span>
-            <span class="section-sub-action" data-i18n="explore_all_categories">All Categories</span>
+            <span style="font-size: 20px; font-weight: 800;" data-i18n="explore_moods">Browse All</span>
+            <span class="section-sub-action" data-i18n="explore_all_categories">Jelajahi Semua</span>
           </div>
           <div class="mood-genre-grid" id="moodGenreGrid">
             <!-- Populated dynamically with colorful cards -->
@@ -1033,28 +1049,6 @@
                 </div>
               </div>
             </div>
-
-            <!-- Track Info & Dedicated Fullscreen Transport Controls -->
-            <div class="screen-player-info-row">
-              <div class="screen-player-meta">
-                <h1 class="screen-player-title" id="screenPlayerTitle">SoraFy Desktop</h1>
-                <div class="screen-player-artist" id="screenPlayerArtist" data-i18n="select_track_prompt">Select a track to play</div>
-              </div>
-              <div class="screen-player-actions">
-                <button class="screen-action-btn" id="screenJamRemoteBtn" title="SoraFy Jam (Remote Control HP)" data-i18n-title="tooltip_jam">
-                  <iconsax-icon name="mobile" type="linear" size="22" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="verify-stream-btn" id="screenVerifyStreamBtn" title="Check / Verify Audio Stream (Pilih Rekaman Audio)" data-i18n-title="tooltip_verify_stream">
-                  <iconsax-icon id="screenVerifyStreamIcon" name="shield-tick" type="linear" size="22" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="heart-btn" id="screenPlayerLikeBtn" title="Like Track" data-i18n-title="tooltip_like">
-                  <iconsax-icon name="heart" type="linear" size="22" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="control-btn" id="screenPlayerAddToPlaylistBtn" title="Add to Playlist">
-                  <iconsax-icon name="add" type="linear" size="22" color="currentColor"></iconsax-icon>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -1140,7 +1134,13 @@
         <div class="queue-section" style="margin-top: 16px;">
           <div class="queue-section-header">
             <span class="queue-section-title" data-i18n="queue_next">Up Next</span>
-            <span class="queue-drag-hint">Drag to reorder</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button class="automix-pill-btn" id="startAutomixRadioBtn" title="Segarkan Antrean Radio Automix" data-i18n-title="tooltip_refresh_automix">
+                <iconsax-icon name="radio" type="bold" size="14" color="#00E599"></iconsax-icon>
+                <span>Automix</span>
+              </button>
+              <span class="queue-drag-hint">Drag to reorder</span>
+            </div>
           </div>
           <div class="queue-list" id="queueList">
             <!-- Drag and drop reorderable items -->
@@ -1204,10 +1204,6 @@
 
     <!-- Right Controls: Lyrics, Queue, Sleep Timer, Fullscreen & Volume Control -->
     <div class="player-right">
-      <button class="control-btn" id="jamRemoteBtn" title="SoraFy Jam (Remote Control HP)" data-i18n-title="tooltip_jam">
-        <iconsax-icon name="mobile" type="linear" size="18" color="currentColor"></iconsax-icon>
-      </button>
-
       <button class="control-btn" id="sleepTimerBtn" title="Sleep Timer" data-i18n-title="tooltip_sleep_timer" style="position: relative;">
         <iconsax-icon name="timer-1" type="linear" size="18" color="currentColor"></iconsax-icon>
         <span class="sleep-timer-badge" id="sleepTimerBadge" style="display: none;"></span>
@@ -1402,399 +1398,554 @@
     </div>
   </div>
 
-  <!-- Modal Dialog Settings Hub -->
-  <div id="settingsModal" class="modal-backdrop" style="display: none;">
-    <div class="modal-card settings-modal-card">
-      <div class="settings-modal-header">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <iconsax-icon name="setting-2" type="bold" size="22" color="#00E599"></iconsax-icon>
-          <h3 style="font-size: 18px; font-weight: 700; margin: 0;" data-i18n="settings_title">SoraFy Settings</h3>
-        </div>
-        <button class="control-btn" id="closeSettingsModalBtn" title="Close">
-          <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
-        </button>
-      </div>
-
-      <!-- Settings Tabs -->
-      <div class="settings-tab-bar" id="settingsTabBar">
-        <button class="settings-tab-btn active" data-tab="audio" data-i18n="settings_tab_audio">Audio & Quality</button>
-        <button class="settings-tab-btn" data-tab="appearance" data-i18n="settings_tab_appearance">Appearance</button>
-        <button class="settings-tab-btn" data-tab="system" data-i18n="settings_tab_system">System</button>
-        <button class="settings-tab-btn" data-tab="data" data-i18n="settings_tab_data">Data & Backup</button>
-        <button class="settings-tab-btn" data-tab="shortcuts" data-i18n="settings_tab_shortcuts">Shortcuts</button>
-        <button class="settings-tab-btn" data-tab="about" data-i18n="settings_tab_about">About</button>
-      </div>
-
-      <div class="settings-body">
-        <!-- 1. Tab Audio -->
-        <div class="settings-tab-pane active" id="settingsTabAudio">
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_audio_quality">Audio Streaming Quality</span>
-              <span class="setting-desc" data-i18n="setting_audio_quality_desc">Select preferred bitrate for playback stream.</span>
-            </div>
-            <select class="settings-select" id="settingAudioQuality">
-              <option value="auto">Automatic / Adaptive</option>
-              <option value="high" selected>High (Opus HD 160 kbps)</option>
-              <option value="lossless">Maximum (Lossless / 320 kbps)</option>
-            </select>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_volume_norm">Volume Normalization</span>
-              <span class="setting-desc" data-i18n="setting_volume_norm_desc">Equalize loudness levels across tracks automatically.</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingVolumeNorm">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_crossfade">Crossfade Between Tracks</span>
-              <span class="setting-desc" data-i18n="setting_crossfade_desc">Smooth transition when switching to the next track.</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="range" class="volume-slider" id="settingCrossfade" min="0" max="10" step="1" value="0" style="width: 120px;">
-              <span id="settingCrossfadeLabel" style="font-size: 13px; font-weight: 600; color: #00E599; min-width: 32px;">0s</span>
-            </div>
-          </div>
+  <!-- Modal Dialog Settings Hub (Discord-Style Redesign) -->
+  <div id="settingsModal" class="modal-backdrop discord-settings-backdrop" style="display: none;">
+    <div class="modal-card settings-modal-card discord-settings-window">
+      <!-- Left Sidebar Navigation -->
+      <aside class="discord-settings-sidebar">
+        <!-- Discord Search -->
+        <div class="discord-settings-search-wrap">
+          <svg class="discord-search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="settingsSearchInput" class="discord-settings-search-input" placeholder="Search" data-i18n-placeholder="settings_search_placeholder">
         </div>
 
-        <!-- Tab Appearance & Theme (Nuclear Feature 6) -->
-        <div class="settings-tab-pane" id="settingsTabAppearance" style="display: none;">
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_theme">Interface Theme</span>
-              <span class="setting-desc" data-i18n="setting_theme_desc">Pilih palet tema tampilan keseluruhan aplikasi.</span>
-            </div>
-            <select class="settings-select" id="settingThemeSelect">
-              <option value="emerald" selected>SoraFy Emerald (Default Dark)</option>
-              <option value="arctic">Arctic Obsidian (Monochrome)</option>
-              <option value="cyber">Lagoon Cyber (Blue / Cyan)</option>
-              <option value="purple">Aurora Purple (Dark Violet)</option>
-              <option value="light">Oasis Light (Mode Terang)</option>
-            </select>
-          </div>
+        <nav class="discord-settings-nav" id="settingsTabBar">
+          <!-- CATEGORY 1: AUDIO & STREAMING -->
+          <div class="discord-nav-header" data-i18n="settings_cat_audio">AUDIO & STREAMING</div>
+          <button class="settings-tab-btn active" data-tab="audio">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+            <span data-i18n="settings_tab_audio">Audio & Quality</span>
+          </button>
+          <button class="settings-tab-btn" data-tab="sources">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+            <span data-i18n="settings_tab_sources">Sources & Metadata</span>
+          </button>
 
-          <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-              <div class="setting-info">
-                <span class="setting-title" data-i18n="setting_accent">Custom Accent Color</span>
-                <span class="setting-desc" data-i18n="setting_accent_desc">Pilih warna aksen kustom untuk tombol, gelombang audio, dan indikator.</span>
+          <div class="discord-nav-divider"></div>
+
+          <!-- CATEGORY 2: APP SETTINGS -->
+          <div class="discord-nav-header" data-i18n="settings_cat_app">APP SETTINGS</div>
+          <button class="settings-tab-btn" data-tab="appearance">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="m4.93 4.93 4.24 4.24"></path><path d="m14.83 9.17 4.24-4.24"></path><path d="m14.83 14.83 4.24 4.24"></path><path d="m9.17 14.83-4.24 4.24"></path><circle cx="12" cy="12" r="4"></circle></svg>
+            <span data-i18n="settings_tab_appearance">Appearance & Themes</span>
+          </button>
+          <button class="settings-tab-btn" data-tab="system">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+            <span data-i18n="settings_tab_system">System & Discord</span>
+          </button>
+          <button class="settings-tab-btn" data-tab="shortcuts">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="6" y1="16" x2="18" y2="16"></line></svg>
+            <span data-i18n="settings_tab_shortcuts">Keybinds</span>
+          </button>
+
+          <div class="discord-nav-divider"></div>
+
+          <!-- CATEGORY 3: STORAGE & SYSTEM -->
+          <div class="discord-nav-header" data-i18n="settings_cat_storage">STORAGE & ABOUT</div>
+          <button class="settings-tab-btn" data-tab="data">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"></ellipse><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path></svg>
+            <span data-i18n="settings_tab_data">Data & Backup</span>
+          </button>
+          <button class="settings-tab-btn" data-tab="about">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            <span data-i18n="settings_tab_about">About SoraFy</span>
+          </button>
+        </nav>
+
+        <!-- Discord Sidebar Footer -->
+        <div class="discord-sidebar-footer">
+          <div class="discord-version-text">SoraFy Desktop v1.0.0</div>
+          <div class="discord-build-text">Linux (Wayland • X11)</div>
+        </div>
+      </aside>
+
+      <!-- Right Content Pane Column -->
+      <main class="discord-settings-content">
+        <!-- Iconic Discord ESC Close Button -->
+        <div class="discord-esc-wrap" id="closeSettingsModalBtn" title="Close Settings (Esc)" role="button" tabindex="0">
+          <div class="discord-esc-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </div>
+          <span class="discord-esc-label">ESC</span>
+        </div>
+
+        <!-- Scrollable Settings Body -->
+        <div class="discord-settings-scroll-body settings-body">
+          <!-- 1. Tab Audio -->
+          <div class="settings-tab-pane active" id="settingsTabAudio">
+            <div class="discord-pane-header">
+              <h2 class="discord-pane-title" data-i18n="settings_tab_audio">Audio & Quality</h2>
+              <p class="discord-pane-desc" data-i18n="settings_desc_audio">Configure streaming quality, volume normalization, and track transitions.</p>
+            </div>
+
+            <div class="discord-settings-section-card">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_audio_quality">Audio Streaming Quality</span>
+                  <span class="setting-desc" data-i18n="setting_audio_quality_desc">Select preferred bitrate for playback stream.</span>
+                </div>
+                <select class="settings-select" id="settingAudioQuality">
+                  <option value="auto">Automatic / Adaptive</option>
+                  <option value="high" selected>High (Opus HD 160 kbps)</option>
+                  <option value="lossless">Maximum (Lossless / 320 kbps)</option>
+                </select>
               </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <input type="color" id="settingAccentColorPicker" value="#00E599" style="width: 38px; height: 32px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
-                <button class="hero-secondary-btn" id="settingResetAccentBtn" style="padding: 4px 10px; font-size: 11px;">Reset</button>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_volume_norm">Volume Normalization</span>
+                  <span class="setting-desc" data-i18n="setting_volume_norm_desc">Equalize loudness levels across tracks automatically.</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingVolumeNorm">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_crossfade">Crossfade Between Tracks</span>
+                  <span class="setting-desc" data-i18n="setting_crossfade_desc">Smooth transition when switching to the next track.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <input type="range" class="volume-slider" id="settingCrossfade" min="0" max="10" step="1" value="0" style="width: 120px;">
+                  <span id="settingCrossfadeLabel" style="font-size: 13px; font-weight: 600; color: #00E599; min-width: 32px;">0s</span>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_automix_queue">Automix Radio Tanpa Batas</span>
+                  <span class="setting-desc" data-i18n="setting_automix_queue_desc">Otomatis rekomendasikan dan sambung lagu serupa saat antrean mendekati akhir.</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingAutoMixQueue" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Tab Sources & Metadata (Nuclear Feature) -->
+          <div class="settings-tab-pane" id="settingsTabSources" style="display: none;">
+            <div class="discord-pane-header">
+              <h2 class="discord-pane-title" data-i18n="settings_tab_sources">Sources & Metadata Catalog</h2>
+              <p class="discord-pane-desc" data-i18n="settings_desc_sources">Manage track metadata sources, artwork quality, and streaming backends.</p>
+            </div>
+
+            <!-- Discord Callout Card -->
+            <div class="discord-callout-card">
+              <svg class="discord-callout-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5865F2" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+              <div class="discord-callout-content">
+                <span class="discord-callout-title">Official Music Catalog & High-Res Covers</span>
+                <span class="discord-callout-text">SoraFy connects directly to official music catalogs for accurate artist metadata, synchronized lyrics, and original artwork.</span>
               </div>
             </div>
 
-            <!-- Quick Preset Swatches -->
-            <div class="accent-swatches-row" id="accentSwatchesRow">
-              <button class="accent-swatch-btn active" data-color="#00E599" style="background: #00E599;" title="Emerald"></button>
-              <button class="accent-swatch-btn" data-color="#00D2FF" style="background: #00D2FF;" title="Electric Cyan"></button>
-              <button class="accent-swatch-btn" data-color="#3B82F6" style="background: #3B82F6;" title="Ocean Blue"></button>
-              <button class="accent-swatch-btn" data-color="#A855F7" style="background: #A855F7;" title="Neon Purple"></button>
-              <button class="accent-swatch-btn" data-color="#EC4899" style="background: #EC4899;" title="Hot Pink"></button>
-              <button class="accent-swatch-btn" data-color="#F59E0B" style="background: #F59E0B;" title="Amber Gold"></button>
-              <button class="accent-swatch-btn" data-color="#EF4444" style="background: #EF4444;" title="Crimson Red"></button>
-              <button class="accent-swatch-btn" data-color="#E0E0E0" style="background: #E0E0E0;" title="Obsidian Silver"></button>
-            </div>
-          </div>
-        </div>
-
-        <!-- 2. Tab System -->
-        <div class="settings-tab-pane" id="settingsTabSystem" style="display: none;">
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_language">Language / Bahasa</span>
-              <span class="setting-desc" data-i18n="setting_language_desc">Select display language for user interface.</span>
-            </div>
-            <select class="settings-select" id="settingLanguage">
-              <option value="en" selected>English (Default)</option>
-              <option value="id">Bahasa Indonesia</option>
-            </select>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_close_tray">Close to System Tray</span>
-              <span class="setting-desc" data-i18n="setting_close_tray_desc">Keep playback running in background when window is closed (X).</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingCloseToTray">
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_notifications">Desktop Track Notifications</span>
-              <span class="setting-desc" data-i18n="setting_notifications_desc">Show pop-up notification when track changes in background.</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingNotifications" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_discord_rpc">Discord Rich Presence</span>
-              <span class="setting-desc" data-i18n="setting_discord_rpc_desc">Show your currently playing track on your Discord profile.</span>
-            </div>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingDiscordRpc" aria-label="Discord Rich Presence" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item discord-setting">
-            <label class="setting-info" for="settingDiscordActivityName">
-              <span class="setting-title" data-i18n="setting_discord_activity_name">Activity Name</span>
-              <span class="setting-desc" data-i18n="setting_discord_activity_name_desc">The name after Listening to, for example Sorafy or Music.</span>
-            </label>
-            <input class="settings-select discord-name-input" type="text" id="settingDiscordActivityName" maxlength="128" placeholder="Sorafy" value="Sorafy">
-          </div>
-
-          <div class="setting-item discord-setting">
-            <label class="setting-info" for="settingDiscordDisplayName">
-              <span class="setting-title" data-i18n="setting_discord_display_name">Display Name</span>
-              <span class="setting-desc" data-i18n="setting_discord_display_name_desc">Choose what appears in your Discord activity status.</span>
-            </label>
-            <select class="settings-select" id="settingDiscordDisplayName">
-              <option value="activity" data-i18n="setting_discord_activity_name">Activity Name</option>
-              <option value="artist" data-i18n="setting_discord_artist_name">Artist Name</option>
-              <option value="title" data-i18n="setting_discord_song_title">Song Title</option>
-            </select>
-          </div>
-
-          <div class="setting-item">
-            <label class="setting-info" for="settingDiscordHideWhenPaused">
-              <span class="setting-title" data-i18n="setting_discord_hide_paused">Hide When Paused</span>
-              <span class="setting-desc" data-i18n="setting_discord_hide_paused_desc">Hide your activity while playback is paused.</span>
-            </label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingDiscordHideWhenPaused" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <label class="setting-info" for="settingDiscordShowLogo">
-              <span class="setting-title" data-i18n="setting_discord_show_logo">Show Logo</span>
-              <span class="setting-desc" data-i18n="setting_discord_show_logo_desc">Show the SoraFy logo beside the cover, or on its own.</span>
-            </label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingDiscordShowLogo" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <label class="setting-info" for="settingDiscordShowCover">
-              <span class="setting-title" data-i18n="setting_discord_show_cover">Show Cover</span>
-              <span class="setting-desc" data-i18n="setting_discord_show_cover_desc">Show the current track's cover art.</span>
-            </label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingDiscordShowCover" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <label class="setting-info" for="settingDiscordShowYouTubeButton">
-              <span class="setting-title" data-i18n="setting_discord_youtube_button">Show YouTube Music Button</span>
-              <span class="setting-desc" data-i18n="setting_discord_youtube_button_desc">Show the listening link in your Discord activity.</span>
-            </label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingDiscordShowYouTubeButton" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item">
-            <label class="setting-info" for="settingDiscordShowSorafyButton">
-              <span class="setting-title" data-i18n="setting_discord_sorafy_button">Show Get SoraFy Button</span>
-              <span class="setting-desc" data-i18n="setting_discord_sorafy_button_desc">Show the SoraFy download link in your Discord activity.</span>
-            </label>
-            <label class="toggle-switch">
-              <input type="checkbox" id="settingDiscordShowSorafyButton" checked>
-              <span class="toggle-slider"></span>
-            </label>
-          </div>
-
-          <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-              <div class="setting-info">
-                <span class="setting-title" data-i18n="setting_mcp_title">Model Context Protocol (MCP Server)</span>
-                <span class="setting-desc" data-i18n="setting_mcp_desc">Local AI integration for Claude Code, Cursor, Windsurf, and AI assistants.</span>
+            <div class="discord-settings-section-card">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_metadata_provider">Primary Metadata Provider</span>
+                  <span class="setting-desc" data-i18n="setting_metadata_provider_desc">Pilih penyedia utama untuk judul lagu, artis, album, dan cover art.</span>
+                </div>
+                <select class="settings-select" id="settingMetadataProvider">
+                  <option value="spotify" selected>Spotify (Official Catalog & Charts)</option>
+                  <option value="ytmusic">InnerTube Engine Catalog</option>
+                  <option value="hybrid">Hybrid / Auto (Spotify Metadata + Stream Audio)</option>
+                  <option value="deezer">Deezer Hi-Fi (Global Metadata)</option>
+                </select>
               </div>
-              <span class="badge" style="background: rgba(0, 229, 153, 0.15); color: #00E599; border: 1px solid rgba(0, 229, 153, 0.3); font-size: 11px; padding: 4px 8px; border-radius: 6px;">
-                Port 8800 Active
-              </span>
-            </div>
-            <div style="width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
-              <code id="mcpServerUrlCode" style="color: #00E599; font-size: 12px; font-family: monospace;">http://127.0.0.1:8800/mcp</code>
-              <button class="hero-secondary-btn" id="copyMcpConfigBtn" style="padding: 4px 10px; font-size: 11px;" data-i18n="btn_copy_ai_config">
-                Salin Config AI
-              </button>
-            </div>
-          </div>
 
-          <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 8px;">
-            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-              <div class="setting-info">
-                <span class="setting-title" data-i18n="setting_mpd_title">Music Player Daemon (MPD Protocol)</span>
-                <span class="setting-desc" data-i18n="setting_mpd_desc">Integrasi kontrol terminal Linux untuk ncmpcpp, mpc, dan mpDris2.</span>
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_stream_source">Audio Streaming Engine</span>
+                  <span class="setting-desc" data-i18n="setting_stream_source_desc">Backend utama yang digunakan untuk mengekstrak dan memutar audio.</span>
+                </div>
+                <select class="settings-select" id="settingStreamingSource">
+                  <option value="yt_opus" selected>YouTube Opus HD (160 - 320 kbps)</option>
+                  <option value="lossless">Monochrome Lossless (FLAC 24-bit)</option>
+                  <option value="jiosaavn">JioSaavn 320k (AAC)</option>
+                </select>
               </div>
-              <span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); font-size: 11px; padding: 4px 8px; border-radius: 6px;">
-                Port 6600 Active
-              </span>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_title_cleanup">Pembersihan Judul Otomatis (Clean Title)</span>
+                  <span class="setting-desc" data-i18n="setting_title_cleanup_desc">Hapus teks pengganggu dari judul YouTube seperti [Official Music Video], (Lyrics), 4K, dll.</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingTitleCleanup" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_cover_hd">Sampul Album Kualitas Tinggi (HD Cover)</span>
+                  <span class="setting-desc" data-i18n="setting_cover_hd_desc">Selalu gunakan resolusi gambar cover tertinggi (544x544 / 640x640).</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingCoverHD" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
             </div>
-            <div style="width: 100%; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 10px 12px; margin-top: 6px; display: flex; align-items: center; justify-content: space-between;">
-              <code style="color: #38BDF8; font-size: 12px; font-family: monospace;">mpc -h 127.0.0.1 status</code>
-              <button class="hero-secondary-btn" id="copyMpdCmdBtn" style="padding: 4px 10px; font-size: 11px;" data-i18n="btn_copy_cmd">
-                Salin Perintah
-              </button>
+          </div>
+
+          <!-- 3. Tab Appearance & Theme -->
+          <div class="settings-tab-pane" id="settingsTabAppearance" style="display: none;">
+            <div class="discord-pane-header">
+              <h2 class="discord-pane-title" data-i18n="settings_tab_appearance">Appearance & Themes</h2>
+              <p class="discord-pane-desc" data-i18n="settings_desc_appearance">Customize interface theme and custom accent colors.</p>
+            </div>
+
+            <div class="discord-settings-section-card">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_theme">Interface Theme</span>
+                  <span class="setting-desc" data-i18n="setting_theme_desc">Pilih palet tema tampilan keseluruhan aplikasi.</span>
+                </div>
+                <select class="settings-select" id="settingThemeSelect">
+                  <option value="emerald" selected>SoraFy Emerald (Default Dark)</option>
+                  <option value="arctic">Arctic Obsidian (Monochrome)</option>
+                  <option value="cyber">Lagoon Cyber (Blue / Cyan)</option>
+                  <option value="purple">Aurora Purple (Dark Violet)</option>
+                  <option value="light">Oasis Light (Mode Terang)</option>
+                </select>
+              </div>
+
+              <div class="setting-item" style="flex-direction: column; align-items: flex-start; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+                  <div class="setting-info">
+                    <span class="setting-title" data-i18n="setting_accent">Custom Accent Color</span>
+                    <span class="setting-desc" data-i18n="setting_accent_desc">Pilih warna aksen kustom untuk tombol, gelombang audio, dan indikator.</span>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="color" id="settingAccentColorPicker" value="#00E599" style="width: 38px; height: 32px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+                    <button class="hero-secondary-btn" id="settingResetAccentBtn" style="padding: 4px 10px; font-size: 11px;">Reset</button>
+                  </div>
+                </div>
+
+                <!-- Quick Preset Swatches -->
+                <div class="accent-swatches-row" id="accentSwatchesRow">
+                  <button class="accent-swatch-btn active" data-color="#00E599" style="background: #00E599;" title="Emerald"></button>
+                  <button class="accent-swatch-btn" data-color="#00D2FF" style="background: #00D2FF;" title="Electric Cyan"></button>
+                  <button class="accent-swatch-btn" data-color="#3B82F6" style="background: #3B82F6;" title="Ocean Blue"></button>
+                  <button class="accent-swatch-btn" data-color="#A855F7" style="background: #A855F7;" title="Neon Purple"></button>
+                  <button class="accent-swatch-btn" data-color="#EC4899" style="background: #EC4899;" title="Hot Pink"></button>
+                  <button class="accent-swatch-btn" data-color="#F59E0B" style="background: #F59E0B;" title="Amber Gold"></button>
+                  <button class="accent-swatch-btn" data-color="#EF4444" style="background: #EF4444;" title="Crimson Red"></button>
+                  <button class="accent-swatch-btn" data-color="#E0E0E0" style="background: #E0E0E0;" title="Obsidian Silver"></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Tab System -->
+          <div class="settings-tab-pane" id="settingsTabSystem" style="display: none;">
+            <div class="discord-pane-header">
+              <h2 class="discord-pane-title" data-i18n="settings_tab_system">System & Connected Services</h2>
+              <p class="discord-pane-desc" data-i18n="settings_desc_system">Window options, Discord Rich Presence, and developer APIs.</p>
+            </div>
+
+            <!-- General Preferences -->
+            <div class="discord-group-title">General Preferences</div>
+            <div class="discord-settings-section-card">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_language">Language / Bahasa</span>
+                  <span class="setting-desc" data-i18n="setting_language_desc">Select display language for user interface.</span>
+                </div>
+                <select class="settings-select" id="settingLanguage">
+                  <option value="en" selected>English (Default)</option>
+                  <option value="id">Bahasa Indonesia</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_close_tray">Close to System Tray</span>
+                  <span class="setting-desc" data-i18n="setting_close_tray_desc">Keep playback running in background when window is closed (X).</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingCloseToTray">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_notifications">Desktop Track Notifications</span>
+                  <span class="setting-desc" data-i18n="setting_notifications_desc">Show pop-up notification when track changes in background.</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingNotifications" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Discord Rich Presence -->
+            <div class="discord-group-title">Discord Rich Presence (RPC)</div>
+            <div class="discord-callout-card" style="border-color: rgba(88, 101, 242, 0.4); background: rgba(88, 101, 242, 0.12);">
+              <svg class="discord-callout-icon" width="20" height="20" viewBox="0 0 24 24" fill="#5865F2"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              <div class="discord-callout-content">
+                <span class="discord-callout-title">Discord Game & Music Activity Status</span>
+                <span class="discord-callout-text">Share what you're listening to in real time directly to your Discord friends with rich album art, progress bar, and play buttons.</span>
+              </div>
+            </div>
+
+            <div class="discord-settings-section-card">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_discord_rpc">Discord Rich Presence</span>
+                  <span class="setting-desc" data-i18n="setting_discord_rpc_desc">Show your currently playing track on your Discord profile.</span>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingDiscordRpc" aria-label="Discord Rich Presence" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item discord-setting">
+                <label class="setting-info" for="settingDiscordActivityName">
+                  <span class="setting-title" data-i18n="setting_discord_activity_name">Activity Name</span>
+                  <span class="setting-desc" data-i18n="setting_discord_activity_name_desc">The name after Listening to, for example Sorafy or Music.</span>
+                </label>
+                <input class="settings-select discord-name-input" type="text" id="settingDiscordActivityName" maxlength="128" placeholder="Sorafy" value="Sorafy">
+              </div>
+
+              <div class="setting-item discord-setting">
+                <label class="setting-info" for="settingDiscordDisplayName">
+                  <span class="setting-title" data-i18n="setting_discord_display_name">Display Name</span>
+                  <span class="setting-desc" data-i18n="setting_discord_display_name_desc">Choose what appears in your Discord activity status.</span>
+                </label>
+                <select class="settings-select" id="settingDiscordDisplayName">
+                  <option value="activity" data-i18n="setting_discord_activity_name">Activity Name</option>
+                  <option value="artist" data-i18n="setting_discord_artist_name">Artist Name</option>
+                  <option value="title" data-i18n="setting_discord_song_title">Song Title</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <label class="setting-info" for="settingDiscordHideWhenPaused">
+                  <span class="setting-title" data-i18n="setting_discord_hide_paused">Hide When Paused</span>
+                  <span class="setting-desc" data-i18n="setting_discord_hide_paused_desc">Hide your activity while playback is paused.</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingDiscordHideWhenPaused" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <label class="setting-info" for="settingDiscordShowLogo">
+                  <span class="setting-title" data-i18n="setting_discord_show_logo">Show Logo</span>
+                  <span class="setting-desc" data-i18n="setting_discord_show_logo_desc">Show the SoraFy logo beside the cover, or on its own.</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingDiscordShowLogo" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <label class="setting-info" for="settingDiscordShowCover">
+                  <span class="setting-title" data-i18n="setting_discord_show_cover">Show Cover</span>
+                  <span class="setting-desc" data-i18n="setting_discord_show_cover_desc">Show the current track's cover art.</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingDiscordShowCover" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <label class="setting-info" for="settingDiscordShowYouTubeButton">
+                  <span class="setting-title" data-i18n="setting_discord_youtube_button">Show Music Link Button</span>
+                  <span class="setting-desc" data-i18n="setting_discord_youtube_button_desc">Show the listening link in your Discord activity.</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingDiscordShowYouTubeButton" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+
+              <div class="setting-item">
+                <label class="setting-info" for="settingDiscordShowSorafyButton">
+                  <span class="setting-title" data-i18n="setting_discord_sorafy_button">Show Get SoraFy Button</span>
+                  <span class="setting-desc" data-i18n="setting_discord_sorafy_button_desc">Show the SoraFy download link in your Discord activity.</span>
+                </label>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="settingDiscordShowSorafyButton" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Tab Data & Backup -->
+          <div class="settings-tab-pane" id="settingsTabData" style="display: none;">
+            <div class="discord-pane-header">
+              <h2 class="discord-pane-title" data-i18n="settings_tab_data">Data, Storage & Backup</h2>
+              <p class="discord-pane-desc" data-i18n="settings_desc_data">Cache management, YouTube cookies, companion engine, and backup.</p>
+            </div>
+
+            <div class="discord-settings-section-card">
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_cache_storage">Audio Cache & Storage</span>
+                  <span class="setting-desc" data-i18n="setting_cache_storage_desc">Clear cached audio streams and artworks to free disk space.</span>
+                </div>
+                <button class="hero-secondary-btn" id="settingClearCacheBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_clear_cache">Clear Cache</button>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_cache_quota">Max Cache Quota (LRU)</span>
+                  <span class="setting-desc" data-i18n="setting_cache_quota_desc">Automatically evict oldest streams when cache exceeds this limit.</span>
+                </div>
+                <select class="settings-select" id="settingCacheQuota">
+                  <option value="1024">1 GB</option>
+                  <option value="2048" selected>2 GB (Default)</option>
+                  <option value="4096">4 GB</option>
+                  <option value="8192">8 GB</option>
+                </select>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_cookies_title">YouTube Cookies (Anti-Bot Bypass)</span>
+                  <span class="setting-desc" data-i18n="setting_cookies_desc">Import Netscape cookies.txt to bypass YouTube age gates and IP bot blocks.</span>
+                  <span style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; display: block;" data-i18n="setting_cookies_hint">Tip: Export cookies with browser extension 'Get cookies.txt LOCALLY' if YouTube restricts access.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span id="settingCookieStatus" style="font-size: 12px; color: var(--color-text-secondary);">None</span>
+                  <button class="hero-secondary-btn" id="settingSelectCookieBtn" style="padding: 6px 12px; font-size: 12px;" data-i18n="btn_import_cookies">Import cookies.txt</button>
+                  <button class="control-btn" id="settingClearCookieBtn" title="Remove Cookie" style="display: none; padding: 4px;">
+                    <iconsax-icon name="trash" type="linear" size="16" color="#EF4444"></iconsax-icon>
+                  </button>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_ytdlp_title">Audio Engine Companion (yt-dlp)</span>
+                  <span class="setting-desc" data-i18n="setting_ytdlp_desc">Enables local offline MP3 downloads and unlimited 1000+ track playlist imports.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span id="settingYtDlpStatus" style="font-size: 12px; color: var(--color-text-secondary);">Checking...</span>
+                  <button class="hero-secondary-btn" id="settingInstallYtDlpBtn" style="padding: 6px 12px; font-size: 12px;" data-i18n="btn_check_engine">Check / Download Engine</button>
+                </div>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_backup_all">Backup All Data</span>
+                  <span class="setting-desc" data-i18n="setting_backup_all_desc">Save your custom playlists, liked tracks, listening history, and sound preferences to a secure JSON file.</span>
+                </div>
+                <button class="hero-secondary-btn" id="settingExportBackupBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_backup_data">Backup Data (.json)</button>
+              </div>
+
+              <div class="setting-item">
+                <div class="setting-info">
+                  <span class="setting-title" data-i18n="setting_restore_data">Restore Data</span>
+                  <span class="setting-desc" data-i18n="setting_restore_data_desc">Restore your playlists, liked tracks, and listening profile from a previously saved JSON file.</span>
+                </div>
+                <button class="hero-play-btn" id="settingRestoreBackupBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_restore_data">Restore Data</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Tab Shortcuts -->
+          <div class="settings-tab-pane" id="settingsTabShortcuts" style="display: none;">
+            <div class="discord-pane-header">
+              <h2 class="discord-pane-title" data-i18n="settings_tab_shortcuts">Keyboard Keybinds</h2>
+              <p class="discord-pane-desc" data-i18n="settings_desc_shortcuts">Keyboard keybinds for controlling playback anywhere in the app.</p>
+            </div>
+
+            <div class="discord-settings-section-card">
+              <div class="shortcuts-grid">
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_play_pause">Play / Pause Track</span>
+                  <kbd class="shortcut-kbd">Space</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_mute">Mute / Unmute Volume</span>
+                  <kbd class="shortcut-kbd">M</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_next">Next Track</span>
+                  <kbd class="shortcut-kbd">Ctrl + →</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_prev">Previous Track</span>
+                  <kbd class="shortcut-kbd">Ctrl + ←</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_seek">Seek Forward / Backward (5s)</span>
+                  <kbd class="shortcut-kbd">→ / ←</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_volume">Volume Up / Down (5%)</span>
+                  <kbd class="shortcut-kbd">↑ / ↓</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_search">Focus Search Bar</span>
+                  <kbd class="shortcut-kbd">Ctrl + F</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_lyrics">Open / Close Lyrics Drawer</span>
+                  <kbd class="shortcut-kbd">L</kbd>
+                </div>
+                <div class="shortcut-row">
+                  <span class="shortcut-desc" data-i18n="shortcut_close">Close Fullscreen Player / Modal</span>
+                  <kbd class="shortcut-kbd">Esc</kbd>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 7. Tab About -->
+          <div class="settings-tab-pane" id="settingsTabAbout" style="display: none;">
+            <div class="discord-pane-header">
+              <h2 class="discord-pane-title" data-i18n="settings_tab_about">About SoraFy</h2>
+              <p class="discord-pane-desc" data-i18n="settings_desc_about">Desktop application information, version status, and updates.</p>
+            </div>
+
+            <div class="discord-settings-section-card discord-about-card">
+              <div style="text-align: center; padding: 12px 0;">
+                <img src="assets/logo.png" alt="SoraFy Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
+                <div style="font-size: 22px; font-weight: 800; color: #FFFFFF;">SoraFy Desktop</div>
+                <div style="font-size: 13px; color: #949ba4; margin-top: 4px;" data-i18n="about_version">Version 1.0.0 (Linux x64) • GPL-3.0 License</div>
+                <p style="font-size: 13px; color: #dbdee1; max-width: 440px; margin: 16px auto 24px; line-height: 1.6;" data-i18n="about_desc">
+                  High-resolution streaming music player with real-time synchronized lyrics, DSP equalizer, and multi-platform playlist import.
+                </p>
+                <div style="display: flex; justify-content: center; gap: 12px;">
+                  <button class="hero-secondary-btn" id="checkUpdateBtn" style="padding: 9px 18px; font-size: 13px; display: inline-flex; align-items: center; gap: 8px;">
+                    <iconsax-icon name="refresh" type="linear" size="16" color="currentColor"></iconsax-icon>
+                    <span data-i18n="btn_check_update">Check for Updates</span>
+                  </button>
+                </div>
+                <div id="updateStatusText" style="font-size: 12px; color: #949ba4; margin-top: 12px;"></div>
+              </div>
             </div>
           </div>
         </div>
-
-        <!-- 3. Tab Data & Backup -->
-        <div class="settings-tab-pane" id="settingsTabData" style="display: none;">
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_cache_storage">Audio Cache & Storage</span>
-              <span class="setting-desc" data-i18n="setting_cache_storage_desc">Clear cached audio streams and artworks to free disk space.</span>
-            </div>
-            <button class="hero-secondary-btn" id="settingClearCacheBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_clear_cache">Clear Cache</button>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_cache_quota">Max Cache Quota (LRU)</span>
-              <span class="setting-desc" data-i18n="setting_cache_quota_desc">Automatically evict oldest streams when cache exceeds this limit.</span>
-            </div>
-            <select class="settings-select" id="settingCacheQuota">
-              <option value="1024">1 GB</option>
-              <option value="2048" selected>2 GB (Default)</option>
-              <option value="4096">4 GB</option>
-              <option value="8192">8 GB</option>
-            </select>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_cookies_title">YouTube Cookies (Anti-Bot Bypass)</span>
-              <span class="setting-desc" data-i18n="setting_cookies_desc">Import Netscape cookies.txt to bypass YouTube age gates and IP bot blocks.</span>
-              <span style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; display: block;" data-i18n="setting_cookies_hint">Tip: Export cookies with browser extension 'Get cookies.txt LOCALLY' if YouTube restricts access.</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="settingCookieStatus" style="font-size: 12px; color: var(--color-text-secondary);">None</span>
-              <button class="hero-secondary-btn" id="settingSelectCookieBtn" style="padding: 6px 12px; font-size: 12px;" data-i18n="btn_import_cookies">Import cookies.txt</button>
-              <button class="control-btn" id="settingClearCookieBtn" title="Remove Cookie" style="display: none; padding: 4px;">
-                <iconsax-icon name="trash" type="linear" size="16" color="#EF4444"></iconsax-icon>
-              </button>
-            </div>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_ytdlp_title">Audio Engine Companion (yt-dlp)</span>
-              <span class="setting-desc" data-i18n="setting_ytdlp_desc">Enables local offline MP3 downloads and unlimited 1000+ track playlist imports.</span>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span id="settingYtDlpStatus" style="font-size: 12px; color: var(--color-text-secondary);">Checking...</span>
-              <button class="hero-secondary-btn" id="settingInstallYtDlpBtn" style="padding: 6px 12px; font-size: 12px;" data-i18n="btn_check_engine">Check / Download Engine</button>
-            </div>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_backup_all">Backup All Data</span>
-              <span class="setting-desc" data-i18n="setting_backup_all_desc">Save your custom playlists, liked tracks, listening history, and sound preferences to a secure JSON file.</span>
-            </div>
-            <button class="hero-secondary-btn" id="settingExportBackupBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_backup_data">Backup Data (.json)</button>
-          </div>
-
-          <div class="setting-item">
-            <div class="setting-info">
-              <span class="setting-title" data-i18n="setting_restore_data">Restore Data</span>
-              <span class="setting-desc" data-i18n="setting_restore_data_desc">Restore your playlists, liked tracks, and listening profile from a previously saved JSON file.</span>
-            </div>
-            <button class="hero-play-btn" id="settingRestoreBackupBtn" style="padding: 6px 14px; font-size: 12px;" data-i18n="btn_restore_data">Restore Data</button>
-          </div>
-        </div>
-
-        <!-- 4. Tab Shortcuts -->
-        <div class="settings-tab-pane" id="settingsTabShortcuts" style="display: none;">
-          <div class="shortcuts-grid">
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_play_pause">Play / Pause Track</span>
-              <kbd class="shortcut-kbd">Space</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_mute">Mute / Unmute Volume</span>
-              <kbd class="shortcut-kbd">M</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_next">Next Track</span>
-              <kbd class="shortcut-kbd">Ctrl + →</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_prev">Previous Track</span>
-              <kbd class="shortcut-kbd">Ctrl + ←</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_seek">Seek Forward / Backward (5s)</span>
-              <kbd class="shortcut-kbd">→ / ←</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_volume">Volume Up / Down (5%)</span>
-              <kbd class="shortcut-kbd">↑ / ↓</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_search">Focus Search Bar</span>
-              <kbd class="shortcut-kbd">Ctrl + F</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_lyrics">Open / Close Lyrics Drawer</span>
-              <kbd class="shortcut-kbd">L</kbd>
-            </div>
-            <div class="shortcut-row">
-              <span class="shortcut-desc" data-i18n="shortcut_close">Close Fullscreen Player / Modal</span>
-              <kbd class="shortcut-kbd">Esc</kbd>
-            </div>
-          </div>
-        </div>
-
-        <!-- 5. Tab About -->
-        <div class="settings-tab-pane" id="settingsTabAbout" style="display: none;">
-          <div style="text-align: center; padding: 20px 0;">
-            <img src="assets/logo.png" alt="SoraFy Logo" style="width: 64px; height: 64px; border-radius: 16px; margin-bottom: 12px;" onerror="this.style.display='none'">
-            <div style="font-size: 20px; font-weight: 800; color: #FFFFFF;">SoraFy Desktop</div>
-            <div style="font-size: 13px; color: var(--color-text-secondary); margin-top: 4px;" data-i18n="about_version">Version 1.0.0 (Linux x64) • GPL-3.0 License</div>
-            <p style="font-size: 13px; color: var(--color-text-secondary); max-width: 380px; margin: 12px auto 20px; line-height: 1.5;" data-i18n="about_desc">
-              High-resolution streaming music player with real-time synchronized lyrics, DSP equalizer, and multi-platform playlist import.
-            </p>
-            <div style="display: flex; justify-content: center; gap: 12px;">
-              <button class="hero-secondary-btn" id="checkUpdateBtn" style="padding: 8px 16px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
-                <iconsax-icon name="refresh" type="linear" size="16" color="currentColor"></iconsax-icon>
-                <span data-i18n="btn_check_update">Check for Updates</span>
-              </button>
-            </div>
-            <div id="updateStatusText" style="font-size: 12px; color: var(--color-text-secondary); margin-top: 10px;"></div>
-          </div>
-        </div>
-      </div>
+      </main>
     </div>
   </div>
 
   <!-- Custom Track Context Menu (Right Click) -->
   <div id="trackContextMenu" class="context-menu" style="display: none;">
+    <div class="context-menu-item" data-action="start-radio">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"></circle><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"></path></svg>
+      <span data-i18n="ctx_start_radio">Mulai Radio (Automix)</span>
+    </div>
+    <div class="context-menu-divider"></div>
     <div class="context-menu-item" data-action="play-next">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></svg>
       <span data-i18n="ctx_play_next">Play Next</span>
@@ -1864,61 +2015,6 @@
           Hapus Verifikasi (Reset ke Otomatis)
         </button>
         <button class="btn btn-secondary" id="cancelStreamCandidatesBtn" style="margin-left: auto;" data-i18n="btn_close">Tutup</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SoraFy Jam QR Code Modal (Nuclear Jam Feature) -->
-  <div id="jamModal" class="modal-overlay" style="display: none;">
-    <div class="modal-dialog jam-dialog">
-      <div class="modal-header">
-        <div style="display: flex; align-items: center; gap: 12px;">
-          <iconsax-icon name="mobile" type="bold" size="26" color="#00E599"></iconsax-icon>
-          <div>
-            <h3 class="modal-title" style="margin: 0; font-size: 16px; font-weight: 700;" data-i18n="jam_modal_title">SoraFy Jam • Remote Control HP</h3>
-            <div style="font-size: 12px; color: var(--color-text-secondary); margin-top: 2px;" data-i18n="jam_modal_desc">Kendalikan musik dari smartphone Anda di jaringan Wi-Fi lokal</div>
-          </div>
-        </div>
-        <button class="modal-close-btn" id="closeJamModalBtn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-
-      <div class="jam-modal-body">
-        <div class="jam-qr-card">
-          <div id="jamQrLoading" class="jam-qr-loading" style="display: none;">
-            <div class="stream-spinner"></div>
-            <span>Membuat QR Code...</span>
-          </div>
-          <img id="jamQrImg" class="jam-qr-img" src="" alt="SoraFy Jam QR Code" style="display: none;">
-        </div>
-
-        <div class="jam-info-block">
-          <div class="jam-instruction-step">
-            <span class="step-num">1</span>
-            <span>Pastikan HP dan komputer Anda terhubung ke <strong>Wi-Fi yang sama</strong>.</span>
-          </div>
-          <div class="jam-instruction-step">
-            <span class="step-num">2</span>
-            <span>Scan QR Code di atas menggunakan kamera HP, atau buka URL berikut:</span>
-          </div>
-
-          <div class="jam-url-box">
-            <input type="text" id="jamUrlInput" readonly value="http://127.0.0.1:4120">
-            <button class="btn btn-secondary" id="copyJamUrlBtn" style="padding: 6px 12px; font-size: 12px;">Salin</button>
-          </div>
-
-          <div class="jam-feature-badges">
-            <span class="jam-badge">✓ Play / Pause / Seek</span>
-            <span class="jam-badge">✓ Live Synced Lyrics</span>
-            <span class="jam-badge">✓ Real-time Queue</span>
-            <span class="jam-badge">✓ Cari Musik dari HP</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer" style="display: flex; justify-content: flex-end;">
-        <button class="btn btn-secondary" id="cancelJamModalBtn">Tutup</button>
       </div>
     </div>
   </div>

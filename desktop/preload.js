@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getYtHomeFeed: (lang) => ipcRenderer.invoke('get-yt-home-feed', lang),
   resolveArtistProfile: (name) => ipcRenderer.invoke('resolve-artist-profile', name),
   fetchYouTubeLyrics: (videoId) => ipcRenderer.invoke('fetch-yt-lyrics', videoId),
+  fetchYouTubeRadioQueue: (videoId, continuationToken) => ipcRenderer.invoke('fetch-yt-radio-queue', videoId, continuationToken),
   importExternalPlaylist: (url) => ipcRenderer.invoke('import-external-playlist', url),
   downloadTrack: (track) => ipcRenderer.invoke('download-track', track),
   saveBackupFile: (data) => ipcRenderer.invoke('save-backup-file', data),
