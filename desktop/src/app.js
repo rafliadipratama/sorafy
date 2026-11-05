@@ -929,6 +929,9 @@ const I18N_DICTIONARY = {
 
     // Search and Categories
     search_placeholder: "Search songs, artists, music videos, or playlists...",
+    search_suggestions_title: "Search Suggestions",
+    recent_searches_title: "Recent Searches",
+    clear_recent_searches: "Clear All",
     popular_suggestions: "Popular Suggestions:",
     category_all: "All",
     category_pop_indo: "Indonesian Pop",
@@ -1241,6 +1244,9 @@ const I18N_DICTIONARY = {
 
     // Search and Categories
     search_placeholder: "Cari lagu, artis, video musik, atau playlist...",
+    search_suggestions_title: "Saran Pencarian",
+    recent_searches_title: "Pencarian Terbaru",
+    clear_recent_searches: "Hapus Semua",
     popular_suggestions: "Saran Populer:",
     category_all: "Semua",
     category_pop_indo: "Pop Indonesia",
@@ -1683,7 +1689,15 @@ class SoraFyDesktopApp {
 
     this.searchInput = document.getElementById("searchInput");
     this.searchClearBtn = document.getElementById("searchClearBtn");
-    this.searchSuggestions = document.getElementById("searchSuggestions");
+    this.searchSuggestionsDropdown = document.getElementById("searchSuggestionsDropdown");
+    this.searchSuggestionsHeader = document.getElementById("searchSuggestionsHeader");
+    this.searchSuggestionsHeaderTitle = document.getElementById("searchSuggestionsHeaderTitle");
+    this.clearRecentSearchesBtn = document.getElementById("clearRecentSearchesBtn");
+    this.searchSuggestionsList = document.getElementById("searchSuggestionsList");
+    this.activeSuggestionIndex = -1;
+    this.currentSuggestions = [];
+    this.originalSearchQuery = "";
+    this.suggestionDebounceTimer = null;
     this.searchFilterTabs = document.getElementById("searchFilterTabs");
     this.filterTabBtns = document.querySelectorAll(".filter-tab-btn");
     this.suggestionChips = document.querySelectorAll(".suggestion-chip");
@@ -3789,10 +3803,13 @@ class SoraFyDesktopApp {
     // Suggestion chips
     this.suggestionChips.forEach(chip => {
       chip.addEventListener("click", () => {
+        this.hideSearchSuggestions();
         const artist = chip.dataset.artist;
         if (artist) {
           this.searchInput.value = artist;
+          this.originalSearchQuery = artist;
           if (this.searchClearBtn) this.searchClearBtn.style.display = "inline-flex";
+          this.saveRecentSearch(artist);
           this.openArtistDetail(artist);
           return;
         }
@@ -3800,7 +3817,9 @@ class SoraFyDesktopApp {
         const q = chip.dataset.query;
         if (q) {
           this.searchInput.value = q;
+          this.originalSearchQuery = q;
           if (this.searchClearBtn) this.searchClearBtn.style.display = "inline-flex";
+          this.saveRecentSearch(q);
           if (this.currentSearchFilter === 'artist') {
             this.openArtistDetail(q);
           } else {
@@ -3823,13 +3842,40 @@ class SoraFyDesktopApp {
       });
     });
 
-    // Enter keydown on search input: directly opens artist if on artist tab or matches artist
+    // Keydown on search input (Keyboard navigation + Enter execution)
     this.searchInput.addEventListener("keydown", async (e) => {
-      if (e.key === "Enter") {
+      if (e.key === "ArrowDown") {
+        if (this.searchSuggestionsDropdown && this.searchSuggestionsDropdown.style.display !== "none") {
+          e.preventDefault();
+          this.navigateSuggestions(1);
+          return;
+        }
+      } else if (e.key === "ArrowUp") {
+        if (this.searchSuggestionsDropdown && this.searchSuggestionsDropdown.style.display !== "none") {
+          e.preventDefault();
+          this.navigateSuggestions(-1);
+          return;
+        }
+      } else if (e.key === "Escape") {
+        if (this.searchSuggestionsDropdown && this.searchSuggestionsDropdown.style.display !== "none") {
+          e.preventDefault();
+          this.hideSearchSuggestions();
+          return;
+        }
+      } else if (e.key === "Enter") {
         e.preventDefault();
         clearTimeout(this.searchDebounceTimer);
+        clearTimeout(this.suggestionDebounceTimer);
+
+        if (this.searchSuggestionsDropdown && this.searchSuggestionsDropdown.style.display !== "none" && this.activeSuggestionIndex >= 0 && this.currentSuggestions[this.activeSuggestionIndex]) {
+          this.selectSuggestion(this.currentSuggestions[this.activeSuggestionIndex]);
+          return;
+        }
+
         const query = this.searchInput.value.trim();
         if (!query) return;
+
+        this.hideSearchSuggestions();
 
         // Check for Spotify or external playlist/album/track link
         const isSpotify = /(?:open\.)?spotify\.com\/(playlist|album|track)[/:]([a-zA-Z0-9]+)/i.test(query) || /^spotify:(playlist|album|track):([a-zA-Z0-9]+)/i.test(query);
@@ -3838,6 +3884,8 @@ class SoraFyDesktopApp {
           this.handleUniversalLinkImport(query);
           return;
         }
+
+        this.saveRecentSearch(query);
 
         if (this.currentSearchFilter === 'artist') {
           this.openArtistDetail(query);
@@ -3848,15 +3896,46 @@ class SoraFyDesktopApp {
       }
     });
 
+    // Search focus
+    this.searchInput.addEventListener("focus", () => {
+      const query = this.searchInput.value.trim();
+      if (!query) {
+        this.renderRecentSearches();
+      } else {
+        if (this.currentSuggestions && this.currentSuggestions.length > 0) {
+          this.showSearchSuggestions();
+        } else {
+          this.fetchAndRenderSuggestions(query);
+        }
+      }
+    });
+
     // Search clear button
     if (this.searchClearBtn) {
       this.searchClearBtn.addEventListener("click", () => {
         this.searchInput.value = "";
+        this.originalSearchQuery = "";
         this.searchClearBtn.style.display = "none";
+        this.hideSearchSuggestions();
         this.switchView("home");
         this.fetchMusicfyRecommendations();
       });
     }
+
+    // Clear all recent searches button
+    if (this.clearRecentSearchesBtn) {
+      this.clearRecentSearchesBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.clearAllRecentSearches();
+      });
+    }
+
+    // Outside click dismisses suggestions
+    document.addEventListener("click", (e) => {
+      if (this.searchSuggestionsDropdown && !e.target.closest(".search-container-col")) {
+        this.hideSearchSuggestions();
+      }
+    });
 
     this.audio.addEventListener("timeupdate", () => this.onTimeUpdate());
     this.audio.addEventListener("loadedmetadata", () => {
@@ -3942,13 +4021,15 @@ class SoraFyDesktopApp {
       });
     }
 
-    // Real Online Search Input with Debounce (Just like mobile!)
+    // Real Online Search Input with Debounce & Live Suggestions
     this.searchInput.addEventListener("input", (e) => {
       const query = e.target.value.trim();
+      this.originalSearchQuery = query;
       if (this.searchClearBtn) {
         this.searchClearBtn.style.display = query ? "inline-flex" : "none";
       }
       clearTimeout(this.searchDebounceTimer);
+      clearTimeout(this.suggestionDebounceTimer);
 
       const isSpotify = /(?:open\.)?spotify\.com\/(playlist|album|track)[/:]([a-zA-Z0-9]+)/i.test(query) || /^spotify:(playlist|album|track):([a-zA-Z0-9]+)/i.test(query);
       if (this.spotifyLinkBanner) {
@@ -3961,12 +4042,14 @@ class SoraFyDesktopApp {
             this.spotifyLinkBannerDesc.textContent = this.currentLanguage === "id" ? `Tekan Enter atau klik tombol untuk impor & putar instan di SoraFy` : `Press Enter or click button to import & play instantly in SoraFy`;
           }
           this.spotifyLinkBanner.style.display = "flex";
+          this.hideSearchSuggestions();
         } else {
           this.spotifyLinkBanner.style.display = "none";
         }
       }
 
       if (!query) {
+        this.renderRecentSearches();
         this.switchView("home");
         this.fetchMusicfyRecommendations();
         return;
@@ -3976,9 +4059,13 @@ class SoraFyDesktopApp {
         return;
       }
 
+      this.suggestionDebounceTimer = setTimeout(() => {
+        this.fetchAndRenderSuggestions(query);
+      }, 120);
+
       this.searchDebounceTimer = setTimeout(() => {
         this.searchOnlineMusic(query, this.currentSearchFilter);
-      }, 350);
+      }, 450);
     });
 
     if (this.spotifyLinkBannerBtn) {
@@ -7449,6 +7536,288 @@ class SoraFyDesktopApp {
   }
 
   // =========================================================
+  // Search Suggestions & Recent Search History Engine
+  // =========================================================
+  getRecentSearches() {
+    try {
+      const data = localStorage.getItem("sorafy_recent_searches");
+      if (!data) return [];
+      const list = JSON.parse(data);
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+
+  saveRecentSearch(query) {
+    if (!query || typeof query !== "string") return;
+    const trimmed = query.trim();
+    if (!trimmed || trimmed.length < 2) return;
+    if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("spotify:")) return;
+    try {
+      let list = this.getRecentSearches();
+      list = list.filter(item => typeof item === "string" && item.toLowerCase() !== trimmed.toLowerCase());
+      list.unshift(trimmed);
+      if (list.length > 8) list = list.slice(0, 8);
+      localStorage.setItem("sorafy_recent_searches", JSON.stringify(list));
+    } catch (e) {
+      console.warn("Failed to save recent search:", e);
+    }
+  }
+
+  deleteRecentSearch(query) {
+    try {
+      let list = this.getRecentSearches();
+      list = list.filter(item => typeof item === "string" && item.toLowerCase() !== query.toLowerCase());
+      localStorage.setItem("sorafy_recent_searches", JSON.stringify(list));
+      this.renderRecentSearches();
+    } catch (e) {
+      console.warn("Failed to delete recent search:", e);
+    }
+  }
+
+  clearAllRecentSearches() {
+    try {
+      localStorage.removeItem("sorafy_recent_searches");
+      this.hideSearchSuggestions();
+    } catch (e) {
+      console.warn("Failed to clear recent searches:", e);
+    }
+  }
+
+  showSearchSuggestions() {
+    if (this.searchSuggestionsDropdown) {
+      this.searchSuggestionsDropdown.style.display = "flex";
+    }
+  }
+
+  hideSearchSuggestions() {
+    if (this.searchSuggestionsDropdown) {
+      this.searchSuggestionsDropdown.style.display = "none";
+    }
+    this.activeSuggestionIndex = -1;
+  }
+
+  renderRecentSearches() {
+    const list = this.getRecentSearches();
+    if (!list || list.length === 0) {
+      this.hideSearchSuggestions();
+      return;
+    }
+
+    if (this.searchSuggestionsHeaderTitle) {
+      this.searchSuggestionsHeaderTitle.textContent = this.currentLanguage === "id" ? "Pencarian Terbaru" : "Recent Searches";
+    }
+    if (this.clearRecentSearchesBtn) {
+      this.clearRecentSearchesBtn.textContent = this.currentLanguage === "id" ? "Hapus Semua" : "Clear All";
+      this.clearRecentSearchesBtn.style.display = "inline-block";
+    }
+
+    this.currentSuggestions = list.map(text => ({ type: "recent", text }));
+    this.activeSuggestionIndex = -1;
+
+    if (!this.searchSuggestionsList) return;
+    this.searchSuggestionsList.innerHTML = "";
+
+    this.currentSuggestions.forEach((item, idx) => {
+      const el = document.createElement("div");
+      el.className = "suggestion-item";
+      el.dataset.index = idx;
+      el.innerHTML = `
+        <div class="suggestion-item-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="suggestion-item-text">
+          <div class="suggestion-item-title">${escapeHtml(item.text)}</div>
+        </div>
+        <button class="suggestion-delete-btn" title="Hapus" data-query="${escapeHtml(item.text)}">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      `;
+
+      el.addEventListener("click", (e) => {
+        if (e.target.closest(".suggestion-delete-btn")) {
+          e.stopPropagation();
+          this.deleteRecentSearch(item.text);
+          return;
+        }
+        this.selectSuggestion(item);
+      });
+
+      this.searchSuggestionsList.appendChild(el);
+    });
+
+    this.showSearchSuggestions();
+  }
+
+  renderOnlineSuggestions(query, suggestions) {
+    if (!suggestions || suggestions.length === 0) {
+      this.hideSearchSuggestions();
+      return;
+    }
+
+    if (this.searchSuggestionsHeaderTitle) {
+      this.searchSuggestionsHeaderTitle.textContent = this.currentLanguage === "id" ? "Saran Pencarian" : "Search Suggestions";
+    }
+    if (this.clearRecentSearchesBtn) {
+      this.clearRecentSearchesBtn.style.display = "none";
+    }
+
+    this.currentSuggestions = suggestions;
+    this.activeSuggestionIndex = -1;
+
+    if (!this.searchSuggestionsList) return;
+    this.searchSuggestionsList.innerHTML = "";
+
+    const cleanQ = query.trim().toLowerCase();
+
+    suggestions.forEach((item, idx) => {
+      const el = document.createElement("div");
+      el.className = "suggestion-item";
+      el.dataset.index = idx;
+
+      if (item.type === "entity") {
+        const isArtist = item.subtitle && (item.subtitle.toLowerCase().includes("artist") || item.subtitle.toLowerCase().includes("artis"));
+        el.innerHTML = `
+          ${item.thumbnail ? `<img class="suggestion-item-thumb ${isArtist ? 'artist' : ''}" src="${escapeHtml(item.thumbnail)}" alt="" onerror="this.style.display='none'">` : `
+            <div class="suggestion-item-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            </div>
+          `}
+          <div class="suggestion-item-text">
+            <div class="suggestion-item-title">${this.highlightSuggestion(item.title, cleanQ)}</div>
+            ${item.subtitle ? `<div class="suggestion-item-subtitle">${escapeHtml(item.subtitle)}</div>` : ''}
+          </div>
+          <div class="suggestion-item-action" title="Lanjutkan pencarian">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="7" y1="17" x2="17" y2="7"></line>
+              <polyline points="7 7 17 7 17 17"></polyline>
+            </svg>
+          </div>
+        `;
+      } else {
+        el.innerHTML = `
+          <div class="suggestion-item-icon">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </div>
+          <div class="suggestion-item-text">
+            <div class="suggestion-item-title">${this.highlightSuggestion(item.text, cleanQ)}</div>
+          </div>
+          <div class="suggestion-item-action" title="Lanjutkan pencarian">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="7" y1="17" x2="17" y2="7"></line>
+              <polyline points="7 7 17 7 17 17"></polyline>
+            </svg>
+          </div>
+        `;
+      }
+
+      el.addEventListener("click", (e) => {
+        if (e.target.closest(".suggestion-item-action")) {
+          e.stopPropagation();
+          const qText = item.type === "entity" ? item.title : item.text;
+          if (this.searchInput) {
+            this.searchInput.value = qText;
+            this.originalSearchQuery = qText;
+            this.searchInput.focus();
+            if (this.searchClearBtn) this.searchClearBtn.style.display = "inline-flex";
+            this.fetchAndRenderSuggestions(qText);
+          }
+          return;
+        }
+        this.selectSuggestion(item);
+      });
+
+      this.searchSuggestionsList.appendChild(el);
+    });
+
+    this.showSearchSuggestions();
+  }
+
+  highlightSuggestion(text, query) {
+    if (!text) return "";
+    if (!query) return escapeHtml(text);
+    const escapedText = escapeHtml(text);
+    const escapedQuery = escapeHtml(query).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    return escapedText.replace(regex, '<b>$1</b>');
+  }
+
+  async fetchAndRenderSuggestions(query) {
+    if (!query || !query.trim()) {
+      this.renderRecentSearches();
+      return;
+    }
+    const cleanQ = query.trim();
+    if (window.electronAPI && typeof window.electronAPI.getSearchSuggestions === "function") {
+      try {
+        const results = await window.electronAPI.getSearchSuggestions(cleanQ);
+        if (this.searchInput && this.searchInput.value.trim() === cleanQ) {
+          this.renderOnlineSuggestions(cleanQ, results);
+        }
+      } catch (err) {
+        console.warn("fetchAndRenderSuggestions error:", err);
+      }
+    }
+  }
+
+  selectSuggestion(item) {
+    if (!item) return;
+    const query = item.type === "entity" ? item.title : item.text;
+    if (this.searchInput) {
+      this.searchInput.value = query;
+      this.originalSearchQuery = query;
+      if (this.searchClearBtn) this.searchClearBtn.style.display = "inline-flex";
+    }
+    this.saveRecentSearch(query);
+    this.hideSearchSuggestions();
+
+    if (item.type === "entity") {
+      const isArtist = item.subtitle && (item.subtitle.toLowerCase().includes("artist") || item.subtitle.toLowerCase().includes("artis"));
+      if (isArtist) {
+        this.openArtistDetail(item.title);
+        return;
+      }
+    }
+    this.searchOnlineMusic(query, this.currentSearchFilter);
+  }
+
+  navigateSuggestions(direction) {
+    if (!this.searchSuggestionsDropdown || this.searchSuggestionsDropdown.style.display === "none") return;
+    const items = this.searchSuggestionsList ? this.searchSuggestionsList.querySelectorAll(".suggestion-item") : [];
+    if (!items.length) return;
+
+    if (direction > 0) {
+      this.activeSuggestionIndex = (this.activeSuggestionIndex + 1) % items.length;
+    } else {
+      this.activeSuggestionIndex = this.activeSuggestionIndex <= 0 ? items.length - 1 : this.activeSuggestionIndex - 1;
+    }
+
+    items.forEach((it, idx) => {
+      const isActive = idx === this.activeSuggestionIndex;
+      it.classList.toggle("active", isActive);
+      if (isActive) {
+        it.scrollIntoView({ block: "nearest" });
+        const selected = this.currentSuggestions[idx];
+        if (selected && this.searchInput) {
+          const val = selected.type === "entity" ? selected.title : selected.text;
+          this.searchInput.value = val;
+          if (this.searchClearBtn) this.searchClearBtn.style.display = "inline-flex";
+        }
+      }
+    });
+  }
+
+  // =========================================================
   // Multi-Type Search (Songs, Artists, Videos, Playlists)
   // =========================================================
   async searchOnlineMusic(query, filterType = 'all') {
@@ -9161,6 +9530,9 @@ class SoraFyDesktopApp {
       this.previousView = this.currentView;
     }
     this.currentView = viewName;
+    if (viewName !== "search_results") {
+      this.hideSearchSuggestions();
+    }
 
     this.navItems.forEach(item => {
       item.classList.toggle("active", item.dataset.view === viewName);

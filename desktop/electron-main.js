@@ -3180,6 +3180,51 @@ ipcMain.handle('search-yt-music', async (event, query, filterType = 'song') => {
   return await searchYouTubeMusicInnerTube(query, filterType);
 });
 
+ipcMain.handle('get-search-suggestions', async (event, query) => {
+  if (!query || !query.trim()) return [];
+  const trimmed = query.trim();
+  try {
+    const payload = {
+      input: trimmed,
+      context: {
+        client: {
+          clientName: 'WEB_REMIX',
+          clientVersion: '1.20240318.01.00',
+          hl: 'id',
+          gl: 'ID'
+        }
+      }
+    };
+    const json = await postInnerTube('music/get_search_suggestions', payload);
+    const contents = json?.contents?.[0]?.searchSuggestionsSectionRenderer?.contents || [];
+    const results = [];
+    for (const item of contents) {
+      if (item.searchSuggestionRenderer) {
+        const s = item.searchSuggestionRenderer;
+        const text = s.suggestion?.runs?.map(r => r.text).join('') || '';
+        if (text && !results.some(r => r.text && r.text.toLowerCase() === text.toLowerCase())) {
+          results.push({ type: 'query', text });
+        }
+      } else if (item.musicResponsiveListItemRenderer) {
+        const r = item.musicResponsiveListItemRenderer;
+        const flexCols = r.flexColumns || [];
+        const title = flexCols[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
+        const subtitleRuns = flexCols[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+        const subtitle = subtitleRuns.map(x => x.text).join('');
+        const videoId = r.playlistItemData?.videoId || '';
+        const thumb = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails?.slice(-1)[0]?.url || '';
+        if (title) {
+          results.push({ type: 'entity', title, subtitle, videoId, thumbnail: thumb });
+        }
+      }
+    }
+    return results.slice(0, 8);
+  } catch (e) {
+    console.error('get-search-suggestions error:', e);
+    return [];
+  }
+});
+
 ipcMain.handle('fetch-yt-lyrics', async (event, videoId) => {
   return await fetchYouTubeMusicLyrics(videoId);
 });

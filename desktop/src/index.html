@@ -93,10 +93,19 @@
         <div class="search-container-col">
           <div class="search-box">
             <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-            <input type="text" id="searchInput" placeholder="Search songs, artists, music videos, or playlists..." data-i18n-placeholder="search_placeholder">
+            <input type="text" id="searchInput" placeholder="Search songs, artists, music videos, or playlists..." data-i18n-placeholder="search_placeholder" autocomplete="off" spellcheck="false">
             <button id="searchClearBtn" class="search-clear-btn" style="display: none;" title="Clear Search">
               <iconsax-icon name="close-circle" type="linear" size="18" color="currentColor"></iconsax-icon>
             </button>
+          </div>
+
+          <!-- Search Suggestions Dropdown (Spotify / YouTube Music style) -->
+          <div id="searchSuggestionsDropdown" class="search-suggestions-dropdown" style="display: none;">
+            <div class="search-suggestions-header" id="searchSuggestionsHeader">
+              <span id="searchSuggestionsHeaderTitle" data-i18n="search_suggestions_title">Saran Pencarian</span>
+              <button id="clearRecentSearchesBtn" class="search-suggestions-clear-btn" data-i18n="clear_recent_searches" style="display: none;">Hapus Semua</button>
+            </div>
+            <div id="searchSuggestionsList" class="search-suggestions-list"></div>
           </div>
 
           <!-- Spotify / External Link Instant Detector Banner -->
