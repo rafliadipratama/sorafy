@@ -1070,8 +1070,10 @@ const I18N_DICTIONARY = {
     settings_desc_data: "Cache management, YouTube cookies, companion engine, and backup.",
     settings_desc_shortcuts: "Keyboard keybinds for controlling playback anywhere in the app.",
     settings_desc_plugins: "Manage streaming audio providers, synchronized lyrics sources, DSP audio engines, and extensions.",
+    settings_desc_equalizer: "Calibrated 10-band ISO octave equalizer, headroom control, and acoustic DSP modules.",
     settings_desc_about: "Desktop application information, version status, and updates.",
     settings_tab_audio: "Audio & Quality",
+    settings_tab_equalizer: "Equalizer & DSP",
     settings_tab_sources: "Sources & Metadata",
     settings_tab_appearance: "Appearance & Theme",
     settings_tab_system: "System",
@@ -1386,8 +1388,10 @@ const I18N_DICTIONARY = {
     settings_desc_data: "Manajemen cache audio, cookies YouTube, mesin yt-dlp, dan cadangan data.",
     settings_desc_shortcuts: "Pintasan keyboard untuk mengontrol pemutaran di aplikasi.",
     settings_desc_plugins: "Kelola penyedia streaming audio, sumber lirik sinkron, mesin DSP audio, dan ekstensi.",
+    settings_desc_equalizer: "Equalizer 10-band ISO terkalibrasi, kontrol headroom, dan modul DSP akustik.",
     settings_desc_about: "Informasi aplikasi desktop, status versi, dan pembaruan.",
     settings_tab_audio: "Audio & Kualitas",
+    settings_tab_equalizer: "Equalizer & DSP",
     settings_tab_sources: "Sumber & Metadata",
     settings_tab_appearance: "Tampilan & Tema",
     settings_tab_system: "Sistem",
@@ -1913,7 +1917,7 @@ class SoraFyDesktopApp {
 
     // Hi-Fi Equalizer DSP elements
     this.eqBandsRow = document.getElementById("eqBandsRow");
-    this.eqChips = document.querySelectorAll("#equalizerViewContainer .chip");
+    this.eqChips = document.querySelectorAll("#settingsTabEqualizer .chip, #equalizerViewContainer .chip");
     this.eqResponseCanvas = document.getElementById("eqResponseCanvas");
     this.eqBypassBtn = document.getElementById("eqBypassBtn");
     this.eqBypassStatusText = document.getElementById("eqBypassStatusText");
@@ -2647,6 +2651,13 @@ class SoraFyDesktopApp {
             settingsSearchInput.value = "";
             settingsSearchInput.dispatchEvent(new Event("input"));
           }
+          if (this.activeSettingsTab === "equalizer") {
+            this.renderEqualizerBands();
+            setTimeout(() => {
+              this.drawEqResponseCurve();
+              this.startEqAnimationLoop();
+            }, 60);
+          }
         }
       });
     }
@@ -2676,11 +2687,18 @@ class SoraFyDesktopApp {
           this.settingsTabBar.querySelectorAll('.settings-tab-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           const target = btn.dataset.tab;
+          this.activeSettingsTab = target;
           document.querySelectorAll('.settings-tab-pane').forEach(pane => {
             pane.style.display = pane.id === `settingsTab${target.charAt(0).toUpperCase() + target.slice(1)}` ? 'block' : 'none';
           });
           if (target === "plugins") {
             this.renderPlugins();
+          } else if (target === "equalizer") {
+            this.renderEqualizerBands();
+            setTimeout(() => {
+              this.drawEqResponseCurve();
+              this.startEqAnimationLoop();
+            }, 60);
           }
         });
       });
@@ -9631,6 +9649,20 @@ class SoraFyDesktopApp {
       plItems.forEach(el => el.classList.remove("active"));
     }
 
+    if (viewName === "equalizer") {
+      if (this.settingsModal) {
+        this.settingsModal.style.display = "flex";
+        const eqBtn = this.settingsTabBar ? this.settingsTabBar.querySelector('[data-tab="equalizer"]') : null;
+        if (eqBtn) eqBtn.click();
+      }
+      return;
+    }
+
+    if (viewName === "stats") {
+      this.switchView("home");
+      return;
+    }
+
     if (this.contentHeader) {
       this.contentHeader.style.display = (viewName === "player") ? "none" : "flex";
     }
@@ -9655,9 +9687,6 @@ class SoraFyDesktopApp {
     if (this.pluginsViewContainer) {
       this.pluginsViewContainer.style.display = (viewName === "plugins") ? "block" : "none";
     }
-    if (this.equalizerViewContainer) {
-      this.equalizerViewContainer.style.display = (viewName === "equalizer") ? "block" : "none";
-    }
     if (this.libraryViewContainer) {
       this.libraryViewContainer.style.display = (viewName === "library") ? "block" : "none";
       if (viewName === "library") {
@@ -9678,12 +9707,6 @@ class SoraFyDesktopApp {
     if (this.playlistViewContainer) {
       this.playlistViewContainer.style.display = (viewName === "playlist") ? "block" : "none";
     }
-    if (this.statsViewContainer) {
-      this.statsViewContainer.style.display = (viewName === "stats") ? "block" : "none";
-      if (viewName === "stats") {
-        this.renderStatsView();
-      }
-    }
     if (this.screenPlayerViewContainer) {
       this.screenPlayerViewContainer.style.display = (viewName === "player") ? "block" : "none";
       if (viewName === "player") {
@@ -9702,11 +9725,6 @@ class SoraFyDesktopApp {
           }
         }
       }
-    }
-
-    if (viewName === "equalizer") {
-      this.renderEqualizerBands();
-      this.startEqAnimationLoop();
     }
   }
 
@@ -10796,8 +10814,8 @@ class SoraFyDesktopApp {
       this.eqHeadroomTag.style.borderColor = "rgba(245, 158, 11, 0.4)";
     } else {
       this.eqHeadroomTag.textContent = "Headroom: Safe";
-      this.eqHeadroomTag.style.color = "#00E599";
-      this.eqHeadroomTag.style.borderColor = "rgba(0, 229, 153, 0.3)";
+      this.eqHeadroomTag.style.color = "#23a55a";
+      this.eqHeadroomTag.style.borderColor = "rgba(35, 165, 90, 0.3)";
     }
   }
 
@@ -10805,7 +10823,10 @@ class SoraFyDesktopApp {
     if (this.eqAnimRunning) return;
     this.eqAnimRunning = true;
     const loop = () => {
-      if (this.currentView === "equalizer") {
+      const isEqTabActive = this.settingsModal && 
+                            this.settingsModal.style.display !== "none" && 
+                            this.activeSettingsTab === "equalizer";
+      if (isEqTabActive || this.currentView === "equalizer") {
         this.drawEqResponseCurve();
         requestAnimationFrame(loop);
       } else {
@@ -10837,7 +10858,7 @@ class SoraFyDesktopApp {
     const h = displayHeight;
 
     // 1. Sleek studio background
-    ctx.fillStyle = "#080B10";
+    ctx.fillStyle = "#1e1f22";
     ctx.fillRect(0, 0, w, h);
 
     const padLeft = 44;
@@ -10866,7 +10887,7 @@ class SoraFyDesktopApp {
       const y = dbToY(db);
       ctx.beginPath();
       if (db === 0) {
-        ctx.strokeStyle = "rgba(0, 229, 153, 0.35)";
+        ctx.strokeStyle = "rgba(35, 165, 90, 0.35)";
         ctx.setLineDash([4, 4]);
       } else {
         ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
@@ -10876,7 +10897,7 @@ class SoraFyDesktopApp {
       ctx.lineTo(w - padRight, y);
       ctx.stroke();
 
-      ctx.fillStyle = db === 0 ? "#00E599" : "#64748B";
+      ctx.fillStyle = db === 0 ? "#23a55a" : "#94a3b8";
       ctx.fillText(`${db > 0 ? '+' : ''}${db} dB`, padLeft - 6, y);
     });
     ctx.setLineDash([]);
@@ -10895,7 +10916,7 @@ class SoraFyDesktopApp {
       ctx.stroke();
 
       const label = f >= 1000 ? `${f / 1000}k` : `${f}`;
-      ctx.fillStyle = "#64748B";
+      ctx.fillStyle = "#94a3b8";
       ctx.fillText(label, x, h - padBottom + 4);
     });
 
@@ -10908,8 +10929,8 @@ class SoraFyDesktopApp {
       const nyquist = (this.audioCtx ? this.audioCtx.sampleRate : 44100) / 2;
       const rtaPoints = 80;
       const rtaGradient = ctx.createLinearGradient(0, padTop, 0, h - padBottom);
-      rtaGradient.addColorStop(0, "rgba(0, 229, 153, 0.28)");
-      rtaGradient.addColorStop(1, "rgba(0, 229, 153, 0.02)");
+      rtaGradient.addColorStop(0, "rgba(35, 165, 90, 0.25)");
+      rtaGradient.addColorStop(1, "rgba(35, 165, 90, 0.02)");
 
       ctx.beginPath();
       ctx.moveTo(padLeft, h - padBottom);
@@ -10979,8 +11000,8 @@ class SoraFyDesktopApp {
         fillGrad.addColorStop(0, "rgba(100, 116, 139, 0.08)");
         fillGrad.addColorStop(1, "rgba(100, 116, 139, 0)");
       } else {
-        fillGrad.addColorStop(0, "rgba(0, 229, 153, 0.18)");
-        fillGrad.addColorStop(1, "rgba(0, 229, 153, 0)");
+        fillGrad.addColorStop(0, "rgba(35, 165, 90, 0.15)");
+        fillGrad.addColorStop(1, "rgba(35, 165, 90, 0)");
       }
 
       ctx.beginPath();
@@ -10997,9 +11018,8 @@ class SoraFyDesktopApp {
         strokeGrad.addColorStop(0, "#64748B");
         strokeGrad.addColorStop(1, "#94A3B8");
       } else {
-        strokeGrad.addColorStop(0, "#00E599");
-        strokeGrad.addColorStop(0.5, "#10B981");
-        strokeGrad.addColorStop(1, "#38BDF8");
+        strokeGrad.addColorStop(0, "#23a55a");
+        strokeGrad.addColorStop(1, "#2dc770");
       }
 
       ctx.beginPath();
@@ -11031,7 +11051,7 @@ class SoraFyDesktopApp {
           ctx.fillStyle = "#FFFFFF";
           ctx.fill();
           ctx.lineWidth = 2;
-          ctx.strokeStyle = "#00E599";
+          ctx.strokeStyle = "#23a55a";
           ctx.stroke();
         });
       }
@@ -12292,7 +12312,7 @@ class SoraFyDesktopApp {
   }
 
   async renderStatsView() {
-    if (!window.electronAPI || typeof window.electronAPI.getListeningStats !== "function") return;
+    if (!this.statsViewContainer || !window.electronAPI || typeof window.electronAPI.getListeningStats !== "function") return;
     try {
       const res = await window.electronAPI.getListeningStats();
       const allEvents = (res && res.success && Array.isArray(res.events)) ? res.events : [];

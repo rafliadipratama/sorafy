@@ -165,9 +165,11 @@
 }
 
 .accent-swatch-btn.active {
-  transform: scale(1.2);
+  transform: scale(1.15);
   border-color: #FFFFFF;
-  box-shadow: 0 0 10px currentColor;
+  outline: 2px solid #FFFFFF;
+  outline-offset: 2px;
+  box-shadow: none;
 }
 
 /* =========================================================
@@ -623,13 +625,13 @@ body {
   cursor: pointer;
   white-space: nowrap;
   transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 2px 8px rgba(30, 215, 96, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
 }
 
 .spotify-link-banner-action-btn:hover {
   background: #1fdf64;
   transform: scale(1.03);
-  box-shadow: 0 4px 14px rgba(30, 215, 96, 0.45);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
 }
 
 .spotify-link-banner-action-btn:active {
@@ -1972,7 +1974,7 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #00E599;
+  background: #FFFFFF;
   cursor: pointer;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
   opacity: 0;
@@ -2292,114 +2294,22 @@ body {
 }
 
 /* =========================================================
-   Audiophile Hi-Fi DSP Equalizer Studio Styles
+   Audiophile Hi-Fi DSP Equalizer Studio Styles (Settings Discord Theme)
    ========================================================= */
-.hifi-eq-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-bottom: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  gap: 20px;
-}
-
-.hifi-eq-header-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
-
-.hifi-eq-icon-box {
-  width: 52px;
-  height: 52px;
-  border-radius: 14px;
-  background: rgba(0, 229, 153, 0.08);
-  border: 1px solid rgba(0, 229, 153, 0.2);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.hifi-eq-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.hifi-eq-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: #FFFFFF;
-  margin: 0;
-  letter-spacing: -0.3px;
-}
-
-.hifi-badge-lossless {
-  background: linear-gradient(135deg, rgba(0, 229, 153, 0.15), rgba(56, 189, 248, 0.15));
-  border: 1px solid rgba(0, 229, 153, 0.3);
-  color: #00E599;
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.6px;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.hifi-badge-spec {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94A3B8;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding: 3px 8px;
-  border-radius: 6px;
-}
-
-.hifi-eq-subtitle {
-  color: var(--color-text-secondary, #94A3B8);
-  font-size: 13px;
-  margin: 6px 0 0 0;
-  line-height: 1.45;
-}
-
 .hifi-eq-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
 }
 
-.hifi-bypass-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 10px;
-  padding: 4px 8px;
-}
-
-.hifi-toolbar-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: #64748B;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
 .hifi-bypass-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: #94A3B8;
+  background: #383a40;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #dbdee1;
   font-size: 12px;
-  font-weight: 700;
-  padding: 5px 12px;
+  font-weight: 600;
+  padding: 6px 12px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -2408,44 +2318,28 @@ body {
   transition: all 0.15s ease;
 }
 
+.hifi-bypass-btn:hover {
+  background: #404249;
+  color: #ffffff;
+}
+
 .hifi-bypass-btn .hifi-bypass-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #64748B;
+  background: #80848e;
   transition: all 0.2s ease;
 }
 
 .hifi-bypass-btn.active {
-  background: rgba(0, 229, 153, 0.12);
-  border-color: rgba(0, 229, 153, 0.35);
-  color: #FFFFFF;
+  background: #23a55a;
+  border-color: #23a55a;
+  color: #ffffff;
 }
 
 .hifi-bypass-btn.active .hifi-bypass-dot {
-  background: #00E599;
-  box-shadow: 0 0 8px rgba(0, 229, 153, 0.8);
-}
-
-.hifi-reset-btn {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 7px 14px;
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.hifi-reset-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.16);
+  background: #ffffff;
+  box-shadow: none;
 }
 
 /* Audiophile Presets Scroll Bar */
@@ -2453,19 +2347,20 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  margin-bottom: 14px;
+  background: #2b2d31;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
   padding: 8px 14px;
+  box-sizing: border-box;
 }
 
 .hifi-presets-label {
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #64748B;
+  letter-spacing: 0.5px;
+  color: #949ba4;
   flex-shrink: 0;
 }
 
@@ -2483,48 +2378,49 @@ body {
 }
 
 .hifi-presets-scroll .chip {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: #94A3B8;
+  background: #1e1f22;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #949ba4;
   font-size: 12px;
-  font-weight: 600;
-  padding: 5px 13px;
-  border-radius: 8px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 6px;
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .hifi-presets-scroll .chip:hover {
-  background: rgba(255, 255, 255, 0.09);
-  color: #FFFFFF;
+  background: #2e3035;
+  color: #f2f3f5;
 }
 
 .hifi-presets-scroll .chip.active {
-  background: rgba(0, 229, 153, 0.15);
-  border-color: rgba(0, 229, 153, 0.4);
-  color: #00E599;
-  font-weight: 700;
+  background: #404249;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow: none;
 }
 
 /* Frequency Response & Spectrum Display Card */
 .hifi-eq-display-card {
-  margin-top: 18px;
-  background: rgba(14, 18, 24, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 16px 20px 18px 20px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  margin-bottom: 14px;
+  background: #2b2d31;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: none;
+  box-sizing: border-box;
 }
 
 .hifi-eq-display-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .hifi-display-stat {
@@ -2534,18 +2430,17 @@ body {
 }
 
 .hifi-display-stat .stat-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: #00E599;
-  box-shadow: 0 0 6px rgba(0, 229, 153, 0.6);
+  background: #23a55a;
+  box-shadow: none;
 }
 
 .hifi-display-stat .stat-name {
   font-size: 12px;
-  font-weight: 700;
-  color: #E2E8F0;
-  letter-spacing: 0.3px;
+  font-weight: 600;
+  color: #f2f3f5;
 }
 
 .hifi-display-tags {
@@ -2555,68 +2450,68 @@ body {
 }
 
 .hifi-tag {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: #1e1f22;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   padding: 2px 7px;
   border-radius: 4px;
-  font-size: 10.5px;
-  font-weight: 600;
-  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 500;
+  color: #949ba4;
 }
 
 .hifi-canvas-wrap {
   width: 100%;
-  background: #080B10;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 10px;
+  background: #1e1f22;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
   overflow: hidden;
   position: relative;
+  box-sizing: border-box;
 }
 
 .hifi-eq-canvas {
   width: 100%;
-  height: 180px;
+  height: 160px;
   display: block;
 }
 
 /* 10-Band ISO Studio Equalizer Rack Card */
 .hifi-eq-rack-card {
-  margin-top: 18px;
-  background: rgba(14, 18, 24, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 20px 24px 22px 24px;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+  margin-bottom: 14px;
+  background: #2b2d31;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 16px 18px;
+  box-shadow: none;
+  box-sizing: border-box;
 }
 
 .hifi-rack-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 16px;
-  margin-bottom: 18px;
+  padding-bottom: 12px;
+  margin-bottom: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .hifi-rack-title {
-  font-size: 13.5px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
-  color: #FFFFFF;
+  letter-spacing: 0.5px;
+  color: #f2f3f5;
 }
 
 .hifi-rack-range {
   font-size: 11px;
-  font-weight: 600;
-  color: #64748B;
+  color: #949ba4;
 }
 
 .hifi-eq-bands-grid {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
-  gap: 12px;
+  gap: 6px;
   align-items: flex-end;
 }
 
@@ -2624,48 +2519,48 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .hifi-gain-val {
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #94A3B8;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #949ba4;
   font-variant-numeric: tabular-nums;
-  min-width: 44px;
+  min-width: 38px;
   text-align: center;
-  padding: 2px 4px;
+  padding: 2px 2px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.03);
+  background: #1e1f22;
   transition: all 0.15s ease;
 }
 
 .hifi-gain-val.boost {
-  color: #00E599;
-  background: rgba(0, 229, 153, 0.08);
+  color: #23a55a;
+  background: rgba(35, 165, 90, 0.12);
 }
 
 .hifi-gain-val.cut {
-  color: #38BDF8;
-  background: rgba(56, 189, 248, 0.08);
+  color: #5865f2;
+  background: rgba(88, 101, 242, 0.12);
 }
 
 .hifi-gain-val.zero {
-  color: #64748B;
+  color: #80848e;
 }
 
 .hifi-fader-wrap {
-  width: 32px;
-  height: 170px;
+  width: 30px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  background: rgba(8, 11, 16, 0.6);
+  background: #1e1f22;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: 8px 0;
+  border-radius: 14px;
+  padding: 6px 0;
 }
 
 .hifi-fader-tick {
@@ -2674,7 +2569,7 @@ body {
   left: 4px;
   right: 4px;
   height: 1px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   transform: translateY(-50%);
   pointer-events: none;
 }
@@ -2685,27 +2580,26 @@ body {
   writing-mode: vertical-lr;
   direction: rtl;
   width: 12px;
-  height: 148px;
+  height: 132px;
   outline: none;
   cursor: pointer;
-  accent-color: #00E599;
+  accent-color: #23a55a;
 }
 
 .hifi-freq-badge {
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #FFFFFF;
-  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #f2f3f5;
+  margin-top: 2px;
   text-align: center;
-  white-space: nowrap;
 }
 
 .hifi-freq-role {
-  font-size: 9.5px;
-  font-weight: 700;
+  font-size: 9px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: #64748B;
+  letter-spacing: 0.3px;
+  color: #80848e;
   text-align: center;
   white-space: nowrap;
   max-width: 100%;
@@ -2716,26 +2610,27 @@ body {
 /* Audiophile Master Processing Modules Grid */
 .hifi-dsp-modules-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
-  margin-top: 18px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+  margin-bottom: 20px;
 }
 
 .hifi-dsp-module-card {
-  background: rgba(14, 18, 24, 0.85);
-  backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  padding: 16px 18px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  background: #2b2d31;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 14px 16px;
+  box-shadow: none;
+  box-sizing: border-box;
 }
 
 .hifi-module-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
-  gap: 10px;
+  margin-bottom: 10px;
+  gap: 8px;
 }
 
 .hifi-module-info {
@@ -2745,22 +2640,21 @@ body {
 }
 
 .hifi-module-title {
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #FFFFFF;
-  letter-spacing: 0.2px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f2f3f5;
 }
 
 .hifi-module-desc {
-  font-size: 10.5px;
-  color: #64748B;
+  font-size: 11px;
+  color: #949ba4;
   line-height: 1.35;
 }
 
 .hifi-module-value {
-  font-size: 12.5px;
-  font-weight: 800;
-  color: #00E599;
+  font-size: 12px;
+  font-weight: 700;
+  color: #23a55a;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
@@ -2772,10 +2666,11 @@ body {
 .hifi-slider-marks {
   display: flex;
   justify-content: space-between;
-  margin-top: 8px;
-  font-size: 10px;
+  margin-top: 6px;
+  font-size: 9.5px;
   font-weight: 600;
-  color: #64748B;
+  color: #80848e;
+}
 }
 
 /* Modal Backdrop & Card */
@@ -5214,7 +5109,7 @@ body {
   opacity: 0;
   transform: translateY(8px) scale(0.9);
   transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.2, 0, 0, 1);
-  box-shadow: 0 6px 18px rgba(30, 215, 96, 0.4);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 .ytm-mix-card:hover .mix-play-overlay {
@@ -6695,8 +6590,7 @@ body {
 }
 
 .verify-stream-btn.verified {
-  color: #00E599;
-  filter: drop-shadow(0 0 6px rgba(0, 229, 153, 0.45));
+  color: #23a55a;
 }
 
 .stream-candidates-dialog {
@@ -6877,646 +6771,3 @@ body {
   border-color: #00E599;
   cursor: default;
 }
-
-/* =========================================================
-   Listening Statistics & Analytics Dashboard (Nuclear Feature)
-   ========================================================= */
-#statsViewContainer {
-  padding: 24px 32px 60px 32px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.stats-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.stats-main-title {
-  font-size: 26px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: #FFFFFF;
-  margin: 0 0 4px 0;
-}
-
-.stats-sub-title {
-  font-size: 13px;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.stats-filter-pills {
-  display: flex;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 4px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.stats-pill {
-  padding: 6px 14px;
-  border-radius: 16px;
-  border: none;
-  background: none;
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.stats-pill:hover {
-  color: #FFFFFF;
-}
-
-.stats-pill.active {
-  background: #00E599;
-  color: #07080A;
-}
-
-/* Music Highlights Showcase Cards (Spotify Wrapped / Apple Music Replay style) */
-.stats-hero-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 960px) {
-  .stats-hero-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.stats-hero-card {
-  position: relative;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.015) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  padding: 20px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  backdrop-filter: blur(12px);
-}
-
-.stats-hero-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(0, 229, 153, 0.3);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
-}
-
-.stats-hero-badge {
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--color-brand-primary, #00E599);
-  background: rgba(0, 229, 153, 0.12);
-  padding: 4px 10px;
-  border-radius: 20px;
-  width: fit-content;
-  border: 1px solid rgba(0, 229, 153, 0.25);
-}
-
-.stats-hero-media {
-  position: relative;
-  width: 100%;
-  height: 150px;
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.stats-hero-artist-img {
-  width: 110px;
-  height: 110px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  border: 2px solid rgba(255, 255, 255, 0.15);
-  transition: transform 0.3s ease;
-}
-
-.stats-hero-card:hover .stats-hero-artist-img {
-  transform: scale(1.05);
-}
-
-.stats-hero-track-img {
-  width: 120px;
-  height: 120px;
-  border-radius: 10px;
-  object-fit: cover;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s ease;
-}
-
-.stats-hero-card:hover .stats-hero-track-img {
-  transform: scale(1.05);
-}
-
-.stats-hero-play-icon {
-  position: absolute;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--color-brand-primary, #00E599);
-  color: #07080A;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transform: scale(0.85);
-  transition: all 0.25s ease;
-  pointer-events: none;
-  box-shadow: 0 6px 20px rgba(0, 229, 153, 0.4);
-}
-
-.stats-hero-card:hover .stats-hero-play-icon {
-  opacity: 1;
-  transform: scale(1);
-}
-
-.stats-vibe-icon-wrap {
-  width: 100%;
-  height: 150px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.25) 0%, rgba(0, 0, 0, 0) 70%);
-}
-
-.stats-hero-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.stats-hero-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: #FFFFFF;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.stats-hero-sub {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.stats-metrics-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-@media (max-width: 900px) {
-  .stats-metrics-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.metric-card {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  backdrop-filter: blur(10px);
-}
-
-.metric-icon-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.metric-content {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.metric-label {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-tertiary);
-  font-weight: 600;
-}
-
-.metric-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #FFFFFF;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.stats-panel-box {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 14px;
-  padding: 20px 24px;
-  margin-bottom: 24px;
-}
-
-.stats-panel-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 18px;
-  gap: 12px;
-}
-
-.stats-panel-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: #FFFFFF;
-  margin: 0 0 4px 0;
-}
-
-.stats-panel-desc {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-/* Weekly Music Rhythm Equalizer Activity Chart (Friendly Non-IT Music Style) */
-.activity-bars-container {
-  display: flex;
-  align-items: flex-end;
-  height: 180px;
-  gap: 12px;
-  padding: 16px 8px 8px 8px;
-  box-sizing: border-box;
-}
-
-.activity-bar-col {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  height: 100%;
-  justify-content: flex-end;
-  gap: 8px;
-  cursor: pointer;
-}
-
-.activity-bar-val {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  opacity: 0.75;
-  transition: opacity 0.2s ease, color 0.2s ease;
-  white-space: nowrap;
-}
-
-.activity-bar-col:hover .activity-bar-val {
-  opacity: 1;
-  color: var(--color-brand-primary, #00E599);
-}
-
-.activity-bar-track {
-  width: 100%;
-  max-width: 44px;
-  height: 110px;
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 22px;
-  display: flex;
-  align-items: flex-end;
-  padding: 4px;
-  box-sizing: border-box;
-  transition: background 0.2s ease;
-}
-
-.activity-bar-col:hover .activity-bar-track {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.activity-bar-fill {
-  width: 100%;
-  border-radius: 18px;
-  background: linear-gradient(180deg, rgba(0, 229, 153, 0.7) 0%, rgba(0, 229, 153, 0.25) 100%);
-  min-height: 8px;
-  transition: height 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.activity-bar-col:hover .activity-bar-fill {
-  background: linear-gradient(180deg, #00E599 0%, #059669 100%);
-  box-shadow: 0 0 12px rgba(0, 229, 153, 0.35);
-}
-
-.activity-bar-fill.peak {
-  background: linear-gradient(180deg, #00E599 0%, #059669 100%);
-  box-shadow: 0 0 16px rgba(0, 229, 153, 0.45);
-}
-
-.activity-bar-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-align: center;
-}
-
-.activity-bar-date {
-  font-size: 10px;
-  color: var(--color-text-tertiary);
-  margin-top: -4px;
-}
-
-.stats-active-day-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #00E599;
-  background: rgba(0, 229, 153, 0.1);
-  padding: 4px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(0, 229, 153, 0.25);
-}
-
-/* 4 Time of Day Listening Segments */
-.day-segments-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  margin-top: 8px;
-}
-
-@media (max-width: 900px) {
-  .day-segments-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.day-segment-card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: background 0.2s ease, border-color 0.2s ease;
-}
-
-.day-segment-card:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.12);
-}
-
-.day-segment-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.day-segment-title {
-  font-size: 13px;
-  font-weight: 700;
-  color: #FFFFFF;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.day-segment-badge {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-brand-primary, #00E599);
-}
-
-.day-segment-progress {
-  width: 100%;
-  height: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border-radius: 4px;
-  overflow: hidden;
-}
-
-.day-segment-progress-fill {
-  height: 100%;
-  border-radius: 4px;
-  background: linear-gradient(90deg, #00E599, #38BDF8);
-  transition: width 0.4s ease;
-}
-
-.day-segment-meta {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  display: flex;
-  justify-content: space-between;
-}
-
-/* Rankings Grid */
-.stats-rankings-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-@media (max-width: 800px) {
-  .stats-rankings-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.rankings-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-.ranking-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 10px;
-  border-radius: 8px;
-  transition: background 0.15s ease;
-  cursor: pointer;
-}
-
-.ranking-item:hover {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.ranking-rank {
-  width: 24px;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text-tertiary);
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.ranking-rank.top1 {
-  color: #00E599;
-}
-
-.ranking-rank.top2 {
-  color: #38BDF8;
-}
-
-.ranking-rank.top3 {
-  color: #F59E0B;
-}
-
-.ranking-art {
-  width: 38px;
-  height: 38px;
-  border-radius: 6px;
-  object-fit: cover;
-  background: rgba(255, 255, 255, 0.05);
-  flex-shrink: 0;
-}
-
-.ranking-art.artist {
-  border-radius: 50%;
-}
-
-.ranking-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.ranking-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: #FFFFFF;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.ranking-sub {
-  font-size: 11px;
-  color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin-top: 2px;
-}
-
-.ranking-badge {
-  font-size: 11px;
-  font-weight: 600;
-  color: #00E599;
-  background: rgba(0, 229, 153, 0.1);
-  padding: 3px 8px;
-  border-radius: 12px;
-  white-space: nowrap;
-}
-
-/* Recent Scrobbles List */
-.recent-scrobbles-table {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 12px;
-}
-
-.recent-scrobble-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  transition: background 0.15s ease;
-}
-
-.recent-scrobble-row:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.recent-scrobble-time {
-  font-size: 11px;
-  color: var(--color-text-tertiary);
-  min-width: 100px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.stats-clear-btn {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  color: var(--color-text-secondary);
-  border-radius: 8px;
-  padding: 6px 12px;
-  font-size: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.stats-clear-btn:hover {
-  border-color: #EF4444;
-  color: #EF4444;
-}
-
-.stats-empty-state {
-  text-align: center;
-  padding: 50px 20px;
-  color: var(--color-text-secondary);
-}
-
-.stats-empty-icon {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 16px auto;
-  color: rgba(255, 255, 255, 0.2);
-}
-
-/* Tooltip */
-.stats-floating-tooltip {
-  position: fixed;
-  background: #161B22;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 6px;
-  padding: 6px 10px;
-  font-size: 11px;
-  color: #FFFFFF;
-  pointer-events: none;
-  z-index: 9999;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-  white-space: nowrap;
-  display: none;
-}
-
-
-

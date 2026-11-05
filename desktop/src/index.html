@@ -47,17 +47,9 @@
           <iconsax-icon name="discover" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_explore">Explore</span>
         </div>
-        <div class="nav-item" data-view="equalizer" id="navEqualizer">
-          <iconsax-icon name="setting-4" type="linear" size="20" color="currentColor"></iconsax-icon>
-          <span data-i18n="nav_equalizer">Equalizer DSP</span>
-        </div>
         <div class="nav-item" data-view="library" id="navLibrary">
           <iconsax-icon name="music-library-2" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_library">Your Library</span>
-        </div>
-        <div class="nav-item" data-view="stats" id="navStats">
-          <iconsax-icon name="chart-2" type="linear" size="20" color="currentColor"></iconsax-icon>
-          <span data-i18n="nav_stats">Listening Stats</span>
         </div>
         <div class="nav-item" id="navSettings">
           <iconsax-icon name="setting-2" type="linear" size="20" color="currentColor"></iconsax-icon>
@@ -571,162 +563,6 @@
         </section>
       </div>
 
-      <!-- Equalizer Studio View Container (Audiophile Hi-Fi DSP Studio) -->
-      <div id="equalizerViewContainer" style="display: none;">
-        <!-- Top Studio Header -->
-        <div class="hifi-eq-header">
-          <div class="hifi-eq-header-left">
-            <div class="hifi-eq-icon-box">
-              <iconsax-icon name="setting-4" type="bold" size="28" color="#00E599"></iconsax-icon>
-            </div>
-            <div>
-              <div class="hifi-eq-title-row">
-                <h1 class="hifi-eq-title">Hi-Fi DSP Equalizer Studio</h1>
-                <span class="hifi-badge-lossless">32-Bit Float DSP</span>
-                <span class="hifi-badge-spec">ISO 10-Band</span>
-                <span class="hifi-badge-spec">Low-Latency IIR</span>
-              </div>
-              <p class="hifi-eq-subtitle">
-                Calibrated audiophile signal chain with real-time FFT spectrum analyzer, anti-clipping headroom protection, and soundstage virtualizer.
-              </p>
-            </div>
-          </div>
-
-          <!-- Studio Master Toolbar -->
-          <div class="hifi-eq-toolbar">
-            <div class="hifi-bypass-wrap" title="Bypass DSP processing for bit-perfect direct output">
-              <span class="hifi-toolbar-label">DSP State:</span>
-              <button class="hifi-bypass-btn active" id="eqBypassBtn">
-                <span class="hifi-bypass-dot"></span>
-                <span id="eqBypassStatusText">Active</span>
-              </button>
-            </div>
-            <button class="hifi-reset-btn" id="eqResetFlatBtn" title="Reset all 10 bands and preamp to 0.0 dB">
-              <iconsax-icon name="rotate-left" type="linear" size="14" color="currentColor"></iconsax-icon>
-              <span>Reset to Flat</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- Audiophile Presets Selector Bar -->
-        <div class="hifi-presets-bar">
-          <span class="hifi-presets-label">Preset:</span>
-          <div class="hifi-presets-scroll" id="eqPresetsContainer">
-            <button class="chip active" data-eq="Flat">Flat / Reference</button>
-            <button class="chip" data-eq="Hi-Fi Clarity">Hi-Fi Clarity</button>
-            <button class="chip" data-eq="Bass Boost">Bass Boost</button>
-            <button class="chip" data-eq="Acoustic & Classical">Acoustic & Classical</button>
-            <button class="chip" data-eq="Warm Tube Sound">Warm Tube Sound</button>
-            <button class="chip" data-eq="Vocal & Acoustic">Vocal & Acoustic</button>
-            <button class="chip" data-eq="Electronic / EDM">Electronic / EDM</button>
-            <button class="chip" data-eq="Rock & Metal">Rock & Metal</button>
-            <button class="chip" data-eq="Late Night / Headphone">Late Night / Headphone</button>
-          </div>
-        </div>
-
-        <!-- Interactive Real-Time Response Curve & Spectrum Analyzer Display -->
-        <div class="hifi-eq-display-card">
-          <div class="hifi-eq-display-header">
-            <div class="hifi-display-stat">
-              <span class="stat-dot"></span>
-              <span class="stat-name">Real-Time Acoustic Response & FFT Spectrum</span>
-            </div>
-            <div class="hifi-display-tags">
-              <span class="hifi-tag" id="eqActivePresetTag">Preset: Flat</span>
-              <span class="hifi-tag">Precision: IEEE 754</span>
-              <span class="hifi-tag" id="eqHeadroomTag">Headroom: Safe</span>
-            </div>
-          </div>
-          <div class="hifi-canvas-wrap">
-            <canvas id="eqResponseCanvas" class="hifi-eq-canvas" width="1000" height="190"></canvas>
-          </div>
-        </div>
-
-        <!-- Main 10-Band ISO Studio Equalizer Rack -->
-        <div class="hifi-eq-rack-card">
-          <div class="hifi-rack-header">
-            <span class="hifi-rack-title">10-Band ISO Octave Graphic Equalizer</span>
-            <span class="hifi-rack-range">Range: ±12.0 dB · Step: 0.5 dB · Direct Form II Biquads</span>
-          </div>
-
-          <div class="hifi-eq-bands-grid" id="eqBandsRow">
-            <!-- 10 Bands generated dynamically with dB readout, fader, Hz label, and role -->
-          </div>
-        </div>
-
-        <!-- Audiophile Master Processing Modules -->
-        <div class="hifi-dsp-modules-grid">
-          <!-- Module 1: Preamp & Headroom Protection -->
-          <div class="hifi-dsp-module-card">
-            <div class="hifi-module-header">
-              <div class="hifi-module-info">
-                <span class="hifi-module-title">Preamp Gain / Headroom</span>
-                <span class="hifi-module-desc">Anti-clipping attenuation for boosted EQ curves</span>
-              </div>
-              <span class="hifi-module-value" id="preampVal">0.0 dB</span>
-            </div>
-            <input type="range" class="volume-slider hifi-module-slider" id="preampSlider" min="-12" max="6" step="0.5" value="0">
-            <div class="hifi-slider-marks">
-              <span>-12 dB</span>
-              <span>-6 dB</span>
-              <span>0 dB (Unity)</span>
-              <span>+6 dB</span>
-            </div>
-          </div>
-
-          <!-- Module 2: Sub-Harmonic Bass Enhancer -->
-          <div class="hifi-dsp-module-card">
-            <div class="hifi-module-header">
-              <div class="hifi-module-info">
-                <span class="hifi-module-title">Dynamic Sub-Bass Enhancer</span>
-                <span class="hifi-module-desc">Low-end punch (40-80 Hz) without masking mids</span>
-              </div>
-              <span class="hifi-module-value" id="bassBoostVal">0%</span>
-            </div>
-            <input type="range" class="volume-slider hifi-module-slider" id="bassBoostSlider" min="0" max="100" value="0">
-            <div class="hifi-slider-marks">
-              <span>Bypass (0%)</span>
-              <span>Moderate (50%)</span>
-              <span>Max (100%)</span>
-            </div>
-          </div>
-
-          <!-- Module 3: 3D Soundstage & Stereo Widener -->
-          <div class="hifi-dsp-module-card">
-            <div class="hifi-module-header">
-              <div class="hifi-module-info">
-                <span class="hifi-module-title">Spatial Soundstage Widener</span>
-                <span class="hifi-module-desc">Expands acoustic stereo field & separation</span>
-              </div>
-              <span class="hifi-module-value" id="virtualizerVal">0%</span>
-            </div>
-            <input type="range" class="volume-slider hifi-module-slider" id="virtualizerSlider" min="0" max="100" value="0">
-            <div class="hifi-slider-marks">
-              <span>Standard (0%)</span>
-              <span>Wide (50%)</span>
-              <span>Studio 3D (100%)</span>
-            </div>
-          </div>
-
-          <!-- Module 4: High-Treble Air Exciter -->
-          <div class="hifi-dsp-module-card">
-            <div class="hifi-module-header">
-              <div class="hifi-module-info">
-                <span class="hifi-module-title">High-Treble Air Exciter</span>
-                <span class="hifi-module-desc">Harmonic sparkle & open top-end (12 kHz+)</span>
-              </div>
-              <span class="hifi-module-value" id="airExciterVal">0%</span>
-            </div>
-            <input type="range" class="volume-slider hifi-module-slider" id="airExciterSlider" min="0" max="100" value="0">
-            <div class="hifi-slider-marks">
-              <span>Natural (0%)</span>
-              <span>Open (50%)</span>
-              <span>Crisp Air (100%)</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <!-- Your Library View Container (Liked Songs, Downloads, Albums, Artists, Playlists) -->
       <div id="libraryViewContainer" style="display: none;">
         <div class="library-header">
@@ -880,160 +716,6 @@
           </div>
           <div class="library-playlists-grid" id="libPlaylistsGrid"></div>
         </section>
-      </div>
-
-      <!-- Listening Statistics & Analytics View (Music Recap & Habits Style) -->
-      <div id="statsViewContainer" style="display: none;">
-        <div class="stats-header">
-          <div class="stats-header-titles">
-            <h1 class="stats-main-title" data-i18n="stats_main_title">Statistik & Kilas Musik</h1>
-            <p class="stats-sub-title" data-i18n="stats_sub_title">Pantau kebiasaan, artis favorit, dan ritme mendengarkan musik Anda secara privat.</p>
-          </div>
-          <div class="stats-filter-pills" id="statsTimeFilterPills">
-            <button class="stats-pill active" data-range="all" data-i18n="stats_range_all">Semua Waktu</button>
-            <button class="stats-pill" data-range="1y" data-i18n="stats_range_1y">1 Tahun</button>
-            <button class="stats-pill" data-range="30d" data-i18n="stats_range_30d">30 Hari</button>
-            <button class="stats-pill" data-range="7d" data-i18n="stats_range_7d">7 Hari</button>
-          </div>
-        </div>
-
-        <!-- Music Highlights Showcase (Spotify Wrapped / Apple Music Replay style) -->
-        <div class="stats-hero-grid" id="statsHeroGrid">
-          <!-- Spotlight 1: #1 Top Artist -->
-          <div class="stats-hero-card" id="statsTopArtistCard">
-            <div class="stats-hero-badge" data-i18n="stats_badge_top_artist">👑 ARTIS TERATAS</div>
-            <div class="stats-hero-media">
-              <img id="statsTopArtistImg" src="assets/logo.png" alt="Top Artist" class="stats-hero-artist-img" onerror="this.src='assets/logo.png'">
-            </div>
-            <div class="stats-hero-info">
-              <h3 id="statsTopArtistName" class="stats-hero-title">Belum ada artis</h3>
-              <p id="statsTopArtistMeta" class="stats-hero-sub">0 putaran • 0 menit</p>
-            </div>
-          </div>
-
-          <!-- Spotlight 2: #1 Top Track -->
-          <div class="stats-hero-card" id="statsTopTrackCard">
-            <div class="stats-hero-badge" data-i18n="stats_badge_top_track">🔥 LAGU TERFAVORIT</div>
-            <div class="stats-hero-media">
-              <img id="statsTopTrackImg" src="assets/logo.png" alt="Top Track" class="stats-hero-track-img" onerror="this.src='assets/logo.png'">
-              <div class="stats-hero-play-icon">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              </div>
-            </div>
-            <div class="stats-hero-info">
-              <h3 id="statsTopTrackTitle" class="stats-hero-title">Belum ada lagu</h3>
-              <p id="statsTopTrackMeta" class="stats-hero-sub">0 putaran</p>
-            </div>
-          </div>
-
-          <!-- Spotlight 3: Listening Personality / Time Vibe -->
-          <div class="stats-hero-card" id="statsVibeCard">
-            <div class="stats-hero-badge" data-i18n="stats_badge_vibe">✨ VIBE MENDENGAR</div>
-            <div class="stats-vibe-icon-wrap" id="statsVibeIconWrap">
-              <span id="statsVibeEmoji" style="font-size: 38px;">🎧</span>
-            </div>
-            <div class="stats-hero-info">
-              <h3 id="statsVibeTitle" class="stats-hero-title">Eksplorasi Musik</h3>
-              <p id="statsVibeDesc" class="stats-hero-sub">Putar lebih banyak lagu untuk melihat profil kebiasaan Anda.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- 4 Music Metric Cards Row -->
-        <div class="stats-metrics-grid">
-          <div class="metric-card">
-            <div class="metric-icon-wrap" style="color: #00E599; background: rgba(0, 229, 153, 0.12);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label" data-i18n="stats_total_time">Total Waktu Dengar</span>
-              <span class="metric-value" id="statsTotalTime">0 Menit</span>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon-wrap" style="color: #38BDF8; background: rgba(56, 189, 248, 0.12);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label" data-i18n="stats_total_tracks">Lagu Diputar</span>
-              <span class="metric-value" id="statsTotalTracks">0 Putaran</span>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon-wrap" style="color: #A855F7; background: rgba(168, 85, 247, 0.12);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label" data-i18n="stats_unique_artists">Artis Berbeda</span>
-              <span class="metric-value" id="statsUniqueArtists">0 Artis</span>
-            </div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-icon-wrap" style="color: #F59E0B; background: rgba(245, 158, 11, 0.12);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            </div>
-            <div class="metric-content">
-              <span class="metric-label" data-i18n="stats_daily_average">Rata-Rata Harian</span>
-              <span class="metric-value" id="statsDailyAvg">0 Menit/Hari</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Weekly Music Rhythm Equalizer Chart (Friendly Non-IT Music Layout) -->
-        <div class="stats-panel-box">
-          <div class="stats-panel-header">
-            <div>
-              <h3 class="stats-panel-title" data-i18n="stats_activity_chart_title">Aktivitas Musik Mingguan</h3>
-              <p class="stats-panel-desc" data-i18n="stats_activity_chart_desc">Durasi waktu mendengarkan musik per hari dalam format equalizer ritme audio.</p>
-            </div>
-            <div class="stats-active-day-badge" id="statsPeakDayBadge">
-              <span>Hari Paling Aktif: --</span>
-            </div>
-          </div>
-          <div class="activity-bars-container" id="statsActivityBars">
-            <!-- 7 Rounded Audio Equalizer Rhythm Bars rendered via JS -->
-          </div>
-        </div>
-
-        <!-- 4 Day Segments: Time of Day Listening Breakdown -->
-        <div class="stats-panel-box">
-          <div class="stats-panel-header">
-            <div>
-              <h3 class="stats-panel-title" data-i18n="stats_day_rhythm_title">Karakter Waktu Mendengar</h3>
-              <p class="stats-panel-desc" data-i18n="stats_day_rhythm_desc">Pola waktu kapan Anda paling sering memutar musik dalam 24 jam.</p>
-            </div>
-          </div>
-          <div class="day-segments-grid" id="statsDaySegmentsGrid">
-            <!-- 4 Cards: Pagi, Siang, Sore, Malam -->
-          </div>
-        </div>
-
-        <!-- Two-Column Leaderboards: Top Artists & Top Tracks -->
-        <div class="stats-rankings-grid">
-          <div class="stats-panel-box">
-            <h3 class="stats-panel-title" data-i18n="stats_top_artists_title">Top 10 Artis Terbanyak Diputar</h3>
-            <div class="rankings-list" id="statsTopArtistsList"></div>
-          </div>
-          <div class="stats-panel-box">
-            <h3 class="stats-panel-title" data-i18n="stats_top_tracks_title">Top 10 Lagu Terfavorit</h3>
-            <div class="rankings-list" id="statsTopTracksList"></div>
-          </div>
-        </div>
-
-        <!-- Recent Scrobbles List -->
-        <div class="stats-panel-box" style="margin-top: 24px; margin-bottom: 40px;">
-          <div class="stats-panel-header">
-            <div>
-              <h3 class="stats-panel-title" data-i18n="stats_recent_history_title">Riwayat Putar Terakhir</h3>
-              <p class="stats-panel-desc" data-i18n="stats_recent_history_desc">Daftar lagu yang baru saja selesai Anda putar.</p>
-            </div>
-            <button class="stats-clear-btn" id="statsClearHistoryBtn" title="Hapus Riwayat">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-              <span data-i18n="stats_clear_btn">Bersihkan Riwayat</span>
-            </button>
-          </div>
-          <div class="recent-scrobbles-table" id="statsRecentScrobblesList"></div>
-        </div>
       </div>
 
       <!-- Dedicated Screen Player View Container (Fullscreen / Now Playing Player) -->
@@ -1549,6 +1231,10 @@
             <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
             <span data-i18n="settings_tab_audio">Audio & Quality</span>
           </button>
+          <button class="settings-tab-btn" data-tab="equalizer">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"></line><line x1="4" y1="10" x2="4" y2="3"></line><line x1="12" y1="21" x2="12" y2="12"></line><line x1="12" y1="8" x2="12" y2="3"></line><line x1="20" y1="21" x2="20" y2="16"></line><line x1="20" y1="12" x2="20" y2="3"></line><line x1="1" y1="14" x2="7" y2="14"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="17" y1="16" x2="23" y2="16"></line></svg>
+            <span data-i18n="settings_tab_equalizer">Equalizer & DSP</span>
+          </button>
           <button class="settings-tab-btn" data-tab="sources">
             <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
             <span data-i18n="settings_tab_sources">Sources & Metadata</span>
@@ -1649,7 +1335,7 @@
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                   <input type="range" class="volume-slider" id="settingCrossfade" min="0" max="10" step="1" value="0" style="width: 120px;">
-                  <span id="settingCrossfadeLabel" style="font-size: 13px; font-weight: 600; color: #00E599; min-width: 32px;">0s</span>
+                  <span id="settingCrossfadeLabel" style="font-size: 13px; font-weight: 600; color: #23a55a; min-width: 32px;">0s</span>
                 </div>
               </div>
 
@@ -1662,6 +1348,147 @@
                   <input type="checkbox" id="settingAutoMixQueue" checked>
                   <span class="toggle-slider"></span>
                 </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Equalizer & DSP -->
+          <div class="settings-tab-pane" id="settingsTabEqualizer" style="display: none;">
+            <div class="discord-pane-header">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; gap: 16px; flex-wrap: wrap;">
+                <div style="min-width: 0; flex: 1;">
+                  <h2 class="discord-pane-title" data-i18n="settings_tab_equalizer">Hi-Fi DSP Equalizer Studio</h2>
+                  <p class="discord-pane-desc" data-i18n="settings_desc_equalizer">Calibrated 10-band ISO octave equalizer, 32-bit float DSP engine, real-time FFT spectrum, and acoustic stereo virtualizer.</p>
+                </div>
+                <!-- Master DSP Toolbar -->
+                <div class="hifi-eq-toolbar" style="flex-shrink: 0; display: flex; align-items: center; gap: 8px;">
+                  <button class="hifi-bypass-btn active" id="eqBypassBtn" title="Bypass DSP processing for bit-perfect direct output">
+                    <span class="hifi-bypass-dot"></span>
+                    <span id="eqBypassStatusText">Active</span>
+                  </button>
+                  <button class="hero-secondary-btn" id="eqResetFlatBtn" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px; cursor: pointer;" title="Reset all 10 bands and preamp to 0.0 dB">
+                    <iconsax-icon name="rotate-left" type="linear" size="14" color="currentColor"></iconsax-icon>
+                    <span>Reset Flat</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Audiophile Presets Selector Bar -->
+            <div class="hifi-presets-bar">
+              <span class="hifi-presets-label">Preset:</span>
+              <div class="hifi-presets-scroll" id="eqPresetsContainer">
+                <button class="chip active" data-eq="Flat">Flat / Reference</button>
+                <button class="chip" data-eq="Hi-Fi Clarity">Hi-Fi Clarity</button>
+                <button class="chip" data-eq="Bass Boost">Bass Boost</button>
+                <button class="chip" data-eq="Acoustic & Classical">Acoustic & Classical</button>
+                <button class="chip" data-eq="Warm Tube Sound">Warm Tube Sound</button>
+                <button class="chip" data-eq="Vocal & Acoustic">Vocal & Acoustic</button>
+                <button class="chip" data-eq="Electronic / EDM">Electronic / EDM</button>
+                <button class="chip" data-eq="Rock & Metal">Rock & Metal</button>
+                <button class="chip" data-eq="Late Night / Headphone">Late Night / Headphone</button>
+              </div>
+            </div>
+
+            <!-- Interactive Real-Time Response Curve & Spectrum Analyzer Display -->
+            <div class="hifi-eq-display-card">
+              <div class="hifi-eq-display-header">
+                <div class="hifi-display-stat">
+                  <span class="stat-dot"></span>
+                  <span class="stat-name">Real-Time Acoustic Response & FFT Spectrum</span>
+                </div>
+                <div class="hifi-display-tags">
+                  <span class="hifi-tag" id="eqActivePresetTag">Preset: Flat</span>
+                  <span class="hifi-tag">Precision: IEEE 754</span>
+                  <span class="hifi-tag" id="eqHeadroomTag">Headroom: Safe</span>
+                </div>
+              </div>
+              <div class="hifi-canvas-wrap">
+                <canvas id="eqResponseCanvas" class="hifi-eq-canvas" width="700" height="160"></canvas>
+              </div>
+            </div>
+
+            <!-- Main 10-Band ISO Studio Equalizer Rack -->
+            <div class="hifi-eq-rack-card">
+              <div class="hifi-rack-header">
+                <span class="hifi-rack-title">10-Band ISO Octave Graphic Equalizer</span>
+                <span class="hifi-rack-range">Range: ±12.0 dB · Step: 0.5 dB · Direct Form II Biquads</span>
+              </div>
+
+              <div class="hifi-eq-bands-grid" id="eqBandsRow">
+                <!-- 10 Bands generated dynamically with dB readout, fader, Hz label, and role -->
+              </div>
+            </div>
+
+            <!-- Audiophile Master Processing Modules -->
+            <div class="hifi-dsp-modules-grid">
+              <!-- Module 1: Preamp & Headroom Protection -->
+              <div class="hifi-dsp-module-card">
+                <div class="hifi-module-header">
+                  <div class="hifi-module-info">
+                    <span class="hifi-module-title">Preamp Gain / Headroom</span>
+                    <span class="hifi-module-desc">Anti-clipping attenuation for boosted EQ curves</span>
+                  </div>
+                  <span class="hifi-module-value" id="preampVal">0.0 dB</span>
+                </div>
+                <input type="range" class="volume-slider hifi-module-slider" id="preampSlider" min="-12" max="6" step="0.5" value="0">
+                <div class="hifi-slider-marks">
+                  <span>-12 dB</span>
+                  <span>-6 dB</span>
+                  <span>0 dB (Unity)</span>
+                  <span>+6 dB</span>
+                </div>
+              </div>
+
+              <!-- Module 2: Sub-Harmonic Bass Enhancer -->
+              <div class="hifi-dsp-module-card">
+                <div class="hifi-module-header">
+                  <div class="hifi-module-info">
+                    <span class="hifi-module-title">Dynamic Sub-Bass Enhancer</span>
+                    <span class="hifi-module-desc">Low-end punch (40-80 Hz) without masking mids</span>
+                  </div>
+                  <span class="hifi-module-value" id="bassBoostVal">0%</span>
+                </div>
+                <input type="range" class="volume-slider hifi-module-slider" id="bassBoostSlider" min="0" max="100" value="0">
+                <div class="hifi-slider-marks">
+                  <span>Bypass (0%)</span>
+                  <span>Moderate (50%)</span>
+                  <span>Max (100%)</span>
+                </div>
+              </div>
+
+              <!-- Module 3: 3D Soundstage & Stereo Widener -->
+              <div class="hifi-dsp-module-card">
+                <div class="hifi-module-header">
+                  <div class="hifi-module-info">
+                    <span class="hifi-module-title">Spatial Soundstage Widener</span>
+                    <span class="hifi-module-desc">Expands acoustic stereo field & separation</span>
+                  </div>
+                  <span class="hifi-module-value" id="virtualizerVal">0%</span>
+                </div>
+                <input type="range" class="volume-slider hifi-module-slider" id="virtualizerSlider" min="0" max="100" value="0">
+                <div class="hifi-slider-marks">
+                  <span>Standard (0%)</span>
+                  <span>Wide (50%)</span>
+                  <span>Studio 3D (100%)</span>
+                </div>
+              </div>
+
+              <!-- Module 4: High-Treble Air Exciter -->
+              <div class="hifi-dsp-module-card">
+                <div class="hifi-module-header">
+                  <div class="hifi-module-info">
+                    <span class="hifi-module-title">High-Treble Air Exciter</span>
+                    <span class="hifi-module-desc">Harmonic sparkle & open top-end (12 kHz+)</span>
+                  </div>
+                  <span class="hifi-module-value" id="airExciterVal">0%</span>
+                </div>
+                <input type="range" class="volume-slider hifi-module-slider" id="airExciterSlider" min="0" max="100" value="0">
+                <div class="hifi-slider-marks">
+                  <span>Natural (0%)</span>
+                  <span>Open (50%)</span>
+                  <span>Crisp Air (100%)</span>
+                </div>
               </div>
             </div>
           </div>
