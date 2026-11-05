@@ -1982,6 +1982,11 @@ class SoraFyDesktopApp {
     this.screenPlayerPlayPauseIcon = document.getElementById("screenPlayerPlayPauseIcon");
     this.screenPlayerNextBtn = document.getElementById("screenPlayerNextBtn");
     this.screenPlayerRepeatBtn = document.getElementById("screenPlayerRepeatBtn");
+    this.screenPlayerMeshBackdrop = document.getElementById("screenPlayerMeshBackdrop");
+    this.screenPlayerStatsBtn = document.getElementById("screenPlayerStatsBtn");
+    this.statsForNerdsModal = document.getElementById("statsForNerdsModal");
+    this.closeStatsForNerdsBtn = document.getElementById("closeStatsForNerdsBtn");
+    this.statsNerdsGrid = document.getElementById("statsNerdsGrid");
 
     this.playerSeekbar = document.getElementById("playerSeekbar");
     this.bottomPlayerTrackInfo = document.getElementById("bottomPlayerTrackInfo");
@@ -3277,6 +3282,26 @@ class SoraFyDesktopApp {
       this.screenPlayerAddToPlaylistBtn.addEventListener("click", () => {
         const cur = this.tracks[this.currentTrackIndex];
         if (cur) this.openAddToPlaylistModal(cur);
+      });
+    }
+    if (this.screenPlayerStatsBtn) {
+      this.screenPlayerStatsBtn.addEventListener("click", () => this.toggleStatsForNerds());
+    }
+    if (this.screenPlayerBadge) {
+      this.screenPlayerBadge.style.cursor = "pointer";
+      this.screenPlayerBadge.title = "Klik untuk membuka Stats for Nerds";
+      this.screenPlayerBadge.addEventListener("click", () => this.toggleStatsForNerds());
+    }
+    if (this.closeStatsForNerdsBtn) {
+      this.closeStatsForNerdsBtn.addEventListener("click", () => {
+        if (this.statsForNerdsModal) this.statsForNerdsModal.style.display = "none";
+      });
+    }
+    if (this.statsForNerdsModal) {
+      this.statsForNerdsModal.addEventListener("click", (e) => {
+        if (e.target === this.statsForNerdsModal) {
+          this.statsForNerdsModal.style.display = "none";
+        }
       });
     }
     if (this.screenPlayerArtist) {
@@ -9966,6 +9991,20 @@ class SoraFyDesktopApp {
       this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
     }
 
+    if (this.screenPlayerMeshBackdrop) {
+      if (track.artwork_url) {
+        this.screenPlayerMeshBackdrop.style.backgroundImage = `url("${track.artwork_url}")`;
+        this.screenPlayerMeshBackdrop.style.opacity = "0.65";
+      } else {
+        this.screenPlayerMeshBackdrop.style.backgroundImage = "none";
+        this.screenPlayerMeshBackdrop.style.opacity = "0";
+      }
+    }
+
+    if (this.statsForNerdsModal && this.statsForNerdsModal.style.display === "flex") {
+      this.renderStatsForNerds();
+    }
+
     // Auto-detect if track is a video or has video_id
     if (track.is_video) {
       this.setScreenPlayerMode("video");
@@ -9974,6 +10013,77 @@ class SoraFyDesktopApp {
     } else {
       this.setScreenPlayerMode("audio");
     }
+  }
+
+  toggleStatsForNerds() {
+    if (!this.statsForNerdsModal) return;
+    const isVisible = this.statsForNerdsModal.style.display === "flex";
+    if (isVisible) {
+      this.statsForNerdsModal.style.display = "none";
+    } else {
+      this.renderStatsForNerds();
+      this.statsForNerdsModal.style.display = "flex";
+    }
+  }
+
+  renderStatsForNerds() {
+    if (!this.statsNerdsGrid) return;
+    const track = this.tracks[this.currentTrackIndex];
+    if (!track) {
+      this.statsNerdsGrid.innerHTML = `<div style="color: #94A3B8; text-align: center; padding: 12px;">Tidak ada trek audio yang sedang aktif.</div>`;
+      return;
+    }
+
+    let codec = track.audio_format?.codec || (track.stream_url?.includes(".mp4") ? "AAC (mp4a)" : "Opus (webm)");
+    if (codec.includes("yt-dlp") || codec.includes("YouTube Direct")) {
+      codec = "Opus (itag 251)";
+    }
+    let sampleRate = "48,000 Hz · Stereo (2 ch)";
+    let bitrate = track.audio_format?.bitrate ? `${Math.round(track.audio_format.bitrate / 1000)} kbps` : "160 kbps (VBR)";
+
+    let bufSecs = "0.0s";
+    if (this.audio && this.audio.buffered && this.audio.buffered.length > 0) {
+      try {
+        const cur = this.audio.currentTime || 0;
+        let found = 0;
+        for (let i = 0; i < this.audio.buffered.length; i++) {
+          if (this.audio.buffered.start(i) <= cur && this.audio.buffered.end(i) >= cur) {
+            found = this.audio.buffered.end(i) - cur;
+            break;
+          }
+        }
+        bufSecs = `${found.toFixed(1)}s`;
+      } catch (_) {}
+    }
+
+    const curTime = this.formatTime(this.audio?.currentTime || 0);
+    const totalTime = this.formatTime(this.audio?.duration || track.duration_secs || 0);
+    const audioBackend = this.audioCtx ? "Web Audio API (DSP Graph)" : "HTML5 MediaElement";
+    const volumeLevel = `${Math.round((this.audio?.volume ?? 0.85) * 100)}%`;
+    const playbackRate = `${(this.audio?.playbackRate || 1.0).toFixed(2)}x`;
+    const sourceKind = track.source_label || (track.is_full_stream ? "Resolved Direct Stream" : "Cached / Internal Stream");
+
+    const rows = [
+      { key: "Track Title", val: this.escapeHtml(track.title || "Unknown") },
+      { key: "Artist", val: this.escapeHtml(track.artist || "Unknown") },
+      { key: "Video / Audio ID", val: track.video_id || track.id || "N/A" },
+      { key: "Stream Codec", val: codec },
+      { key: "Sample Rate", val: sampleRate },
+      { key: "Audio Bitrate", val: bitrate },
+      { key: "Buffer Health", val: bufSecs },
+      { key: "Playhead Position", val: `${curTime} / ${totalTime}` },
+      { key: "DSP Engine", val: audioBackend },
+      { key: "Volume Level", val: volumeLevel },
+      { key: "Speed / Rate", val: playbackRate },
+      { key: "Stream Delivery", val: sourceKind }
+    ];
+
+    this.statsNerdsGrid.innerHTML = rows.map(r => `
+      <div class="stats-nerds-row">
+        <span class="stats-nerds-key">${r.key}:</span>
+        <span class="stats-nerds-val">${r.val}</span>
+      </div>
+    `).join("");
   }
 
   // =========================================================

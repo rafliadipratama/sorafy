@@ -1390,11 +1390,12 @@ body {
 }
 
 .lyric-line.active {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: #FFFFFF;
-  border-left-color: var(--color-brand-primary);
-  background: rgba(0, 229, 153, 0.08);
+  border-left-color: rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
 }
 
 .lyric-line.active-search-match {
@@ -1492,19 +1493,22 @@ body {
 .lyric-word {
   display: inline-block;
   margin-right: 0.28em;
-  transition: color 0.12s ease, transform 0.12s ease, text-shadow 0.12s ease;
+  opacity: 0.45;
+  transition: opacity 0.16s cubic-bezier(0.16, 1, 0.3, 1), transform 0.16s ease, color 0.16s ease;
 }
 
 .lyric-line.active .lyric-word.sung {
-  color: var(--color-brand-primary);
+  color: #FFFFFF;
   font-weight: 700;
+  opacity: 0.95;
 }
 
 .lyric-line.active .lyric-word.singing {
   color: #FFFFFF;
-  transform: scale(1.08);
+  transform: scale(1.04);
   font-weight: 800;
-  text-shadow: 0 0 10px rgba(0, 229, 153, 0.9), 0 0 20px rgba(0, 229, 153, 0.6);
+  opacity: 1;
+  text-shadow: none;
 }
 
 .lyric-sub.romaji {
@@ -3360,11 +3364,28 @@ body {
    Screen Player (Dedicated Fullscreen / Now Playing View)
    ========================================================= */
 #screenPlayerViewContainer {
+  position: relative;
+  overflow: hidden;
+  min-height: calc(100vh - 90px);
   padding: 16px 28px 40px 28px;
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+.screen-player-mesh-backdrop {
+  position: absolute;
+  inset: -60px;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(80px) saturate(1.35) brightness(0.35);
+  opacity: 0.65;
+  pointer-events: none;
+  transition: background-image 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+}
+
 .screen-player-topbar {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -3852,11 +3873,13 @@ body {
 }
 
 .screen-player-meta-row {
+  width: 100%;
+  max-width: 480px;
+  margin: 20px auto 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 20px;
-  padding: 0 6px;
+  padding: 0 4px;
 }
 
 .screen-player-meta-info {
@@ -3915,18 +3938,22 @@ body {
 }
 
 .screen-player-controls-card {
-  margin-top: 18px;
-  background: #11151C;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 18px;
-  padding: 16px 20px 18px 20px;
+  width: 100%;
+  max-width: 480px;
+  margin: 18px auto 0 auto;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 18px 22px 20px 22px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
 }
 
 .screen-player-progress-container {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .screen-player-seekbar-wrap {
@@ -3957,9 +3984,9 @@ body {
   width: 13px;
   height: 13px;
   border-radius: 50%;
-  background: #00E599;
+  background: #FFFFFF;
   cursor: pointer;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
   transition: transform 0.15s ease;
 }
 
@@ -3984,6 +4011,70 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* =========================================================
+   Stats for Nerds Diagnostics Overlay (BitChord Style)
+   ========================================================= */
+.stats-nerds-card {
+  max-width: 480px;
+  width: 92%;
+  background: rgba(14, 18, 24, 0.94);
+  backdrop-filter: blur(28px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 22px 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.75);
+}
+
+.stats-nerds-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stats-nerds-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  background: rgba(0, 0, 0, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.stats-nerds-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding-bottom: 5px;
+}
+
+.stats-nerds-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.stats-nerds-key {
+  color: #94A3B8;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.stats-nerds-val {
+  color: #F8FAFC;
+  font-weight: 600;
+  text-align: right;
+  word-break: break-all;
+}
   cursor: pointer;
   transition: transform 0.15s ease, background 0.15s ease;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
