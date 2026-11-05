@@ -1456,6 +1456,10 @@ const I18N_DICTIONARY = {
   }
 };
 
+const LIKED_COVER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cdefs%3E%3ClinearGradient id='heartGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%236366F1'/%3E%3Cstop offset='50%25' stop-color='%238B5CF6'/%3E%3Cstop offset='100%25' stop-color='%23A855F7'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='300' rx='16' fill='url(%23heartGrad)'/%3E%3Cpath d='M150 225l-13.8-12.5C87.2 168.2 55 138.9 55 102.5 55 72.9 77.9 50 107.5 50c16.7 0 32.7 7.8 42.5 20 9.8-12.2 25.8-20 42.5-20 29.6 0 52.5 22.9 52.5 52.5 0 36.4-32.2 65.7-81.2 110L150 225z' fill='%23FFFFFF'/%3E%3C/svg%3E";
+
+const DOWNLOADS_COVER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cdefs%3E%3ClinearGradient id='dlGrad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%23059669'/%3E%3Cstop offset='50%25' stop-color='%2310B981'/%3E%3Cstop offset='100%25' stop-color='%2314B8A6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='300' rx='16' fill='url(%23dlGrad)'/%3E%3Cg fill='none' stroke='%23FFFFFF' stroke-width='16' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M80 180v35c0 8.3 6.7 15 15 15h110c8.3 0 15-6.7 15-15v-35'/%3E%3Cpath d='M150 65v105'/%3E%3Cpath d='M110 130l40 40 40-40'/%3E%3C/g%3E%3C/svg%3E";
+
 class SoraFyDesktopApp {
   constructor() {
     this.audio = document.getElementById("audioSource");
@@ -1486,6 +1490,7 @@ class SoraFyDesktopApp {
     this.followedArtists = new Set(JSON.parse(localStorage.getItem("sorafy_followed_artists") || "[]"));
     this.followedArtistDetails = JSON.parse(localStorage.getItem("sorafy_followed_artist_details") || "{}");
     this.likedAlbums = JSON.parse(localStorage.getItem("sorafy_liked_albums") || "[]");
+    this.pinnedKeys = new Set(JSON.parse(localStorage.getItem("sorafy_pinned_items") || '["liked", "downloads"]'));
     this.activeLibraryTab = "all";
     this.sidebarLibraryFilter = "all";
 
@@ -1818,6 +1823,7 @@ class SoraFyDesktopApp {
     this.playlistShuffleBtn = document.getElementById("playlistShuffleBtn");
     this.playlistEditBtn = document.getElementById("playlistEditBtn");
     this.playlistDeleteBtn = document.getElementById("playlistDeleteBtn");
+    this.playlistOpenFolderBtn = document.getElementById("playlistOpenFolderBtn");
     this.playlistTrackList = document.getElementById("playlistTrackList");
 
     // Nav Items
@@ -3512,6 +3518,16 @@ class SoraFyDesktopApp {
       this.playlistDeleteBtn.addEventListener("click", () => {
         if (this.currentPlaylist && confirm(`Delete playlist "${this.currentPlaylist.title}"?`)) {
           this.deletePlaylist(this.currentPlaylist.id);
+        }
+      });
+    }
+
+    if (this.playlistOpenFolderBtn) {
+      this.playlistOpenFolderBtn.addEventListener("click", () => {
+        if (window.electronAPI && typeof window.electronAPI.openDownloadFolder === 'function') {
+          window.electronAPI.openDownloadFolder();
+        } else {
+          this.showToast(this.currentLanguage === "id" ? "Membuka folder unduhan..." : "Opening downloads folder...");
         }
       });
     }
@@ -5743,6 +5759,9 @@ class SoraFyDesktopApp {
     if (this.currentView === "library") {
       this.renderLibraryLikedSongs();
     }
+    if (this.currentView === "playlist" && this.currentPlaylist?.is_special === "liked") {
+      this.openLikedSongsView();
+    }
     this.renderUserPlaylists();
   }
 
@@ -6643,6 +6662,89 @@ class SoraFyDesktopApp {
     this.renderUserPlaylists();
   }
 
+  isItemPinned(key) {
+    return this.pinnedKeys && this.pinnedKeys.has(key);
+  }
+
+  togglePin(key, title = "") {
+    const isId = (this.currentLanguage === "id");
+    if (!this.pinnedKeys) {
+      this.pinnedKeys = new Set(["liked", "downloads"]);
+    }
+    if (this.pinnedKeys.has(key)) {
+      this.pinnedKeys.delete(key);
+      this.showToast(isId ? `Sematan dilepas: ${title}` : `Unpinned: ${title}`);
+    } else {
+      this.pinnedKeys.add(key);
+      this.showToast(isId ? `Disematkan ke atas: ${title}` : `Pinned to top: ${title}`);
+    }
+    localStorage.setItem("sorafy_pinned_items", JSON.stringify([...this.pinnedKeys]));
+    this.renderUserPlaylists();
+  }
+
+  unfollowArtist(artName) {
+    if (!artName) return;
+    this.followedArtists.delete(artName);
+    if (this.followedArtistDetails) {
+      delete this.followedArtistDetails[artName];
+    }
+    localStorage.setItem("sorafy_followed_artists", JSON.stringify([...this.followedArtists]));
+    localStorage.setItem("sorafy_followed_artist_details", JSON.stringify(this.followedArtistDetails));
+    this.showToast(this.currentLanguage === "id" ? `Berhenti mengikuti ${artName}` : `Unfollowed ${artName}`);
+    if (this.currentView === "artist" && this.currentArtist && this.currentArtist.name && this.currentArtist.name.toLowerCase() === artName.toLowerCase()) {
+      if (this.artistFollowBtn) {
+        this.artistFollowBtn.textContent = this.currentLanguage === "id" ? "+ Ikuti" : "+ Follow";
+        this.artistFollowBtn.classList.remove("active");
+      }
+    }
+    this.renderUserPlaylists();
+  }
+
+  removeSavedAlbum(albumId, albumTitle = "") {
+    const idx = this.likedAlbums.findIndex(a => a.id === albumId || a.title === albumTitle);
+    if (idx >= 0) {
+      const title = this.likedAlbums[idx].title || albumTitle || "Album";
+      this.likedAlbums.splice(idx, 1);
+      localStorage.setItem("sorafy_liked_albums", JSON.stringify(this.likedAlbums));
+      this.showToast(this.currentLanguage === "id" ? `Album "${title}" dihapus dari library` : `Album "${title}" removed from library`);
+      if (this.currentPlaylist && (this.currentPlaylist.id === albumId || this.currentPlaylist.title === albumTitle)) {
+        if (this.playlistLikeAlbumBtn) {
+          this.playlistLikeAlbumBtn.classList.remove("active");
+          if (this.playlistLikeAlbumLabel) this.playlistLikeAlbumLabel.textContent = this.currentLanguage === "id" ? "Simpan Album" : "Like Album";
+        }
+      }
+      this.renderUserPlaylists();
+    }
+  }
+
+  openLikedSongsView() {
+    const isId = (this.currentLanguage === "id");
+    const likedTracks = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+    const likedPlaylist = {
+      id: "special_liked_songs",
+      is_special: "liked",
+      title: isId ? "Lagu Disukai" : "Liked Songs",
+      description: isId ? "Koleksi semua lagu favorit yang Anda sukai di SoraFy." : "Collection of all tracks you liked on SoraFy.",
+      artwork_url: LIKED_COVER_SVG,
+      tracks: likedTracks
+    };
+    this.openPlaylistDetail(likedPlaylist);
+  }
+
+  openDownloadedSongsView() {
+    const isId = (this.currentLanguage === "id");
+    const dlTracks = Array.isArray(this.downloadedTracks) ? this.downloadedTracks : [];
+    const dlPlaylist = {
+      id: "special_downloaded_songs",
+      is_special: "downloads",
+      title: isId ? "Lagu Terunduh" : "Downloaded Songs",
+      description: isId ? "Koleksi musik offline yang tersimpan di perangkat lokal Anda." : "Collection of offline tracks saved on your local device.",
+      artwork_url: DOWNLOADS_COVER_SVG,
+      tracks: dlTracks
+    };
+    this.openPlaylistDetail(dlPlaylist);
+  }
+
   renderUserPlaylists() {
     if (!this.userPlaylistsNav) return;
     this.userPlaylistsNav.innerHTML = "";
@@ -6655,203 +6757,218 @@ class SoraFyDesktopApp {
     const followedArtists = Array.isArray(this.followedArtists) ? this.followedArtists : Array.from(this.followedArtists || []);
     const likedAlbums = Array.isArray(this.likedAlbums) ? this.likedAlbums : [];
 
-    let totalItemsRendered = 0;
+    const allItems = [];
 
-    // 1. Liked Songs (Pinned Playlist at the top, Spotify Desktop style)
+    // 1. Liked Songs
     if (activeFilter === "all" || activeFilter === "playlists") {
-      const isLikedActive = (this.currentView === "home" && this.currentCustomView === "liked");
-      const likedItem = document.createElement("div");
-      likedItem.className = `lib-sidebar-item playlist-nav-item ${isLikedActive ? "active" : ""}`;
-      likedItem.dataset.type = "liked";
-
-      likedItem.innerHTML = `
-        <div class="lib-sidebar-art-wrap liked-songs">
-          <iconsax-icon name="heart" type="bold" size="20" color="#FFFFFF"></iconsax-icon>
-        </div>
-        <div class="lib-sidebar-info">
-          <div class="lib-item-title">${isId ? "Lagu Disukai" : "Liked Songs"}</div>
-          <div class="lib-item-meta">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="color: var(--color-brand-primary, #23a55a); transform: rotate(45deg); flex-shrink: 0;"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>
-            <span>Playlist • ${likedCount} ${isId ? "lagu" : "songs"}</span>
-          </div>
-        </div>
-      `;
-
-      likedItem.addEventListener("click", () => {
-        this.currentCustomView = "liked";
-        this.switchView("home");
-        this.showLikedSongs();
-        this.renderUserPlaylists();
+      const isLikedActive = (this.currentView === "playlist" && this.currentPlaylist && this.currentPlaylist.is_special === "liked");
+      allItems.push({
+        key: "liked",
+        type: "liked",
+        title: isId ? "Lagu Disukai" : "Liked Songs",
+        subtitle: `Playlist • ${likedCount} ${isId ? "lagu" : "songs"}`,
+        isActive: isLikedActive,
+        artMarkup: `<div class="lib-sidebar-art-wrap liked-songs"><iconsax-icon name="heart" type="bold" size="20" color="#FFFFFF"></iconsax-icon></div>`,
+        onOpen: () => this.openLikedSongsView(),
+        onPlay: () => {
+          this.openLikedSongsView();
+          if (likedTracks.length) {
+            this.tracks = [...likedTracks];
+            this.loadTrack(0, true);
+          }
+        }
       });
-
-      this.userPlaylistsNav.appendChild(likedItem);
-      totalItemsRendered++;
     }
 
-    // 2. Downloaded Music (Pinned Playlist, Spotify Desktop style)
+    // 2. Downloaded Songs
     if (activeFilter === "all" || activeFilter === "playlists") {
-      const isDownloadedActive = (this.currentView === "home" && this.currentCustomView === "downloads");
-      const downloadedItem = document.createElement("div");
-      downloadedItem.className = `lib-sidebar-item playlist-nav-item ${isDownloadedActive ? "active" : ""}`;
-      downloadedItem.dataset.type = "downloads";
-
+      const isDownloadedActive = (this.currentView === "playlist" && this.currentPlaylist && this.currentPlaylist.is_special === "downloads");
       const dlCount = (this.downloadedTracks && this.downloadedTracks.length) || 0;
-
-      downloadedItem.innerHTML = `
-        <div class="lib-sidebar-art-wrap downloaded-songs">
-          <iconsax-icon name="folder-cloud" type="bold" size="20" color="#FFFFFF"></iconsax-icon>
-        </div>
-        <div class="lib-sidebar-info">
-          <div class="lib-item-title">${isId ? "Lagu Terunduh" : "Downloaded Songs"}</div>
-          <div class="lib-item-meta">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="color: var(--color-brand-primary, #23a55a); transform: rotate(45deg); flex-shrink: 0;"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>
-            <span>Playlist • ${dlCount} ${isId ? "lagu" : "songs"}</span>
-          </div>
-        </div>
-      `;
-
-      downloadedItem.addEventListener("click", () => {
-        this.currentCustomView = "downloads";
-        this.switchView("home");
-        this.showDownloadedSongs();
-        this.renderUserPlaylists();
+      allItems.push({
+        key: "downloads",
+        type: "downloads",
+        title: isId ? "Lagu Terunduh" : "Downloaded Songs",
+        subtitle: `Playlist • ${dlCount} ${isId ? "lagu" : "songs"}`,
+        isActive: isDownloadedActive,
+        artMarkup: `<div class="lib-sidebar-art-wrap downloaded-songs"><iconsax-icon name="folder-cloud" type="bold" size="20" color="#FFFFFF"></iconsax-icon></div>`,
+        onOpen: () => this.openDownloadedSongsView(),
+        onPlay: () => {
+          this.openDownloadedSongsView();
+          if (this.downloadedTracks && this.downloadedTracks.length) {
+            this.tracks = [...this.downloadedTracks];
+            this.loadTrack(0, true);
+          }
+        }
       });
-
-      this.userPlaylistsNav.appendChild(downloadedItem);
-      totalItemsRendered++;
     }
 
     // 3. User Playlists (Created & Imported)
     if (activeFilter === "all" || activeFilter === "playlists") {
       userPlaylists.forEach(pl => {
-        const item = document.createElement("div");
-        item.className = "lib-sidebar-item playlist-nav-item";
-        item.dataset.playlistId = pl.id;
-        item.dataset.type = "playlist";
-        if (this.currentView === "playlist" && this.currentPlaylist && this.currentPlaylist.id === pl.id) {
-          item.classList.add("active");
-        }
-
+        const isPlActive = (this.currentView === "playlist" && this.currentPlaylist && this.currentPlaylist.id === pl.id);
         const artUrl = pl.artwork_url || (pl.tracks && pl.tracks[0]?.artwork_url) || "";
         const author = pl.author || (pl.source ? (pl.source.charAt(0).toUpperCase() + pl.source.slice(1)) : "SoraFy");
-        const subtitle = `Playlist • ${author}`;
-
         const artMarkup = artUrl
-          ? `<img src="${artUrl}" alt="${this.escapeHtml(pl.title || 'Playlist')}" class="lib-sidebar-art-img" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'music-playlist\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';">`
-          : `<iconsax-icon name="music-playlist" type="bold" size="20" color="#949ba4"></iconsax-icon>`;
+          ? `<div class="lib-sidebar-art-wrap"><img src="${artUrl}" alt="${this.escapeHtml(pl.title || 'Playlist')}" class="lib-sidebar-art-img" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'music-playlist\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';"></div>`
+          : `<div class="lib-sidebar-art-wrap"><iconsax-icon name="music-playlist" type="bold" size="20" color="#949ba4"></iconsax-icon></div>`;
 
-        item.innerHTML = `
-          <div class="lib-sidebar-art-wrap">
-            ${artMarkup}
-          </div>
-          <div class="lib-sidebar-info">
-            <div class="lib-item-title" title="${this.escapeHtml(pl.title || pl.name || 'Playlist')}">${this.escapeHtml(pl.title || pl.name || 'Playlist')}</div>
-            <div class="lib-item-meta" title="${this.escapeHtml(subtitle)}">${this.escapeHtml(subtitle)}</div>
-          </div>
-          <button class="playlist-more-dots-btn" title="Playlist options">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg>
-          </button>
-        `;
-
-        const moreBtn = item.querySelector(".playlist-more-dots-btn");
-        if (moreBtn) {
-          moreBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            this.showPlaylistContextMenu(e, pl);
-          });
-        }
-
-        item.addEventListener("click", () => {
-          this.openPlaylistDetail(pl);
+        allItems.push({
+          key: `playlist:${pl.id}`,
+          type: "playlist",
+          title: pl.title || pl.name || "Playlist",
+          subtitle: `Playlist • ${author}`,
+          isActive: isPlActive,
+          artMarkup,
+          data: pl,
+          onOpen: () => this.openPlaylistDetail(pl),
+          onPlay: () => {
+            this.openPlaylistDetail(pl).then(() => {
+              if (pl.tracks && pl.tracks.length) {
+                this.tracks = [...pl.tracks];
+                this.loadTrack(0, true);
+              }
+            });
+          },
+          onQueue: () => {
+            if (pl.tracks && pl.tracks.length) {
+              this.queue.push(...pl.tracks);
+              this.renderQueue();
+              this.showToast(isId ? `${pl.tracks.length} lagu ditambahkan ke antrean` : `Added ${pl.tracks.length} tracks to queue`);
+            }
+          }
         });
-
-        item.addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          this.showPlaylistContextMenu(e, pl);
-        });
-
-        this.userPlaylistsNav.appendChild(item);
-        totalItemsRendered++;
       });
     }
 
-    // 3. Followed Artists
+    // 4. Followed Artists
     if (activeFilter === "all" || activeFilter === "artists") {
       followedArtists.forEach(artKey => {
         const details = (this.followedArtistDetails && this.followedArtistDetails[artKey]) || {};
         const artName = details.name || artKey;
         const avatarUrl = details.avatar_url || getArtistAvatar(artName);
         const browseId = details.browse_id || "";
-
-        const item = document.createElement("div");
-        item.className = "lib-sidebar-item playlist-nav-item";
-        item.dataset.artistName = artName;
-        item.dataset.type = "artist";
-
         const isCurrentArtist = (this.currentView === "artist" && (
           (this.currentArtist && this.currentArtist.name && this.currentArtist.name.toLowerCase() === artName.toLowerCase()) ||
           (this.currentArtistName && this.currentArtistName.toLowerCase() === artName.toLowerCase())
         ));
-        if (isCurrentArtist) {
-          item.classList.add("active");
-        }
+        const artMarkup = avatarUrl
+          ? `<div class="lib-sidebar-art-wrap artist"><img src="${avatarUrl}" alt="${this.escapeHtml(artName)}" class="lib-sidebar-art-img circle" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'user\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';"></div>`
+          : `<div class="lib-sidebar-art-wrap artist"><iconsax-icon name="user" type="bold" size="20" color="#949ba4"></iconsax-icon></div>`;
 
-        const avatarMarkup = avatarUrl
-          ? `<img src="${avatarUrl}" alt="${this.escapeHtml(artName)}" class="lib-sidebar-art-img circle" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'user\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';">`
-          : `<iconsax-icon name="user" type="bold" size="20" color="#949ba4"></iconsax-icon>`;
-
-        item.innerHTML = `
-          <div class="lib-sidebar-art-wrap artist">
-            ${avatarMarkup}
-          </div>
-          <div class="lib-sidebar-info">
-            <div class="lib-item-title" title="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</div>
-            <div class="lib-item-meta">${isId ? "Artis" : "Artist"}</div>
-          </div>
-        `;
-
-        item.addEventListener("click", () => {
-          this.openArtistDetail(artName, browseId);
+        allItems.push({
+          key: `artist:${artName}`,
+          type: "artist",
+          title: artName,
+          subtitle: isId ? "Artis" : "Artist",
+          isActive: isCurrentArtist,
+          artMarkup,
+          data: { name: artName, browseId },
+          onOpen: () => this.openArtistDetail(artName, browseId),
+          onPlay: async () => {
+            await this.openArtistDetail(artName, browseId);
+            if (this.tracks && this.tracks.length) {
+              this.loadTrack(0, true);
+            }
+          }
         });
-
-        this.userPlaylistsNav.appendChild(item);
-        totalItemsRendered++;
       });
     }
 
-    // 4. Saved / Added Albums
+    // 5. Liked Albums
     if (activeFilter === "all" || activeFilter === "albums") {
       likedAlbums.forEach(album => {
-        const item = document.createElement("div");
-        item.className = "lib-sidebar-item playlist-nav-item";
-        item.dataset.albumId = album.id;
-        item.dataset.type = "album";
-
-        if (this.currentView === "playlist" && this.currentPlaylist && (this.currentPlaylist.id === album.id || this.currentPlaylist.title === album.title)) {
-          item.classList.add("active");
-        }
-
+        const isAlbumActive = (this.currentView === "playlist" && this.currentPlaylist && (this.currentPlaylist.id === album.id || this.currentPlaylist.title === album.title));
         const artUrl = album.artwork_url || this.DEFAULT_TRACK_ART;
-        const subtitle = `Album • ${album.artist || 'Unknown'}`;
+        const artMarkup = `<div class="lib-sidebar-art-wrap"><img src="${artUrl}" alt="${this.escapeHtml(album.title)}" class="lib-sidebar-art-img" onerror="this.src='${this.DEFAULT_TRACK_ART}'"></div>`;
 
-        item.innerHTML = `
-          <div class="lib-sidebar-art-wrap">
-            <img src="${artUrl}" alt="${this.escapeHtml(album.title)}" class="lib-sidebar-art-img" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
-          </div>
-          <div class="lib-sidebar-info">
-            <div class="lib-item-title" title="${this.escapeHtml(album.title)}">${this.escapeHtml(album.title)}</div>
-            <div class="lib-item-meta" title="${this.escapeHtml(subtitle)}">${this.escapeHtml(subtitle)}</div>
-          </div>
-        `;
-
-        item.addEventListener("click", () => {
-          this.openAlbumDetail(album);
+        allItems.push({
+          key: `album:${album.id}`,
+          type: "album",
+          title: album.title,
+          subtitle: `Album • ${album.artist || 'Unknown'}`,
+          isActive: isAlbumActive,
+          artMarkup,
+          data: album,
+          onOpen: () => this.openAlbumDetail(album),
+          onPlay: async () => {
+            await this.openAlbumDetail(album);
+            if (this.currentPlaylist && this.currentPlaylist.tracks && this.currentPlaylist.tracks.length) {
+              this.tracks = [...this.currentPlaylist.tracks];
+              this.loadTrack(0, true);
+            }
+          },
+          onQueue: async () => {
+            if (album.tracks && album.tracks.length) {
+              this.queue.push(...album.tracks);
+              this.renderQueue();
+              this.showToast(isId ? `Album ditambahkan ke antrean` : `Album added to queue`);
+            } else {
+              await this.openAlbumDetail(album);
+              if (this.currentPlaylist && this.currentPlaylist.tracks) {
+                this.queue.push(...this.currentPlaylist.tracks);
+                this.renderQueue();
+                this.showToast(isId ? `Album ditambahkan ke antrean` : `Album added to queue`);
+              }
+            }
+          }
         });
-
-        this.userPlaylistsNav.appendChild(item);
-        totalItemsRendered++;
       });
     }
+
+    // Sort: Pinned items float to the top!
+    const pinnedItems = allItems.filter(item => this.isItemPinned(item.key));
+    const unpinnedItems = allItems.filter(item => !this.isItemPinned(item.key));
+    const sortedItems = [...pinnedItems, ...unpinnedItems];
+
+    let totalItemsRendered = 0;
+
+    sortedItems.forEach(item => {
+      const isPinned = this.isItemPinned(item.key);
+      const div = document.createElement("div");
+      div.className = `lib-sidebar-item playlist-nav-item ${item.isActive ? "active" : ""}`;
+      div.dataset.type = item.type;
+      div.dataset.key = item.key;
+      if (item.type === "playlist" && item.data) div.dataset.playlistId = item.data.id;
+      if (item.type === "artist" && item.data) div.dataset.artistName = item.data.name;
+      if (item.type === "album" && item.data) div.dataset.albumId = item.data.id;
+
+      const pinIcon = isPinned ? `<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" class="lib-pin-icon" style="color: var(--color-brand-primary, #23a55a); transform: rotate(45deg); flex-shrink: 0;"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>` : ``;
+
+      div.innerHTML = `
+        ${item.artMarkup}
+        <div class="lib-sidebar-info">
+          <div class="lib-item-title" title="${this.escapeHtml(item.title)}">${this.escapeHtml(item.title)}</div>
+          <div class="lib-item-meta" title="${this.escapeHtml(item.subtitle)}">
+            ${pinIcon}
+            <span>${this.escapeHtml(item.subtitle)}</span>
+          </div>
+        </div>
+        <button class="playlist-more-dots-btn" title="Opsi ${this.escapeHtml(item.title)}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg>
+        </button>
+      `;
+
+      const moreBtn = div.querySelector(".playlist-more-dots-btn");
+      if (moreBtn) {
+        moreBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          this.showLibraryContextMenu(e, item);
+        });
+      }
+
+      div.addEventListener("click", () => {
+        item.onOpen();
+        this.renderUserPlaylists();
+      });
+
+      div.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        this.showLibraryContextMenu(e, item);
+      });
+
+      this.userPlaylistsNav.appendChild(div);
+      totalItemsRendered++;
+    });
 
     // Empty state if nothing in this filter
     if (totalItemsRendered === 0) {
@@ -6871,57 +6988,201 @@ class SoraFyDesktopApp {
     }
   }
 
-  showPlaylistContextMenu(e, pl) {
+  showLibraryContextMenu(e, item) {
     if (this.playlistContextMenu) {
       this.playlistContextMenu.remove();
       this.playlistContextMenu = null;
     }
 
+    const isId = (this.currentLanguage === "id");
+    const isPinned = this.isItemPinned(item.key);
+    const pinLabel = isPinned
+      ? (isId ? "Lepas Sematan dari Atas" : "Unpin from top")
+      : (isId ? "Sematkan ke Atas" : "Pin to top");
+    const pinIconSvg = isPinned
+      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/><line x1="3" y1="3" x2="21" y2="21" stroke="currentColor" stroke-width="2"/></svg>`
+      : `<svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" style="transform: rotate(45deg);"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>`;
+
     const menu = document.createElement("div");
     menu.className = "context-menu";
     menu.id = "playlistContextMenu";
-    menu.style.top = `${e.clientY}px`;
-    menu.style.left = `${Math.min(e.clientX, window.innerWidth - 220)}px`;
-    menu.style.display = "block";
 
-    menu.innerHTML = `
-      <div class="context-menu-item" id="ctx_pl_play">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-        <span>Play Playlist</span>
-      </div>
-      <div class="context-menu-item" id="ctx_pl_edit">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
-        <span>Edit Details</span>
-      </div>
-      <div class="context-menu-divider"></div>
-      <div class="context-menu-item" id="ctx_pl_delete" style="color: #EF4444;">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
-        <span>Delete Playlist</span>
-      </div>
-    `;
+    let menuHtml = "";
+
+    if (item.type === "liked") {
+      menuHtml = `
+        <div class="context-menu-item" id="ctx_lib_open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          <span>${isId ? "Buka Lagu Disukai" : "Open Liked Songs"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_play">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${isId ? "Putar Semua" : "Play All"}</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="ctx_lib_pin">
+          ${pinIconSvg}
+          <span>${pinLabel}</span>
+        </div>
+      `;
+    } else if (item.type === "downloads") {
+      menuHtml = `
+        <div class="context-menu-item" id="ctx_lib_open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+          <span>${isId ? "Buka Lagu Terunduh" : "Open Downloaded Songs"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_play">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${isId ? "Putar Semua" : "Play All"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_open_folder">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+          <span>${isId ? "Buka Folder di File Manager" : "Open in File Manager"}</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="ctx_lib_pin">
+          ${pinIconSvg}
+          <span>${pinLabel}</span>
+        </div>
+      `;
+    } else if (item.type === "playlist") {
+      const pl = item.data;
+      menuHtml = `
+        <div class="context-menu-item" id="ctx_lib_open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${isId ? "Buka Playlist" : "Open Playlist"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_play">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${isId ? "Putar Playlist" : "Play Playlist"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_queue">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span>${isId ? "Tambahkan ke Antrean" : "Add to Queue"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_pin">
+          ${pinIconSvg}
+          <span>${pinLabel}</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="ctx_lib_edit">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+          <span>${isId ? "Edit Detail" : "Edit Details"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_delete" style="color: #EF4444;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span>${isId ? "Hapus Playlist" : "Delete Playlist"}</span>
+        </div>
+      `;
+    } else if (item.type === "artist") {
+      menuHtml = `
+        <div class="context-menu-item" id="ctx_lib_open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          <span>${isId ? "Buka Profil Artis" : "Open Artist Profile"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_play">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${isId ? "Putar Artis Ini" : "Play Artist"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_pin">
+          ${pinIconSvg}
+          <span>${pinLabel}</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="ctx_lib_unfollow" style="color: #EF4444;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="18" y1="8" x2="23" y2="13"></line><line x1="23" y1="8" x2="18" y2="13"></line></svg>
+          <span>${isId ? "Berhenti Mengikuti" : "Unfollow Artist"}</span>
+        </div>
+      `;
+    } else if (item.type === "album") {
+      menuHtml = `
+        <div class="context-menu-item" id="ctx_lib_open">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="12" cy="12" r="3"></circle></svg>
+          <span>${isId ? "Buka Album" : "Open Album"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_play">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          <span>${isId ? "Putar Album" : "Play Album"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_queue">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          <span>${isId ? "Tambahkan ke Antrean" : "Add to Queue"}</span>
+        </div>
+        <div class="context-menu-item" id="ctx_lib_pin">
+          ${pinIconSvg}
+          <span>${pinLabel}</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" id="ctx_lib_remove_album" style="color: #EF4444;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+          <span>${isId ? "Hapus dari Library" : "Remove from Library"}</span>
+        </div>
+      `;
+    }
+
+    menu.innerHTML = menuHtml;
+
+    // Positioning
+    const posX = Math.min(e.clientX, window.innerWidth - 240);
+    const posY = Math.min(e.clientY, window.innerHeight - 260);
+    menu.style.top = `${posY}px`;
+    menu.style.left = `${posX}px`;
+    menu.style.display = "block";
 
     document.body.appendChild(menu);
     this.playlistContextMenu = menu;
 
-    menu.querySelector("#ctx_pl_play")?.addEventListener("click", () => {
-      this.openPlaylistDetail(pl).then(() => {
-        if (pl.tracks && pl.tracks.length) {
-          this.tracks = [...pl.tracks];
-          this.loadTrack(0, true);
-        }
-      });
+    // Actions binding
+    menu.querySelector("#ctx_lib_open")?.addEventListener("click", () => {
+      item.onOpen();
       menu.remove();
     });
 
-    menu.querySelector("#ctx_pl_edit")?.addEventListener("click", () => {
-      this.openEditPlaylistModal(pl);
-      menu.remove();
-    });
-
-    menu.querySelector("#ctx_pl_delete")?.addEventListener("click", () => {
-      if (confirm(`Are you sure you want to delete playlist "${pl.title}"?`)) {
-        this.deletePlaylist(pl.id);
+    menu.querySelector("#ctx_lib_play")?.addEventListener("click", () => {
+      if (item.onPlay) {
+        item.onPlay();
+      } else {
+        item.onOpen();
       }
+      menu.remove();
+    });
+
+    menu.querySelector("#ctx_lib_queue")?.addEventListener("click", () => {
+      if (item.onQueue) item.onQueue();
+      menu.remove();
+    });
+
+    menu.querySelector("#ctx_lib_open_folder")?.addEventListener("click", () => {
+      if (window.electronAPI && typeof window.electronAPI.openDownloadFolder === 'function') {
+        window.electronAPI.openDownloadFolder();
+      }
+      menu.remove();
+    });
+
+    menu.querySelector("#ctx_lib_pin")?.addEventListener("click", () => {
+      this.togglePin(item.key, item.title);
+      menu.remove();
+    });
+
+    menu.querySelector("#ctx_lib_edit")?.addEventListener("click", () => {
+      if (item.type === "playlist") this.openEditPlaylistModal(item.data);
+      menu.remove();
+    });
+
+    menu.querySelector("#ctx_lib_delete")?.addEventListener("click", () => {
+      if (confirm(isId ? `Hapus playlist "${item.title}"?` : `Delete playlist "${item.title}"?`)) {
+        this.deletePlaylist(item.data.id);
+      }
+      menu.remove();
+    });
+
+    menu.querySelector("#ctx_lib_unfollow")?.addEventListener("click", () => {
+      this.unfollowArtist(item.data.name);
+      menu.remove();
+    });
+
+    menu.querySelector("#ctx_lib_remove_album")?.addEventListener("click", () => {
+      this.removeSavedAlbum(item.data.id, item.data.title);
       menu.remove();
     });
 
@@ -6932,6 +7193,32 @@ class SoraFyDesktopApp {
       }
     };
     setTimeout(() => document.addEventListener("click", closeHandler), 10);
+  }
+
+  showPlaylistContextMenu(e, pl) {
+    if (!pl) return;
+    this.showLibraryContextMenu(e, {
+      key: `playlist:${pl.id}`,
+      type: "playlist",
+      title: pl.title || pl.name || "Playlist",
+      data: pl,
+      onOpen: () => this.openPlaylistDetail(pl),
+      onPlay: () => {
+        this.openPlaylistDetail(pl).then(() => {
+          if (pl.tracks && pl.tracks.length) {
+            this.tracks = [...pl.tracks];
+            this.loadTrack(0, true);
+          }
+        });
+      },
+      onQueue: () => {
+        if (pl.tracks && pl.tracks.length) {
+          this.queue.push(...pl.tracks);
+          this.renderQueue();
+          this.showToast(this.currentLanguage === "id" ? `${pl.tracks.length} lagu ditambahkan ke antrean` : `Added ${pl.tracks.length} tracks to queue`);
+        }
+      }
+    });
   }
 
   openCreatePlaylistModal() {
@@ -7145,14 +7432,24 @@ class SoraFyDesktopApp {
     if (this.userPlaylistsNav) {
       const plItems = this.userPlaylistsNav.querySelectorAll(".playlist-nav-item");
       plItems.forEach(el => {
-        el.classList.toggle("active", el.dataset.playlistId === playlist.id);
+        if (playlist.is_special === "liked") {
+          el.classList.toggle("active", el.dataset.type === "liked");
+        } else if (playlist.is_special === "downloads") {
+          el.classList.toggle("active", el.dataset.type === "downloads");
+        } else {
+          el.classList.toggle("active", el.dataset.playlistId === playlist.id || el.dataset.key === `playlist:${playlist.id}`);
+        }
       });
     }
 
-    const isUserPl = this.userPlaylists.some(p => p.id === playlist.id);
+    const typeBadge = document.getElementById("playlistTypeBadge");
+    if (typeBadge) typeBadge.textContent = "PLAYLIST";
+
+    const isUserPl = !playlist.is_special && this.userPlaylists.some(p => p.id === playlist.id);
     if (this.playlistDeleteBtn) this.playlistDeleteBtn.style.display = isUserPl ? "inline-flex" : "none";
     if (this.playlistEditBtn) this.playlistEditBtn.style.display = isUserPl ? "inline-flex" : "none";
     if (this.playlistLikeAlbumBtn) this.playlistLikeAlbumBtn.style.display = "none";
+    if (this.playlistOpenFolderBtn) this.playlistOpenFolderBtn.style.display = (playlist.is_special === "downloads") ? "inline-flex" : "none";
 
     this.playlistTitleHeading.textContent = playlist.title;
     this.playlistDescText.textContent = playlist.description || (playlist.author ? `Curated collection: ${playlist.author}` : "Curated playlist.");
@@ -7160,8 +7457,8 @@ class SoraFyDesktopApp {
 
     let tracks = playlist.tracks || [];
 
-    // Only query YouTube if this is an external / online curated playlist, NOT a user custom playlist
-    if (!isUserPl && playlist.browse_id && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
+    // Only query YouTube if this is an external / online curated playlist, NOT a user custom playlist or special playlist
+    if (!isUserPl && !playlist.is_special && playlist.browse_id && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
       this.playlistTrackList.innerHTML = `<div style="text-align: center; padding: 32px; color: var(--color-text-secondary); font-size: 13px;">Loading playlist tracks...</div>`;
       try {
         const res = await window.electronAPI.browseYouTube(playlist.browse_id);
@@ -7176,7 +7473,7 @@ class SoraFyDesktopApp {
       } catch (_) {}
     }
 
-    if (!isUserPl && !tracks.length && playlist.title) {
+    if (!isUserPl && !playlist.is_special && !tracks.length && playlist.title) {
       try {
         const searchTracks = await this.queryInnerTubeSongs(`${playlist.title} hits`);
         if (searchTracks && searchTracks.length) tracks = searchTracks;
@@ -7184,7 +7481,7 @@ class SoraFyDesktopApp {
     }
 
     playlist.tracks = tracks;
-    this.playlistStatsText.textContent = `${tracks.length} Songs`;
+    this.playlistStatsText.textContent = `${tracks.length} ${this.currentLanguage === 'id' ? 'Lagu' : 'Songs'}`;
     this.renderPlaylistTracks(tracks, isUserPl ? playlist.id : null);
   }
 
@@ -7193,9 +7490,20 @@ class SoraFyDesktopApp {
     this.playlistTrackList.innerHTML = "";
 
     if (!tracks || tracks.length === 0) {
+      const isId = (this.currentLanguage === "id");
+      let emptyMsg = this.t("no_tracks", "No tracks in this playlist yet.");
+      if (this.currentPlaylist?.is_special === "liked") {
+        emptyMsg = isId
+          ? "Lagu yang Anda sukai akan muncul di sini. Klik ikon hati pada lagu apa saja untuk menyimpannya."
+          : "Songs you like will appear here. Click the heart icon on any track to save it.";
+      } else if (this.currentPlaylist?.is_special === "downloads") {
+        emptyMsg = isId
+          ? "Belum ada lagu yang diunduh. Klik tombol download pada lagu untuk mendengarkannya secara offline."
+          : "No downloaded songs yet. Click the download button on any track to listen offline.";
+      }
       this.playlistTrackList.innerHTML = `
-        <div style="text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px;">
-          ${this.t("no_tracks", "No tracks in this playlist yet.")}
+        <div style="text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px; line-height: 1.6;">
+          ${emptyMsg}
         </div>
       `;
       return;
@@ -9811,13 +10119,13 @@ class SoraFyDesktopApp {
     if (this.userPlaylistsNav) {
       const plItems = this.userPlaylistsNav.querySelectorAll(".playlist-nav-item, .lib-sidebar-item");
       plItems.forEach(el => {
-        if (viewName === "playlist" && this.currentPlaylist && el.dataset.playlistId === this.currentPlaylist.id) {
+        if (viewName === "playlist" && this.currentPlaylist?.is_special === "liked" && el.dataset.type === "liked") {
+          el.classList.add("active");
+        } else if (viewName === "playlist" && this.currentPlaylist?.is_special === "downloads" && el.dataset.type === "downloads") {
+          el.classList.add("active");
+        } else if (viewName === "playlist" && this.currentPlaylist && el.dataset.playlistId === this.currentPlaylist.id) {
           el.classList.add("active");
         } else if (viewName === "playlist" && this.currentPlaylist && el.dataset.albumId && (el.dataset.albumId === this.currentPlaylist.id || el.dataset.albumId === this.currentPlaylist.browse_id)) {
-          el.classList.add("active");
-        } else if (viewName === "home" && this.currentCustomView === "liked" && el.dataset.type === "liked") {
-          el.classList.add("active");
-        } else if (viewName === "home" && this.currentCustomView === "downloads" && el.dataset.type === "downloads") {
           el.classList.add("active");
         } else if (viewName === "artist" && this.currentArtist && el.dataset.artistName && el.dataset.artistName.toLowerCase() === this.currentArtist.name.toLowerCase()) {
           el.classList.add("active");
@@ -9842,14 +10150,12 @@ class SoraFyDesktopApp {
     }
 
     if (viewName === "library") {
-      this.switchView("home");
-      this.showLikedSongs();
+      this.openLikedSongsView();
       return;
     }
 
     if (viewName === "downloads") {
-      this.switchView("home");
-      this.showDownloadedSongs();
+      this.openDownloadedSongsView();
       return;
     }
 
@@ -11554,6 +11860,9 @@ class SoraFyDesktopApp {
           const dlTracks = await window.electronAPI.getDownloadedTracks();
           this.downloadedTracks = Array.isArray(dlTracks) ? dlTracks : [];
           this.renderUserPlaylists();
+          if (this.currentView === "playlist" && this.currentPlaylist?.is_special === "downloads") {
+            this.openDownloadedSongsView();
+          }
           if (this.currentCustomView === "downloads") {
             this.showDownloadedSongs();
           }
