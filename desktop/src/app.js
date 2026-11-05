@@ -3688,7 +3688,10 @@ class SoraFyDesktopApp {
     const sidebarLibTitleWrap = document.querySelector(".sidebar-section-title-wrap");
     if (sidebarLibTitleWrap) {
       sidebarLibTitleWrap.addEventListener("click", () => {
-        this.switchView("library");
+        this.sidebarLibraryFilter = "all";
+        const pills = document.querySelectorAll("#sidebarLibraryPills .lib-pill");
+        pills.forEach(p => p.classList.toggle("active", p.dataset.filter === "all"));
+        this.renderUserPlaylists();
       });
     }
 
@@ -6748,7 +6751,7 @@ class SoraFyDesktopApp {
 
     // 1. Liked Songs (Pinned Playlist at the top, Spotify Desktop style)
     if (activeFilter === "all" || activeFilter === "playlists") {
-      const isLikedActive = (this.currentView === "library" && this.activeLibraryTab === "liked");
+      const isLikedActive = (this.currentView === "home" && this.sectionTitleLabel && this.sectionTitleLabel.textContent.includes("Liked Songs"));
       const likedItem = document.createElement("div");
       likedItem.className = `lib-sidebar-item playlist-nav-item ${isLikedActive ? "active" : ""}`;
       likedItem.dataset.type = "liked";
@@ -6767,8 +6770,8 @@ class SoraFyDesktopApp {
       `;
 
       likedItem.addEventListener("click", () => {
-        this.switchView("library");
-        this.switchLibraryTab("liked");
+        this.switchView("home");
+        this.showLikedSongs();
       });
 
       this.userPlaylistsNav.appendChild(likedItem);
@@ -9854,6 +9857,12 @@ class SoraFyDesktopApp {
       return;
     }
 
+    if (viewName === "library" || viewName === "downloads") {
+      this.switchView("home");
+      this.showLikedSongs();
+      return;
+    }
+
     if (this.contentHeader) {
       this.contentHeader.style.display = (viewName === "player") ? "none" : "flex";
     }
@@ -9877,17 +9886,6 @@ class SoraFyDesktopApp {
     }
     if (this.pluginsViewContainer) {
       this.pluginsViewContainer.style.display = (viewName === "plugins") ? "block" : "none";
-    }
-    if (this.libraryViewContainer) {
-      this.libraryViewContainer.style.display = (viewName === "library") ? "block" : "none";
-      if (viewName === "library") {
-        this.renderLibraryView();
-      }
-    }
-    if (viewName === "downloads") {
-      this.currentView = "library";
-      if (this.libraryViewContainer) this.libraryViewContainer.style.display = "block";
-      this.switchLibraryTab("downloads");
     }
     if (this.searchResultsContainer) {
       this.searchResultsContainer.style.display = (viewName === "search_results") ? "block" : "none";
