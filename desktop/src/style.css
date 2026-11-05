@@ -2106,35 +2106,37 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-/* Plugins List (Streamlined Minimalist) */
+/* Plugins List (Discord Settings Dark-Gray Style) */
 .plugin-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .plugin-card {
-  background-color: var(--color-surface-container);
+  background: #2b2d31;
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-sm);
-  padding: 12px 18px;
+  border-radius: 8px;
+  padding: 14px 18px;
   display: flex;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
   transition: background 0.15s ease, border-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .plugin-card:hover {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(0, 229, 153, 0.2);
+  background: #2e3035;
+  border-color: rgba(255, 255, 255, 0.09);
   transform: none;
   box-shadow: none;
 }
 
 .plugin-card.disabled {
   opacity: 0.55;
+  background: #28292d;
 }
 
 .plugin-header {
@@ -2147,72 +2149,98 @@ body {
 
 .plugin-info {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
   flex: 1;
   min-width: 0;
 }
 
 .plugin-icon-box {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-sm);
-  background: rgba(0, 229, 153, 0.08);
-  color: var(--color-brand-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #1e1f22;
+  border: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 20px;
   flex-shrink: 0;
-  border: 1px solid rgba(0, 229, 153, 0.15);
+  transition: opacity 0.15s ease;
+}
+
+.plugin-card.disabled .plugin-icon-box {
+  opacity: 0.6;
+  filter: grayscale(0.8);
 }
 
 .plugin-meta-col {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
+  flex: 1;
 }
 
 .plugin-title {
   font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-primary);
+  font-weight: 600;
+  color: #f2f3f5;
+  letter-spacing: -0.01em;
 }
 
 .plugin-author-version {
   font-size: 11px;
-  color: var(--color-text-tertiary);
+  color: #80848e;
+  font-weight: 500;
 }
 
 .plugin-desc {
-  font-size: 12px;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-  white-space: nowrap;
+  font-size: 12.5px;
+  color: #949ba4;
+  line-height: 1.45;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 380px;
 }
 
 .plugin-footer {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
   padding-top: 0;
   border-top: none;
   flex-shrink: 0;
 }
 
+.plugin-status-text {
+  font-size: 11.5px;
+  font-weight: 600;
+  transition: color 0.18s ease;
+}
+
+.plugin-status-text.active,
+.plugin-card:not(.disabled) .plugin-status-text {
+  color: #23a55a;
+}
+
+.plugin-status-text.disabled,
+.plugin-card.disabled .plugin-status-text {
+  color: #80848e;
+}
+
 .plugin-category-badge {
   font-size: 10px;
   font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--color-text-secondary);
+  padding: 2px 7px;
+  border-radius: 4px;
+  background: #1e1f22;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #b5bac1;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
 }
 
 /* Switch Toggle Component */
@@ -5808,7 +5836,7 @@ body {
 .discord-settings-content {
   flex: 1;
   background: #313338;
-  padding: 36px 44px 32px 36px;
+  padding: 36px 92px 32px 36px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -5866,7 +5894,8 @@ body {
 .discord-settings-scroll-body {
   flex: 1;
   overflow-y: auto;
-  padding-right: 16px;
+  overflow-x: hidden;
+  padding-right: 12px;
 }
 
 .discord-settings-scroll-body::-webkit-scrollbar {
@@ -6102,6 +6131,24 @@ body {
 
 .discord-settings-window .hero-play-btn:hover {
   background: #4752c4 !important;
+}
+
+.discord-settings-window #resetPluginsBtn {
+  background: #383a40 !important;
+  color: #dbdee1 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 6px !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  transition: all 0.15s ease !important;
+  cursor: pointer;
+}
+
+.discord-settings-window #resetPluginsBtn:hover {
+  background: #4e5058 !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.16) !important;
 }
 
 /* Discord Keybinds Grid */

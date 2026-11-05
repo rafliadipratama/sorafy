@@ -4173,6 +4173,10 @@ class SoraFyDesktopApp {
     if (this.resetPluginsBtn) {
       this.resetPluginsBtn.addEventListener("click", () => {
         this.plugins.forEach(p => p.is_enabled = true);
+        try {
+          const stateMap = Object.fromEntries(this.plugins.map(p => [p.id, true]));
+          localStorage.setItem("sorafy_plugins_state", JSON.stringify(stateMap));
+        } catch (e) {}
         this.renderPlugins();
         this.showToast("All 9 plugins reset to active status!");
       });
@@ -11075,14 +11079,15 @@ class SoraFyDesktopApp {
     this.pluginListGrid.innerHTML = "";
 
     this.plugins.forEach(plugin => {
+      const isEnabled = plugin.is_enabled !== false;
       const card = document.createElement("div");
-      card.className = `plugin-card ${plugin.is_enabled ? '' : 'disabled'}`;
+      card.className = `plugin-card ${isEnabled ? '' : 'disabled'}`;
       card.id = `plugin_card_${plugin.id}`;
 
       card.innerHTML = `
         <div class="plugin-header">
           <div class="plugin-info">
-            <div class="plugin-icon-box">${plugin.icon || '<iconsax-icon name="box" type="bold" size="24" color="#00E599"></iconsax-icon>'}</div>
+            <div class="plugin-icon-box">${plugin.icon || '<iconsax-icon name="box" type="bold" size="22" color="#b5bac1"></iconsax-icon>'}</div>
             <div class="plugin-meta-col">
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span class="plugin-title">${plugin.name}</span>
@@ -11094,12 +11099,12 @@ class SoraFyDesktopApp {
           </div>
         </div>
         <div class="plugin-footer">
-          <span style="font-size: 11px; color: ${plugin.is_enabled ? 'var(--color-brand-primary)' : 'var(--color-text-tertiary)'}; font-weight: 600;" id="status_${plugin.id}">
-            ${plugin.is_enabled ? '● Active' : '○ Inactive'}
+          <span class="plugin-status-text ${isEnabled ? 'active' : 'disabled'}" id="status_${plugin.id}">
+            ${isEnabled ? '● Active' : '○ Inactive'}
           </span>
-          <label class="switch">
-            <input type="checkbox" ${plugin.is_enabled ? 'checked' : ''} id="toggle_${plugin.id}">
-            <span class="slider"></span>
+          <label class="toggle-switch">
+            <input type="checkbox" ${isEnabled ? 'checked' : ''} id="toggle_${plugin.id}">
+            <span class="toggle-slider"></span>
           </label>
         </div>
       `;
@@ -11129,7 +11134,7 @@ class SoraFyDesktopApp {
     if (card) card.classList.toggle("disabled", !isEnabled);
     if (status) {
       status.textContent = isEnabled ? '● Active' : '○ Disabled';
-      status.style.color = isEnabled ? 'var(--color-brand-primary)' : 'var(--color-text-tertiary)';
+      status.className = `plugin-status-text ${isEnabled ? 'active' : 'disabled'}`;
     }
 
     await invokeTauri("toggle_plugin", { id, enabled: isEnabled });
