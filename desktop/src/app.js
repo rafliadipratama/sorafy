@@ -4202,6 +4202,14 @@ class SoraFyDesktopApp {
       });
     }
 
+    if (this.unifiedImportModal) {
+      this.unifiedImportModal.addEventListener("click", (e) => {
+        if (e.target === this.unifiedImportModal) {
+          this.unifiedImportModal.style.display = "none";
+        }
+      });
+    }
+
     if (this.submitUnifiedImportBtn) {
       this.submitUnifiedImportBtn.addEventListener("click", () => this.handleUnifiedImport());
     }
