@@ -1712,22 +1712,6 @@ body {
   text-shadow: none;
 }
 
-.lyric-sub.romaji {
-  display: block;
-  font-size: 13px;
-  font-weight: 500;
-  color: #8F9CAE;
-  margin-top: 3px;
-  letter-spacing: 0.3px;
-  opacity: 0.8;
-  line-height: 1.4;
-}
-
-.lyric-line.active .lyric-sub.romaji {
-  color: #6EE7B7;
-  opacity: 1;
-}
-
 /* Floating Top Toast Notification */
 .top-toast {
   position: fixed;
@@ -2926,6 +2910,11 @@ body {
 
 .lib-sidebar-art-wrap.liked-songs {
   background: linear-gradient(135deg, #450af5 0%, #8e8ee5 50%, #23a55a 100%);
+  color: #FFFFFF;
+}
+
+.lib-sidebar-art-wrap.downloaded-songs {
+  background: linear-gradient(135deg, #054637 0%, #00875a 50%, #00e599 100%);
   color: #FFFFFF;
 }
 

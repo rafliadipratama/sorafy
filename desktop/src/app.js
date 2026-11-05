@@ -231,102 +231,8 @@ function fetchDeezerJsonp(url) {
 
 // =========================================================
 // Advanced Lyrics Engine (Phase 4):
-// Word-Level Timing, Enhanced LRC, Romaji & Hangul Phonetics
+// Word-Level Timing & Enhanced LRC
 // =========================================================
-const KANA_TO_ROMAJI = {
-  'きゃ':'kya','きゅ':'kyu','きょ':'kyo','しゃ':'sha','しゅ':'shu','しょ':'sho',
-  'ちゃ':'cha','ちゅ':'chu','ちょ':'cho','にゃ':'nya','にゅ':'nyu','にょ':'nyo',
-  'ひゃ':'hya','ひゅ':'hyu','ひょ':'hyo','みゃ':'mya','みゅ':'myu','みょ':'myo',
-  'りゃ':'rya','りゅ':'ryu','りょ':'ryo','ぎゃ':'gya','ぎゅ':'gyu','ぎょ':'gyo',
-  'じゃ':'ja','じゅ':'ju','じょ':'jo','びゃ':'bya','びゅ':'byu','びょ':'byo',
-  'ぴゃ':'pya','ぴゅ':'pyu','ぴょ':'pyo','ティ':'ti','ディ':'di','チェ':'che',
-  'ファ':'fa','フィ':'fi','フェ':'fe','フォ':'fo','ウィ':'wi','ウェ':'we',
-  'あ':'a','い':'i','う':'u','え':'e','お':'o',
-  'か':'ka','き':'ki','く':'ku','け':'ke','こ':'ko',
-  'さ':'sa','し':'shi','す':'su','せ':'se','そ':'so',
-  'た':'ta','ち':'chi','つ':'tsu','て':'te','と':'to',
-  'な':'na','に':'ni','ぬ':'nu','ね':'ne','の':'no',
-  'は':'ha','ひ':'hi','ふ':'fu','へ':'he','ほ':'ho',
-  'ま':'ma','み':'mi','む':'mu','め':'me','も':'mo',
-  'や':'ya','ゆ':'yu','よ':'yo',
-  'ら':'ra','り':'ri','る':'ru','れ':'re','ろ':'ro',
-  'わ':'wa','を':'wo','ん':'n',
-  'が':'ga','ぎ':'gi','ぐ':'gu','げ':'ge','ご':'go',
-  'ざ':'za','じ':'ji','ず':'zu','ぜ':'ze','ぞ':'zo',
-  'だ':'da','ぢ':'ji','づ':'zu','で':'de','ど':'do',
-  'ば':'ba','び':'bi','ぶ':'bu','べ':'be','ぼ':'bo',
-  'ぱ':'pa','ぴ':'pi','ぷ':'pu','ぺ':'pe','ぽ':'po'
-};
-
-const COMMON_KANJI_MAP = {
-  '世界':'sekai','明日':'ashita','未来':'mirai','昨日':'kinou','時間':'jikan',
-  '本当':'hontou','心':'kokoro','涙':'namida','笑顔':'egao','奇跡':'kiseki',
-  '運命':'unmei','孤独':'kodoku','自由':'jiyuu','理由':'riyuu','記憶':'kioku',
-  '自分':'jibun','二人':'futari','一人':'hitori','誰か':'dareka','今':'ima',
-  '夜':'yoru','朝':'asa','空':'sora','星':'hoshi','月':'tsuki','風':'kaze',
-  '雨':'ame','海':'umi','花':'hana','夢':'yume','愛':'ai','光':'hikari',
-  '影':'kage','声':'koe','音':'oto','手':'te','目':'me','私':'watashi',
-  '僕':'boku','君':'kimi','あなた':'anata','道':'michi','街':'machi',
-  '言葉':'kotoba','約束':'yakusoku','永遠':'eien','希望':'kibou','想い':'omoi'
-};
-
-function romanizeHangul(text) {
-  const initial = ['g','kk','n','d','tt','r','m','b','pp','s','ss','','j','jj','ch','k','t','p','h'];
-  const medial = ['a','ae','ya','yae','eo','e','yeo','ye','o','wa','wae','oe','yo','u','weo','we','wi','yu','eu','ui','i'];
-  const final = ['','k','k','ks','n','nj','nh','t','l','lg','lm','lb','ls','lt','lp','lh','m','p','bs','s','ss','ng','j','ch','k','t','p','h'];
-  return text.replace(/[\uac00-\ud7af]/g, (char) => {
-    const code = char.charCodeAt(0) - 0xac00;
-    const i = Math.floor(code / 588);
-    const m = Math.floor((code % 588) / 28);
-    const f = code % 28;
-    return initial[i] + medial[m] + final[f];
-  });
-}
-
-function kataToHira(str) {
-  return str.replace(/[\u30a1-\u30f6]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
-}
-
-function getPhoneticSubline(text) {
-  if (!text) return null;
-  if (/[\uac00-\ud7af]/.test(text)) {
-    return romanizeHangul(text);
-  }
-  if (/[\u3040-\u30ff\u4e00-\u9faf]/.test(text)) {
-    let replaced = text;
-    for (const [kanji, rom] of Object.entries(COMMON_KANJI_MAP)) {
-      if (replaced.includes(kanji)) {
-        replaced = replaced.split(kanji).join(rom + ' ');
-      }
-    }
-    const hira = kataToHira(replaced);
-    let res = '';
-    let i = 0;
-    while (i < hira.length) {
-      if (hira[i] === 'っ' && i + 1 < hira.length) {
-        const nextChar = hira.slice(i + 1, i + 3);
-        const nextRom = KANA_TO_ROMAJI[nextChar] || KANA_TO_ROMAJI[hira[i + 1]] || '';
-        res += nextRom[0] || '';
-        i++;
-        continue;
-      }
-      const pair = hira.slice(i, i + 2);
-      if (KANA_TO_ROMAJI[pair]) {
-        res += KANA_TO_ROMAJI[pair];
-        i += 2;
-      } else if (KANA_TO_ROMAJI[hira[i]]) {
-        res += KANA_TO_ROMAJI[hira[i]];
-        i++;
-      } else {
-        res += hira[i];
-        i++;
-      }
-    }
-    return res.replace(/\s+/g, ' ').trim();
-  }
-  return null;
-}
-
 function parseLrc(lrcText) {
   if (!lrcText) return [];
   const lines = lrcText.split("\n");
@@ -1715,11 +1621,6 @@ class SoraFyDesktopApp {
     this.lyricsOffsetMinusBtn = document.getElementById("lyricsOffsetMinusBtn");
     this.lyricsOffsetPlusBtn = document.getElementById("lyricsOffsetPlusBtn");
     this.lyricsOffsets = JSON.parse(localStorage.getItem("sorafy_lyrics_offsets") || "{}");
-    this.toggleRomajiBtn = document.getElementById("toggleRomajiBtn");
-    this.showRomaji = localStorage.getItem("sorafy_show_romaji") === "true";
-    if (this.toggleRomajiBtn) {
-      this.toggleRomajiBtn.classList.toggle("active", this.showRomaji);
-    }
 
     this.searchInput = document.getElementById("searchInput");
     this.searchClearBtn = document.getElementById("searchClearBtn");
@@ -3191,17 +3092,6 @@ class SoraFyDesktopApp {
       this.lyricsOffsetBadge.addEventListener("click", () => this.resetLyricsOffset());
     }
 
-    if (this.toggleRomajiBtn) {
-      this.toggleRomajiBtn.addEventListener("click", () => {
-        this.showRomaji = !this.showRomaji;
-        localStorage.setItem("sorafy_show_romaji", String(this.showRomaji));
-        this.toggleRomajiBtn.classList.toggle("active", this.showRomaji);
-        const subs = this.lyricsContainer.querySelectorAll(".lyric-sub.romaji");
-        subs.forEach(s => s.style.display = this.showRomaji ? "block" : "none");
-        this.showToast(`Pronunciation (Romaji / Hangul): ${this.showRomaji ? "ON" : "OFF"}`);
-      });
-    }
-
     if (this.toggleQueueBtn) {
       this.toggleQueueBtn.addEventListener("click", () => {
         this.toggleQueueTab();
@@ -4166,6 +4056,9 @@ class SoraFyDesktopApp {
         const view = item.dataset.view;
         const filter = item.dataset.filter;
         if (view) {
+          if (view === "home") {
+            this.currentCustomView = null;
+          }
           this.switchView(view);
         } else if (filter === "favorites") {
           this.switchView("home");
@@ -4571,6 +4464,13 @@ class SoraFyDesktopApp {
           }
         });
       });
+    }
+
+    if (window.electronAPI && typeof window.electronAPI.getDownloadedTracks === 'function') {
+      window.electronAPI.getDownloadedTracks().then(tracks => {
+        this.downloadedTracks = Array.isArray(tracks) ? tracks : [];
+        this.renderUserPlaylists();
+      }).catch(() => {});
     }
   }
 
@@ -6759,7 +6659,7 @@ class SoraFyDesktopApp {
 
     // 1. Liked Songs (Pinned Playlist at the top, Spotify Desktop style)
     if (activeFilter === "all" || activeFilter === "playlists") {
-      const isLikedActive = (this.currentView === "home" && this.sectionTitleLabel && this.sectionTitleLabel.textContent.includes("Liked Songs"));
+      const isLikedActive = (this.currentView === "home" && this.currentCustomView === "liked");
       const likedItem = document.createElement("div");
       likedItem.className = `lib-sidebar-item playlist-nav-item ${isLikedActive ? "active" : ""}`;
       likedItem.dataset.type = "liked";
@@ -6778,15 +6678,50 @@ class SoraFyDesktopApp {
       `;
 
       likedItem.addEventListener("click", () => {
+        this.currentCustomView = "liked";
         this.switchView("home");
         this.showLikedSongs();
+        this.renderUserPlaylists();
       });
 
       this.userPlaylistsNav.appendChild(likedItem);
       totalItemsRendered++;
     }
 
-    // 2. User Playlists (Created & Imported)
+    // 2. Downloaded Music (Pinned Playlist, Spotify Desktop style)
+    if (activeFilter === "all" || activeFilter === "playlists") {
+      const isDownloadedActive = (this.currentView === "home" && this.currentCustomView === "downloads");
+      const downloadedItem = document.createElement("div");
+      downloadedItem.className = `lib-sidebar-item playlist-nav-item ${isDownloadedActive ? "active" : ""}`;
+      downloadedItem.dataset.type = "downloads";
+
+      const dlCount = (this.downloadedTracks && this.downloadedTracks.length) || 0;
+
+      downloadedItem.innerHTML = `
+        <div class="lib-sidebar-art-wrap downloaded-songs">
+          <iconsax-icon name="folder-cloud" type="bold" size="20" color="#FFFFFF"></iconsax-icon>
+        </div>
+        <div class="lib-sidebar-info">
+          <div class="lib-item-title">${isId ? "Lagu Terunduh" : "Downloaded Songs"}</div>
+          <div class="lib-item-meta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="color: var(--color-brand-primary, #23a55a); transform: rotate(45deg); flex-shrink: 0;"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>
+            <span>Playlist • ${dlCount} ${isId ? "lagu" : "songs"}</span>
+          </div>
+        </div>
+      `;
+
+      downloadedItem.addEventListener("click", () => {
+        this.currentCustomView = "downloads";
+        this.switchView("home");
+        this.showDownloadedSongs();
+        this.renderUserPlaylists();
+      });
+
+      this.userPlaylistsNav.appendChild(downloadedItem);
+      totalItemsRendered++;
+    }
+
+    // 3. User Playlists (Created & Imported)
     if (activeFilter === "all" || activeFilter === "playlists") {
       userPlaylists.forEach(pl => {
         const item = document.createElement("div");
@@ -9156,6 +9091,8 @@ class SoraFyDesktopApp {
   }
 
   showLikedSongs() {
+    this.currentCustomView = "liked";
+    const isId = (this.currentLanguage === "id");
     const saved = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
     const currentLiked = this.tracks.filter(t => this.likedTrackIds.has(t.id));
     const map = new Map();
@@ -9163,17 +9100,64 @@ class SoraFyDesktopApp {
     currentLiked.forEach(t => map.set(t.id, t));
     const liked = Array.from(map.values()).filter(t => this.likedTrackIds.has(t.id));
 
-    this.sectionTitleLabel.textContent = `Liked Songs (${liked.length})`;
+    this.sectionTitleLabel.textContent = isId ? `Lagu Disukai (${liked.length})` : `Liked Songs (${liked.length})`;
     if (liked.length === 0) {
       this.trackGrid.innerHTML = `
         <div style="grid-column: 1/-1; text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px;">
           <div style="margin-bottom: 12px;"><iconsax-icon name="heart" type="bold" size="32" color="#EF4444"></iconsax-icon></div>
-          No liked songs yet. Click the heart icon on any song to save it here.
+          ${isId ? "Belum ada lagu yang disukai. Klik ikon hati pada lagu untuk menyimpannya di sini." : "No liked songs yet. Click the heart icon on any song to save it here."}
         </div>
       `;
     } else {
       this.tracks = liked;
       this.renderTrackGrid(liked);
+    }
+  }
+
+  async showDownloadedSongs() {
+    this.currentCustomView = "downloads";
+    const isId = (this.currentLanguage === "id");
+    this.sectionTitleLabel.textContent = isId ? "Lagu Terunduh" : "Downloaded Songs";
+
+    if (!window.electronAPI || typeof window.electronAPI.getDownloadedTracks !== 'function') {
+      this.trackGrid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px;">
+          <div style="margin-bottom: 12px;"><iconsax-icon name="folder-cloud" type="bold" size="32" color="#00E599"></iconsax-icon></div>
+          ${isId ? "Fitur lagu terunduh didukung pada aplikasi desktop SoraFy." : "Local downloads are supported on SoraFy desktop app."}
+        </div>
+      `;
+      return;
+    }
+
+    try {
+      const tracks = await window.electronAPI.getDownloadedTracks();
+      this.downloadedTracks = Array.isArray(tracks) ? tracks : [];
+      const count = this.downloadedTracks.length;
+      this.sectionTitleLabel.textContent = isId ? `Lagu Terunduh (${count})` : `Downloaded Songs (${count})`;
+
+      if (count === 0) {
+        this.trackGrid.innerHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px;">
+            <div style="margin-bottom: 12px;"><iconsax-icon name="folder-cloud" type="bold" size="32" color="#00E599"></iconsax-icon></div>
+            <div style="font-weight: 700; color: #FFFFFF; margin-bottom: 6px; font-size: 15px;">
+              ${isId ? "Belum ada lagu yang diunduh" : "No downloaded tracks yet"}
+            </div>
+            <div style="font-size: 13px; max-width: 380px; margin: 0 auto; line-height: 1.5;">
+              ${isId ? "Klik kanan pada lagu mana saja saat online dan pilih 'Download Track (MP3)' untuk mendengarkannya secara offline kapan saja." : "Right-click any song while online and select 'Download Track (MP3)' to listen offline anytime."}
+            </div>
+          </div>
+        `;
+      } else {
+        this.tracks = [...this.downloadedTracks];
+        this.renderTrackGrid(this.tracks);
+      }
+      this.renderUserPlaylists();
+    } catch (err) {
+      this.trackGrid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 48px 0; color: #EF4444; font-size: 13px;">
+          Error reading local downloads: ${this.escapeHtml(err.message)}
+        </div>
+      `;
     }
   }
 
@@ -9473,16 +9457,6 @@ class SoraFyDesktopApp {
         mainDiv.textContent = line.text;
       }
       p.appendChild(mainDiv);
-
-      // 2. Phonetic sub-line (Romaji / Hangul Romanization) if non-Latin
-      const phonetic = getPhoneticSubline(line.text);
-      if (phonetic) {
-        const subDiv = document.createElement("div");
-        subDiv.className = "lyric-sub romaji";
-        subDiv.textContent = phonetic;
-        if (!this.showRomaji) subDiv.style.display = "none";
-        p.appendChild(subDiv);
-      }
 
       p.addEventListener("click", () => {
         if (typeof line.timestamp_ms === "number" && line.timestamp_ms >= 0) {
@@ -9841,7 +9815,9 @@ class SoraFyDesktopApp {
           el.classList.add("active");
         } else if (viewName === "playlist" && this.currentPlaylist && el.dataset.albumId && (el.dataset.albumId === this.currentPlaylist.id || el.dataset.albumId === this.currentPlaylist.browse_id)) {
           el.classList.add("active");
-        } else if (viewName === "library" && this.activeLibraryTab === "liked" && el.dataset.type === "liked") {
+        } else if (viewName === "home" && this.currentCustomView === "liked" && el.dataset.type === "liked") {
+          el.classList.add("active");
+        } else if (viewName === "home" && this.currentCustomView === "downloads" && el.dataset.type === "downloads") {
           el.classList.add("active");
         } else if (viewName === "artist" && this.currentArtist && el.dataset.artistName && el.dataset.artistName.toLowerCase() === this.currentArtist.name.toLowerCase()) {
           el.classList.add("active");
@@ -9865,9 +9841,15 @@ class SoraFyDesktopApp {
       return;
     }
 
-    if (viewName === "library" || viewName === "downloads") {
+    if (viewName === "library") {
       this.switchView("home");
       this.showLikedSongs();
+      return;
+    }
+
+    if (viewName === "downloads") {
+      this.switchView("home");
+      this.showDownloadedSongs();
       return;
     }
 
@@ -11568,8 +11550,13 @@ class SoraFyDesktopApp {
       const res = await window.electronAPI.downloadTrack(track);
       if (res && res.success) {
         this.showToast(`Successfully downloaded: ${res.filename}`);
-        if (this.currentView === "downloads") {
-          this.loadDownloadedTracksView();
+        if (window.electronAPI && typeof window.electronAPI.getDownloadedTracks === 'function') {
+          const dlTracks = await window.electronAPI.getDownloadedTracks();
+          this.downloadedTracks = Array.isArray(dlTracks) ? dlTracks : [];
+          this.renderUserPlaylists();
+          if (this.currentCustomView === "downloads") {
+            this.showDownloadedSongs();
+          }
         }
       } else {
         this.showToast(`Download failed: ${res?.error || 'Audio stream unavailable'}`);
