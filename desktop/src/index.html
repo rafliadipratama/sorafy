@@ -578,6 +578,7 @@
       <div id="screenPlayerViewContainer" style="display: none;">
         <!-- Dynamic Ambient Artwork Mesh Backdrop (Apple Music / BitChord style) -->
         <div class="screen-player-mesh-backdrop" id="screenPlayerMeshBackdrop"></div>
+        <div class="screen-player-mesh-overlay"></div>
 
         <!-- Top Navigation & Mode Switcher Bar -->
         <div class="screen-player-topbar">
@@ -614,58 +615,8 @@
         <div class="screen-player-body">
           <div class="screen-player-visual-col">
             <!-- 1. Audio Artwork Mode -->
-            <div id="screenPlayerAudioView" class="screen-player-art-box">
+            <div id="screenPlayerAudioView" class="screen-player-art-box" title="Play / Pause">
               <img id="screenPlayerArtwork" src="" alt="Album Artwork" class="screen-player-artwork-img">
-            </div>
-
-            <!-- Screen Player Metadata Row (Clean Apple Music Typography) -->
-            <div class="screen-player-meta-row" id="screenPlayerMetaRow">
-              <div class="screen-player-meta-info">
-                <h2 class="screen-player-title" id="screenPlayerTitle">
-                  <span class="title-text">SoraFy Desktop</span>
-                </h2>
-                <div class="screen-player-artist" id="screenPlayerArtist">Artist</div>
-              </div>
-              <div class="screen-player-actions">
-                <button class="control-btn" id="screenPlayerStatsBtn" title="Stats for Nerds (Statistik Audio)">
-                  <iconsax-icon name="chart-2" type="linear" size="18" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="control-btn" id="screenPlayerAddToPlaylistBtn" title="Add to Playlist">
-                  <iconsax-icon name="add-circle" type="linear" size="19" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="heart-btn" id="screenPlayerLikeBtn" title="Like Track">
-                  <iconsax-icon name="heart" type="linear" size="19" color="currentColor"></iconsax-icon>
-                </button>
-              </div>
-            </div>
-
-            <!-- Screen Player Transport Controls Card (Frosted Glass, Zero Neon Glow) -->
-            <div class="screen-player-controls-card" id="screenPlayerControlsCard">
-              <div class="screen-player-progress-container">
-                <span class="time-label" id="screenPlayerCurrentTime">0:00</span>
-                <div class="screen-player-seekbar-wrap">
-                  <input type="range" class="screen-player-slider" id="screenPlayerSeekbar" min="0" max="100" value="0" step="0.1">
-                </div>
-                <span class="time-label" id="screenPlayerDuration">0:00</span>
-              </div>
-
-              <div class="screen-player-transport">
-                <button class="control-btn" id="screenPlayerShuffleBtn" title="Shuffle">
-                  <iconsax-icon name="shuffle" type="linear" size="18" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="control-btn" id="screenPlayerPrevBtn" title="Previous">
-                  <iconsax-icon name="previous" type="bold" size="20" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="screen-player-play-btn" id="screenPlayerPlayPauseBtn" title="Play / Pause">
-                  <iconsax-icon id="screenPlayerPlayPauseIcon" name="play" type="bold" size="22" color="#07080A"></iconsax-icon>
-                </button>
-                <button class="control-btn" id="screenPlayerNextBtn" title="Next">
-                  <iconsax-icon name="next" type="bold" size="20" color="currentColor"></iconsax-icon>
-                </button>
-                <button class="control-btn" id="screenPlayerRepeatBtn" title="Repeat">
-                  <iconsax-icon id="screenPlayerRepeatIcon" name="repeate-music" type="linear" size="18" color="currentColor"></iconsax-icon>
-                </button>
-              </div>
             </div>
 
             <!-- 2. Video Player Mode -->

@@ -3999,21 +3999,35 @@ body {
 #screenPlayerViewContainer {
   position: relative;
   overflow: hidden;
+  height: calc(100vh - 90px);
   min-height: calc(100vh - 90px);
-  padding: 16px 28px 40px 28px;
+  padding: 16px 32px 24px 32px;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 .screen-player-mesh-backdrop {
   position: absolute;
-  inset: -60px;
+  inset: -100px;
   z-index: 0;
   background-size: cover;
   background-position: center;
-  filter: blur(80px) saturate(1.35) brightness(0.35);
-  opacity: 0.65;
+  filter: blur(90px) saturate(1.85) brightness(0.48);
+  opacity: 0.75;
   pointer-events: none;
+  transform: scale(1.1);
   transition: background-image 0.8s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
+}
+
+.screen-player-mesh-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: radial-gradient(circle at center, rgba(7, 8, 10, 0.08) 0%, rgba(7, 8, 10, 0.45) 55%, rgba(7, 8, 10, 0.88) 100%),
+              linear-gradient(to bottom, rgba(7, 8, 10, 0.25) 0%, transparent 30%, rgba(7, 8, 10, 0.65) 100%);
+  pointer-events: none;
 }
 
 .screen-player-topbar {
@@ -4022,13 +4036,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 8px;
+  flex-shrink: 0;
 }
 
 .screen-player-mode-pill {
   display: inline-flex;
   align-items: center;
-  background: #141820;
+  background: rgba(20, 24, 32, 0.85);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 24px;
   padding: 3px;
@@ -4067,15 +4083,19 @@ body {
 }
 
 .screen-player-body {
+  position: relative;
+  z-index: 2;
   display: flex;
+  flex: 1;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 100%;
-  max-width: 540px;
+  max-width: 600px;
   margin: auto;
-  padding: 16px 20px 32px 20px;
+  padding: 0 20px 16px 20px;
   transition: max-width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 .screen-player-body.video-mode {
@@ -4089,23 +4109,25 @@ body {
   align-items: center;
   justify-content: center;
   width: 100%;
+  margin: auto;
 }
 
 .screen-player-art-box {
   width: 100%;
-  max-width: 480px;
+  max-width: min(450px, 54vh);
+  aspect-ratio: 1 / 1;
   margin: 0 auto;
-  aspect-ratio: 1;
-  border-radius: 24px;
+  border-radius: 28px;
   overflow: hidden;
-  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.88), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  box-shadow: 0 32px 80px rgba(0, 0, 0, 0.85), 0 0 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.1);
   background: #141820;
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s ease;
 }
 
 .screen-player-art-box:hover {
-  transform: scale(1.02);
-  box-shadow: 0 40px 84px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.14);
+  transform: scale(1.025);
+  box-shadow: 0 40px 96px rgba(0, 0, 0, 0.95), 0 0 80px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.16);
 }
 
 .screen-player-artwork-img {
@@ -4113,6 +4135,8 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .screen-player-video-box {
@@ -4503,150 +4527,6 @@ body {
   background: rgba(0, 229, 153, 0.18);
   border-color: #00E599;
   color: #00E599;
-}
-
-.screen-player-meta-row {
-  width: 100%;
-  max-width: 480px;
-  margin: 20px auto 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 4px;
-}
-
-.screen-player-meta-info {
-  flex: 1;
-  min-width: 0;
-  padding-right: 16px;
-}
-
-.screen-player-title {
-  font-size: 22px;
-  font-weight: 800;
-  color: #FFFFFF;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  letter-spacing: -0.3px;
-}
-
-.screen-player-title .title-text {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.screen-player-title .explicit-badge {
-  width: 17px;
-  height: 17px;
-  font-size: 10px;
-  border-radius: 4px;
-}
-
-.screen-player-artist {
-  font-size: 14.5px;
-  font-weight: 500;
-  color: #94A3B8;
-  margin: 4px 0 0 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.screen-player-artist:hover {
-  color: #FFFFFF;
-  text-decoration: underline;
-}
-
-.screen-player-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.screen-player-controls-card {
-  width: 100%;
-  max-width: 480px;
-  margin: 18px auto 0 auto;
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: 18px 22px 20px 22px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-}
-
-.screen-player-progress-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-
-.screen-player-seekbar-wrap {
-  flex: 1;
-  display: flex;
-  align-items: center;
-}
-
-.screen-player-slider {
-  width: 100%;
-  height: 5px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: rgba(255, 255, 255, 0.16);
-  border-radius: 4px;
-  outline: none;
-  cursor: pointer;
-  transition: height 0.15s ease;
-}
-
-.screen-player-slider:hover {
-  height: 7px;
-}
-
-.screen-player-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 13px;
-  height: 13px;
-  border-radius: 50%;
-  background: #FFFFFF;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-  transition: transform 0.15s ease;
-}
-
-.screen-player-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.25);
-}
-
-.screen-player-transport {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-}
-
-.screen-player-play-btn {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  background: #FFFFFF;
-  color: #07080A;
-  border: none;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: transform 0.15s ease, background 0.15s ease;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 /* =========================================================

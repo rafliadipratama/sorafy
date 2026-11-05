@@ -3209,6 +3209,9 @@ class SoraFyDesktopApp {
     }
 
     // Screen Player Actions & Synchronized Controls
+    if (this.screenPlayerAudioView) {
+      this.screenPlayerAudioView.addEventListener("click", () => this.togglePlayPause());
+    }
     if (this.screenPlayerBackBtn) {
       this.screenPlayerBackBtn.addEventListener("click", () => {
         this.switchView(this.previousView && this.previousView !== "player" ? this.previousView : "home");
@@ -10956,7 +10959,7 @@ class SoraFyDesktopApp {
     if (this.screenPlayerMeshBackdrop) {
       if (track.artwork_url) {
         this.screenPlayerMeshBackdrop.style.backgroundImage = `url("${track.artwork_url}")`;
-        this.screenPlayerMeshBackdrop.style.opacity = "0.65";
+        this.screenPlayerMeshBackdrop.style.opacity = "0.75";
       } else {
         this.screenPlayerMeshBackdrop.style.backgroundImage = "none";
         this.screenPlayerMeshBackdrop.style.opacity = "0";
