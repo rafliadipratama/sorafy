@@ -8,7 +8,38 @@ const os = require('os');
 const net = require('net');
 const des = require('des.js');
 try {
-  require('dotenv').config({ path: path.join(__dirname, '.env'), quiet: true });
+  const candidateEnvPaths = [
+    path.join(__dirname, '.env'),
+    path.join(process.resourcesPath || '', '.env'),
+    path.join(path.dirname(process.execPath || ''), '.env'),
+    path.join(process.cwd(), '.env'),
+    path.join(process.cwd(), 'desktop', '.env'),
+    path.join(path.dirname(__dirname), '.env'),
+    path.join(os.homedir(), '.config', 'sorafy', '.env')
+  ];
+  for (const envPath of candidateEnvPaths) {
+    if (fs.existsSync(envPath)) {
+      try {
+        require('dotenv').config({ path: envPath, quiet: true });
+      } catch (_) {}
+      if (!process.env.DISCORD_CLIENT_ID) {
+        try {
+          const raw = fs.readFileSync(envPath, 'utf8');
+          for (const line of raw.split(/\r?\n/)) {
+            const m = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+            if (m && m[1] && m[2] !== undefined) {
+              const key = m[1].trim();
+              const val = m[2].trim().replace(/^['"](.*)['"]$/, '$1');
+              if (!process.env[key]) process.env[key] = val;
+            }
+          }
+        } catch (_) {}
+      }
+      if (/^\d{17,20}$/.test((process.env.DISCORD_CLIENT_ID || '').trim())) {
+        break;
+      }
+    }
+  }
 } catch (_) {}
 
 if (!/^\d{17,20}$/.test((process.env.DISCORD_CLIENT_ID || '').trim())) {

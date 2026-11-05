@@ -47,10 +47,6 @@
           <iconsax-icon name="discover" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_explore">Explore</span>
         </div>
-        <div class="nav-item" data-view="library" id="navLibrary">
-          <iconsax-icon name="music-library-2" type="linear" size="20" color="currentColor"></iconsax-icon>
-          <span data-i18n="nav_library">Your Library</span>
-        </div>
         <div class="nav-item" id="navSettings">
           <iconsax-icon name="setting-2" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_settings">Settings</span>
@@ -59,7 +55,10 @@
 
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-header-row">
-        <div class="sidebar-section-title" data-i18n="sidebar_playlists">My Playlists</div>
+        <div class="sidebar-section-title-wrap">
+          <iconsax-icon name="music-library-2" type="bold" size="18" color="currentColor"></iconsax-icon>
+          <span class="sidebar-section-title" data-i18n="sidebar_library">My Library</span>
+        </div>
         <div style="display: flex; align-items: center; gap: 4px;">
           <button class="sidebar-add-playlist-btn" id="sidebarImportPlaylistBtn" title="Import Hub: Spotify, Apple Music & YouTube" data-i18n-title="tooltip_sidebar_import">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
@@ -70,8 +69,16 @@
         </div>
       </div>
 
-      <nav class="nav-menu" id="userPlaylistsNav">
-        <!-- User custom playlists list populated dynamically -->
+      <!-- Spotify-Style Library Filter Pills -->
+      <div class="sidebar-library-pills" id="sidebarLibraryPills">
+        <button class="lib-pill active" data-filter="all" data-i18n="lib_filter_all">All</button>
+        <button class="lib-pill" data-filter="playlists" data-i18n="lib_filter_playlists">Playlists</button>
+        <button class="lib-pill" data-filter="artists" data-i18n="lib_filter_artists">Artists</button>
+        <button class="lib-pill" data-filter="albums" data-i18n="lib_filter_albums">Albums</button>
+      </div>
+
+      <nav class="nav-menu spotify-library-nav" id="userPlaylistsNav">
+        <!-- Spotify-style unified library items populated dynamically -->
       </nav>
     </aside>
 

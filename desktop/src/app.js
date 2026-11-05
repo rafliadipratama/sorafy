@@ -912,7 +912,12 @@ const I18N_DICTIONARY = {
     nav_downloads: "Downloads",
     nav_library: "Your Library",
     library_title: "Your Library",
-    sidebar_playlists: "My Playlists",
+    sidebar_playlists: "My Library",
+    sidebar_library: "My Library",
+    lib_filter_all: "All",
+    lib_filter_playlists: "Playlists",
+    lib_filter_artists: "Artists",
+    lib_filter_albums: "Albums",
     quick_picks: "Listen Again",
     quick_picks_sub: "RECENTLY PLAYED",
     recommended: "Recommended For You",
@@ -1230,7 +1235,12 @@ const I18N_DICTIONARY = {
     nav_stats: "Statistik Mendengar",
     nav_settings: "Pengaturan",
     library_title: "Koleksi Saya",
-    sidebar_playlists: "Playlist Saya",
+    sidebar_playlists: "Koleksi Saya",
+    sidebar_library: "Koleksi Saya",
+    lib_filter_all: "Semua",
+    lib_filter_playlists: "Playlist",
+    lib_filter_artists: "Artis",
+    lib_filter_albums: "Album",
     quick_picks: "Putar Lagi",
     quick_picks_sub: "TERAKHIR DIDENGARKAN",
     recommended: "Rekomendasi Untuk Anda",
@@ -1571,6 +1581,7 @@ class SoraFyDesktopApp {
     this.followedArtistDetails = JSON.parse(localStorage.getItem("sorafy_followed_artist_details") || "{}");
     this.likedAlbums = JSON.parse(localStorage.getItem("sorafy_liked_albums") || "[]");
     this.activeLibraryTab = "all";
+    this.sidebarLibraryFilter = "all";
 
     // App state
     this.curatedPlaylists = [];
@@ -3555,6 +3566,7 @@ class SoraFyDesktopApp {
         }
         localStorage.setItem("sorafy_followed_artists", JSON.stringify([...this.followedArtists]));
         localStorage.setItem("sorafy_followed_artist_details", JSON.stringify(this.followedArtistDetails));
+        this.renderUserPlaylists();
 
         // Re-calculate taste affinity & trigger home recommendations update
         if (this._albumRecDebounce) clearTimeout(this._albumRecDebounce);
@@ -3652,6 +3664,31 @@ class SoraFyDesktopApp {
     if (this.sidebarCreatePlaylistBtn) {
       this.sidebarCreatePlaylistBtn.addEventListener("click", () => {
         this.openCreatePlaylistModal();
+      });
+    }
+
+    // Sidebar My Library Filter Pills (Spotify Desktop Style)
+    const sidebarLibPills = document.querySelectorAll("#sidebarLibraryPills .lib-pill");
+    if (sidebarLibPills.length > 0) {
+      sidebarLibPills.forEach(pill => {
+        pill.addEventListener("click", () => {
+          const filter = pill.dataset.filter;
+          if (this.sidebarLibraryFilter === filter && filter !== "all") {
+            this.sidebarLibraryFilter = "all";
+            sidebarLibPills.forEach(p => p.classList.toggle("active", p.dataset.filter === "all"));
+          } else {
+            this.sidebarLibraryFilter = filter;
+            sidebarLibPills.forEach(p => p.classList.toggle("active", p === pill));
+          }
+          this.renderUserPlaylists();
+        });
+      });
+    }
+
+    const sidebarLibTitleWrap = document.querySelector(".sidebar-section-title-wrap");
+    if (sidebarLibTitleWrap) {
+      sidebarLibTitleWrap.addEventListener("click", () => {
+        this.switchView("library");
       });
     }
 
@@ -5795,6 +5832,7 @@ class SoraFyDesktopApp {
     if (this.currentView === "library") {
       this.renderLibraryLikedSongs();
     }
+    this.renderUserPlaylists();
   }
 
   async fetchExternalMusic(query) {
@@ -6698,52 +6736,193 @@ class SoraFyDesktopApp {
     if (!this.userPlaylistsNav) return;
     this.userPlaylistsNav.innerHTML = "";
 
-    if (!this.userPlaylists || this.userPlaylists.length === 0) {
-      this.userPlaylistsNav.innerHTML = `
-        <div style="padding: 10px 14px; font-size: 12px; color: var(--color-text-tertiary); font-style: italic;">
-          No playlists yet
+    const isId = (this.currentLanguage === "id");
+    const activeFilter = this.sidebarLibraryFilter || "all";
+    const likedTracks = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+    const likedCount = likedTracks.length;
+    const userPlaylists = (this.userPlaylists || []).filter(pl => pl && pl.id && pl.id !== "upl_favorites" && pl.title !== "Lagu Santai Saya");
+    const followedArtists = Array.isArray(this.followedArtists) ? this.followedArtists : Array.from(this.followedArtists || []);
+    const likedAlbums = Array.isArray(this.likedAlbums) ? this.likedAlbums : [];
+
+    let totalItemsRendered = 0;
+
+    // 1. Liked Songs (Pinned Playlist at the top, Spotify Desktop style)
+    if (activeFilter === "all" || activeFilter === "playlists") {
+      const isLikedActive = (this.currentView === "library" && this.activeLibraryTab === "liked");
+      const likedItem = document.createElement("div");
+      likedItem.className = `lib-sidebar-item playlist-nav-item ${isLikedActive ? "active" : ""}`;
+      likedItem.dataset.type = "liked";
+
+      likedItem.innerHTML = `
+        <div class="lib-sidebar-art-wrap liked-songs">
+          <iconsax-icon name="heart" type="bold" size="20" color="#FFFFFF"></iconsax-icon>
+        </div>
+        <div class="lib-sidebar-info">
+          <div class="lib-item-title">${isId ? "Lagu Disukai" : "Liked Songs"}</div>
+          <div class="lib-item-meta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="color: var(--color-brand-primary, #23a55a); transform: rotate(45deg); flex-shrink: 0;"><path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>
+            <span>Playlist • ${likedCount} ${isId ? "lagu" : "songs"}</span>
+          </div>
         </div>
       `;
-      return;
+
+      likedItem.addEventListener("click", () => {
+        this.switchView("library");
+        this.switchLibraryTab("liked");
+      });
+
+      this.userPlaylistsNav.appendChild(likedItem);
+      totalItemsRendered++;
     }
 
-    this.userPlaylists.forEach(pl => {
-      const item = document.createElement("div");
-      item.className = "nav-item playlist-nav-item";
-      item.dataset.playlistId = pl.id;
-      if (this.currentView === "playlist" && this.currentPlaylist && this.currentPlaylist.id === pl.id) {
-        item.classList.add("active");
-      }
+    // 2. User Playlists (Created & Imported)
+    if (activeFilter === "all" || activeFilter === "playlists") {
+      userPlaylists.forEach(pl => {
+        const item = document.createElement("div");
+        item.className = "lib-sidebar-item playlist-nav-item";
+        item.dataset.playlistId = pl.id;
+        item.dataset.type = "playlist";
+        if (this.currentView === "playlist" && this.currentPlaylist && this.currentPlaylist.id === pl.id) {
+          item.classList.add("active");
+        }
 
-      item.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0;">
-          <iconsax-icon name="music-playlist" type="linear" size="20" color="currentColor" style="flex-shrink: 0;"></iconsax-icon>
-          <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1;">${this.escapeHtml(pl.title || pl.name || 'Playlist')}</span>
-        </div>
-        <button class="playlist-more-dots-btn" title="Playlist options">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg>
-        </button>
-      `;
+        const artUrl = pl.artwork_url || (pl.tracks && pl.tracks[0]?.artwork_url) || "";
+        const author = pl.author || (pl.source ? (pl.source.charAt(0).toUpperCase() + pl.source.slice(1)) : "SoraFy");
+        const subtitle = `Playlist • ${author}`;
 
-      const moreBtn = item.querySelector(".playlist-more-dots-btn");
-      if (moreBtn) {
-        moreBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
+        const artMarkup = artUrl
+          ? `<img src="${artUrl}" alt="${this.escapeHtml(pl.title || 'Playlist')}" class="lib-sidebar-art-img" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'music-playlist\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';">`
+          : `<iconsax-icon name="music-playlist" type="bold" size="20" color="#949ba4"></iconsax-icon>`;
+
+        item.innerHTML = `
+          <div class="lib-sidebar-art-wrap">
+            ${artMarkup}
+          </div>
+          <div class="lib-sidebar-info">
+            <div class="lib-item-title" title="${this.escapeHtml(pl.title || pl.name || 'Playlist')}">${this.escapeHtml(pl.title || pl.name || 'Playlist')}</div>
+            <div class="lib-item-meta" title="${this.escapeHtml(subtitle)}">${this.escapeHtml(subtitle)}</div>
+          </div>
+          <button class="playlist-more-dots-btn" title="Playlist options">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="12" cy="19" r="2"></circle></svg>
+          </button>
+        `;
+
+        const moreBtn = item.querySelector(".playlist-more-dots-btn");
+        if (moreBtn) {
+          moreBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            this.showPlaylistContextMenu(e, pl);
+          });
+        }
+
+        item.addEventListener("click", () => {
+          this.openPlaylistDetail(pl);
+        });
+
+        item.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
           this.showPlaylistContextMenu(e, pl);
         });
-      }
 
-      item.addEventListener("click", () => {
-        this.openPlaylistDetail(pl);
+        this.userPlaylistsNav.appendChild(item);
+        totalItemsRendered++;
       });
+    }
 
-      item.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        this.showPlaylistContextMenu(e, pl);
+    // 3. Followed Artists
+    if (activeFilter === "all" || activeFilter === "artists") {
+      followedArtists.forEach(artKey => {
+        const details = (this.followedArtistDetails && this.followedArtistDetails[artKey]) || {};
+        const artName = details.name || artKey;
+        const avatarUrl = details.avatar_url || getArtistAvatar(artName);
+        const browseId = details.browse_id || "";
+
+        const item = document.createElement("div");
+        item.className = "lib-sidebar-item playlist-nav-item";
+        item.dataset.artistName = artName;
+        item.dataset.type = "artist";
+
+        const isCurrentArtist = (this.currentView === "artist" && (
+          (this.currentArtist && this.currentArtist.name && this.currentArtist.name.toLowerCase() === artName.toLowerCase()) ||
+          (this.currentArtistName && this.currentArtistName.toLowerCase() === artName.toLowerCase())
+        ));
+        if (isCurrentArtist) {
+          item.classList.add("active");
+        }
+
+        const avatarMarkup = avatarUrl
+          ? `<img src="${avatarUrl}" alt="${this.escapeHtml(artName)}" class="lib-sidebar-art-img circle" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'user\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';">`
+          : `<iconsax-icon name="user" type="bold" size="20" color="#949ba4"></iconsax-icon>`;
+
+        item.innerHTML = `
+          <div class="lib-sidebar-art-wrap artist">
+            ${avatarMarkup}
+          </div>
+          <div class="lib-sidebar-info">
+            <div class="lib-item-title" title="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</div>
+            <div class="lib-item-meta">${isId ? "Artis" : "Artist"}</div>
+          </div>
+        `;
+
+        item.addEventListener("click", () => {
+          this.openArtistDetail(artName, browseId);
+        });
+
+        this.userPlaylistsNav.appendChild(item);
+        totalItemsRendered++;
       });
+    }
 
-      this.userPlaylistsNav.appendChild(item);
-    });
+    // 4. Saved / Added Albums
+    if (activeFilter === "all" || activeFilter === "albums") {
+      likedAlbums.forEach(album => {
+        const item = document.createElement("div");
+        item.className = "lib-sidebar-item playlist-nav-item";
+        item.dataset.albumId = album.id;
+        item.dataset.type = "album";
+
+        if (this.currentView === "playlist" && this.currentPlaylist && (this.currentPlaylist.id === album.id || this.currentPlaylist.title === album.title)) {
+          item.classList.add("active");
+        }
+
+        const artUrl = album.artwork_url || this.DEFAULT_TRACK_ART;
+        const subtitle = `Album • ${album.artist || 'Unknown'}`;
+
+        item.innerHTML = `
+          <div class="lib-sidebar-art-wrap">
+            <img src="${artUrl}" alt="${this.escapeHtml(album.title)}" class="lib-sidebar-art-img" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          </div>
+          <div class="lib-sidebar-info">
+            <div class="lib-item-title" title="${this.escapeHtml(album.title)}">${this.escapeHtml(album.title)}</div>
+            <div class="lib-item-meta" title="${this.escapeHtml(subtitle)}">${this.escapeHtml(subtitle)}</div>
+          </div>
+        `;
+
+        item.addEventListener("click", () => {
+          this.openAlbumDetail(album);
+        });
+
+        this.userPlaylistsNav.appendChild(item);
+        totalItemsRendered++;
+      });
+    }
+
+    // Empty state if nothing in this filter
+    if (totalItemsRendered === 0) {
+      const emptyMsg = activeFilter === "artists"
+        ? (isId ? "Belum ada artis yang diikuti" : "No followed artists yet")
+        : (activeFilter === "albums"
+          ? (isId ? "Belum ada album tersimpan" : "No saved albums yet")
+          : (activeFilter === "playlists"
+            ? (isId ? "Belum ada playlist" : "No playlists yet")
+            : (isId ? "Koleksi Anda masih kosong" : "Your library is empty")));
+
+      this.userPlaylistsNav.innerHTML = `
+        <div style="padding: 16px 12px; font-size: 12px; color: var(--color-text-tertiary); text-align: center;">
+          ${emptyMsg}
+        </div>
+      `;
+    }
   }
 
   showPlaylistContextMenu(e, pl) {
@@ -9644,9 +9823,21 @@ class SoraFyDesktopApp {
       item.classList.toggle("active", item.dataset.view === viewName);
     });
 
-    if (viewName !== "playlist" && this.userPlaylistsNav) {
-      const plItems = this.userPlaylistsNav.querySelectorAll(".playlist-nav-item");
-      plItems.forEach(el => el.classList.remove("active"));
+    if (this.userPlaylistsNav) {
+      const plItems = this.userPlaylistsNav.querySelectorAll(".playlist-nav-item, .lib-sidebar-item");
+      plItems.forEach(el => {
+        if (viewName === "playlist" && this.currentPlaylist && el.dataset.playlistId === this.currentPlaylist.id) {
+          el.classList.add("active");
+        } else if (viewName === "playlist" && this.currentPlaylist && el.dataset.albumId && (el.dataset.albumId === this.currentPlaylist.id || el.dataset.albumId === this.currentPlaylist.browse_id)) {
+          el.classList.add("active");
+        } else if (viewName === "library" && this.activeLibraryTab === "liked" && el.dataset.type === "liked") {
+          el.classList.add("active");
+        } else if (viewName === "artist" && this.currentArtist && el.dataset.artistName && el.dataset.artistName.toLowerCase() === this.currentArtist.name.toLowerCase()) {
+          el.classList.add("active");
+        } else {
+          el.classList.remove("active");
+        }
+      });
     }
 
     if (viewName === "equalizer") {
@@ -11908,6 +12099,7 @@ class SoraFyDesktopApp {
 
           this.showToast(this.currentLanguage === "id" ? `Berhenti mengikuti ${artName}` : `Unfollowed ${artName}`);
           this.renderLibraryArtists();
+          this.renderUserPlaylists();
           this.fetchYtmNewReleases();
           this.fetchMusicfyRecommendations();
         });
@@ -12022,6 +12214,7 @@ class SoraFyDesktopApp {
     if (this.currentView === "library") {
       this.renderLibraryAlbums();
     }
+    this.renderUserPlaylists();
 
     // Refresh recommendations to reflect updated taste weights
     this.fetchYtmNewReleases();
