@@ -2524,46 +2524,6 @@ body {
   color: #FFFFFF;
 }
 
-.suggestion-picks {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 2px;
-  scrollbar-width: none;
-}
-
-.suggestion-picks::-webkit-scrollbar {
-  display: none;
-}
-
-.suggestion-label {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-  letter-spacing: 0.5px;
-}
-
-.suggestion-chip {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-full);
-  color: var(--color-text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 4px 12px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s ease;
-}
-
-.suggestion-chip:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #FFFFFF;
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
 .search-filter-tabs {
   display: flex;
   align-items: center;

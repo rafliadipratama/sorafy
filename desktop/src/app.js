@@ -932,7 +932,6 @@ const I18N_DICTIONARY = {
     search_suggestions_title: "Search Suggestions",
     recent_searches_title: "Recent Searches",
     clear_recent_searches: "Clear All",
-    popular_suggestions: "Popular Suggestions:",
     category_all: "All",
     category_pop_indo: "Indonesian Pop",
     category_relax: "Relax & Chill",
@@ -1247,7 +1246,6 @@ const I18N_DICTIONARY = {
     search_suggestions_title: "Saran Pencarian",
     recent_searches_title: "Pencarian Terbaru",
     clear_recent_searches: "Hapus Semua",
-    popular_suggestions: "Saran Populer:",
     category_all: "Semua",
     category_pop_indo: "Pop Indonesia",
     category_relax: "Santai & Tenang",
@@ -1700,7 +1698,6 @@ class SoraFyDesktopApp {
     this.suggestionDebounceTimer = null;
     this.searchFilterTabs = document.getElementById("searchFilterTabs");
     this.filterTabBtns = document.querySelectorAll(".filter-tab-btn");
-    this.suggestionChips = document.querySelectorAll(".suggestion-chip");
 
     // Spotify Instant Link Banner
     this.spotifyLinkBanner = document.getElementById("spotifyLinkBanner");
@@ -3799,35 +3796,6 @@ class SoraFyDesktopApp {
         this.openCreatePlaylistModal();
       });
     }
-
-    // Suggestion chips
-    this.suggestionChips.forEach(chip => {
-      chip.addEventListener("click", () => {
-        this.hideSearchSuggestions();
-        const artist = chip.dataset.artist;
-        if (artist) {
-          this.searchInput.value = artist;
-          this.originalSearchQuery = artist;
-          if (this.searchClearBtn) this.searchClearBtn.style.display = "inline-flex";
-          this.saveRecentSearch(artist);
-          this.openArtistDetail(artist);
-          return;
-        }
-
-        const q = chip.dataset.query;
-        if (q) {
-          this.searchInput.value = q;
-          this.originalSearchQuery = q;
-          if (this.searchClearBtn) this.searchClearBtn.style.display = "inline-flex";
-          this.saveRecentSearch(q);
-          if (this.currentSearchFilter === 'artist') {
-            this.openArtistDetail(q);
-          } else {
-            this.searchOnlineMusic(q, this.currentSearchFilter);
-          }
-        }
-      });
-    });
 
     // Search filter tabs
     this.filterTabBtns.forEach(btn => {
