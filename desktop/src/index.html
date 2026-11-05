@@ -47,10 +47,6 @@
           <iconsax-icon name="discover" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_explore">Explore</span>
         </div>
-        <div class="nav-item" data-view="plugins" id="navPlugins">
-          <iconsax-icon name="box" type="linear" size="20" color="currentColor"></iconsax-icon>
-          <span data-i18n="nav_plugins">Plugins & Extensions</span>
-        </div>
         <div class="nav-item" data-view="equalizer" id="navEqualizer">
           <iconsax-icon name="setting-4" type="linear" size="20" color="currentColor"></iconsax-icon>
           <span data-i18n="nav_equalizer">Equalizer DSP</span>
@@ -575,68 +571,157 @@
         </section>
       </div>
 
-      <!-- Plugins & Extensions View Container -->
-      <div id="pluginsViewContainer" style="display: none;">
-        <div class="plugins-header">
-          <div>
-            <h2 style="font-size: 24px; font-weight: 800;">Extension & Plugin Manager</h2>
-            <p style="color: var(--color-text-secondary); font-size: 14px; margin-top: 4px;">
-              Fully featured from SoraFy Mobile. Toggle audio providers, synchronized lyrics, DSP equalizers, and social integrations.
-            </p>
-          </div>
-          <button class="hero-play-btn" id="resetPluginsBtn" style="padding: 8px 18px; font-size: 13px;">
-            Reset Defaults
-          </button>
-        </div>
-
-        <div class="plugin-grid" id="pluginListGrid" style="margin-top: 20px;">
-          <!-- Populated dynamically via JS -->
-        </div>
-      </div>
-
-      <!-- Equalizer Studio View Container -->
+      <!-- Equalizer Studio View Container (Audiophile Hi-Fi DSP Studio) -->
       <div id="equalizerViewContainer" style="display: none;">
-        <div class="plugins-header">
-          <div>
-            <h2 style="font-size: 24px; font-weight: 800;">DSP Equalizer Studio</h2>
-            <p style="color: var(--color-text-secondary); font-size: 14px; margin-top: 4px;">
-              Customize audio output in real-time with 7-band parametric EQ, bass boost, and surround virtualizer.
-            </p>
+        <!-- Top Studio Header -->
+        <div class="hifi-eq-header">
+          <div class="hifi-eq-header-left">
+            <div class="hifi-eq-icon-box">
+              <iconsax-icon name="setting-4" type="bold" size="28" color="#00E599"></iconsax-icon>
+            </div>
+            <div>
+              <div class="hifi-eq-title-row">
+                <h1 class="hifi-eq-title">Hi-Fi DSP Equalizer Studio</h1>
+                <span class="hifi-badge-lossless">32-Bit Float DSP</span>
+                <span class="hifi-badge-spec">ISO 10-Band</span>
+                <span class="hifi-badge-spec">Low-Latency IIR</span>
+              </div>
+              <p class="hifi-eq-subtitle">
+                Calibrated audiophile signal chain with real-time FFT spectrum analyzer, anti-clipping headroom protection, and soundstage virtualizer.
+              </p>
+            </div>
+          </div>
+
+          <!-- Studio Master Toolbar -->
+          <div class="hifi-eq-toolbar">
+            <div class="hifi-bypass-wrap" title="Bypass DSP processing for bit-perfect direct output">
+              <span class="hifi-toolbar-label">DSP State:</span>
+              <button class="hifi-bypass-btn active" id="eqBypassBtn">
+                <span class="hifi-bypass-dot"></span>
+                <span id="eqBypassStatusText">Active</span>
+              </button>
+            </div>
+            <button class="hifi-reset-btn" id="eqResetFlatBtn" title="Reset all 10 bands and preamp to 0.0 dB">
+              <iconsax-icon name="rotate-left" type="linear" size="14" color="currentColor"></iconsax-icon>
+              <span>Reset to Flat</span>
+            </button>
           </div>
         </div>
 
-        <div class="eq-card" style="margin-top: 20px;">
-          <div style="display: flex; gap: 10px; margin-bottom: 24px; flex-wrap: wrap;">
-            <button class="chip active" data-eq="Flat">Flat</button>
-            <button class="chip" data-eq="Bass Boost" style="display: inline-flex; align-items: center; gap: 6px;">
-              Bass Boost <iconsax-icon name="flash" type="bold" size="14" color="#EF4444"></iconsax-icon>
-            </button>
-            <button class="chip" data-eq="Electronic / Cyber" style="display: inline-flex; align-items: center; gap: 6px;">
-              Cyberpunk Beats <iconsax-icon name="cpu" type="bold" size="14" color="#3B82F6"></iconsax-icon>
-            </button>
-            <button class="chip" data-eq="Vocal / Acoustic" style="display: inline-flex; align-items: center; gap: 6px;">
-              Vocal & Acoustic <iconsax-icon name="microphone-2" type="bold" size="14" color="#10B981"></iconsax-icon>
-            </button>
+        <!-- Audiophile Presets Selector Bar -->
+        <div class="hifi-presets-bar">
+          <span class="hifi-presets-label">Preset:</span>
+          <div class="hifi-presets-scroll" id="eqPresetsContainer">
+            <button class="chip active" data-eq="Flat">Flat / Reference</button>
+            <button class="chip" data-eq="Hi-Fi Clarity">Hi-Fi Clarity</button>
+            <button class="chip" data-eq="Bass Boost">Bass Boost</button>
+            <button class="chip" data-eq="Acoustic & Classical">Acoustic & Classical</button>
+            <button class="chip" data-eq="Warm Tube Sound">Warm Tube Sound</button>
+            <button class="chip" data-eq="Vocal & Acoustic">Vocal & Acoustic</button>
+            <button class="chip" data-eq="Electronic / EDM">Electronic / EDM</button>
+            <button class="chip" data-eq="Rock & Metal">Rock & Metal</button>
+            <button class="chip" data-eq="Late Night / Headphone">Late Night / Headphone</button>
           </div>
+        </div>
 
-          <div class="eq-sliders-row" id="eqBandsRow">
-            <!-- Populated dynamically via JS -->
-          </div>
-
-          <div class="eq-fx-row" style="margin-top: 32px; display: flex; gap: 32px;">
-            <div style="flex: 1;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600;">
-                <span>Dynamic Bass Boost</span>
-                <span id="bassBoostVal">0%</span>
-              </div>
-              <input type="range" class="volume-slider" style="width: 100%;" id="bassBoostSlider" min="0" max="100" value="0">
+        <!-- Interactive Real-Time Response Curve & Spectrum Analyzer Display -->
+        <div class="hifi-eq-display-card">
+          <div class="hifi-eq-display-header">
+            <div class="hifi-display-stat">
+              <span class="stat-dot"></span>
+              <span class="stat-name">Real-Time Acoustic Response & FFT Spectrum</span>
             </div>
-            <div style="flex: 1;">
-              <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px; font-weight: 600;">
-                <span>3D Surround Virtualizer</span>
-                <span id="virtualizerVal">0%</span>
+            <div class="hifi-display-tags">
+              <span class="hifi-tag" id="eqActivePresetTag">Preset: Flat</span>
+              <span class="hifi-tag">Precision: IEEE 754</span>
+              <span class="hifi-tag" id="eqHeadroomTag">Headroom: Safe</span>
+            </div>
+          </div>
+          <div class="hifi-canvas-wrap">
+            <canvas id="eqResponseCanvas" class="hifi-eq-canvas" width="1000" height="190"></canvas>
+          </div>
+        </div>
+
+        <!-- Main 10-Band ISO Studio Equalizer Rack -->
+        <div class="hifi-eq-rack-card">
+          <div class="hifi-rack-header">
+            <span class="hifi-rack-title">10-Band ISO Octave Graphic Equalizer</span>
+            <span class="hifi-rack-range">Range: ±12.0 dB · Step: 0.5 dB · Direct Form II Biquads</span>
+          </div>
+
+          <div class="hifi-eq-bands-grid" id="eqBandsRow">
+            <!-- 10 Bands generated dynamically with dB readout, fader, Hz label, and role -->
+          </div>
+        </div>
+
+        <!-- Audiophile Master Processing Modules -->
+        <div class="hifi-dsp-modules-grid">
+          <!-- Module 1: Preamp & Headroom Protection -->
+          <div class="hifi-dsp-module-card">
+            <div class="hifi-module-header">
+              <div class="hifi-module-info">
+                <span class="hifi-module-title">Preamp Gain / Headroom</span>
+                <span class="hifi-module-desc">Anti-clipping attenuation for boosted EQ curves</span>
               </div>
-              <input type="range" class="volume-slider" style="width: 100%;" id="virtualizerSlider" min="0" max="100" value="0">
+              <span class="hifi-module-value" id="preampVal">0.0 dB</span>
+            </div>
+            <input type="range" class="volume-slider hifi-module-slider" id="preampSlider" min="-12" max="6" step="0.5" value="0">
+            <div class="hifi-slider-marks">
+              <span>-12 dB</span>
+              <span>-6 dB</span>
+              <span>0 dB (Unity)</span>
+              <span>+6 dB</span>
+            </div>
+          </div>
+
+          <!-- Module 2: Sub-Harmonic Bass Enhancer -->
+          <div class="hifi-dsp-module-card">
+            <div class="hifi-module-header">
+              <div class="hifi-module-info">
+                <span class="hifi-module-title">Dynamic Sub-Bass Enhancer</span>
+                <span class="hifi-module-desc">Low-end punch (40-80 Hz) without masking mids</span>
+              </div>
+              <span class="hifi-module-value" id="bassBoostVal">0%</span>
+            </div>
+            <input type="range" class="volume-slider hifi-module-slider" id="bassBoostSlider" min="0" max="100" value="0">
+            <div class="hifi-slider-marks">
+              <span>Bypass (0%)</span>
+              <span>Moderate (50%)</span>
+              <span>Max (100%)</span>
+            </div>
+          </div>
+
+          <!-- Module 3: 3D Soundstage & Stereo Widener -->
+          <div class="hifi-dsp-module-card">
+            <div class="hifi-module-header">
+              <div class="hifi-module-info">
+                <span class="hifi-module-title">Spatial Soundstage Widener</span>
+                <span class="hifi-module-desc">Expands acoustic stereo field & separation</span>
+              </div>
+              <span class="hifi-module-value" id="virtualizerVal">0%</span>
+            </div>
+            <input type="range" class="volume-slider hifi-module-slider" id="virtualizerSlider" min="0" max="100" value="0">
+            <div class="hifi-slider-marks">
+              <span>Standard (0%)</span>
+              <span>Wide (50%)</span>
+              <span>Studio 3D (100%)</span>
+            </div>
+          </div>
+
+          <!-- Module 4: High-Treble Air Exciter -->
+          <div class="hifi-dsp-module-card">
+            <div class="hifi-module-header">
+              <div class="hifi-module-info">
+                <span class="hifi-module-title">High-Treble Air Exciter</span>
+                <span class="hifi-module-desc">Harmonic sparkle & open top-end (12 kHz+)</span>
+              </div>
+              <span class="hifi-module-value" id="airExciterVal">0%</span>
+            </div>
+            <input type="range" class="volume-slider hifi-module-slider" id="airExciterSlider" min="0" max="100" value="0">
+            <div class="hifi-slider-marks">
+              <span>Natural (0%)</span>
+              <span>Open (50%)</span>
+              <span>Crisp Air (100%)</span>
             </div>
           </div>
         </div>
@@ -1485,6 +1570,10 @@
             <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="6" y1="8" x2="6.01" y2="8"></line><line x1="10" y1="8" x2="10.01" y2="8"></line><line x1="14" y1="8" x2="14.01" y2="8"></line><line x1="18" y1="8" x2="18.01" y2="8"></line><line x1="8" y1="12" x2="16" y2="12"></line><line x1="6" y1="16" x2="18" y2="16"></line></svg>
             <span data-i18n="settings_tab_shortcuts">Keybinds</span>
           </button>
+          <button class="settings-tab-btn" data-tab="plugins">
+            <svg class="discord-tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            <span data-i18n="settings_tab_plugins">Plugins & Extensions</span>
+          </button>
 
           <div class="discord-nav-divider"></div>
 
@@ -1957,7 +2046,24 @@
             </div>
           </div>
 
-          <!-- 7. Tab About -->
+          <!-- 7. Tab Plugins & Extensions (Moved from Sidebar) -->
+          <div class="settings-tab-pane" id="settingsTabPlugins" style="display: none;">
+            <div class="discord-pane-header">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; gap: 16px;">
+                <div>
+                  <h2 class="discord-pane-title" data-i18n="settings_tab_plugins">Extension & Plugin Manager</h2>
+                  <p class="discord-pane-desc" data-i18n="settings_desc_plugins">Manage streaming audio providers, synchronized lyrics sources, DSP audio engines, and MPD daemon extensions.</p>
+                </div>
+                <button class="hero-play-btn" id="resetPluginsBtn" style="padding: 7px 16px; font-size: 12px; border-radius: 8px; flex-shrink: 0;">
+                  Reset Defaults
+                </button>
+              </div>
+            </div>
+
+            <div class="plugin-grid" id="pluginListGrid" style="margin-top: 16px;">
+              <!-- Populated dynamically via JS -->
+            </div>
+          </div>
           <div class="settings-tab-pane" id="settingsTabAbout" style="display: none;">
             <div class="discord-pane-header">
               <h2 class="discord-pane-title" data-i18n="settings_tab_about">About SoraFy</h2>

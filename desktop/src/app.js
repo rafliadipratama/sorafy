@@ -166,12 +166,29 @@ const DEFAULT_PLUGINS = [
   }
 ];
 
-const EQ_FREQUENCIES = [60, 150, 400, 1000, 2400, 6000, 15000];
+const EQ_FREQUENCIES = [32, 64, 125, 250, 500, 1000, 2000, 4000, 8000, 16000];
+const EQ_BAND_ROLES = [
+  "Sub-Bass",
+  "Bass",
+  "Upper Bass",
+  "Warmth",
+  "Low Mid",
+  "Mid Body",
+  "Clarity",
+  "Presence",
+  "Brilliance",
+  "Air"
+];
 const EQ_PRESETS = {
-  "Flat": [0, 0, 0, 0, 0, 0, 0],
-  "Bass Boost": [8, 6, 3, 0, 0, 1, 2],
-  "Electronic / Cyber": [6, 4, -1, 2, 4, 6, 7],
-  "Vocal / Acoustic": [-2, 0, 2, 4, 3, 2, 0]
+  "Flat": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "Hi-Fi Clarity": [2.5, 2.0, 1.0, -0.5, 0.0, 1.5, 2.0, 3.0, 3.5, 4.0],
+  "Bass Boost": [7.0, 6.0, 4.0, 1.5, 0.0, 0.0, 0.5, 1.0, 1.5, 2.0],
+  "Acoustic & Classical": [1.5, 2.0, 1.5, 0.0, 1.0, 2.0, 2.5, 3.0, 3.5, 3.0],
+  "Warm Tube Sound": [3.5, 3.0, 2.0, 1.0, 0.5, 0.0, -0.5, -1.0, -1.5, -2.0],
+  "Vocal & Acoustic": [-1.5, -0.5, 0.5, 2.0, 3.5, 4.0, 3.0, 1.5, 0.5, 0.0],
+  "Electronic / EDM": [6.0, 5.0, 2.5, 0.0, -1.0, 1.5, 3.0, 4.0, 4.5, 5.0],
+  "Rock & Metal": [4.5, 3.5, 1.5, -0.5, 1.0, 2.5, 4.0, 3.5, 3.0, 3.5],
+  "Late Night / Headphone": [4.0, 3.0, 1.5, 0.0, 0.0, 0.0, 1.0, 2.0, 3.0, 3.5]
 };
 
 // Safe Tauri IPC Helper
@@ -1052,6 +1069,7 @@ const I18N_DICTIONARY = {
     settings_desc_system: "Window options, Discord Rich Presence, and developer APIs.",
     settings_desc_data: "Cache management, YouTube cookies, companion engine, and backup.",
     settings_desc_shortcuts: "Keyboard keybinds for controlling playback anywhere in the app.",
+    settings_desc_plugins: "Manage streaming audio providers, synchronized lyrics sources, DSP audio engines, and extensions.",
     settings_desc_about: "Desktop application information, version status, and updates.",
     settings_tab_audio: "Audio & Quality",
     settings_tab_sources: "Sources & Metadata",
@@ -1059,6 +1077,7 @@ const I18N_DICTIONARY = {
     settings_tab_system: "System",
     settings_tab_data: "Data & Backup",
     settings_tab_shortcuts: "Shortcuts",
+    settings_tab_plugins: "Plugins & Extensions",
     settings_tab_about: "About",
     setting_metadata_provider: "Primary Metadata Provider",
     setting_metadata_provider_desc: "Select primary service for song titles, artist names, albums, and artwork.",
@@ -1366,6 +1385,7 @@ const I18N_DICTIONARY = {
     settings_desc_system: "Opsi jendela, Discord Rich Presence, dan protokol integrasi lokal.",
     settings_desc_data: "Manajemen cache audio, cookies YouTube, mesin yt-dlp, dan cadangan data.",
     settings_desc_shortcuts: "Pintasan keyboard untuk mengontrol pemutaran di aplikasi.",
+    settings_desc_plugins: "Kelola penyedia streaming audio, sumber lirik sinkron, mesin DSP audio, dan ekstensi.",
     settings_desc_about: "Informasi aplikasi desktop, status versi, dan pembaruan.",
     settings_tab_audio: "Audio & Kualitas",
     settings_tab_sources: "Sumber & Metadata",
@@ -1373,6 +1393,7 @@ const I18N_DICTIONARY = {
     settings_tab_system: "Sistem",
     settings_tab_data: "Data & Cadangan",
     settings_tab_shortcuts: "Pintasan Keyboard",
+    settings_tab_plugins: "Plugin & Ekstensi",
     settings_tab_about: "Tentang",
     setting_metadata_provider: "Penyedia Metadata Utama",
     setting_metadata_provider_desc: "Pilih penyedia utama untuk judul lagu, artis, album, dan cover art.",
@@ -1886,17 +1907,39 @@ class SoraFyDesktopApp {
     // Nav Items
     this.navItems = document.querySelectorAll(".nav-menu .nav-item");
 
-    // Plugins view elements
+    // Plugins elements (Inside Settings Modal)
     this.pluginListGrid = document.getElementById("pluginListGrid");
     this.resetPluginsBtn = document.getElementById("resetPluginsBtn");
 
-    // Equalizer view elements
+    // Hi-Fi Equalizer DSP elements
     this.eqBandsRow = document.getElementById("eqBandsRow");
     this.eqChips = document.querySelectorAll("#equalizerViewContainer .chip");
+    this.eqResponseCanvas = document.getElementById("eqResponseCanvas");
+    this.eqBypassBtn = document.getElementById("eqBypassBtn");
+    this.eqBypassStatusText = document.getElementById("eqBypassStatusText");
+    this.eqResetFlatBtn = document.getElementById("eqResetFlatBtn");
+    this.eqActivePresetTag = document.getElementById("eqActivePresetTag");
+    this.eqHeadroomTag = document.getElementById("eqHeadroomTag");
+    this.preampSlider = document.getElementById("preampSlider");
+    this.preampVal = document.getElementById("preampVal");
     this.bassBoostSlider = document.getElementById("bassBoostSlider");
     this.bassBoostVal = document.getElementById("bassBoostVal");
     this.virtualizerSlider = document.getElementById("virtualizerSlider");
     this.virtualizerVal = document.getElementById("virtualizerVal");
+    this.airExciterSlider = document.getElementById("airExciterSlider");
+    this.airExciterVal = document.getElementById("airExciterVal");
+    this.isEqBypassed = localStorage.getItem("sorafy_eq_bypass") === "true";
+    this.currentPreamp = parseFloat(localStorage.getItem("sorafy_eq_preamp") || "0");
+    this.currentAirExciter = parseFloat(localStorage.getItem("sorafy_eq_air") || "0");
+    const savedGains = localStorage.getItem("sorafy_eq_gains");
+    try {
+      this.currentGains = savedGains ? JSON.parse(savedGains) : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      if (!Array.isArray(this.currentGains) || this.currentGains.length !== 10) {
+        this.currentGains = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+      }
+    } catch {
+      this.currentGains = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    }
 
     // Unified Import Modal elements (Spotify, Apple Music, YouTube Music)
     this.unifiedImportModal = document.getElementById("unifiedImportModal");
@@ -2636,6 +2679,9 @@ class SoraFyDesktopApp {
           document.querySelectorAll('.settings-tab-pane').forEach(pane => {
             pane.style.display = pane.id === `settingsTab${target.charAt(0).toUpperCase() + target.slice(1)}` ? 'block' : 'none';
           });
+          if (target === "plugins") {
+            this.renderPlugins();
+          }
         });
       });
     }
@@ -4132,33 +4178,103 @@ class SoraFyDesktopApp {
       });
     }
 
-    // Equalizer Preset chips
-    this.eqChips.forEach(chip => {
-      chip.addEventListener("click", () => {
-        this.eqChips.forEach(c => c.classList.remove("active"));
-        chip.classList.add("active");
-        const presetName = chip.dataset.eq;
-        this.applyEqualizerPreset(presetName);
+    // Hi-Fi Equalizer Preset chips
+    if (this.eqChips) {
+      this.eqChips.forEach(chip => {
+        chip.addEventListener("click", () => {
+          this.eqChips.forEach(c => c.classList.remove("active"));
+          chip.classList.add("active");
+          const presetName = chip.dataset.eq;
+          this.applyEqualizerPreset(presetName);
+        });
       });
-    });
+    }
 
-    // Bass Boost & Virtualizer Sliders
+    // Hi-Fi Equalizer Reset to Flat button
+    if (this.eqResetFlatBtn) {
+      this.eqResetFlatBtn.addEventListener("click", () => {
+        this.applyEqualizerPreset("Flat");
+        if (this.preampSlider) {
+          this.preampSlider.value = 0;
+          this.currentPreamp = 0;
+          if (this.preampVal) this.preampVal.textContent = "0.0 dB";
+          if (this.preampNode && !this.isEqBypassed) this.preampNode.gain.value = 1.0;
+          localStorage.setItem("sorafy_eq_preamp", 0);
+        }
+        if (this.airExciterSlider) {
+          this.airExciterSlider.value = 0;
+          this.currentAirExciter = 0;
+          if (this.airExciterVal) this.airExciterVal.textContent = "0%";
+          if (this.airFilterNode && !this.isEqBypassed) this.airFilterNode.gain.value = 0;
+          localStorage.setItem("sorafy_eq_air", 0);
+        }
+        if (this.virtualizerSlider) {
+          this.virtualizerSlider.value = 0;
+          if (this.virtualizerVal) this.virtualizerVal.textContent = "0%";
+        }
+        this.showToast("Equalizer reset to Flat (0.0 dB Reference)");
+      });
+    }
+
+    // Hi-Fi Equalizer Bypass Toggle
+    if (this.eqBypassBtn) {
+      this.updateEqBypassUI();
+      this.eqBypassBtn.addEventListener("click", () => {
+        this.toggleEqBypass();
+      });
+    }
+
+    // Hi-Fi Preamp Gain Slider
+    if (this.preampSlider) {
+      this.preampSlider.value = this.currentPreamp;
+      if (this.preampVal) this.preampVal.textContent = `${this.currentPreamp > 0 ? '+' : ''}${this.currentPreamp.toFixed(1)} dB`;
+      this.preampSlider.addEventListener("input", (e) => {
+        this.currentPreamp = parseFloat(e.target.value);
+        if (this.preampVal) this.preampVal.textContent = `${this.currentPreamp > 0 ? '+' : ''}${this.currentPreamp.toFixed(1)} dB`;
+        if (this.preampNode && !this.isEqBypassed) {
+          this.preampNode.gain.value = Math.pow(10, this.currentPreamp / 20);
+        }
+        localStorage.setItem("sorafy_eq_preamp", this.currentPreamp);
+        this.updateHeadroomTag();
+        this.drawEqResponseCurve();
+      });
+    }
+
+    // Hi-Fi Bass Boost Slider
     if (this.bassBoostSlider) {
       this.bassBoostSlider.addEventListener("input", (e) => {
         const val = parseInt(e.target.value, 10);
         this.bassBoostAmount = val;
-        this.bassBoostVal.textContent = `${val}%`;
-        if (this.bassFilterNode) {
-          this.bassFilterNode.gain.value = (val / 100) * 12;
+        if (this.bassBoostVal) this.bassBoostVal.textContent = `${val}%`;
+        if (this.bassFilterNode && !this.isEqBypassed) {
+          this.bassFilterNode.gain.value = (val / 100) * 8.0;
         }
+        this.drawEqResponseCurve();
       });
     }
 
+    // Hi-Fi Virtualizer Slider
     if (this.virtualizerSlider) {
       this.virtualizerSlider.addEventListener("input", (e) => {
         const val = parseInt(e.target.value, 10);
         this.virtualizerAmount = val;
-        this.virtualizerVal.textContent = `${val}%`;
+        if (this.virtualizerVal) this.virtualizerVal.textContent = `${val}%`;
+      });
+    }
+
+    // Hi-Fi Air Exciter Slider
+    if (this.airExciterSlider) {
+      this.airExciterSlider.value = this.currentAirExciter;
+      if (this.airExciterVal) this.airExciterVal.textContent = `${this.currentAirExciter}%`;
+      this.airExciterSlider.addEventListener("input", (e) => {
+        const val = parseInt(e.target.value, 10);
+        this.currentAirExciter = val;
+        if (this.airExciterVal) this.airExciterVal.textContent = `${val}%`;
+        if (this.airFilterNode && !this.isEqBypassed) {
+          this.airFilterNode.gain.value = (val / 100) * 6.0;
+        }
+        localStorage.setItem("sorafy_eq_air", val);
+        this.drawEqResponseCurve();
       });
     }
 
@@ -9584,10 +9700,9 @@ class SoraFyDesktopApp {
       }
     }
 
-    if (viewName === "plugins") {
-      this.renderPlugins();
-    } else if (viewName === "equalizer") {
+    if (viewName === "equalizer") {
       this.renderEqualizerBands();
+      this.startEqAnimationLoop();
     }
   }
 
@@ -10427,7 +10542,7 @@ class SoraFyDesktopApp {
   }
 
   // =========================================================
-  // Web Audio API & Equalizer DSP Engine
+  // Web Audio API & Hi-Fi DSP Equalizer Studio Engine
   // =========================================================
   initAudioEqualizer() {
     try {
@@ -10437,7 +10552,16 @@ class SoraFyDesktopApp {
       this.audioCtx = new AudioContextClass();
       this.audioSourceNode = this.audioCtx.createMediaElementSource(this.audio);
 
+      // 1. Preamp Gain Node (Headroom & Anti-Clipping Attenuation)
+      this.preampNode = this.audioCtx.createGain();
+      const preampFactor = Math.pow(10, (this.currentPreamp || 0) / 20);
+      this.preampNode.gain.value = this.isEqBypassed ? 1.0 : preampFactor;
+
       let lastNode = this.audioSourceNode;
+      lastNode.connect(this.preampNode);
+      lastNode = this.preampNode;
+
+      // 2. 10-Band ISO Graphic Equalizer Filters (Direct Form II Biquads)
       this.eqFilters = EQ_FREQUENCIES.map((freq, idx) => {
         const filter = this.audioCtx.createBiquadFilter();
         if (idx === 0) {
@@ -10446,32 +10570,49 @@ class SoraFyDesktopApp {
           filter.type = "highshelf";
         } else {
           filter.type = "peaking";
-          filter.Q.value = 1.4;
+          filter.Q.value = 1.414;
         }
         filter.frequency.value = freq;
-        filter.gain.value = 0;
+        const targetGain = this.isEqBypassed ? 0 : (this.currentGains[idx] || 0);
+        filter.gain.value = targetGain;
 
         lastNode.connect(filter);
         lastNode = filter;
         return filter;
       });
 
+      // 3. Sub-Bass Dynamic Filter (40-80 Hz sub-harmonic resonance)
       this.bassFilterNode = this.audioCtx.createBiquadFilter();
       this.bassFilterNode.type = "lowshelf";
-      this.bassFilterNode.frequency.value = 80;
-      this.bassFilterNode.gain.value = 0;
+      this.bassFilterNode.frequency.value = 75;
+      this.bassFilterNode.gain.value = (this.isEqBypassed || !this.bassBoostAmount) ? 0 : (this.bassBoostAmount / 100) * 8.0;
       lastNode.connect(this.bassFilterNode);
       lastNode = this.bassFilterNode;
 
-      // Dynamics Compressor (Audio Normalization / Anti-Kaget Loudness Equalization)
+      // 4. High-Treble Air Exciter Filter (12 kHz+ sparkle)
+      this.airFilterNode = this.audioCtx.createBiquadFilter();
+      this.airFilterNode.type = "highshelf";
+      this.airFilterNode.frequency.value = 12000;
+      this.airFilterNode.gain.value = (this.isEqBypassed || !this.currentAirExciter) ? 0 : (this.currentAirExciter / 100) * 6.0;
+      lastNode.connect(this.airFilterNode);
+      lastNode = this.airFilterNode;
+
+      // 5. Dynamics Compressor (Safe Headroom & Anti-Clipping Limiter)
       this.normalizerNode = this.audioCtx.createDynamicsCompressor();
-      this.normalizerNode.threshold.value = -24; // dB threshold
-      this.normalizerNode.knee.value = 30; // smooth compression knee
-      this.normalizerNode.ratio.value = 12; // tame abrupt peak surges
-      this.normalizerNode.attack.value = 0.003; // 3ms rapid surge reaction
-      this.normalizerNode.release.value = 0.25; // 250ms release
+      this.normalizerNode.threshold.value = -18;
+      this.normalizerNode.knee.value = 24;
+      this.normalizerNode.ratio.value = 8;
+      this.normalizerNode.attack.value = 0.003;
+      this.normalizerNode.release.value = 0.25;
       lastNode.connect(this.normalizerNode);
       lastNode = this.normalizerNode;
+
+      // 6. AnalyserNode for Real-Time Frequency Spectrum Display
+      this.analyserNode = this.audioCtx.createAnalyser();
+      this.analyserNode.fftSize = 512;
+      this.analyserNode.smoothingTimeConstant = 0.82;
+      lastNode.connect(this.analyserNode);
+      lastNode = this.analyserNode;
 
       lastNode.connect(this.audioCtx.destination);
     } catch (e) {
@@ -10479,6 +10620,7 @@ class SoraFyDesktopApp {
     }
 
     this.renderEqualizerBands();
+    this.updateHeadroomTag();
   }
 
   ensureAudioContextActive() {
@@ -10494,15 +10636,19 @@ class SoraFyDesktopApp {
     EQ_FREQUENCIES.forEach((freq, idx) => {
       const currentGain = this.currentGains[idx] || 0;
       const col = document.createElement("div");
-      col.className = "eq-band-col";
-      const formattedFreq = freq >= 1000 ? `${(freq / 1000).toFixed(1)} kHz` : `${freq} Hz`;
+      col.className = "hifi-eq-band-col";
+      const formattedFreq = freq >= 1000 ? `${(freq / 1000).toFixed(freq % 1000 === 0 ? 0 : 1)}k` : `${freq}`;
+      const role = EQ_BAND_ROLES[idx] || "";
+      const gainClass = currentGain > 0 ? "boost" : (currentGain < 0 ? "cut" : "zero");
 
       col.innerHTML = `
-        <span class="eq-gain-label" id="eqGainLabel_${idx}">${currentGain > 0 ? '+' : ''}${currentGain} dB</span>
-        <div class="eq-v-slider-wrapper">
-          <input type="range" class="eq-vertical-slider" min="-12" max="12" step="0.5" value="${currentGain}" id="eqSlider_${idx}">
+        <span class="hifi-gain-val ${gainClass}" id="eqGainLabel_${idx}">${currentGain > 0 ? '+' : ''}${currentGain.toFixed(1)} dB</span>
+        <div class="hifi-fader-wrap">
+          <div class="hifi-fader-tick"></div>
+          <input type="range" class="hifi-v-fader" min="-12" max="12" step="0.5" value="${currentGain}" id="eqSlider_${idx}">
         </div>
-        <span class="eq-freq-label">${formattedFreq}</span>
+        <span class="hifi-freq-badge">${formattedFreq}</span>
+        <span class="hifi-freq-role" title="${role}">${role}</span>
       `;
 
       const slider = col.querySelector(`#eqSlider_${idx}`);
@@ -10511,14 +10657,23 @@ class SoraFyDesktopApp {
       slider.addEventListener("input", (e) => {
         const val = parseFloat(e.target.value);
         this.currentGains[idx] = val;
-        label.textContent = `${val > 0 ? '+' : ''}${val} dB`;
-        if (this.eqFilters[idx]) {
+        label.textContent = `${val > 0 ? '+' : ''}${val.toFixed(1)} dB`;
+        label.className = `hifi-gain-val ${val > 0 ? 'boost' : (val < 0 ? 'cut' : 'zero')}`;
+        if (this.eqFilters[idx] && !this.isEqBypassed) {
           this.eqFilters[idx].gain.value = val;
         }
+        localStorage.setItem("sorafy_eq_gains", JSON.stringify(this.currentGains));
+        if (this.eqActivePresetTag) {
+          this.eqActivePresetTag.textContent = "Preset: Custom";
+        }
+        this.updateHeadroomTag();
+        this.drawEqResponseCurve();
       });
 
       this.eqBandsRow.appendChild(col);
     });
+
+    this.drawEqResponseCurve();
   }
 
   applyEqualizerPreset(presetName) {
@@ -10526,31 +10681,368 @@ class SoraFyDesktopApp {
     if (!preset) return;
 
     this.currentGains = [...preset];
+    localStorage.setItem("sorafy_eq_gains", JSON.stringify(this.currentGains));
+
     this.currentGains.forEach((gain, idx) => {
-      if (this.eqFilters[idx]) {
+      if (this.eqFilters[idx] && !this.isEqBypassed) {
         this.eqFilters[idx].gain.value = gain;
       }
       const slider = document.getElementById(`eqSlider_${idx}`);
       const label = document.getElementById(`eqGainLabel_${idx}`);
       if (slider) slider.value = gain;
-      if (label) label.textContent = `${gain > 0 ? '+' : ''}${gain} dB`;
+      if (label) {
+        label.textContent = `${gain > 0 ? '+' : ''}${gain.toFixed(1)} dB`;
+        label.className = `hifi-gain-val ${gain > 0 ? 'boost' : (gain < 0 ? 'cut' : 'zero')}`;
+      }
     });
 
+    if (this.eqActivePresetTag) {
+      this.eqActivePresetTag.textContent = `Preset: ${presetName}`;
+    }
+
     if (presetName === "Bass Boost") {
-      this.bassBoostSlider.value = 45;
-      this.bassBoostVal.textContent = "45%";
-      if (this.bassFilterNode) this.bassFilterNode.gain.value = 5.4;
-    } else if (presetName === "Electronic / Cyber") {
-      this.bassBoostSlider.value = 30;
-      this.bassBoostVal.textContent = "30%";
-      if (this.bassFilterNode) this.bassFilterNode.gain.value = 3.6;
+      if (this.bassBoostSlider) {
+        this.bassBoostSlider.value = 45;
+        this.bassBoostAmount = 45;
+      }
+      if (this.bassBoostVal) this.bassBoostVal.textContent = "45%";
+      if (this.bassFilterNode && !this.isEqBypassed) this.bassFilterNode.gain.value = 3.6;
+    } else if (presetName === "Hi-Fi Clarity") {
+      if (this.bassBoostSlider) {
+        this.bassBoostSlider.value = 15;
+        this.bassBoostAmount = 15;
+      }
+      if (this.bassBoostVal) this.bassBoostVal.textContent = "15%";
+      if (this.bassFilterNode && !this.isEqBypassed) this.bassFilterNode.gain.value = 1.2;
+      if (this.airExciterSlider) {
+        this.airExciterSlider.value = 35;
+        this.currentAirExciter = 35;
+      }
+      if (this.airExciterVal) this.airExciterVal.textContent = "35%";
+      if (this.airFilterNode && !this.isEqBypassed) this.airFilterNode.gain.value = 2.1;
+    } else if (presetName === "Electronic / EDM") {
+      if (this.bassBoostSlider) {
+        this.bassBoostSlider.value = 35;
+        this.bassBoostAmount = 35;
+      }
+      if (this.bassBoostVal) this.bassBoostVal.textContent = "35%";
+      if (this.bassFilterNode && !this.isEqBypassed) this.bassFilterNode.gain.value = 2.8;
     } else {
-      this.bassBoostSlider.value = 0;
-      this.bassBoostVal.textContent = "0%";
+      if (this.bassBoostSlider) {
+        this.bassBoostSlider.value = 0;
+        this.bassBoostAmount = 0;
+      }
+      if (this.bassBoostVal) this.bassBoostVal.textContent = "0%";
       if (this.bassFilterNode) this.bassFilterNode.gain.value = 0;
     }
 
+    this.updateHeadroomTag();
+    this.drawEqResponseCurve();
     this.showToast(`Preset Equalizer: ${presetName}`);
+  }
+
+  toggleEqBypass() {
+    this.isEqBypassed = !this.isEqBypassed;
+    localStorage.setItem("sorafy_eq_bypass", this.isEqBypassed);
+
+    if (this.isEqBypassed) {
+      if (this.preampNode) this.preampNode.gain.value = 1.0;
+      if (this.eqFilters) this.eqFilters.forEach(f => f.gain.value = 0);
+      if (this.bassFilterNode) this.bassFilterNode.gain.value = 0;
+      if (this.airFilterNode) this.airFilterNode.gain.value = 0;
+      this.showToast("DSP Equalizer di-Bypass (Bit-Perfect Direct Output)");
+    } else {
+      if (this.preampNode) this.preampNode.gain.value = Math.pow(10, (this.currentPreamp || 0) / 20);
+      if (this.eqFilters) {
+        this.eqFilters.forEach((f, idx) => {
+          f.gain.value = this.currentGains[idx] || 0;
+        });
+      }
+      if (this.bassFilterNode) this.bassFilterNode.gain.value = ((this.bassBoostAmount || 0) / 100) * 8.0;
+      if (this.airFilterNode) this.airFilterNode.gain.value = ((this.currentAirExciter || 0) / 100) * 6.0;
+      this.showToast("DSP Equalizer Aktif");
+    }
+
+    this.updateEqBypassUI();
+    this.drawEqResponseCurve();
+  }
+
+  updateEqBypassUI() {
+    if (!this.eqBypassBtn || !this.eqBypassStatusText) return;
+    if (this.isEqBypassed) {
+      this.eqBypassBtn.classList.remove("active");
+      this.eqBypassStatusText.textContent = "Bypass (Bit-Perfect)";
+    } else {
+      this.eqBypassBtn.classList.add("active");
+      this.eqBypassStatusText.textContent = "Active";
+    }
+  }
+
+  updateHeadroomTag() {
+    if (!this.eqHeadroomTag) return;
+    const maxBoost = Math.max(0, ...(this.currentGains || [0]));
+    const totalHeadroom = (this.currentPreamp || 0) + maxBoost;
+    if (totalHeadroom > 4.0) {
+      this.eqHeadroomTag.textContent = "Headroom: Reduce Preamp (-3dB)";
+      this.eqHeadroomTag.style.color = "#EF4444";
+      this.eqHeadroomTag.style.borderColor = "rgba(239, 68, 68, 0.4)";
+    } else if (totalHeadroom > 1.5) {
+      this.eqHeadroomTag.textContent = "Headroom: Caution";
+      this.eqHeadroomTag.style.color = "#F59E0B";
+      this.eqHeadroomTag.style.borderColor = "rgba(245, 158, 11, 0.4)";
+    } else {
+      this.eqHeadroomTag.textContent = "Headroom: Safe";
+      this.eqHeadroomTag.style.color = "#00E599";
+      this.eqHeadroomTag.style.borderColor = "rgba(0, 229, 153, 0.3)";
+    }
+  }
+
+  startEqAnimationLoop() {
+    if (this.eqAnimRunning) return;
+    this.eqAnimRunning = true;
+    const loop = () => {
+      if (this.currentView === "equalizer") {
+        this.drawEqResponseCurve();
+        requestAnimationFrame(loop);
+      } else {
+        this.eqAnimRunning = false;
+      }
+    };
+    requestAnimationFrame(loop);
+  }
+
+  drawEqResponseCurve() {
+    if (!this.eqResponseCanvas) return;
+    const canvas = this.eqResponseCanvas;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const rect = canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const displayWidth = rect.width > 0 ? rect.width : 1000;
+    const displayHeight = rect.height > 0 ? rect.height : 190;
+    if (canvas.width !== Math.round(displayWidth * dpr) || canvas.height !== Math.round(displayHeight * dpr)) {
+      canvas.width = Math.round(displayWidth * dpr);
+      canvas.height = Math.round(displayHeight * dpr);
+    }
+
+    ctx.save();
+    ctx.scale(dpr, dpr);
+
+    const w = displayWidth;
+    const h = displayHeight;
+
+    // 1. Sleek studio background
+    ctx.fillStyle = "#080B10";
+    ctx.fillRect(0, 0, w, h);
+
+    const padLeft = 44;
+    const padRight = 24;
+    const padTop = 14;
+    const padBottom = 22;
+    const plotW = w - padLeft - padRight;
+    const plotH = h - padTop - padBottom;
+
+    const minFreq = 20;
+    const maxFreq = 20000;
+    const minDb = -12;
+    const maxDb = 12;
+
+    const freqToX = (f) => padLeft + (Math.log10(f / minFreq) / Math.log10(maxFreq / minFreq)) * plotW;
+    const dbToY = (db) => padTop + (1 - (db - minDb) / (maxDb - minDb)) * plotH;
+
+    // 2. Horizontal dB Grid Lines
+    const dbLines = [12, 6, 0, -6, -12];
+    ctx.lineWidth = 1;
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.font = "10px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+
+    dbLines.forEach(db => {
+      const y = dbToY(db);
+      ctx.beginPath();
+      if (db === 0) {
+        ctx.strokeStyle = "rgba(0, 229, 153, 0.35)";
+        ctx.setLineDash([4, 4]);
+      } else {
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+        ctx.setLineDash([]);
+      }
+      ctx.moveTo(padLeft, y);
+      ctx.lineTo(w - padRight, y);
+      ctx.stroke();
+
+      ctx.fillStyle = db === 0 ? "#00E599" : "#64748B";
+      ctx.fillText(`${db > 0 ? '+' : ''}${db} dB`, padLeft - 6, y);
+    });
+    ctx.setLineDash([]);
+
+    // 3. Vertical Log Frequency Grid Lines
+    const gridFreqs = [50, 100, 250, 500, 1000, 2000, 4000, 8000, 16000];
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+
+    gridFreqs.forEach(f => {
+      const x = freqToX(f);
+      ctx.beginPath();
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.04)";
+      ctx.moveTo(x, padTop);
+      ctx.lineTo(x, h - padBottom);
+      ctx.stroke();
+
+      const label = f >= 1000 ? `${f / 1000}k` : `${f}`;
+      ctx.fillStyle = "#64748B";
+      ctx.fillText(label, x, h - padBottom + 4);
+    });
+
+    // 4. Real-Time FFT Spectrum Analyzer (RTA)
+    if (this.analyserNode && this.audio && !this.audio.paused) {
+      const binCount = this.analyserNode.frequencyBinCount;
+      const freqData = new Uint8Array(binCount);
+      this.analyserNode.getByteFrequencyData(freqData);
+
+      const nyquist = (this.audioCtx ? this.audioCtx.sampleRate : 44100) / 2;
+      const rtaPoints = 80;
+      const rtaGradient = ctx.createLinearGradient(0, padTop, 0, h - padBottom);
+      rtaGradient.addColorStop(0, "rgba(0, 229, 153, 0.28)");
+      rtaGradient.addColorStop(1, "rgba(0, 229, 153, 0.02)");
+
+      ctx.beginPath();
+      ctx.moveTo(padLeft, h - padBottom);
+      for (let i = 0; i < rtaPoints; i++) {
+        const f = minFreq * Math.pow(maxFreq / minFreq, i / (rtaPoints - 1));
+        const binIndex = Math.min(binCount - 1, Math.max(0, Math.round((f / nyquist) * binCount)));
+        const magnitude = freqData[binIndex] / 255;
+        const x = freqToX(f);
+        const y = h - padBottom - (magnitude * plotH * 0.85);
+        ctx.lineTo(x, y);
+      }
+      ctx.lineTo(w - padRight, h - padBottom);
+      ctx.closePath();
+      ctx.fillStyle = rtaGradient;
+      ctx.fill();
+    }
+
+    // 5. Authentic Biquad Frequency Response Curve
+    const numPoints = 140;
+    const freqArray = new Float32Array(numPoints);
+    for (let i = 0; i < numPoints; i++) {
+      freqArray[i] = minFreq * Math.pow(maxFreq / minFreq, i / (numPoints - 1));
+    }
+
+    const totalMag = new Float32Array(numPoints).fill(1.0);
+    const magOut = new Float32Array(numPoints);
+    const phaseOut = new Float32Array(numPoints);
+
+    if (!this.isEqBypassed && this.eqFilters && this.eqFilters.length === 10) {
+      try {
+        this.eqFilters.forEach(f => {
+          f.getFrequencyResponse(freqArray, magOut, phaseOut);
+          for (let j = 0; j < numPoints; j++) {
+            totalMag[j] *= magOut[j];
+          }
+        });
+        if (this.bassFilterNode && this.bassFilterNode.gain.value !== 0) {
+          this.bassFilterNode.getFrequencyResponse(freqArray, magOut, phaseOut);
+          for (let j = 0; j < numPoints; j++) {
+            totalMag[j] *= magOut[j];
+          }
+        }
+        if (this.airFilterNode && this.airFilterNode.gain.value !== 0) {
+          this.airFilterNode.getFrequencyResponse(freqArray, magOut, phaseOut);
+          for (let j = 0; j < numPoints; j++) {
+            totalMag[j] *= magOut[j];
+          }
+        }
+      } catch (e) {}
+    }
+
+    const preampOffset = this.isEqBypassed ? 0 : (this.currentPreamp || 0);
+
+    // Draw Curve Fill & Stroke
+    const curvePoints = [];
+    for (let i = 0; i < numPoints; i++) {
+      const f = freqArray[i];
+      let db = this.isEqBypassed ? 0 : (20 * Math.log10(Math.max(1e-6, totalMag[i])) + preampOffset);
+      db = Math.max(-14, Math.min(14, db));
+      curvePoints.push({ x: freqToX(f), y: dbToY(db) });
+    }
+
+    if (curvePoints.length > 0) {
+      // Underfill
+      const fillGrad = ctx.createLinearGradient(0, padTop, 0, h - padBottom);
+      if (this.isEqBypassed) {
+        fillGrad.addColorStop(0, "rgba(100, 116, 139, 0.08)");
+        fillGrad.addColorStop(1, "rgba(100, 116, 139, 0)");
+      } else {
+        fillGrad.addColorStop(0, "rgba(0, 229, 153, 0.18)");
+        fillGrad.addColorStop(1, "rgba(0, 229, 153, 0)");
+      }
+
+      ctx.beginPath();
+      ctx.moveTo(curvePoints[0].x, h - padBottom);
+      curvePoints.forEach(pt => ctx.lineTo(pt.x, pt.y));
+      ctx.lineTo(curvePoints[curvePoints.length - 1].x, h - padBottom);
+      ctx.closePath();
+      ctx.fillStyle = fillGrad;
+      ctx.fill();
+
+      // Spline Stroke
+      const strokeGrad = ctx.createLinearGradient(padLeft, 0, w - padRight, 0);
+      if (this.isEqBypassed) {
+        strokeGrad.addColorStop(0, "#64748B");
+        strokeGrad.addColorStop(1, "#94A3B8");
+      } else {
+        strokeGrad.addColorStop(0, "#00E599");
+        strokeGrad.addColorStop(0.5, "#10B981");
+        strokeGrad.addColorStop(1, "#38BDF8");
+      }
+
+      ctx.beginPath();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = strokeGrad;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+
+      ctx.moveTo(curvePoints[0].x, curvePoints[0].y);
+      for (let i = 1; i < curvePoints.length; i++) {
+        const prev = curvePoints[i - 1];
+        const cur = curvePoints[i];
+        const midX = (prev.x + cur.x) / 2;
+        const midY = (prev.y + cur.y) / 2;
+        ctx.quadraticCurveTo(prev.x, prev.y, midX, midY);
+      }
+      ctx.lineTo(curvePoints[curvePoints.length - 1].x, curvePoints[curvePoints.length - 1].y);
+      ctx.stroke();
+
+      // Band Nodes
+      if (!this.isEqBypassed) {
+        EQ_FREQUENCIES.forEach((freq, idx) => {
+          const x = freqToX(freq);
+          const rawDb = (this.currentGains[idx] || 0) + preampOffset;
+          const y = dbToY(Math.max(-13, Math.min(13, rawDb)));
+
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fill();
+          ctx.lineWidth = 2;
+          ctx.strokeStyle = "#00E599";
+          ctx.stroke();
+        });
+      }
+    }
+
+    // 6. Watermark Badge if Bit-Perfect Bypass is Active
+    if (this.isEqBypassed) {
+      ctx.fillStyle = "rgba(148, 163, 184, 0.7)";
+      ctx.font = "700 12px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("BIT-PERFECT BYPASS ACTIVE (DIRECT UNPROCESSED AUDIO)", w / 2, h / 2);
+    }
+
+    ctx.restore();
   }
 
   isPluginEnabled(id) {

@@ -2263,65 +2263,491 @@ body {
   background-color: #07080A;
 }
 
-/* Equalizer Studio DSP Styles */
-.eq-card {
-  background-color: var(--color-surface-container);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: var(--radius-lg);
-  padding: 28px;
-}
-
-.eq-sliders-row {
+/* =========================================================
+   Audiophile Hi-Fi DSP Equalizer Studio Styles
+   ========================================================= */
+.hifi-eq-header {
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   align-items: center;
-  height: 250px;
-  padding: 20px 0;
-  background: rgba(11, 13, 16, 0.6);
-  border-radius: var(--radius-md);
-  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 20px;
 }
 
-.eq-band-col {
+.hifi-eq-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.hifi-eq-icon-box {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: rgba(0, 229, 153, 0.08);
+  border: 1px solid rgba(0, 229, 153, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.hifi-eq-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.hifi-eq-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.hifi-badge-lossless {
+  background: linear-gradient(135deg, rgba(0, 229, 153, 0.15), rgba(56, 189, 248, 0.15));
+  border: 1px solid rgba(0, 229, 153, 0.3);
+  color: #00E599;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.hifi-badge-spec {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94A3B8;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.hifi-eq-subtitle {
+  color: var(--color-text-secondary, #94A3B8);
+  font-size: 13px;
+  margin: 6px 0 0 0;
+  line-height: 1.45;
+}
+
+.hifi-eq-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.hifi-bypass-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 4px 8px;
+}
+
+.hifi-toolbar-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748B;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.hifi-bypass-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hifi-bypass-btn .hifi-bypass-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #64748B;
+  transition: all 0.2s ease;
+}
+
+.hifi-bypass-btn.active {
+  background: rgba(0, 229, 153, 0.12);
+  border-color: rgba(0, 229, 153, 0.35);
+  color: #FFFFFF;
+}
+
+.hifi-bypass-btn.active .hifi-bypass-dot {
+  background: #00E599;
+  box-shadow: 0 0 8px rgba(0, 229, 153, 0.8);
+}
+
+.hifi-reset-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hifi-reset-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+/* Audiophile Presets Scroll Bar */
+.hifi-presets-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 8px 14px;
+}
+
+.hifi-presets-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #64748B;
+  flex-shrink: 0;
+}
+
+.hifi-presets-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 0;
+}
+
+.hifi-presets-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.hifi-presets-scroll .chip {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94A3B8;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 13px;
+  border-radius: 8px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hifi-presets-scroll .chip:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #FFFFFF;
+}
+
+.hifi-presets-scroll .chip.active {
+  background: rgba(0, 229, 153, 0.15);
+  border-color: rgba(0, 229, 153, 0.4);
+  color: #00E599;
+  font-weight: 700;
+}
+
+/* Frequency Response & Spectrum Display Card */
+.hifi-eq-display-card {
+  margin-top: 18px;
+  background: rgba(14, 18, 24, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 16px 20px 18px 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.hifi-eq-display-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.hifi-display-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hifi-display-stat .stat-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #00E599;
+  box-shadow: 0 0 6px rgba(0, 229, 153, 0.6);
+}
+
+.hifi-display-stat .stat-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #E2E8F0;
+  letter-spacing: 0.3px;
+}
+
+.hifi-display-tags {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hifi-tag {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #94A3B8;
+}
+
+.hifi-canvas-wrap {
+  width: 100%;
+  background: #080B10;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.hifi-eq-canvas {
+  width: 100%;
+  height: 180px;
+  display: block;
+}
+
+/* 10-Band ISO Studio Equalizer Rack Card */
+.hifi-eq-rack-card {
+  margin-top: 18px;
+  background: rgba(14, 18, 24, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 20px 24px 22px 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.hifi-rack-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.hifi-rack-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #FFFFFF;
+}
+
+.hifi-rack-range {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748B;
+}
+
+.hifi-eq-bands-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 12px;
+  align-items: flex-end;
+}
+
+.hifi-eq-band-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  height: 100%;
+  gap: 10px;
+  min-width: 0;
 }
 
-.eq-gain-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--color-brand-primary);
-  min-width: 36px;
+.hifi-gain-val {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #94A3B8;
+  font-variant-numeric: tabular-nums;
+  min-width: 44px;
   text-align: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.15s ease;
 }
 
-.eq-v-slider-wrapper {
-  flex: 1;
+.hifi-gain-val.boost {
+  color: #00E599;
+  background: rgba(0, 229, 153, 0.08);
+}
+
+.hifi-gain-val.cut {
+  color: #38BDF8;
+  background: rgba(56, 189, 248, 0.08);
+}
+
+.hifi-gain-val.zero {
+  color: #64748B;
+}
+
+.hifi-fader-wrap {
+  width: 32px;
+  height: 170px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  background: rgba(8, 11, 16, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 8px 0;
 }
 
-.eq-vertical-slider {
+.hifi-fader-tick {
+  position: absolute;
+  top: 50%;
+  left: 4px;
+  right: 4px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.hifi-v-fader {
   -webkit-appearance: slider-vertical;
   appearance: slider-vertical;
   writing-mode: vertical-lr;
   direction: rtl;
-  width: 10px;
-  height: 140px;
+  width: 12px;
+  height: 148px;
   outline: none;
   cursor: pointer;
-  accent-color: var(--color-brand-primary);
+  accent-color: #00E599;
 }
 
-.eq-freq-label {
-  font-size: 11px;
+.hifi-freq-badge {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  margin-top: 4px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.hifi-freq-role {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #64748B;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Audiophile Master Processing Modules Grid */
+.hifi-dsp-modules-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+
+.hifi-dsp-module-card {
+  background: rgba(14, 18, 24, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 16px 18px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.hifi-module-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.hifi-module-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hifi-module-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #FFFFFF;
+  letter-spacing: 0.2px;
+}
+
+.hifi-module-desc {
+  font-size: 10.5px;
+  color: #64748B;
+  line-height: 1.35;
+}
+
+.hifi-module-value {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #00E599;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.hifi-module-slider {
+  width: 100%;
+}
+
+.hifi-slider-marks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 10px;
   font-weight: 600;
-  color: var(--color-text-secondary);
+  color: #64748B;
 }
 
 /* Modal Backdrop & Card */
