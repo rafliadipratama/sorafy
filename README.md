@@ -1,148 +1,116 @@
-# SoraFy (Multiplatform Monorepo)
+# SoraFy
 
 <div align="center">
 
 <img src="shared/assets/logo_monogram.png" alt="SoraFy Logo" width="128" />
 
-### **Fast, Elegant, and Subscription-Free Music Streaming Across Android, Linux, macOS, and Windows**
+### Fast, clean, subscription-free music streaming for desktop & mobile
 
 [![Release](https://img.shields.io/github/v/release/rafliadipratama/sorafy?color=00e599&style=flat-square)](https://github.com/rafliadipratama/sorafy/releases)
+[![Stars](https://img.shields.io/github/stars/rafliadipratama/sorafy?color=00e599&style=flat-square)](https://github.com/rafliadipratama/sorafy/stargazers)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](LICENSE)
 [![Website](https://img.shields.io/badge/Website-GitHub%20Pages-00e599?style=flat-square&logo=github)](https://rafliadipratama.github.io/sorafy/)
-[![Android](https://img.shields.io/badge/Platform-Android_7.0%2B-brightgreen?style=flat-square&logo=android)](https://www.android.com/)
-[![Linux](https://img.shields.io/badge/Platform-Linux_(AppImage%20%7C%20deb%20%7C%20snap%20%7C%20AUR)-FCC624?style=flat-square&logo=linux&logoColor=black)](https://kernel.org/)
-[![Windows](https://img.shields.io/badge/Platform-Windows_10%2F11-0078D6?style=flat-square&logo=windows)](https://www.microsoft.com/)
-[![macOS](https://img.shields.io/badge/Platform-macOS_(DMG)-black?style=flat-square&logo=apple)](https://apple.com/)
-[![Kotlin](https://img.shields.io/badge/Kotlin-2.1-7F52FF?style=flat-square&logo=kotlin)](https://kotlinlang.org/)
-[![Electron](https://img.shields.io/badge/Desktop-Electron_%26_Rust-47848F?style=flat-square&logo=electron)](https://www.electronjs.org/)
+[![Platform](https://img.shields.io/badge/Platforms-Android%20%7C%20Linux%20%7C%20Windows%20%7C%20macOS-white?style=flat-square)](https://github.com/rafliadipratama/sorafy/releases/latest)
 
-[**Official Website**](https://rafliadipratama.github.io/sorafy/) • [**Download Releases**](https://github.com/rafliadipratama/sorafy/releases/latest) • [**Key Features**](#-key-features) • [**Installation**](#-installation--package-managers) • [**Build Guide**](#-build-instructions) • [**License**](#-license)
+[**Website**](https://rafliadipratama.github.io/sorafy/) • [**Download**](https://github.com/rafliadipratama/sorafy/releases/latest) • [**Features**](#-features) • [**Installation**](#-installation) • [**Build from Source**](#-build-from-source) • [**Star History**](#-star-history) • [**Contributors**](#-contributors)
 
 </div>
 
 ---
 
-## 🎧 About SoraFy
+## Overview
 
-**SoraFy** is a modern, cross-platform music streaming and playback application built within a unified **Monorepo** architecture. It prioritizes user privacy, high-fidelity audio performance, and a sleek, uncompromised interface—completely free of advertisements, algorithmic feed clutter, or recurring subscription fees.
+SoraFy is a free, open-source music player built around straightforward priorities: no subscription costs, no audio ads, and no algorithm-forced feeds. You get full control over your library, timestamped karaoke lyrics, fine parametric audio equalization, and local Wi-Fi remote playback.
 
-### Supported Platforms:
-- 📱 **Android**: Native Kotlin + Jetpack Compose (Material 3) + AndroidX Media3 + Real FFT Audio Fingerprinting.
-- 🐧 **Linux**: Native Desktop App (AppImage, deb, rpm, snap, and Arch Linux AUR).
-- 🪟 **Windows**: Native Desktop App (NSIS Installer EXE and Portable).
-- 🍎 **macOS**: Native Desktop App (Apple Silicon & Intel DMG).
-- 🌐 **Web Landing Page & Portal**: Built with Astro & Tailwind CSS, hosted on [GitHub Pages](https://rafliadipratama.github.io/sorafy/).
-
-Built with an intentional dark design language: deep *Obsidian Void* canvas, elevated *Slate Surface* cards, and energetic neon twin accents of *Priangan Emerald* & *Electric Lime*.
+### Where it runs
+- **Android**: Native Kotlin with Jetpack Compose, AndroidX Media3, and acoustic song identification.
+- **Linux**: Desktop build packaged as AppImage, deb, rpm, Snap, and Arch Linux AUR.
+- **Windows**: NSIS installer and portable executable for Windows 10 & 11.
+- **macOS**: Native DMG bundle for Apple Silicon and Intel Macs.
+- **Web**: Project documentation and static site hosted on [GitHub Pages](https://rafliadipratama.github.io/sorafy/).
 
 ---
 
-## 🎨 Design System & Official Color Tokens
+## Color System
 
-| Design Token | Hex Code | Interface Role |
+SoraFy uses an OLED-friendly dark palette across desktop and mobile interfaces:
+
+| Token | Hex | Usage |
 | :--- | :--- | :--- |
-| **Obsidian Void** | `#0B0D10` | Primary canvas background; OLED/AMOLED battery-friendly deep tone |
-| **Slate Surface** | `#181C22` | Surface containers, track rows, mini-player bar, modals, and sidebars |
-| **Priangan Emerald** | `#00E599` | Primary brand accent: playback controls, squiggly seekbar, logo, and active badges |
-| **Electric Lime** | `#C8FF29` | Energetic secondary accent: active synced lyrics glow, audio badges, and highlights |
+| **Obsidian Void** | `#0B0D10` | Main canvas background |
+| **Slate Surface** | `#181C22` | Cards, track rows, bottom player bar, sidebars, and modals |
+| **Priangan Emerald** | `#00E599` | Primary brand color: play buttons, squiggly seekbar, and active items |
+| **Electric Lime** | `#C8FF29` | Highlights: active lyric glow and audio quality badges |
 
 ---
 
-## 🏛️ Monorepo Architecture
-
-This repository is structured as a modular **Monorepo** to maintain architectural consistency across all target platforms:
+## Repository Layout
 
 ```text
 sorafy/
-├── android/                   # Android Mobile Application (Kotlin + Jetpack Compose)
-│   ├── app/                   # Native source code (Media3, UI, FFT Shazam fingerprinting)
-│   ├── build.gradle.kts       # Android root Gradle configuration
-│   └── settings.gradle.kts
-│
-├── desktop/                   # Cross-Platform Desktop App (macOS, Linux, & Windows)
-│   ├── electron-main.js       # Main runtime process, window management, & IPC bridge
-│   ├── preload.js             # Secure context bridge between main and renderer processes
-│   ├── package.json           # App configuration, packaging, & electron-builder targets
-│   ├── src/                   # Modern Desktop UI (SoraFy UI + Web Audio DSP Engine)
-│   │   ├── app.js             # State management, playlist engine, equalizer, & audio core
-│   │   ├── index.html         # Application shell structure, views, & modals
-│   │   └── style.css          # Obsidian Void design tokens & responsive animations
-│   ├── remote-web/            # SoraFy Jam web client (Wi-Fi companion for mobile devices)
-│   └── src-tauri/             # Rust backend modules with Hexagonal / DDD architecture
-│
-├── packaging/                 # Official distribution packaging configurations
-│   ├── aur/                   # PKGBUILD for Arch Linux AUR
-│   ├── flatpak/               # Flatpak manifest for Flathub
-│   ├── homebrew/              # Cask formula for macOS Homebrew
-│   ├── snap/                  # snapcraft.yaml for Ubuntu Snapcraft
-│   └── winget/                # Manifest YAML for Windows Package Manager (winget)
-│
-├── shared/                    # Shared Assets & Cross-Platform Design Tokens
-│   ├── design/                # tokens.json & colors.css
-│   └── assets/                # Monogram logo, branding diagrams, & visual assets
-│
-├── website/                   # Official Landing Page & Documentation Portal
-│   ├── src/                   # Astro components, Tailwind CSS, & TypeScript
-│   └── astro.config.mjs       # Static site generator configuration
-│
-└── .github/workflows/
-    ├── deploy-pages.yml       # Automated CI/CD deployment to GitHub Pages
-    └── release.yml            # Automated CI/CD multi-platform binary release pipeline
+├── android/         # Native Android app (Kotlin + Jetpack Compose)
+├── desktop/         # Desktop application (macOS, Linux, Windows)
+│   ├── src/         # UI markup, player logic, and Web Audio DSP
+│   ├── remote-web/  # SoraFy Jam web client for phone browser remote
+│   └── src-tauri/   # Rust backend services and domain ports
+├── packaging/       # Distro packaging configs (AUR, Flatpak, Homebrew, Snap, Winget)
+├── shared/          # Brand assets and design tokens
+└── website/         # Official Astro landing page
 ```
 
 ---
 
-## ✨ Key Features
+## Features
 
-### 🎵 High-Fidelity Audio & Visual Experience
-- **Squiggly Waveform Seekbar**: Dynamic sinusoidal progress bar that ripples fluidly during playback and flattens smoothly upon pause.
-- **Screen Player View**: Minimalist, full-screen playback mode with a vertically and horizontally centered album artwork, ambient dynamic color mesh overlay / glow vignette extracted from the cover, and tap/click-to-play/pause.
-- **Word-by-Word Synchronized Lyrics**: Millisecond-accurate timestamped lyrics sourced from LRCLIB and Musixmatch, with fine-tuned line-offset calibration and Furigana support for Japanese tracks.
-- **7-Band Parametric Equalizer**: Precision Web Audio API DSP filters with sub-bass boost, vocal clarity enhancement, stereo surround expansion, and volume normalization.
-- **High-Fidelity Audio Badges**: Instant stream quality indicators (*FLAC Lossless*, *Opus Hi-Res 320kbps*, and *AAC High*).
+### Audio & Playback
+- **Squiggly Waveform Seekbar**: A fluid wave progress bar that ripples while audio plays and flattens smoothly when paused.
+- **Screen Player View**: Full-screen player mode with a centered album cover, ambient color glow sampled from the artwork, and click-to-toggle play/pause.
+- **Synchronized Lyrics**: Millisecond-accurate word-by-word karaoke lyrics fetched from LRCLIB and Musixmatch, with manual offset adjustments and Furigana support for Japanese songs.
+- **7-Band Parametric Equalizer**: Web Audio DSP with presets and custom sliders for sub-bass, vocal clarity, stereo surround, and volume leveling.
+- **Audio Quality Badges**: Quick visual badges indicating whether the active stream is FLAC Lossless, Opus 320kbps, or AAC.
 
-### 📚 Library & Playlist Management
-- **Custom Playlist Cover Upload**: Upload custom artwork for your personal playlists through a clean dialog (supports local image files, remote image URLs, or resetting to default gradient art).
-- **Downloaded Songs & Liked Songs Hub**: Dedicated library views to organize liked tracks and offline cached songs with download progress and availability indicators.
-- **Pin & Unpin Favorites**: Pin your top playlists, favorite artists, and albums to the top of *My Library* for instant one-click access.
-- **Right-Click Context Menu**: Swift action shortcuts on any library item to Play, Follow/Unfollow artists, Edit Playlist details & cover art, Pin/Unpin, or Remove from library.
-- **Universal Playlist Importer**: One-click playlist resolution and import from Spotify, Apple Music, and YouTube without requiring accounts or login credentials.
+### Library & Organization
+- **Custom Playlist Artwork**: Upload local image files, paste external URLs, or reset to generated color gradients.
+- **Liked & Downloaded Songs**: Dedicated views for favorited tracks and songs cached locally for offline listening.
+- **Pin Items**: Pin your favorite playlists, artists, and albums to the top of the sidebar.
+- **Context Menus**: Right-click any playlist, track, or artist to play, edit metadata, follow, or delete.
+- **Universal Importer**: Paste public playlist links from Spotify, Apple Music, or YouTube to resolve tracks without logging in.
 
-### 🛠️ Developer & Power-User Integrations
-- **SoraFy Jam (Port 4120)**: Wireless remote playback companion. Scan a QR code from any smartphone connected to the same local Wi-Fi to seamlessly control playback from a browser without installing extra apps.
-- **Music Player Daemon / MPD (Port 6600)**: Native MPD socket protocol compatibility. Control SoraFy using standard Linux terminal clients like `mpc`, `ncmpcpp`, `yams`, or integrate playback status into desktop status bars (Polybar / Waybar).
-- **Model Context Protocol / AI MCP (Port 8800)**: Built-in JSON-RPC server allowing AI coding assistants (Claude Code, Cursor, Windsurf) to query track metadata, queue songs, or tweak equalizers while you program.
-- **Discord Rich Presence**: Real-time display of currently playing track, artist name, album artwork, and playback progress on your desktop Discord profile.
-- **Acoustic Music Recognition (Android)**: Real-time audio identification of surrounding music using Fast Fourier Transform (FFT) acoustic fingerprinting.
+### Remote & Developer Tools
+- **SoraFy Jam (Port 4120)**: Control playback from your phone. Scan the desktop QR code to open the Jam web remote on your local Wi-Fi network without installing an app.
+- **MPD Socket Support (Port 6600)**: Talk to SoraFy using standard Linux terminal clients like `mpc` and `ncmpcpp`, or bind track data to Polybar and Waybar modules.
+- **AI Model Context Protocol (Port 8800)**: Connect coding assistants (Cursor, Claude Code, Windsurf) through JSON-RPC to inspect queue state, search music, or adjust volume while you work.
+- **Discord Rich Presence**: Share current track titles, artist names, album art, and timestamps on your Discord profile.
+- **Acoustic Song Search (Android)**: Tap to listen to surrounding music and detect titles using Fast Fourier Transform audio fingerprinting.
 
 ---
 
-## 📦 Installation & Package Managers
+## Installation
 
-In addition to downloading standalone installers directly from [GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest), SoraFy can be installed via package managers across major platforms:
+Download the latest installer from [GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest), or install through your system's package manager:
 
-### 🍎 macOS (Homebrew Cask)
+### macOS (Homebrew Cask)
 ```bash
 brew install --cask sorafy
 ```
-*Note for macOS users if blocked by Apple Gatekeeper on manual DMG installations:*
-```bash
-sudo xattr -r -d com.apple.quarantine /Applications/SoraFy.app
-```
+> If macOS Gatekeeper flags manual DMG installations, clear the quarantine attribute:
+> ```bash
+> sudo xattr -r -d com.apple.quarantine /Applications/SoraFy.app
+> ```
 
-### 🪟 Windows (winget)
+### Windows (winget)
 ```powershell
 winget install SoraFy
 ```
 
-### 🐧 Linux
+### Linux
 
 **Arch Linux (AUR):**
 ```bash
 yay -S sorafy-bin
 ```
 
-**Flathub / Flatpak:**
+**Flatpak (Flathub):**
 ```bash
 flatpak install flathub com.rafliadipratama.sorafy
 ```
@@ -154,75 +122,72 @@ sudo snap install sorafy
 
 ---
 
-## 🚀 Build Instructions
+## Build from Source
 
-### 1. Building the Android Application (APK)
-
-Ensure JDK 17+ and the Android SDK are installed and configured:
+### Android (APK)
+Requirements: JDK 17+ and Android SDK.
 ```bash
 cd android
 ./gradlew assembleDebug
 
-# Build release-ready APK:
+# For a release APK:
 ./gradlew assembleRelease
 ```
-*The resulting APKs are located in `android/app/build/outputs/apk/`.*
+The output APK is generated in `android/app/build/outputs/apk/`.
 
-### 2. Building the Desktop Application (Linux, Windows, & macOS)
-
-Ensure Node.js 20+ and npm are installed:
+### Desktop (Linux, Windows, macOS)
+Requirements: Node.js 20+ and npm.
 ```bash
 cd desktop
 npm install
 
-# Run in local development mode:
+# Start development app:
 npm start
 ```
 
-**Configuring Discord Rich Presence (Optional):**
-Copy `desktop/.env.example` to `desktop/.env` and specify your Discord Client ID:
+To configure Discord Rich Presence, copy `desktop/.env.example` to `desktop/.env` and add your client ID:
 ```env
 DISCORD_CLIENT_ID=YOUR_DISCORD_APPLICATION_ID
 ```
 
-**Building Desktop Release Packages:**
+Package for your current operating system:
 ```bash
-# Linux (AppImage & deb):
-npm run build:linux
-
-# Windows (NSIS Installer EXE):
-npm run build:win
-
-# macOS (DMG & zip):
-npm run build:dmg
+npm run build:linux  # AppImage & deb
+npm run build:win    # Windows installer
+npm run build:dmg    # macOS DMG
 ```
-*Installers and binaries will be generated inside the `desktop/dist/` directory.*
+Binary installers are written to `desktop/dist/`.
 
-### 3. Building the Landing Page & Documentation Web
-
-Ensure Bun is installed:
+### Website
+Requirements: Bun.
 ```bash
 cd website
 bun install
-
-# Run local development preview:
-bun run dev
-
-# Build static production assets:
-bun run build
+bun run dev   # Local preview
+bun run build # Static production output
 ```
 
 ---
 
-## 📥 Download Official Releases
+## ⭐ Star History
 
-All precompiled binaries for every supported platform (Android APK, Linux AppImage/deb, Windows EXE, and macOS DMG) are published together at:
+[![Star History Chart](https://api.star-history.com/svg?repos=rafliadipratama/sorafy&type=Date)](https://star-history.com/#rafliadipratama/sorafy&Date)
 
-👉 **[Download SoraFy on GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest)**
+---
+
+## 👥 Contributors
+
+Thank you to everyone helping build and improve SoraFy!
+
+<a href="https://github.com/rafliadipratama/sorafy/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=rafliadipratama/sorafy" alt="SoraFy Contributors" />
+</a>
+
+Contributions of all kinds—whether fixing bugs, improving documentation, or proposing new features—are warmly welcomed. Feel free to open an issue or pull request.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE).  
-Crafted with passion and dedication by [Rafli Adi Pratama](https://github.com/rafliadipratama).
+SoraFy is released under the [GNU General Public License v3.0 (GPLv3)](LICENSE).  
+Maintained by [Rafli Adi Pratama](https://github.com/rafliadipratama).
