@@ -4,7 +4,7 @@
 
 <img src="shared/assets/logo_monogram.png" alt="SoraFy Logo" width="128" />
 
-### **Aplikasi Streaming Musik Cepat, Elegan, dan Bebas Biaya Langganan Lintas Platform**
+### **Fast, Elegant, and Subscription-Free Music Streaming Across Android, Linux, macOS, and Windows**
 
 [![Release](https://img.shields.io/github/v/release/rafliadipratama/sorafy?color=00e599&style=flat-square)](https://github.com/rafliadipratama/sorafy/releases)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg?style=flat-square)](LICENSE)
@@ -16,116 +16,116 @@
 [![Kotlin](https://img.shields.io/badge/Kotlin-2.1-7F52FF?style=flat-square&logo=kotlin)](https://kotlinlang.org/)
 [![Electron](https://img.shields.io/badge/Desktop-Electron_%26_Rust-47848F?style=flat-square&logo=electron)](https://www.electronjs.org/)
 
-[**Website Resmi**](https://rafliadipratama.github.io/sorafy/) • [**Unduh Rilis**](https://github.com/rafliadipratama/sorafy/releases/latest) • [**Fitur Unggulan**](#-fitur-unggulan) • [**Instalasi**](#-instalasi--manajemen-paket) • [**Panduan Build**](#-panduan-membangun-build-instructions) • [**Lisensi**](#-lisensi)
+[**Official Website**](https://rafliadipratama.github.io/sorafy/) • [**Download Releases**](https://github.com/rafliadipratama/sorafy/releases/latest) • [**Key Features**](#-key-features) • [**Installation**](#-installation--package-managers) • [**Build Guide**](#-build-instructions) • [**License**](#-license)
 
 </div>
 
 ---
 
-## 🎧 Tentang SoraFy
+## 🎧 About SoraFy
 
-**SoraFy** adalah aplikasi pemutar dan pengalir musik modern lintas platform (*cross-platform*) yang dibangun dengan arsitektur **Monorepo** serta mengedepankan privasi pengguna, performa audio beresolusi tinggi, dan antarmuka premium tanpa kompromi iklan atau biaya langganan.
+**SoraFy** is a modern, cross-platform music streaming and playback application built within a unified **Monorepo** architecture. It prioritizes user privacy, high-fidelity audio performance, and a sleek, uncompromised interface—completely free of advertisements, algorithmic feed clutter, or recurring subscription fees.
 
-### Platform yang Didukung:
-- 📱 **Android**: Native Kotlin + Jetpack Compose (Material 3) + AndroidX Media3 + FFT Audio Fingerprinting.
-- 🐧 **Linux**: Native Desktop App (AppImage, deb, rpm, snap, dan Arch Linux AUR).
-- 🪟 **Windows**: Native Desktop App (Installer NSIS EXE dan Portable).
+### Supported Platforms:
+- 📱 **Android**: Native Kotlin + Jetpack Compose (Material 3) + AndroidX Media3 + Real FFT Audio Fingerprinting.
+- 🐧 **Linux**: Native Desktop App (AppImage, deb, rpm, snap, and Arch Linux AUR).
+- 🪟 **Windows**: Native Desktop App (NSIS Installer EXE and Portable).
 - 🍎 **macOS**: Native Desktop App (Apple Silicon & Intel DMG).
-- 🌐 **Landing Page & Web Portal**: Dibangun dengan Astro & Tailwind CSS, di-host melalui [GitHub Pages](https://rafliadipratama.github.io/sorafy/).
+- 🌐 **Web Landing Page & Portal**: Built with Astro & Tailwind CSS, hosted on [GitHub Pages](https://rafliadipratama.github.io/sorafy/).
 
-Aplikasi mengusung bahasa visual gelap modern: kanvas utama *Obsidian Void*, kartu elevasi *Slate Surface*, serta aksen kembar *Priangan Emerald* & *Electric Lime*.
+Built with an intentional dark design language: deep *Obsidian Void* canvas, elevated *Slate Surface* cards, and energetic neon twin accents of *Priangan Emerald* & *Electric Lime*.
 
 ---
 
-## 🎨 Sistem Desain & Palet Warna Resmi
+## 🎨 Design System & Official Color Tokens
 
-| Token Desain | Kode Hex | Peran Antarmuka |
+| Design Token | Hex Code | Interface Role |
 | :--- | :--- | :--- |
-| **Obsidian Void** | `#0B0D10` | Latar belakang kanvas utama (*canvas background*), ramah daya layar OLED/AMOLED |
-| **Slate Surface** | `#181C22` | Warna dasar kartu (*cards*), wadah baris lagu (*track rows*), *mini-player*, dan panel navigasi |
-| **Priangan Emerald** | `#00E599` | Warna aksen utama (*primary brand*): tombol putar (*play*), *squiggly seekbar*, logo, dan status aktif |
-| **Electric Lime** | `#C8FF29` | Aksen sekunder *neon energetic*: *glow active lyrics*, *badge* kualitas audio, dan highlight status |
+| **Obsidian Void** | `#0B0D10` | Primary canvas background; OLED/AMOLED battery-friendly deep tone |
+| **Slate Surface** | `#181C22` | Surface containers, track rows, mini-player bar, modals, and sidebars |
+| **Priangan Emerald** | `#00E599` | Primary brand accent: playback controls, squiggly seekbar, logo, and active badges |
+| **Electric Lime** | `#C8FF29` | Energetic secondary accent: active synced lyrics glow, audio badges, and highlights |
 
 ---
 
-## 🏛️ Arsitektur Monorepo
+## 🏛️ Monorepo Architecture
 
-Repository ini disusun dalam struktur **Monorepo** modular untuk menjaga konsistensi lintas platform:
+This repository is structured as a modular **Monorepo** to maintain architectural consistency across all target platforms:
 
 ```text
 sorafy/
-├── android/                   # Aplikasi Mobile Android (Kotlin + Jetpack Compose)
-│   ├── app/                   # Kode sumber Android native (Media3, UI, FFT Shazam)
-│   ├── build.gradle.kts       # Konfigurasi Gradle root Android
+├── android/                   # Android Mobile Application (Kotlin + Jetpack Compose)
+│   ├── app/                   # Native source code (Media3, UI, FFT Shazam fingerprinting)
+│   ├── build.gradle.kts       # Android root Gradle configuration
 │   └── settings.gradle.kts
 │
-├── desktop/                   # Aplikasi Desktop (macOS, Linux, & Windows)
-│   ├── electron-main.js       # Runtime proses utama, window manager, & IPC bridge
-│   ├── preload.js             # Context bridge aman antar proses
-│   ├── package.json           # Konfigurasi paket & electron-builder
-│   ├── src/                   # Antarmuka Desktop Modern (SoraFy UI + Audio Engine)
-│   │   ├── app.js             # State management, playlist, equalizer, & DSP
-│   │   ├── index.html         # Struktur tampilan desktop & modal sistem
-│   │   └── style.css          # Desain sistem Obsidian Void & animasi responsif
-│   ├── remote-web/            # SoraFy Jam web client (mobile companion Wi-Fi)
-│   └── src-tauri/             # Modul backend Rust berarsitektur Hexagonal / DDD
+├── desktop/                   # Cross-Platform Desktop App (macOS, Linux, & Windows)
+│   ├── electron-main.js       # Main runtime process, window management, & IPC bridge
+│   ├── preload.js             # Secure context bridge between main and renderer processes
+│   ├── package.json           # App configuration, packaging, & electron-builder targets
+│   ├── src/                   # Modern Desktop UI (SoraFy UI + Web Audio DSP Engine)
+│   │   ├── app.js             # State management, playlist engine, equalizer, & audio core
+│   │   ├── index.html         # Application shell structure, views, & modals
+│   │   └── style.css          # Obsidian Void design tokens & responsive animations
+│   ├── remote-web/            # SoraFy Jam web client (Wi-Fi companion for mobile devices)
+│   └── src-tauri/             # Rust backend modules with Hexagonal / DDD architecture
 │
-├── packaging/                 # Konfigurasi distribusi paket resmi
-│   ├── aur/                   # PKGBUILD untuk Arch Linux AUR
-│   ├── flatpak/               # Manifest Flatpak untuk Flathub
-│   ├── homebrew/              # Cask Formula untuk macOS Homebrew
-│   ├── snap/                  # snapcraft.yaml untuk Ubuntu Snapcraft
-│   └── winget/                # Manifest YAML untuk Windows Package Manager
+├── packaging/                 # Official distribution packaging configurations
+│   ├── aur/                   # PKGBUILD for Arch Linux AUR
+│   ├── flatpak/               # Flatpak manifest for Flathub
+│   ├── homebrew/              # Cask formula for macOS Homebrew
+│   ├── snap/                  # snapcraft.yaml for Ubuntu Snapcraft
+│   └── winget/                # Manifest YAML for Windows Package Manager (winget)
 │
-├── shared/                    # Aset Bersama & Token Desain Lintas Platform
+├── shared/                    # Shared Assets & Cross-Platform Design Tokens
 │   ├── design/                # tokens.json & colors.css
-│   └── assets/                # Logo monogram, diagram branding, dan ikon origami
+│   └── assets/                # Monogram logo, branding diagrams, & visual assets
 │
-├── website/                   # Landing Page & Portal Dokumentasi Resmi
-│   ├── src/                   # Komponen Astro, Tailwind CSS, & TypeScript
-│   └── astro.config.mjs       # Konfigurasi static site generator
+├── website/                   # Official Landing Page & Documentation Portal
+│   ├── src/                   # Astro components, Tailwind CSS, & TypeScript
+│   └── astro.config.mjs       # Static site generator configuration
 │
 └── .github/workflows/
-    ├── deploy-pages.yml       # CI/CD deployment otomatis ke GitHub Pages
-    └── release.yml            # CI/CD otomatis untuk rilis multi-platform
+    ├── deploy-pages.yml       # Automated CI/CD deployment to GitHub Pages
+    └── release.yml            # Automated CI/CD multi-platform binary release pipeline
 ```
 
 ---
 
-## ✨ Fitur Unggulan
+## ✨ Key Features
 
-### 🎵 Pengalaman Audio & Visual
-- **Squiggly Waveform Seekbar**: Bilah progres lagu bergelombang sinusoidal dinamis yang hidup saat audio berputar dan merata elastis saat dihentikan.
-- **Screen Player View**: Mode tampilan layar penuh minimalis dengan album art responsif di tengah, pendaran dinamis *ambient color mesh overlay* dari cover lagu, serta interaktivitas *click-to-play/pause*.
-- **Word-by-Word Synchronized Lyrics**: Lirik tersinkronisasi presisi milidetik dari LRCLIB dan Musixmatch, lengkap dengan kalibrasi offset baris lirik serta dukungan Furigana untuk trek berbahasa Jepang.
-- **7-Band Parametric Equalizer**: Pengaturan profil akustik berbasis Web Audio API dengan opsi penyesuaian *sub-bass boost*, kejernihan vokal, *stereo surround*, dan *volume normalization*.
-- **High-Fidelity Audio Badge**: Indikator langsung kualitas berkas (*FLAC Lossless*, *Opus Hi-Res 320kbps*, dan *AAC High*).
+### 🎵 High-Fidelity Audio & Visual Experience
+- **Squiggly Waveform Seekbar**: Dynamic sinusoidal progress bar that ripples fluidly during playback and flattens smoothly upon pause.
+- **Screen Player View**: Minimalist, full-screen playback mode with a vertically and horizontally centered album artwork, ambient dynamic color mesh overlay / glow vignette extracted from the cover, and tap/click-to-play/pause.
+- **Word-by-Word Synchronized Lyrics**: Millisecond-accurate timestamped lyrics sourced from LRCLIB and Musixmatch, with fine-tuned line-offset calibration and Furigana support for Japanese tracks.
+- **7-Band Parametric Equalizer**: Precision Web Audio API DSP filters with sub-bass boost, vocal clarity enhancement, stereo surround expansion, and volume normalization.
+- **High-Fidelity Audio Badges**: Instant stream quality indicators (*FLAC Lossless*, *Opus Hi-Res 320kbps*, and *AAC High*).
 
-### 📚 Koleksi & Manajemen Playlist
-- **Custom Playlist Cover Upload**: Unggah foto sampul kustom untuk playlist buatanmu melalui dialog bersih (dukungan berkas lokal, tautan gambar, atau kembali ke cover bawaan).
-- **Downloaded Songs & Liked Songs Hub**: Halaman khusus untuk menjelajahi lagu yang disukai serta arsip lagu yang telah diunduh secara offline dengan indikator status unduhan.
-- **Pin & Unpin Favorites**: Sematkan playlist, artis, atau album favorit langsung di posisi teratas *My Library*.
-- **Shortcut Klik Kanan (Context Menu)**: Akses cepat pada item koleksi untuk memutar (*Play*), mengikuti/berhenti mengikuti artis (*Follow/Unfollow*), mengubah info & cover playlist, pin/unpin, atau menghapus dari library.
-- **Universal Playlist Importer**: Impor daftar putar langsung dari Spotify, Apple Music, dan YouTube tanpa memerlukan autentikasi login atau akun pihak ketiga.
+### 📚 Library & Playlist Management
+- **Custom Playlist Cover Upload**: Upload custom artwork for your personal playlists through a clean dialog (supports local image files, remote image URLs, or resetting to default gradient art).
+- **Downloaded Songs & Liked Songs Hub**: Dedicated library views to organize liked tracks and offline cached songs with download progress and availability indicators.
+- **Pin & Unpin Favorites**: Pin your top playlists, favorite artists, and albums to the top of *My Library* for instant one-click access.
+- **Right-Click Context Menu**: Swift action shortcuts on any library item to Play, Follow/Unfollow artists, Edit Playlist details & cover art, Pin/Unpin, or Remove from library.
+- **Universal Playlist Importer**: One-click playlist resolution and import from Spotify, Apple Music, and YouTube without requiring accounts or login credentials.
 
-### 🛠️ Integrasi Power-User & Pengembang
-- **SoraFy Jam (Port 4120)**: Remote playback nirkabel. Pindai kode QR dari ponsel di jaringan Wi-Fi lokal yang sama untuk mengontrol lagu dari browser tanpa perlu menginstal aplikasi tambahan.
-- **Music Player Daemon / MPD (Port 6600)**: Soket protokol MPD bawaan untuk mengontrol SoraFy menggunakan perintah terminal Linux standar seperti `mpc`, `ncmpcpp`, `yams`, atau menghubungkannya ke widget Polybar / Waybar.
-- **Model Context Protocol / AI MCP (Port 8800)**: Server JSON-RPC untuk menghubungkan asisten coding AI (Claude Code, Cursor, Windsurf) agar dapat mengontrol pemutaran musik, membaca lirik, dan menyesuaikan volume langsung dari editor kode.
-- **Discord Rich Presence**: Menampilkan judul lagu, artis, artwork album, dan durasi berjalan secara *real-time* di profil Discord desktop.
-- **Pendeteksi Musik Akustik (Android)**: Identifikasi judul lagu di sekitarmu secara instan melalui analisis spektrum audio *Fast Fourier Transform* (FFT).
+### 🛠️ Developer & Power-User Integrations
+- **SoraFy Jam (Port 4120)**: Wireless remote playback companion. Scan a QR code from any smartphone connected to the same local Wi-Fi to seamlessly control playback from a browser without installing extra apps.
+- **Music Player Daemon / MPD (Port 6600)**: Native MPD socket protocol compatibility. Control SoraFy using standard Linux terminal clients like `mpc`, `ncmpcpp`, `yams`, or integrate playback status into desktop status bars (Polybar / Waybar).
+- **Model Context Protocol / AI MCP (Port 8800)**: Built-in JSON-RPC server allowing AI coding assistants (Claude Code, Cursor, Windsurf) to query track metadata, queue songs, or tweak equalizers while you program.
+- **Discord Rich Presence**: Real-time display of currently playing track, artist name, album artwork, and playback progress on your desktop Discord profile.
+- **Acoustic Music Recognition (Android)**: Real-time audio identification of surrounding music using Fast Fourier Transform (FFT) acoustic fingerprinting.
 
 ---
 
-## 📦 Instalasi & Manajemen Paket
+## 📦 Installation & Package Managers
 
-Selain mengunduh berkas installer biner langsung dari [GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest), SoraFy dapat dipasang melalui package manager resmi di berbagai sistem operasi:
+In addition to downloading standalone installers directly from [GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest), SoraFy can be installed via package managers across major platforms:
 
 ### 🍎 macOS (Homebrew Cask)
 ```bash
 brew install --cask sorafy
 ```
-*Catatan untuk pengguna macOS jika aplikasi dibatasi oleh Gatekeeper saat instalasi manual:*
+*Note for macOS users if blocked by Apple Gatekeeper on manual DMG installations:*
 ```bash
 sudo xattr -r -d com.apple.quarantine /Applications/SoraFy.app
 ```
@@ -154,38 +154,38 @@ sudo snap install sorafy
 
 ---
 
-## 🚀 Panduan Membangun (*Build Instructions*)
+## 🚀 Build Instructions
 
-### 1. Membangun Aplikasi Android (APK)
+### 1. Building the Android Application (APK)
 
-Pastikan JDK 17+ dan Android SDK telah terpasang:
+Ensure JDK 17+ and the Android SDK are installed and configured:
 ```bash
 cd android
 ./gradlew assembleDebug
 
-# Membangun APK Release siap distribusi:
+# Build release-ready APK:
 ./gradlew assembleRelease
 ```
-*Hasil berkas APK berada di folder `android/app/build/outputs/apk/`.*
+*The resulting APKs are located in `android/app/build/outputs/apk/`.*
 
-### 2. Membangun Aplikasi Desktop (Linux, Windows & macOS)
+### 2. Building the Desktop Application (Linux, Windows, & macOS)
 
-Pastikan Node.js 20+ dan npm telah terpasang:
+Ensure Node.js 20+ and npm are installed:
 ```bash
 cd desktop
 npm install
 
-# Menjalankan mode pengembangan (Dev):
+# Run in local development mode:
 npm start
 ```
 
-**Konfigurasi Discord Rich Presence (Opsional):**
-Salin `desktop/.env.example` ke `desktop/.env` lalu masukkan Client ID Discord Anda:
+**Configuring Discord Rich Presence (Optional):**
+Copy `desktop/.env.example` to `desktop/.env` and specify your Discord Client ID:
 ```env
-DISCORD_CLIENT_ID=ID_APLIKASI_DISCORD_ANDA
+DISCORD_CLIENT_ID=YOUR_DISCORD_APPLICATION_ID
 ```
 
-**Membangun Paket Rilis Desktop:**
+**Building Desktop Release Packages:**
 ```bash
 # Linux (AppImage & deb):
 npm run build:linux
@@ -196,33 +196,33 @@ npm run build:win
 # macOS (DMG & zip):
 npm run build:dmg
 ```
-*Hasil binary installer otomatis tersedia di folder `desktop/dist/`.*
+*Installers and binaries will be generated inside the `desktop/dist/` directory.*
 
-### 3. Membangun Landing Page & Dokumentasi Web
+### 3. Building the Landing Page & Documentation Web
 
-Pastikan Bun telah terpasang:
+Ensure Bun is installed:
 ```bash
 cd website
 bun install
 
-# Menjalankan preview lokal:
+# Run local development preview:
 bun run dev
 
-# Membangun static site untuk produksi:
+# Build static production assets:
 bun run build
 ```
 
 ---
 
-## 📥 Unduh Rilis Resmi
+## 📥 Download Official Releases
 
-Seluruh versi rilis biner untuk semua platform (Android APK, Linux AppImage/deb, Windows exe, macOS dmg) dipublikasikan secara terpadu di:
+All precompiled binaries for every supported platform (Android APK, Linux AppImage/deb, Windows EXE, and macOS DMG) are published together at:
 
-👉 **[Unduh SoraFy di GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest)**
+👉 **[Download SoraFy on GitHub Releases](https://github.com/rafliadipratama/sorafy/releases/latest)**
 
 ---
 
-## 📄 Lisensi
+## 📄 License
 
-Proyek ini dilisensikan di bawah [GNU General Public License v3.0 (GPLv3)](LICENSE).  
-Dibuat dengan dedikasi oleh [Rafli Adi Pratama](https://github.com/rafliadipratama).
+This project is licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE).  
+Crafted with passion and dedication by [Rafli Adi Pratama](https://github.com/rafliadipratama).
