@@ -5,7 +5,8 @@ import tailwindcss from '@tailwindcss/vite';
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
-  site: 'https://sorafy.org',
+  site: 'https://rafliadipratama.github.io',
+  base: '/sorafy',
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'id'],

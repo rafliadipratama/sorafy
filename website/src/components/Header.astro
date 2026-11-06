@@ -9,7 +9,10 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
-const basePath = lang === 'id' ? '/id' : '';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const basePath = lang === 'id' ? `${base}/id` : (base || '/');
+const enPath = base || '/';
+const idPath = `${base}/id`;
 ---
 
 <header class="sticky top-0 z-50 bg-[#0B0D10]/85 backdrop-blur-md transition-colors relative" id="header">
@@ -18,8 +21,8 @@ const basePath = lang === 'id' ? '/id' : '';
 
   <div class="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
     <!-- Brand Logo -->
-    <a href={basePath || '/'} class="flex items-center gap-3 group" aria-label="SoraFy Home">
-      <img src="/assets/logo.png" alt="SoraFy Logo" class="w-8 h-8 rounded-md object-contain" />
+    <a href={basePath} class="flex items-center gap-3 group" aria-label="SoraFy Home">
+      <img src={`${base}/assets/logo.png`} alt="SoraFy Logo" class="w-8 h-8 rounded-md object-contain" />
       <span class="text-xl font-extrabold tracking-tight text-white group-hover:text-[#00E599] transition-colors">sorafy</span>
     </a>
 
@@ -37,7 +40,7 @@ const basePath = lang === 'id' ? '/id' : '';
       <!-- Language Switcher Pill -->
       <div class="flex items-center gap-1 bg-surface border border-subtle px-2.5 py-1 rounded-full text-xs font-semibold">
         <a 
-          href="/" 
+          href={enPath} 
           class={`px-1 transition-colors ${lang === 'en' ? 'text-[#00E599] font-bold' : 'text-neutral-500 hover:text-neutral-300'}`}
           aria-current={lang === 'en' ? 'page' : undefined}
         >
@@ -45,7 +48,7 @@ const basePath = lang === 'id' ? '/id' : '';
         </a>
         <span class="text-neutral-600 text-[10px]">/</span>
         <a 
-          href="/id" 
+          href={idPath} 
           class={`px-1 transition-colors ${lang === 'id' ? 'text-[#00E599] font-bold' : 'text-neutral-500 hover:text-neutral-300'}`}
           aria-current={lang === 'id' ? 'page' : undefined}
         >

@@ -19,6 +19,7 @@ interface Props {
 
 const { lang } = Astro.props;
 const t = useTranslations(lang);
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
 <div class="w-full max-w-5xl mx-auto">
@@ -45,7 +46,7 @@ const t = useTranslations(lang);
       <div class="hidden md:flex flex-col justify-between bg-surface border-r border-subtle p-4">
         <div>
           <div class="flex items-center gap-2 mb-5">
-            <img src="/assets/logo.png" alt="SoraFy" class="w-6 h-6 rounded object-contain" />
+            <img src={`${base}/assets/logo.png`} alt="SoraFy" class="w-6 h-6 rounded object-contain" />
             <span class="font-bold text-sm text-white">sorafy</span>
           </div>
 
