@@ -692,6 +692,14 @@ body {
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 4px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.category-chips::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .chip {
@@ -3789,6 +3797,14 @@ body {
   gap: 12px;
   overflow-x: auto;
   padding-bottom: 8px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.artist-peers-row::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .peer-chip {
@@ -4774,24 +4790,45 @@ body {
   transform: scale(1.05);
 }
 
+/* Clean Horizontal Scroll Containers: Hidden scrollbars, scrollable via buttons or Shift + Mouse Wheel */
+.ytm-swipe-carousel,
+.ytm-video-cards-row,
+.ytm-community-playlists-row,
+.ytm-new-releases-row,
+.category-chips,
+.explore-pill-grid,
+.artist-peers-row {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.ytm-swipe-carousel::-webkit-scrollbar,
+.ytm-video-cards-row::-webkit-scrollbar,
+.ytm-community-playlists-row::-webkit-scrollbar,
+.ytm-new-releases-row::-webkit-scrollbar,
+.category-chips::-webkit-scrollbar,
+.explore-pill-grid::-webkit-scrollbar,
+.artist-peers-row::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 .ytm-swipe-carousel {
   display: flex;
   gap: 16px;
   overflow-x: auto;
-  scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
   padding: 12px 2px 16px 2px;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
 }
 
 .ytm-swipe-carousel::-webkit-scrollbar {
-  height: 6px;
-}
-
-.ytm-swipe-carousel::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 3px;
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 .ytm-song-column {

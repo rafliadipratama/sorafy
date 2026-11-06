@@ -6108,6 +6108,21 @@ class SoraFyDesktopApp {
     this.fetchYtmMusicVideos();
     this.fetchYtmCommunityPlaylists();
     this.fetchYtmNewReleases();
+
+    // 5. Shift + Mouse Scroll support for horizontal carousels (with hidden scrollbars)
+    document.addEventListener("wheel", (e) => {
+      if (!e.shiftKey) return;
+      const horizontalContainer = e.target.closest(
+        ".ytm-swipe-carousel, .ytm-video-cards-row, .ytm-community-playlists-row, .ytm-new-releases-row, .category-chips, .curated-playlists-row, .explore-pill-grid, .artist-peers-row, .charts-carousel, .hifi-presets-scroll"
+      );
+      if (horizontalContainer) {
+        e.preventDefault();
+        let delta = e.deltaY !== 0 ? e.deltaY : e.deltaX;
+        if (e.deltaMode === 1) delta *= 33;
+        else if (e.deltaMode === 2) delta *= 100;
+        horizontalContainer.scrollBy({ left: delta, behavior: "auto" });
+      }
+    }, { passive: false });
   }
 
   renderOldFavoritesMixes() {
