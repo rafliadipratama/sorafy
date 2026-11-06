@@ -18,20 +18,15 @@ const t = useTranslations(lang);
   <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)]"></div>
 
   <!-- Header Section with Dynamic Typewriter -->
-  <div class="mb-8 sm:mb-10 text-center relative z-10">
-    <!-- Eyebrow Pill -->
-    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-elevated/70 border border-subtle backdrop-blur-md mb-4 shadow-sm hover:border-[#00E599]/30 transition-colors">
-      <span class="w-1.5 h-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
-      <span class="text-[11px] font-mono-code font-bold tracking-widest uppercase text-neutral-300">
-        EST. 2026 • OPEN SOURCE MUSIC STREAMING
-      </span>
-    </div>
-
-    <h1 class="text-3xl leading-tight font-black uppercase sm:text-5xl md:text-6xl tracking-tight text-white max-w-4xl mx-auto">
+  <div class="mb-6 sm:mb-8 text-center relative z-10">
+    <span class="text-neutral-500 mb-2 inline-block text-[11px] font-bold tracking-[0.3em] uppercase">
+      EST. 2026
+    </span>
+    <h1 class="text-2xl leading-tight font-black uppercase sm:text-4xl md:text-5xl lg:text-[3.25rem] text-white">
       {lang === 'id' ? 'SORAFY ADALAH ' : 'SORAFY IS A '}
       <span
-        class="text-transparent bg-clip-text bg-gradient-to-r from-[#00E599] via-[#00F5A0] to-[#00E599]"
-        style="text-shadow: 0 0 35px rgba(0, 229, 153, 0.25);"
+        class="inline-block text-[#00E599]"
+        style="text-shadow: 2px 2px 0px rgba(0, 229, 153, 0.25);"
       >
         {lang === 'id' ? 'PEMUTAR MUSIK' : 'MUSIC PLAYER'}
       </span>
@@ -39,8 +34,8 @@ const t = useTranslations(lang);
       <Typewriter client:load lang={lang} />
     </h1>
 
-    <!-- Command Banner Pill -->
-    <div class="mt-5 flex justify-center">
+    <!-- Interactive Command Banner with Custom Cursor -->
+    <div class="mt-4 sm:mt-5 flex justify-center">
       <HeroBanner client:load lang={lang} />
     </div>
   </div>

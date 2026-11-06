@@ -23,102 +23,62 @@ const t = useTranslations(lang);
       </p>
     </div>
 
-    <div class="overflow-x-auto bg-[#0E1116]/90 border border-neutral-800 rounded-2xl shadow-xl">
+    <div class="overflow-x-auto bg-surface border border-subtle rounded-2xl">
       <table class="w-full border-collapse text-left text-sm">
         <thead>
-          <tr class="bg-surface-elevated/80 border-b border-subtle">
+          <tr class="bg-surface-elevated border-b border-subtle">
             <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-neutral-400">{t('comp_col_feature')}</th>
-            <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-[#00E599] bg-[#00E599]/10 border-x border-[#00E599]/20">SoraFy</th>
+            <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-[#00E599] bg-[#00E599]/5">SoraFy</th>
             <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-neutral-400">Spotify Free</th>
             <th class="p-4 sm:p-5 font-bold uppercase tracking-wider text-xs text-neutral-400">YouTube Music (Web)</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-subtle">
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_cost')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                100% Free Forever
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">100% Free Forever</td>
             <td class="p-4 sm:p-5 text-neutral-400">Free with limitations</td>
             <td class="p-4 sm:p-5 text-neutral-400">Free with video ads</td>
           </tr>
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_ads')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                Zero Ads
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Zero Ads</td>
             <td class="p-4 sm:p-5 text-neutral-500">Frequent unskippable ads</td>
             <td class="p-4 sm:p-5 text-neutral-500">Frequent visual & audio ads</td>
           </tr>
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_login')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                Not Required
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Not Required</td>
             <td class="p-4 sm:p-5 text-neutral-500">Account Mandatory</td>
             <td class="p-4 sm:p-5 text-neutral-500">Google Account Required</td>
           </tr>
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_import')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                Direct 1-Click Import
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Direct 1-Click Import</td>
             <td class="p-4 sm:p-5 text-neutral-500">Walled Garden</td>
             <td class="p-4 sm:p-5 text-neutral-500">Manual Rebuilding</td>
           </tr>
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_eq')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                7-Band Parametric + Normalization
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">7-Band Parametric + Normalization</td>
             <td class="p-4 sm:p-5 text-neutral-400">Basic 6-Band</td>
             <td class="p-4 sm:p-5 text-neutral-500">No Equalizer on Web</td>
           </tr>
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_offline')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                Automatic LRU Cache + MP3
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Automatic LRU Cache + MP3</td>
             <td class="p-4 sm:p-5 text-neutral-500">Paid Premium Only</td>
             <td class="p-4 sm:p-5 text-neutral-500">Paid Premium Only</td>
           </tr>
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_protocols')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                Native Port 6600 & 8800
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Native Port 6600 & 8800</td>
             <td class="p-4 sm:p-5 text-neutral-500">Not Supported</td>
             <td class="p-4 sm:p-5 text-neutral-500">Not Supported</td>
           </tr>
-          <tr class="hover:bg-white/[0.02] transition-colors">
+          <tr>
             <td class="p-4 sm:p-5 font-medium text-white">{t('comp_privacy')}</td>
-            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5 border-x border-[#00E599]/15">
-              <span class="inline-flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-                Zero Cloud Telemetry
-              </span>
-            </td>
+            <td class="p-4 sm:p-5 font-semibold text-[#00E599] bg-[#00E599]/5">Zero Cloud Telemetry</td>
             <td class="p-4 sm:p-5 text-neutral-500">Extensive Ad-Tracking</td>
             <td class="p-4 sm:p-5 text-neutral-500">Google Activity Tracking</td>
           </tr>

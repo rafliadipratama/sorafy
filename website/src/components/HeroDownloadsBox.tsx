@@ -40,10 +40,10 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
   return (
     <div className="flex flex-col items-center w-full max-w-lg">
       {/* Downloads Box Container */}
-      <div className="relative w-full bg-[#0E1116]/90 backdrop-blur-md border border-neutral-800 hover:border-[#00E599]/35 rounded-2xl p-6 sm:p-7 shadow-[0_20px_50px_rgba(0,0,0,0.8)] transition-all">
+      <div className="relative w-full bg-surface border-2 border-subtle hover:border-[#00E599]/30 rounded-2xl p-6 sm:p-7 shadow-2xl transition-all">
         {/* Top Centered Floating Badge */}
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#00E599] text-neutral-950 font-black text-[10px] uppercase tracking-widest px-3.5 py-0.5 rounded-full shadow-[0_0_15px_rgba(0,229,153,0.35)]">
-          {lang === 'id' ? 'UNDUHAN RESMI' : 'OFFICIAL DOWNLOADS'}
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#00E599] text-neutral-950 font-black text-xs uppercase tracking-widest px-4 py-1 rounded-full border border-neutral-950 shadow-md">
+          {lang === 'id' ? 'UNDUHAN' : 'DOWNLOADS'}
         </div>
 
         {/* 3 Main Platform Buttons */}
@@ -52,7 +52,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
             href={releaseUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-[#141820] hover:bg-[#1C222D] border border-neutral-800 hover:border-[#00E599]/50 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-[0_0_15px_rgba(0,229,153,0.12)]"
+            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-surface-elevated hover:bg-surface-subtle border border-medium hover:border-[#00E599]/40 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-lg transition-all hover:-translate-y-0.5 shadow-sm"
           >
             <OfficialAppleIcon className="w-4 h-4 shrink-0" />
             <span>macOS</span>
@@ -62,7 +62,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
             href={releaseUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-[#141820] hover:bg-[#1C222D] border border-neutral-800 hover:border-[#00E599]/50 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-[0_0_15px_rgba(0,229,153,0.12)]"
+            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-surface-elevated hover:bg-surface-subtle border border-medium hover:border-[#00E599]/40 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-lg transition-all hover:-translate-y-0.5 shadow-sm"
           >
             <OfficialWindowsIcon className="w-4 h-4 shrink-0" />
             <span>Windows</span>
@@ -72,7 +72,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
             href={releaseUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-[#141820] hover:bg-[#1C222D] border border-neutral-800 hover:border-[#00E599]/50 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-xl transition-all hover:-translate-y-0.5 shadow-sm hover:shadow-[0_0_15px_rgba(0,229,153,0.12)]"
+            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-surface-elevated hover:bg-surface-subtle border border-medium hover:border-[#00E599]/40 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-lg transition-all hover:-translate-y-0.5 shadow-sm"
           >
             <OfficialLinuxIcon className="w-4 h-4 shrink-0" />
             <span>Linux</span>
@@ -90,7 +90,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
             return (
               <div
                 key={pm.id}
-                className="inline-flex items-center bg-canvas/90 border border-neutral-800 rounded-lg text-xs font-semibold overflow-hidden hover:border-[#00E599]/40 transition-colors"
+                className="inline-flex items-center bg-canvas border border-subtle rounded-md text-xs font-semibold overflow-hidden hover:border-medium transition-colors"
               >
                 <span className="px-2.5 py-1 text-neutral-300 bg-surface flex items-center gap-1.5">
                   <IconComponent className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
@@ -99,7 +99,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
                 <button
                   type="button"
                   onClick={() => copyToClipboard(pm.cmd, pm.id)}
-                  className="px-2 py-1 text-neutral-400 hover:text-[#00E599] hover:bg-surface-elevated border-l border-neutral-800 transition-colors"
+                  className="px-2 py-1 text-neutral-400 hover:text-[#00E599] hover:bg-surface-elevated border-l border-subtle transition-colors"
                   title={`Copy: ${pm.cmd}`}
                 >
                   {copiedKey === pm.id ? (
@@ -126,7 +126,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
           <p>
             <strong className="text-white">macOS users:</strong> macOS may block SoraFy from opening. Run this in Terminal:
           </p>
-          <div className="mt-2 flex items-center justify-between gap-2 bg-canvas/90 border border-neutral-800 px-3 py-1.5 rounded-lg text-left font-mono-code text-[10px] text-neutral-300">
+          <div className="mt-2 flex items-center justify-between gap-2 bg-canvas border border-subtle px-3 py-1.5 rounded text-left font-mono-code text-[10px] text-neutral-300">
             <span className="truncate">{macCmd}</span>
             <button
               type="button"
@@ -145,15 +145,15 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
       </div>
 
       {/* GitHub Learn More Button */}
-      <div className="mt-5">
+      <div className="mt-6">
         <a
           href="https://github.com/rafliadipratama/sorafy"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2 bg-[#12161E] hover:bg-[#1A202A] border border-neutral-800 hover:border-neutral-700 text-white font-bold text-xs px-6 py-2.5 rounded-xl transition-all shadow-md hover:-translate-y-0.5"
+          className="inline-flex items-center justify-center gap-2.5 bg-surface hover:bg-surface-elevated border border-medium hover:border-strong text-white font-bold text-sm px-7 py-3 rounded-xl transition-all shadow-md hover:-translate-y-0.5"
         >
           <OfficialGithubIcon className="w-4 h-4 shrink-0" />
-          <span>GitHub Repository</span>
+          <span>Learn more</span>
         </a>
       </div>
     </div>

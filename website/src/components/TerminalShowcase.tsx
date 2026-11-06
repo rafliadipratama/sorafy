@@ -55,49 +55,41 @@ $ curl -s http://192.168.1.100:4120/api/state | jq
   return (
     <div className="max-w-4xl mx-auto bg-[#090B0E] border border-medium rounded-2xl overflow-hidden shadow-2xl">
       {/* Terminal Titlebar & Tabs */}
-      <div className="bg-[#11141A] border-b border-neutral-800 flex items-center justify-between px-4 py-2.5 flex-wrap gap-2">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FF5F56] inline-block"></span>
-            <span className="w-2.5 h-2.5 rounded-full bg-[#FFBD2E] inline-block"></span>
-            <span className="w-2.5 h-2.5 rounded-full bg-[#27C93F] inline-block"></span>
-          </div>
-          <div className="h-3.5 w-px bg-neutral-800"></div>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => setActiveTab('mpd')}
-              className={`text-xs font-mono-code font-semibold px-2.5 py-1 rounded transition-all ${
-                activeTab === 'mpd'
-                  ? 'bg-surface-elevated text-[#00E599] border border-subtle'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              MPD Client (Terminal)
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('mcp')}
-              className={`text-xs font-mono-code font-semibold px-2.5 py-1 rounded transition-all ${
-                activeTab === 'mcp'
-                  ? 'bg-surface-elevated text-[#00E599] border border-subtle'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              AI Claude / Cursor MCP
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab('jam')}
-              className={`text-xs font-mono-code font-semibold px-2.5 py-1 rounded transition-all ${
-                activeTab === 'jam'
-                  ? 'bg-surface-elevated text-[#00E599] border border-subtle'
-                  : 'text-neutral-400 hover:text-white'
-              }`}
-            >
-              Jam Remote (Local Wi-Fi)
-            </button>
-          </div>
+      <div className="bg-[#11141A] border-b border-subtle flex items-center justify-between px-4 py-2.5 flex-wrap gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setActiveTab('mpd')}
+            className={`text-xs font-mono-code font-semibold px-3 py-1.5 rounded transition-all ${
+              activeTab === 'mpd'
+                ? 'bg-surface-elevated text-[#00E599] border border-subtle'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+          >
+            MPD Client (Terminal)
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('mcp')}
+            className={`text-xs font-mono-code font-semibold px-3 py-1.5 rounded transition-all ${
+              activeTab === 'mcp'
+                ? 'bg-surface-elevated text-[#00E599] border border-subtle'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+          >
+            AI Claude / Cursor MCP
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab('jam')}
+            className={`text-xs font-mono-code font-semibold px-3 py-1.5 rounded transition-all ${
+              activeTab === 'jam'
+                ? 'bg-surface-elevated text-[#00E599] border border-subtle'
+                : 'text-neutral-400 hover:text-white'
+            }`}
+          >
+            Jam Remote (Local Wi-Fi)
+          </button>
         </div>
 
         <button
