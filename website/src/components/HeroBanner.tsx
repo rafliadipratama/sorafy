@@ -74,9 +74,12 @@ export default function HeroBanner({ lang = 'en' }: Props) {
         </div>
 
         {/* Copy Status Icon Pill */}
-        <div className="flex items-center justify-center w-6 h-6 rounded-full bg-canvas/90 border border-subtle group-hover:border-[#00E599]/50 text-neutral-400 group-hover:text-[#00E599] transition-all shrink-0 ml-0.5">
+        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-canvas/90 border border-subtle group-hover:border-[#00E599]/50 text-neutral-400 group-hover:text-[#00E599] transition-all shrink-0 ml-0.5">
           {copied ? (
-            <TickCircle size={14} variant="Bold" className="text-[#00E599] scale-110 transition-transform" />
+            <>
+              <TickCircle size={14} variant="Bold" className="text-[#00E599] scale-110 transition-transform" />
+              <span className="text-[10px] text-[#00E599] font-bold font-mono-code">{lang === 'id' ? 'Tersalin!' : 'Copied!'}</span>
+            </>
           ) : (
             <Copy size={13} variant="Linear" />
           )}

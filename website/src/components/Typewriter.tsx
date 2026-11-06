@@ -92,9 +92,9 @@ export default function Typewriter({ lang = 'en' }: Props) {
   }, [lang]);
 
   return (
-    <span className="text-white border-b-2 border-[#00E599] pb-0.5 inline-block">
+    <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-white via-neutral-100 to-neutral-300 font-extrabold">
       {text}
-      <span className="animate-pulse text-[#00E599] font-normal ml-0.5">|</span>
+      <span className="text-[#00E599] animate-pulse font-normal ml-1 drop-shadow-[0_0_8px_rgba(0,229,153,0.8)]">|</span>
     </span>
   );
 }

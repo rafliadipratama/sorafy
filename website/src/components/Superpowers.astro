@@ -29,82 +29,76 @@ const t = useTranslations(lang);
     <!-- 6 Superpowers Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-14">
       <!-- 1. Jam Remote -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
+      <div class="bg-[#0E1116]/85 border border-neutral-800 hover:border-[#00E599]/40 rounded-2xl p-6 flex flex-col gap-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <div class="w-10 h-10 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
             <Mobile size={20} variant="Linear" className="text-[#00E599]" />
           </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">Port 4120</span>
+          <span class="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-md bg-[#141820] border border-neutral-800 text-[#00E599]">Port 4120</span>
         </div>
         <h3 class="text-base font-bold text-white">{t('super_jam_title')}</h3>
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_jam_desc')}</p>
       </div>
 
       <!-- 2. MPD Daemon -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
+      <div class="bg-[#0E1116]/85 border border-neutral-800 hover:border-[#00E599]/40 rounded-2xl p-6 flex flex-col gap-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <div class="w-10 h-10 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
             <CommandSquare size={20} variant="Linear" className="text-[#00E599]" />
           </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">Port 6600</span>
+          <span class="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-md bg-[#141820] border border-neutral-800 text-[#00E599]">Port 6600</span>
         </div>
         <h3 class="text-base font-bold text-white">{t('super_mpd_title')}</h3>
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_mpd_desc')}</p>
       </div>
 
       <!-- 3. AI MCP -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
+      <div class="bg-[#0E1116]/85 border border-neutral-800 hover:border-[#00E599]/40 rounded-2xl p-6 flex flex-col gap-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <div class="w-10 h-10 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
             <CpuSetting size={20} variant="Linear" className="text-[#00E599]" />
           </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">Port 8800</span>
+          <span class="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-md bg-[#141820] border border-neutral-800 text-[#00E599]">Port 8800</span>
         </div>
         <h3 class="text-base font-bold text-white">{t('super_mcp_title')}</h3>
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_mcp_desc')}</p>
       </div>
 
       <!-- 4. Listening Recap -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
+      <div class="bg-[#0E1116]/85 border border-neutral-800 hover:border-[#00E599]/40 rounded-2xl p-6 flex flex-col gap-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <div class="w-10 h-10 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
             <Chart21 size={20} variant="Linear" className="text-[#00E599]" />
           </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">100% Offline</span>
+          <span class="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-md bg-[#141820] border border-neutral-800 text-neutral-400">100% Offline</span>
         </div>
         <h3 class="text-base font-bold text-white">{t('super_recap_title')}</h3>
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_recap_desc')}</p>
       </div>
 
       <!-- 5. Discord RPC -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
+      <div class="bg-[#0E1116]/85 border border-neutral-800 hover:border-[#00E599]/40 rounded-2xl p-6 flex flex-col gap-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#5865F2]">
+          <div class="w-10 h-10 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#5865F2] shadow-inner">
             <OfficialDiscordIcon className="w-5 h-5 text-[#5865F2]" />
           </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">Discord RPC</span>
+          <span class="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-md bg-[#141820] border border-neutral-800 text-[#5865F2]">Discord RPC</span>
         </div>
         <h3 class="text-base font-bold text-white">{t('super_discord_title')}</h3>
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_discord_desc')}</p>
       </div>
 
       <!-- 6. Themes -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
+      <div class="bg-[#0E1116]/85 border border-neutral-800 hover:border-[#00E599]/40 rounded-2xl p-6 flex flex-col gap-3.5 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(0,0,0,0.5)]">
         <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+          <div class="w-10 h-10 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
             <Colorfilter size={20} variant="Linear" className="text-[#00E599]" />
           </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">5 Presets</span>
+          <span class="text-[10px] font-mono-code font-bold px-2 py-0.5 rounded-md bg-[#141820] border border-neutral-800 text-neutral-400">5 Presets</span>
         </div>
         <h3 class="text-base font-bold text-white">{t('super_theme_title')}</h3>
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_theme_desc')}</p>
       </div>
-    </div>
-
-    <!-- Terminal Code Showcase Component -->
-    <TerminalShowcase client:visible lang={lang} />
-  </div>
-</section>
     </div>
 
     <!-- Terminal Code Showcase Component -->

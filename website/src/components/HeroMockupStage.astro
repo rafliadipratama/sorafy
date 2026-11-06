@@ -3,8 +3,8 @@ import { useTranslations } from '../i18n/ui';
 import { 
   Home2, 
   Discover, 
-  SliderHorizontal, 
-  Chart21, 
+  Folder2, 
+  Setting2, 
   SearchNormal1, 
   Play, 
   Pause, 
@@ -21,9 +21,9 @@ const t = useTranslations(lang);
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 
-<div class="relative w-full max-w-2xl mx-auto rotate-1 group">
+<div class="relative w-full max-w-2xl mx-auto group">
   <!-- Desktop Player Window Box -->
-  <div class="bg-surface border-2 border-subtle hover:border-[#00E599]/30 rounded-2xl overflow-hidden shadow-2xl transition-all">
+  <div class="bg-surface border border-neutral-800 hover:border-[#00E599]/40 rounded-2xl overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.85)] transition-all duration-300">
     <!-- Window Titlebar -->
     <div class="h-9 bg-surface-elevated border-b border-subtle flex items-center justify-between px-3.5">
       <div class="flex items-center gap-1.5">
@@ -34,7 +34,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       <div class="text-[11px] font-semibold text-neutral-400 truncate max-w-[200px]">
         SoraFy Desktop — High-Fidelity
       </div>
-      <div class="flex items-center gap-1 text-[10px] font-mono-code text-[#00E599] bg-emerald-subtle border border-emerald-subtle px-2 py-0.5 rounded-full">
+      <div class="flex items-center gap-1 text-[10px] font-mono-code text-[#00E599] bg-[#00E599]/10 border border-[#00E599]/25 px-2 py-0.5 rounded-full">
         <span class="w-1.5 h-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
         <span>Port 8800</span>
       </div>
@@ -51,21 +51,21 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
           </div>
 
           <div class="flex flex-col gap-1">
-            <div class="flex items-center gap-2 px-2 py-1.5 rounded bg-surface-subtle text-[#00E599] font-bold text-[11px]">
+            <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-md bg-surface-subtle text-[#00E599] font-bold text-[11px]">
               <Home2 size={13} variant="Bold" className="shrink-0" />
               <span>{t('mockup_nav_home')}</span>
             </div>
-            <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
+            <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-neutral-400 hover:text-white font-medium text-[11px] transition-colors">
               <Discover size={13} variant="Linear" className="shrink-0" />
               <span>{t('mockup_nav_explore')}</span>
             </div>
-            <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
-              <SliderHorizontal size={13} variant="Linear" className="shrink-0" />
-              <span>{t('mockup_nav_equalizer')}</span>
+            <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-neutral-400 hover:text-white font-medium text-[11px] transition-colors">
+              <Folder2 size={13} variant="Linear" className="shrink-0" />
+              <span>{t('mockup_nav_library')}</span>
             </div>
-            <div class="flex items-center gap-2 px-2 py-1.5 rounded text-neutral-400 hover:text-white font-medium text-[11px]">
-              <Chart21 size={13} variant="Linear" className="shrink-0" />
-              <span>{t('mockup_nav_stats')}</span>
+            <div class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-neutral-400 hover:text-white font-medium text-[11px] transition-colors">
+              <Setting2 size={13} variant="Linear" className="shrink-0" />
+              <span>{t('mockup_nav_settings')}</span>
             </div>
           </div>
         </div>
@@ -84,19 +84,24 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         </div>
 
         <!-- Spotlight Track -->
-        <div class="flex items-center gap-3 bg-surface border border-subtle rounded-xl p-3">
-          <div class="w-11 h-11 rounded-lg bg-gradient-to-br from-neutral-800 to-neutral-950 flex items-center justify-center border border-subtle shrink-0 text-[#00E599]">
-            <Play size={14} variant="Bold" className="text-[#00E599]" />
+        <div class="flex items-center gap-3 bg-surface-elevated/70 border border-subtle hover:border-[#00E599]/30 rounded-xl p-3 transition-colors">
+          <div class="relative w-11 h-11 rounded-lg bg-gradient-to-br from-emerald-950 via-neutral-900 to-neutral-950 flex items-center justify-center border border-[#00E599]/30 shrink-0 overflow-hidden shadow-md">
+            <div class="absolute inset-0 bg-gradient-to-tr from-[#00E599]/20 to-transparent"></div>
+            <Play size={14} variant="Bold" className="text-[#00E599] drop-shadow-[0_0_8px_#00E599]" />
           </div>
           <div class="min-w-0 flex-1">
-            <span class="text-[9px] font-bold text-[#00E599] tracking-wider block uppercase">
-              {t('mockup_now_playing')}
-            </span>
+            <div class="flex items-center gap-1.5 mb-0.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
+              <span class="text-[9px] font-bold text-[#00E599] tracking-wider uppercase">
+                {t('mockup_now_playing')}
+              </span>
+            </div>
             <h4 class="text-xs font-bold text-white truncate">Satu Bulan</h4>
             <p class="text-[10px] text-neutral-400 truncate">Bernadya • Sialnya, Hidup Harus Tetap Berjalan</p>
-            <div class="flex gap-1 mt-1">
-              <span class="text-[9px] font-semibold px-1 py-0.2 bg-surface-elevated border border-subtle rounded text-[#00E599]">Lossless</span>
-              <span class="text-[9px] font-semibold px-1 py-0.2 bg-surface-elevated border border-subtle rounded text-neutral-300">Synced LRC</span>
+            <div class="flex gap-1.5 mt-1">
+              <span class="text-[9px] font-semibold font-mono-code px-1.5 py-0.2 bg-canvas/80 border border-subtle rounded text-[#00E599]">Lossless</span>
+              <span class="text-[9px] font-semibold font-mono-code px-1.5 py-0.2 bg-canvas/80 border border-subtle rounded text-neutral-300">Synced LRC</span>
+              <span class="text-[9px] font-semibold font-mono-code px-1.5 py-0.2 bg-canvas/80 border border-subtle rounded text-neutral-400">DSP</span>
             </div>
           </div>
         </div>
@@ -164,30 +169,33 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   </div>
 
   <!-- Floating Mobile Mockup: SoraFy Jam Phone Remote -->
-  <div class="absolute -bottom-7 -left-3 sm:-left-6 z-20 w-[42%] max-w-[210px] -rotate-6 transition-transform group-hover:-rotate-3 shadow-2xl">
-    <div class="bg-surface border-2 border-medium hover:border-[#00E599] rounded-2xl overflow-hidden p-2.5 shadow-2xl bg-canvas/95 backdrop-blur-md">
+  <div class="absolute -bottom-6 -right-2 sm:-right-4 z-20 w-[38%] max-w-[195px] shadow-[0_20px_45px_rgba(0,0,0,0.85)] hover:scale-105 transition-all duration-300">
+    <div class="bg-[#0B0D10]/95 border border-medium hover:border-[#00E599]/60 rounded-2xl overflow-hidden p-2.5 shadow-2xl backdrop-blur-md">
       <!-- Notch & Header -->
       <div class="flex items-center justify-between border-b border-subtle pb-1.5 mb-2">
-        <div class="flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
+        <div class="flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
           <span class="text-[9px] font-bold text-white uppercase tracking-wider">SORAFY JAM</span>
         </div>
-        <span class="text-[8px] font-mono-code text-[#00E599] bg-emerald-subtle px-1 rounded">WiFi</span>
+        <span class="text-[8px] font-mono-code font-bold text-[#00E599] bg-[#00E599]/10 border border-[#00E599]/20 px-1.5 py-0.2 rounded">WiFi</span>
       </div>
 
       <!-- Phone Track Card -->
-      <div class="w-full aspect-square rounded-lg bg-gradient-to-tr from-neutral-900 via-neutral-800 to-neutral-700 border border-subtle flex items-center justify-center mb-2 shadow-inner">
-        <img src={`${base}/assets/logo.png`} alt="SoraFy" class="w-10 h-10 object-contain drop-shadow" />
+      <div class="w-full aspect-square rounded-xl bg-gradient-to-tr from-emerald-950/80 via-neutral-900 to-neutral-800 border border-subtle flex flex-col items-center justify-center mb-2 shadow-inner relative overflow-hidden">
+        <div class="w-9 h-9 rounded-full bg-[#00E599]/20 flex items-center justify-center border border-[#00E599]/40 mb-1">
+          <Play size={14} variant="Bold" className="text-[#00E599]" />
+        </div>
+        <span class="text-[8px] font-mono-code text-neutral-400">Remote Session</span>
       </div>
 
       <!-- Track Info -->
       <div class="text-center mb-2">
-        <p class="text-[10px] font-bold text-white truncate">Satu Bulan</p>
-        <p class="text-[8px] text-neutral-400 truncate">Bernadya</p>
+        <p class="text-[11px] font-bold text-white truncate">Satu Bulan</p>
+        <p class="text-[9px] text-neutral-400 truncate">Bernadya</p>
       </div>
 
       <!-- Controls -->
-      <div class="flex items-center justify-center gap-3.5 text-neutral-300 py-1 bg-surface-elevated rounded-md border border-subtle text-[11px]">
+      <div class="flex items-center justify-center gap-3.5 text-neutral-300 py-1.5 bg-surface-elevated/80 rounded-lg border border-subtle text-[11px]">
         <Previous size={11} variant="Bold" className="cursor-pointer hover:text-white transition-colors" />
         <Pause size={13} variant="Bold" className="text-[#00E599] cursor-pointer hover:text-[#00B377] transition-colors" />
         <Next size={11} variant="Bold" className="cursor-pointer hover:text-white transition-colors" />

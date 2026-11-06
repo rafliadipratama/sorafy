@@ -27,64 +27,64 @@ const t = useTranslations(lang);
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Pillar 1: Universal Importer -->
-      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
-        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+      <article class="bg-[#0E1116]/85 hover:border-[#00E599]/40 border border-neutral-800 rounded-2xl p-7 sm:p-8 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.6)]">
+        <div class="w-12 h-12 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
           <ImportCurve size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_import_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_import_desc')}</p>
         <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
-          <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">
             <OfficialSpotifyIcon className="w-3.5 h-3.5 text-[#1DB954]" />
             <span>Spotify Hub</span>
           </span>
-          <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">
+          <span class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">
             <OfficialAppleMusicIcon className="w-3.5 h-3.5 text-[#FC3C44]" />
             <span>Apple Music</span>
           </span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Zero Login Required</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">Zero Login Required</span>
         </div>
       </article>
 
       <!-- Pillar 2: Synced Lyrics -->
-      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
-        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+      <article class="bg-[#0E1116]/85 hover:border-[#00E599]/40 border border-neutral-800 rounded-2xl p-7 sm:p-8 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.6)]">
+        <div class="w-12 h-12 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
           <Microphone2 size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_lyrics_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_lyrics_desc')}</p>
         <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">LRCLIB</span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Romaji / Hangul</span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Timing Calibration</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">LRCLIB</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">Synchronized Lyrics</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">Furigana Support</span>
         </div>
       </article>
 
       <!-- Pillar 3: Parametric Equalizer Studio -->
-      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
-        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+      <article class="bg-[#0E1116]/85 hover:border-[#00E599]/40 border border-neutral-800 rounded-2xl p-7 sm:p-8 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.6)]">
+        <div class="w-12 h-12 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
           <SliderHorizontal size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_eq_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_eq_desc')}</p>
         <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Parametric DSP</span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Volume Normalization</span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Crossfade</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">Parametric DSP</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">Volume Normalization</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">Crossfade</span>
         </div>
       </article>
 
       <!-- Pillar 4: Offline Caching & Downloads -->
-      <article class="bg-surface hover:border-medium border border-subtle rounded-2xl p-8 flex flex-col gap-4 transition-all hover:-translate-y-0.5">
-        <div class="w-11 h-11 rounded-lg bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
+      <article class="bg-[#0E1116]/85 hover:border-[#00E599]/40 border border-neutral-800 rounded-2xl p-7 sm:p-8 flex flex-col gap-4 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_12px_30px_rgba(0,0,0,0.6)]">
+        <div class="w-12 h-12 rounded-xl bg-[#141820] border border-neutral-800 flex items-center justify-center text-[#00E599] shadow-inner">
           <Folder2 size={24} variant="Linear" className="text-[#00E599]" />
         </div>
         <h3 class="text-xl font-bold text-white tracking-tight">{t('feat_cache_title')}</h3>
         <p class="text-neutral-400 text-sm leading-relaxed">{t('feat_cache_desc')}</p>
         <div class="flex items-center gap-2 flex-wrap mt-auto pt-2">
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">LRU Cache</span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">yt-dlp Companion</span>
-          <span class="text-xs font-semibold px-2.5 py-1 bg-surface-elevated border border-subtle rounded text-neutral-300">Offline Playback</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">LRU Cache</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">yt-dlp Companion</span>
+          <span class="text-xs font-semibold px-2.5 py-1 bg-[#12161E] border border-neutral-800 rounded-lg text-neutral-300">Offline Playback</span>
         </div>
       </article>
     </div>
