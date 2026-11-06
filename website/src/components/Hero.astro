@@ -3,6 +3,7 @@ import { useTranslations } from '../i18n/ui';
 import Typewriter from './Typewriter';
 import HeroMockupStage from './HeroMockupStage.astro';
 import HeroDownloadsBox from './HeroDownloadsBox';
+import HeroBanner from './HeroBanner';
 
 interface Props {
   lang: 'en' | 'id';
@@ -19,7 +20,7 @@ const t = useTranslations(lang);
   <!-- Header Section with Dynamic Typewriter -->
   <div class="mb-6 sm:mb-8 text-center relative z-10">
     <span class="text-neutral-500 mb-2 inline-block text-[11px] font-bold tracking-[0.3em] uppercase">
-      EST. 2024
+      EST. 2026
     </span>
     <h1 class="text-2xl leading-tight font-black uppercase sm:text-4xl md:text-5xl lg:text-[3.25rem] text-white">
       {lang === 'id' ? 'SORAFY ADALAH ' : 'SORAFY IS A '}
@@ -32,6 +33,11 @@ const t = useTranslations(lang);
       <br />
       <Typewriter client:load lang={lang} />
     </h1>
+
+    <!-- Interactive Command Banner with Custom Cursor -->
+    <div class="mt-4 sm:mt-5 flex justify-center">
+      <HeroBanner client:load lang={lang} />
+    </div>
   </div>
 
   <!-- 2-Column Split Banner Layout (Desktop Mockup on Left + Downloads Box on Right) -->
