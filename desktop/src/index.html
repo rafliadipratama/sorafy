@@ -525,8 +525,12 @@
         </div>
 
         <div class="playlist-hero-card">
-          <div class="playlist-cover-wrapper">
+          <div class="playlist-cover-wrapper" id="playlistCoverWrapper">
             <img src="" alt="Playlist Cover" id="playlistCoverImg" class="playlist-cover-img">
+            <div class="playlist-cover-edit-overlay" id="playlistCoverEditOverlay" style="display: none;">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              <span>Pilih Foto</span>
+            </div>
           </div>
           <div class="playlist-hero-meta">
             <span class="playlist-type-badge" id="playlistTypeBadge">Playlist</span>
@@ -929,21 +933,62 @@
 
   <!-- Modal Dialog Edit Custom Playlist -->
   <div id="editPlaylistModal" class="modal-backdrop" style="display: none;">
-    <div class="modal-card">
+    <div class="modal-card edit-playlist-modal-card">
       <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h3 style="font-size: 18px; font-weight: 700;" data-i18n="edit_playlist_title">Edit Playlist Details</h3>
+        <h3 style="font-size: 18px; font-weight: 700;" data-i18n="edit_playlist_title">Ubah Detail Playlist</h3>
         <button class="control-btn" id="closeEditPlaylistModalBtn" title="Close" data-i18n-title="btn_close">
           <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
         </button>
       </div>
-      <p style="font-size: 13px; color: var(--color-text-secondary); margin-top: 8px;" data-i18n="edit_playlist_desc">
-        Update your playlist's name and description.
-      </p>
-      <input type="text" id="editPlaylistNameInput" class="modal-input" placeholder="Playlist Name" data-i18n-placeholder="edit_playlist_placeholder">
-      <textarea id="editPlaylistDescInput" class="modal-input" style="height: 70px; resize: none; margin-top: 10px;" placeholder="Optional description..." data-i18n-placeholder="create_playlist_desc_placeholder"></textarea>
-      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
-        <button class="hero-secondary-btn" id="cancelEditPlaylistBtn" data-i18n="btn_cancel">Cancel</button>
-        <button class="hero-play-btn" id="submitEditPlaylistBtn" data-i18n="btn_save">Save Changes</button>
+
+      <div class="edit-playlist-body">
+        <!-- Cover Art Column -->
+        <div class="edit-playlist-cover-col">
+          <div class="edit-playlist-cover-box" id="editPlaylistCoverBox" title="Pilih foto dari komputer">
+            <img src="" alt="Playlist Cover" id="editPlaylistCoverPreview" class="edit-playlist-cover-img">
+            <div class="edit-playlist-cover-overlay">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+              <span style="font-size: 12px; font-weight: 600; text-align: center;">Pilih Foto</span>
+            </div>
+          </div>
+          <input type="file" id="editPlaylistCoverFileInput" accept="image/png,image/jpeg,image/webp,image/gif" style="display: none;">
+          <div class="edit-playlist-cover-actions">
+            <button type="button" class="edit-playlist-text-btn" id="editPlaylistRemoveCoverBtn" style="display: none;">
+              <iconsax-icon name="trash" type="linear" size="13" color="currentColor"></iconsax-icon>
+              <span>Hapus Foto</span>
+            </button>
+            <button type="button" class="edit-playlist-text-btn" id="editPlaylistToggleUrlBtn">
+              <iconsax-icon name="link" type="linear" size="13" color="currentColor"></iconsax-icon>
+              <span>Gunakan URL</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Inputs Column -->
+        <div class="edit-playlist-fields-col">
+          <label style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Nama Playlist</label>
+          <input type="text" id="editPlaylistNameInput" class="modal-input" style="margin-top: 0; padding: 10px 12px;" placeholder="Nama Playlist" data-i18n-placeholder="edit_playlist_placeholder">
+          <label style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 4px 0;">Deskripsi</label>
+          <textarea id="editPlaylistDescInput" class="modal-input" style="margin-top: 0; height: 95px; resize: none; padding: 10px 12px; line-height: 1.4;" placeholder="Tambahkan deskripsi opsional..." data-i18n-placeholder="create_playlist_desc_placeholder"></textarea>
+        </div>
+      </div>
+
+      <!-- Optional URL Input Row (toggled) -->
+      <div id="editPlaylistUrlRow" style="display: none; margin-top: 14px;">
+        <label style="font-size: 11px; font-weight: 700; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block;">Link Gambar (URL)</label>
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="editPlaylistUrlInput" class="modal-input" style="margin-top: 0; flex: 1;" placeholder="https://example.com/cover.jpg">
+          <button type="button" class="hero-secondary-btn" id="editPlaylistApplyUrlBtn" style="padding: 0 14px; font-size: 12px;">Terapkan</button>
+        </div>
+      </div>
+
+      <div style="font-size: 11px; color: var(--color-text-tertiary); margin-top: 14px; line-height: 1.4;">
+        Foto cover akan dipangkas rapi dan disimpan otomatis ke library Anda.
+      </div>
+
+      <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px;">
+        <button class="hero-secondary-btn" id="cancelEditPlaylistBtn" data-i18n="btn_cancel">Batal</button>
+        <button class="hero-play-btn" id="submitEditPlaylistBtn" data-i18n="btn_save">Simpan Perubahan</button>
       </div>
     </div>
   </div>

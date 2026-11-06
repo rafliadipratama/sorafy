@@ -3832,6 +3832,7 @@ body {
 }
 
 .playlist-cover-wrapper {
+  position: relative;
   width: 180px;
   height: 180px;
   border-radius: var(--radius-md);
@@ -3839,6 +3840,147 @@ body {
   background: #181C22;
   flex-shrink: 0;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.playlist-cover-wrapper.editable {
+  cursor: pointer;
+}
+
+.playlist-cover-edit-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.68);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #FFFFFF;
+  opacity: 0;
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.playlist-cover-wrapper.editable:hover .playlist-cover-edit-overlay {
+  opacity: 1;
+}
+
+.playlist-cover-edit-overlay span {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+}
+
+/* Edit Playlist Modal (Spotify Style 2-Column Clean Layout) */
+.edit-playlist-modal-card {
+  max-width: 530px !important;
+  padding: 24px 26px !important;
+  background: #16181f !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 32px 72px rgba(0, 0, 0, 0.85) !important;
+}
+
+.edit-playlist-body {
+  display: flex;
+  gap: 20px;
+  margin-top: 18px;
+  align-items: flex-start;
+}
+
+.edit-playlist-cover-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 164px;
+}
+
+.edit-playlist-cover-box {
+  position: relative;
+  width: 164px;
+  height: 164px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1e222b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.edit-playlist-cover-box:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: scale(1.015);
+}
+
+.edit-playlist-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  user-select: none;
+}
+
+.edit-playlist-cover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #FFFFFF;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.edit-playlist-cover-box:hover .edit-playlist-cover-overlay {
+  opacity: 1;
+}
+
+.edit-playlist-cover-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  width: 100%;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.edit-playlist-text-btn {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-secondary, #b3b3b3);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.15s ease;
+}
+
+.edit-playlist-text-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.edit-playlist-fields-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .playlist-cover-img {

@@ -1815,7 +1815,9 @@ class SoraFyDesktopApp {
 
     // Playlist Detail Screen Elements
     this.playlistBackBtn = document.getElementById("playlistBackBtn");
+    this.playlistCoverWrapper = document.getElementById("playlistCoverWrapper");
     this.playlistCoverImg = document.getElementById("playlistCoverImg");
+    this.playlistCoverEditOverlay = document.getElementById("playlistCoverEditOverlay");
     this.playlistTitleHeading = document.getElementById("playlistTitleHeading");
     this.playlistDescText = document.getElementById("playlistDescText");
     this.playlistStatsText = document.getElementById("playlistStatsText");
@@ -1904,6 +1906,15 @@ class SoraFyDesktopApp {
     this.submitEditPlaylistBtn = document.getElementById("submitEditPlaylistBtn");
     this.editPlaylistNameInput = document.getElementById("editPlaylistNameInput");
     this.editPlaylistDescInput = document.getElementById("editPlaylistDescInput");
+    this.editPlaylistCoverBox = document.getElementById("editPlaylistCoverBox");
+    this.editPlaylistCoverPreview = document.getElementById("editPlaylistCoverPreview");
+    this.editPlaylistCoverFileInput = document.getElementById("editPlaylistCoverFileInput");
+    this.editPlaylistRemoveCoverBtn = document.getElementById("editPlaylistRemoveCoverBtn");
+    this.editPlaylistToggleUrlBtn = document.getElementById("editPlaylistToggleUrlBtn");
+    this.editPlaylistUrlRow = document.getElementById("editPlaylistUrlRow");
+    this.editPlaylistUrlInput = document.getElementById("editPlaylistUrlInput");
+    this.editPlaylistApplyUrlBtn = document.getElementById("editPlaylistApplyUrlBtn");
+    this.editingPlaylistCoverUrl = null;
 
     // Add to Playlist Modal elements
     this.addToPlaylistModal = document.getElementById("addToPlaylistModal");
@@ -3509,6 +3520,15 @@ class SoraFyDesktopApp {
       });
     }
 
+    if (this.playlistCoverWrapper) {
+      this.playlistCoverWrapper.addEventListener("click", () => {
+        const isUserPl = this.currentPlaylist && !this.currentPlaylist.is_special && this.userPlaylists.some(p => p.id === this.currentPlaylist.id);
+        if (isUserPl) {
+          this.openEditPlaylistModal(this.currentPlaylist);
+        }
+      });
+    }
+
     if (this.playlistEditBtn) {
       this.playlistEditBtn.addEventListener("click", () => {
         if (this.currentPlaylist) {
@@ -3547,16 +3567,128 @@ class SoraFyDesktopApp {
       });
     }
 
+    // Cover picker events in Edit Playlist Modal
+    if (this.editPlaylistCoverBox) {
+      this.editPlaylistCoverBox.addEventListener("click", () => {
+        if (this.editPlaylistCoverFileInput) this.editPlaylistCoverFileInput.click();
+      });
+    }
+
+    if (this.editPlaylistCoverFileInput) {
+      this.editPlaylistCoverFileInput.addEventListener("change", (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        if (!file.type.startsWith("image/")) {
+          this.showToast(this.currentLanguage === "id" ? "Pilih berkas gambar yang valid!" : "Please select a valid image file!");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (loadEvt) => {
+          const img = new Image();
+          img.onload = () => {
+            // Offscreen canvas center-crop to 480x480 JPEG (clean & lightweight)
+            const canvas = document.createElement("canvas");
+            const TARGET_SIZE = 480;
+            canvas.width = TARGET_SIZE;
+            canvas.height = TARGET_SIZE;
+            const ctx = canvas.getContext("2d");
+
+            const minSide = Math.min(img.width, img.height);
+            const sx = (img.width - minSide) / 2;
+            const sy = (img.height - minSide) / 2;
+            ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, TARGET_SIZE, TARGET_SIZE);
+
+            const optimizedDataUrl = canvas.toDataURL("image/jpeg", 0.88);
+            this.editingPlaylistCoverUrl = optimizedDataUrl;
+            if (this.editPlaylistCoverPreview) {
+              this.editPlaylistCoverPreview.src = optimizedDataUrl;
+            }
+            if (this.editPlaylistRemoveCoverBtn) {
+              this.editPlaylistRemoveCoverBtn.style.display = "inline-flex";
+            }
+            this.showToast(this.currentLanguage === "id" ? "Foto cover siap disimpan!" : "Cover photo ready to save!");
+          };
+          img.onerror = () => {
+            this.showToast(this.currentLanguage === "id" ? "Gagal memproses gambar." : "Failed to process image.");
+          };
+          img.src = loadEvt.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (this.editPlaylistToggleUrlBtn) {
+      this.editPlaylistToggleUrlBtn.addEventListener("click", () => {
+        if (this.editPlaylistUrlRow) {
+          const isShown = this.editPlaylistUrlRow.style.display !== "none";
+          this.editPlaylistUrlRow.style.display = isShown ? "none" : "block";
+          if (!isShown && this.editPlaylistUrlInput) {
+            this.editPlaylistUrlInput.focus();
+          }
+        }
+      });
+    }
+
+    if (this.editPlaylistApplyUrlBtn) {
+      this.editPlaylistApplyUrlBtn.addEventListener("click", () => {
+        const url = (this.editPlaylistUrlInput?.value || "").trim();
+        if (!url) {
+          this.showToast(this.currentLanguage === "id" ? "Masukkan tautan URL gambar!" : "Please enter an image URL!");
+          return;
+        }
+        const testImg = new Image();
+        testImg.onload = () => {
+          this.editingPlaylistCoverUrl = url;
+          if (this.editPlaylistCoverPreview) {
+            this.editPlaylistCoverPreview.src = url;
+          }
+          if (this.editPlaylistRemoveCoverBtn) {
+            this.editPlaylistRemoveCoverBtn.style.display = "inline-flex";
+          }
+          this.showToast(this.currentLanguage === "id" ? "Foto cover dari URL berhasil dimuat!" : "Cover from URL loaded!");
+        };
+        testImg.onerror = () => {
+          this.showToast(this.currentLanguage === "id" ? "Gagal memuat URL gambar. Pastikan link langsung ke berkas gambar." : "Failed to load image URL.");
+        };
+        testImg.src = url;
+      });
+    }
+
+    if (this.editPlaylistUrlInput) {
+      this.editPlaylistUrlInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          this.editPlaylistApplyUrlBtn?.click();
+        }
+      });
+    }
+
+    if (this.editPlaylistRemoveCoverBtn) {
+      this.editPlaylistRemoveCoverBtn.addEventListener("click", () => {
+        this.editingPlaylistCoverUrl = null;
+        const pl = this.userPlaylists.find(p => p.id === this.editingPlaylistId);
+        const fallback = (pl?.tracks && pl.tracks[0]?.artwork_url) || this.DEFAULT_TRACK_ART;
+        if (this.editPlaylistCoverPreview) {
+          this.editPlaylistCoverPreview.src = fallback;
+        }
+        this.editPlaylistRemoveCoverBtn.style.display = "none";
+        if (this.editPlaylistUrlInput) this.editPlaylistUrlInput.value = "";
+        if (this.editPlaylistCoverFileInput) this.editPlaylistCoverFileInput.value = "";
+        this.showToast(this.currentLanguage === "id" ? "Foto kustom dihapus, menggunakan cover bawaan." : "Custom cover removed, using default.");
+      });
+    }
+
     if (this.submitEditPlaylistBtn) {
       this.submitEditPlaylistBtn.addEventListener("click", () => {
         const name = (this.editPlaylistNameInput.value || "").trim();
         const desc = (this.editPlaylistDescInput.value || "").trim();
         if (!name) {
-          this.showToast("Masukkan nama playlist!");
+          this.showToast(this.currentLanguage === "id" ? "Masukkan nama playlist!" : "Please enter a playlist name!");
           return;
         }
         if (this.editingPlaylistId) {
-          this.updatePlaylist(this.editingPlaylistId, name, desc);
+          this.updatePlaylist(this.editingPlaylistId, name, desc, this.editingPlaylistCoverUrl);
         }
         this.editPlaylistModal.style.display = "none";
       });
@@ -7258,29 +7390,63 @@ class SoraFyDesktopApp {
     const target = playlist || this.currentPlaylist;
     if (!target) return;
     this.editingPlaylistId = target.id;
+    this.editingPlaylistCoverUrl = target.artwork_url || (target.tracks && target.tracks[0]?.artwork_url) || "";
+    const hasCustomCover = target.custom_artwork || (target.artwork_url && (!target.tracks || !target.tracks.length || target.artwork_url !== target.tracks[0]?.artwork_url));
+
     if (this.editPlaylistModal) {
       if (this.editPlaylistNameInput) this.editPlaylistNameInput.value = target.title || "";
       if (this.editPlaylistDescInput) this.editPlaylistDescInput.value = target.description || "";
+      if (this.editPlaylistCoverPreview) {
+        this.editPlaylistCoverPreview.src = this.editingPlaylistCoverUrl || this.DEFAULT_TRACK_ART;
+      }
+      if (this.editPlaylistRemoveCoverBtn) {
+        this.editPlaylistRemoveCoverBtn.style.display = hasCustomCover ? "inline-flex" : "none";
+      }
+      if (this.editPlaylistUrlRow) {
+        this.editPlaylistUrlRow.style.display = "none";
+      }
+      if (this.editPlaylistUrlInput) {
+        this.editPlaylistUrlInput.value = "";
+      }
+      if (this.editPlaylistCoverFileInput) {
+        this.editPlaylistCoverFileInput.value = "";
+      }
       this.editPlaylistModal.style.display = "flex";
       setTimeout(() => this.editPlaylistNameInput?.focus(), 50);
     }
   }
 
-  updatePlaylist(playlistId, newTitle, newDesc) {
+  updatePlaylist(playlistId, newTitle, newDesc, newArtworkUrl = undefined) {
     if (!playlistId) return;
     const pl = this.userPlaylists.find(p => p.id === playlistId);
     if (!pl) return;
     pl.title = newTitle;
     pl.description = newDesc;
+    if (newArtworkUrl !== undefined) {
+      if (newArtworkUrl === null) {
+        pl.custom_artwork = false;
+        pl.artwork_url = (pl.tracks && pl.tracks[0]?.artwork_url) || "";
+      } else if (newArtworkUrl) {
+        pl.artwork_url = newArtworkUrl;
+        pl.custom_artwork = true;
+      }
+    }
     this.saveUserPlaylists();
     this.renderUserPlaylists();
     if (this.currentPlaylist && this.currentPlaylist.id === playlistId) {
       this.currentPlaylist.title = newTitle;
       this.currentPlaylist.description = newDesc;
+      if (newArtworkUrl !== undefined) {
+        this.currentPlaylist.artwork_url = pl.artwork_url;
+        this.currentPlaylist.custom_artwork = pl.custom_artwork;
+        if (this.playlistCoverImg) {
+          this.playlistCoverImg.src = pl.artwork_url || this.DEFAULT_TRACK_ART;
+        }
+      }
       if (this.playlistTitleHeading) this.playlistTitleHeading.textContent = newTitle;
       if (this.playlistDescText) this.playlistDescText.textContent = newDesc || "Curated playlist.";
     }
-    this.showToast(`Playlist "${newTitle}" updated successfully!`);
+    this.showToast(this.currentLanguage === "id" ? `Playlist "${newTitle}" berhasil diperbarui!` : `Playlist "${newTitle}" updated successfully!`);
   }
 
   deletePlaylist(playlistId) {
@@ -7453,6 +7619,13 @@ class SoraFyDesktopApp {
     if (this.playlistEditBtn) this.playlistEditBtn.style.display = isUserPl ? "inline-flex" : "none";
     if (this.playlistLikeAlbumBtn) this.playlistLikeAlbumBtn.style.display = "none";
     if (this.playlistOpenFolderBtn) this.playlistOpenFolderBtn.style.display = (playlist.is_special === "downloads") ? "inline-flex" : "none";
+
+    if (this.playlistCoverWrapper) {
+      this.playlistCoverWrapper.classList.toggle("editable", isUserPl);
+      if (this.playlistCoverEditOverlay) {
+        this.playlistCoverEditOverlay.style.display = isUserPl ? "flex" : "none";
+      }
+    }
 
     this.playlistTitleHeading.textContent = playlist.title;
     this.playlistDescText.textContent = playlist.description || (playlist.author ? `Curated collection: ${playlist.author}` : "Curated playlist.");
