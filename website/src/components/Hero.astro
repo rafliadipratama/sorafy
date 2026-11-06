@@ -4,7 +4,6 @@ import Typewriter from './Typewriter';
 import HeroMockupStage from './HeroMockupStage.astro';
 import HeroDownloadsBox from './HeroDownloadsBox';
 import HeroBanner from './HeroBanner';
-import HeroInteractiveBackground from './HeroInteractiveBackground';
 
 interface Props {
   lang: 'en' | 'id';
@@ -15,9 +14,6 @@ const t = useTranslations(lang);
 ---
 
 <section class="relative z-20 mx-auto w-full max-w-7xl px-4 pt-4 sm:pt-6 pb-12 sm:pb-16 md:px-8 overflow-hidden" id="hero">
-  <!-- Interactive Cursor, Click-to-Copy & Ambient Spotlight on Banner Background -->
-  <HeroInteractiveBackground client:load lang={lang} />
-
   <!-- Blueprint Grid Pattern in Background (inspired by nuclearplayer.com) -->
   <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:32px_32px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_40%,#000_70%,transparent_100%)]"></div>
 
