@@ -55,6 +55,9 @@ app.commandLine.appendSwitch('disable-features', 'Vulkan');
 app.commandLine.appendSwitch('disable-dev-shm-usage');
 app.commandLine.appendSwitch('log-level', '3'); // Suppress harmless Chromium Ozone/Vulkan warnings
 
+// Allow autoplay without requiring an active user gesture on every async track load
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
+
 // Disable QUIC and HTTP/3 protocol to prevent net::ERR_QUIC_PROTOCOL_ERROR on Google / YouTube streams
 app.commandLine.appendSwitch('disable-quic');
 app.commandLine.appendSwitch('disable-http2-grease');
@@ -4619,6 +4622,10 @@ ipcMain.handle('save-app-settings', (_event, newSettings) => {
 // IPC Handlers: Playback Session Persistence (State & Exact Timestamp Resume)
 ipcMain.handle('save-playback-session', (_event, sessionData) => {
   return savePlaybackSessionDisk(sessionData);
+});
+
+ipcMain.on('save-playback-session-sync', (event, sessionData) => {
+  event.returnValue = savePlaybackSessionDisk(sessionData);
 });
 
 ipcMain.handle('load-playback-session', () => {

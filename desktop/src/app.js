@@ -4101,12 +4101,12 @@ class SoraFyDesktopApp {
     this.audio.addEventListener("seeked", () => this.updateDiscordPresence(this.tracks[this.currentTrackIndex]));
 
     // Playback session persistence hooks (on window close, unload, pagehide, and Electron app-before-close)
-    window.addEventListener("beforeunload", () => this.savePlaybackSession());
-    window.addEventListener("pagehide", () => this.savePlaybackSession());
+    window.addEventListener("beforeunload", () => this.savePlaybackSession(true));
+    window.addEventListener("pagehide", () => this.savePlaybackSession(true));
 
     if (window.electronAPI && typeof window.electronAPI.onAppBeforeClose === "function") {
       window.electronAPI.onAppBeforeClose(() => {
-        this.savePlaybackSession();
+        this.savePlaybackSession(true);
       });
     }
 
@@ -5250,7 +5250,7 @@ class SoraFyDesktopApp {
 
       this.currentShelves = finalShelves;
       this.homeTracks = finalShelves.flatMap(s => s.tracks);
-      if (!this.isPlaying || !this.tracks || this.tracks.length === 0) {
+      if (!this.hasRestoredSession && (!this.isPlaying || !this.tracks || this.tracks.length === 0)) {
         this.tracks = this.homeTracks;
       }
 
@@ -9034,10 +9034,15 @@ class SoraFyDesktopApp {
     });
   }
 
-  savePlaybackSession() {
+  savePlaybackSession(isSync = false) {
     if (!this.tracks || !this.tracks[this.currentTrackIndex]) return;
     const currentTrack = this.tracks[this.currentTrackIndex];
-    const currentTime = Math.max(0, this.audio ? (this.audio.currentTime || 0) : 0);
+    let currentTime = 0;
+    if (this.audio && !isNaN(this.audio.currentTime) && this.audio.currentTime > 0) {
+      currentTime = this.audio.currentTime;
+    } else if (this._restoredSeekPosition > 0) {
+      currentTime = this._restoredSeekPosition;
+    }
     const duration = (this.audio && this.audio.duration && !isNaN(this.audio.duration))
       ? this.audio.duration
       : (currentTrack.duration_secs || 0);
@@ -9055,8 +9060,12 @@ class SoraFyDesktopApp {
       localStorage.setItem("sorafy_last_playback_session", JSON.stringify(session));
     } catch (_) {}
 
-    if (window.electronAPI && typeof window.electronAPI.savePlaybackSession === "function") {
-      window.electronAPI.savePlaybackSession(session).catch(() => {});
+    if (window.electronAPI) {
+      if (isSync && typeof window.electronAPI.savePlaybackSessionSync === "function") {
+        window.electronAPI.savePlaybackSessionSync(session);
+      } else if (typeof window.electronAPI.savePlaybackSession === "function") {
+        window.electronAPI.savePlaybackSession(session).catch(() => {});
+      }
     }
   }
 
@@ -9084,18 +9093,16 @@ class SoraFyDesktopApp {
 
     this.hasRestoredSession = true;
 
-    // Refresh expired GoogleVideo stream URLs if saved session is older than 45 minutes
-    if (session.savedAt && (Date.now() - session.savedAt > 2700000)) {
-      if (session.track) {
-        session.track.stream_url = null;
-        session.track.is_full_stream = false;
-      }
-      if (Array.isArray(session.queue)) {
-        session.queue.forEach(t => {
-          t.stream_url = null;
-          t.is_full_stream = false;
-        });
-      }
+    // Clear stale local proxy and direct stream URLs because local proxy port changes on every run
+    if (session.track) {
+      session.track.stream_url = null;
+      session.track.is_full_stream = false;
+    }
+    if (Array.isArray(session.queue)) {
+      session.queue.forEach(t => {
+        t.stream_url = null;
+        t.is_full_stream = false;
+      });
     }
 
     // Restore queue and track index
@@ -9113,6 +9120,7 @@ class SoraFyDesktopApp {
       ? session.currentTime
       : 0;
 
+    this._restoredSeekPosition = startPos;
     await this.loadTrack(this.currentTrackIndex, false, startPos);
     return true;
   }
@@ -9123,6 +9131,21 @@ class SoraFyDesktopApp {
     if (!track) return;
 
     this.isNextTrackPreloaded = false;
+
+    // Immediately stop previous audio and assign unique load token to avoid race conditions
+    if (this.audio) {
+      try {
+        this.audio.pause();
+      } catch (_) {}
+    }
+    this._currentLoadId = (this._currentLoadId || 0) + 1;
+    const loadId = this._currentLoadId;
+
+    if (autoPlay) {
+      this.isPlaying = true;
+      this.updatePlayPauseIcon();
+      this.showPlayerBuffering(true);
+    }
 
     if (!track.video_id && track.id && track.id.startsWith("yt_")) {
       track.video_id = track.id.replace(/^yt_/, "");
@@ -9172,14 +9195,6 @@ class SoraFyDesktopApp {
     // Record listening taste affinity for persistent "se-genre & se-kultur" profile
     this.recordTasteAffinity(track);
 
-    if (!track.video_id && track.id && track.id.startsWith("yt_")) {
-      track.video_id = track.id.replace(/^yt_/, "");
-    }
-
-    // Reset listening analytics scrobble session (Nuclear Feature 5)
-    this._currentListenRecorded = false;
-    this._currentListenTrack = track;
-
     // Spotify/Apple Music Instant Stream: Skip network resolver if already preloaded or cached
     if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!track.is_full_stream || !track.stream_url)) {
       try {
@@ -9189,6 +9204,7 @@ class SoraFyDesktopApp {
           videoId: track.video_id,
           isVideo: !!track.is_video
         });
+        if (loadId !== this._currentLoadId) return;
         if (full && full.url) {
           track.fallback_url = track.stream_url;
           track.stream_url = full.url;
@@ -9231,13 +9247,20 @@ class SoraFyDesktopApp {
       }
     }
 
+    if (loadId !== this._currentLoadId) return;
+
     if (!track.stream_url) {
+      this.isPlaying = false;
+      this.showPlayerBuffering(false);
+      this.updatePlayPauseIcon();
       this.showToast("Failed to load audio stream for this track");
       return;
     }
 
     this.audio.src = track.stream_url;
     this.audio.load();
+
+    this._restoredSeekPosition = startPosition > 0 ? startPosition : 0;
 
     if (startPosition > 0) {
       const applyRestoredSeek = () => {
@@ -9247,7 +9270,20 @@ class SoraFyDesktopApp {
           } else {
             this.audio.currentTime = startPosition;
           }
-          this.onTimeUpdate();
+          const dur = (this.audio && !isNaN(this.audio.duration) && this.audio.duration > 0)
+            ? this.audio.duration
+            : (track.duration_secs || 1);
+          const pct = Math.min(100, Math.max(0, (startPosition / dur) * 100));
+          if (this.playerSeekbar && !this.isSeekingBottom) {
+            this.playerSeekbar.value = pct;
+            this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
+          }
+          if (this.screenPlayerSeekbar && !this.isSeekingScreen) {
+            this.screenPlayerSeekbar.value = pct;
+            this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${pct}%, rgba(255, 255, 255, 0.16) ${pct}%, rgba(255, 255, 255, 0.16) 100%)`;
+          }
+          this.currentTimeLabel.textContent = this.formatTime(startPosition);
+          if (this.screenPlayerCurrentTime) this.screenPlayerCurrentTime.textContent = this.formatTime(startPosition);
         } catch (e) {
           console.warn("Restore seek position notice:", e);
         }
@@ -9290,41 +9326,75 @@ class SoraFyDesktopApp {
     setTimeout(() => this.ensureUpcomingQueue(), 1200);
 
     if (autoPlay) {
-      this.ensureAudioContextActive();
-      if (this.appSettings && this.appSettings.crossfadeDuration > 0) {
-        this.fadeInAudio(this.appSettings.crossfadeDuration);
-      }
-      this.audio.play().then(() => {
-        this.isPlaying = true;
-        this.updatePlayPauseIcon();
-        this.syncJamState();
-        if (this.currentView === "player" && (track.is_video || this.currentScreenMode === "video")) {
-          this.setScreenPlayerMode("video");
-        }
-        // Spotify Preload Hook: resolve and buffer next track in background after 1s
-        setTimeout(() => this.preloadNextTrack(), 1000);
-      }).catch(async (err) => {
-        console.warn("Audio autoplay notice:", err);
-        if (track.fallback_url && track.fallback_url !== track.stream_url) {
-          try {
-            this.audio.src = track.fallback_url;
-            this.audio.load();
-            if (startPosition > 0) {
-              this.audio.currentTime = startPosition;
-            }
-            await this.audio.play();
-            this.isPlaying = true;
-            this.updatePlayPauseIcon();
-            setTimeout(() => this.preloadNextTrack(), 1000);
+      const attemptPlayback = async (retryCount = 0) => {
+        if (loadId !== this._currentLoadId) return;
+        try {
+          this.ensureAudioContextActive();
+          if (this.appSettings && this.appSettings.crossfadeDuration > 0) {
+            this.fadeInAudio(this.appSettings.crossfadeDuration);
+          }
+          await this.audio.play();
+          if (loadId !== this._currentLoadId) return;
+          this.isPlaying = true;
+          this.showPlayerBuffering(false);
+          this.updatePlayPauseIcon();
+          this.syncJamState();
+          if (this.currentView === "player" && (track.is_video || this.currentScreenMode === "video")) {
+            this.setScreenPlayerMode("video");
+          }
+          // Spotify Preload Hook: resolve and buffer next track in background after 1s
+          setTimeout(() => this.preloadNextTrack(), 1000);
+        } catch (err) {
+          if (loadId !== this._currentLoadId) return;
+          console.warn("Audio autoplay attempt rejected:", err);
+
+          // Retry on canplay or quick buffer delay if interrupted / buffering
+          if (retryCount === 0) {
+            const onCanPlay = () => {
+              this.audio.removeEventListener("canplay", onCanPlay);
+              if (loadId === this._currentLoadId) {
+                attemptPlayback(1);
+              }
+            };
+            this.audio.addEventListener("canplay", onCanPlay, { once: true });
+
+            setTimeout(() => {
+              if (loadId === this._currentLoadId && this.audio.paused) {
+                attemptPlayback(1);
+              }
+            }, 300);
             return;
-          } catch (e2) {}
+          }
+
+          // Try fallback stream URL if available
+          if (track.fallback_url && track.fallback_url !== track.stream_url) {
+            try {
+              this.audio.src = track.fallback_url;
+              this.audio.load();
+              if (startPosition > 0) {
+                this.audio.currentTime = startPosition;
+              }
+              await this.audio.play();
+              if (loadId !== this._currentLoadId) return;
+              this.isPlaying = true;
+              this.showPlayerBuffering(false);
+              this.updatePlayPauseIcon();
+              setTimeout(() => this.preloadNextTrack(), 1000);
+              return;
+            } catch (e2) {}
+          }
+
+          this.isPlaying = false;
+          this.showPlayerBuffering(false);
+          this.updatePlayPauseIcon();
+          this.showToast("Unable to play audio");
         }
-        this.isPlaying = false;
-        this.updatePlayPauseIcon();
-        this.showToast("Unable to play audio");
-      });
+      };
+
+      attemptPlayback();
     } else {
       this.isPlaying = false;
+      this.showPlayerBuffering(false);
       this.updatePlayPauseIcon();
       if ('mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
@@ -9701,14 +9771,14 @@ class SoraFyDesktopApp {
       const cur = this.tracks[this.currentTrackIndex];
       if (cur) this.updateDiscordPresence(cur);
     } else {
+      const resumePos = Math.max(0, (this.audio && this.audio.currentTime > 0) ? this.audio.currentTime : (this._restoredSeekPosition || 0));
       if (!this.audio.src || this.audio.error) {
-        this.loadTrack(this.currentTrackIndex, true);
+        this.loadTrack(this.currentTrackIndex, true, resumePos);
         return;
       }
       this.audio.play().then(() => {
         this.isPlaying = true;
         this.updatePlayPauseIcon();
-        this.syncJamState();
         this.syncJamState();
         if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         const cur = this.tracks[this.currentTrackIndex];
@@ -9721,7 +9791,7 @@ class SoraFyDesktopApp {
       }).catch(async (err) => {
         console.warn("Audio play error, reloading track:", err);
         try {
-          await this.loadTrack(this.currentTrackIndex, true);
+          await this.loadTrack(this.currentTrackIndex, true, resumePos);
         } catch (e2) {
           this.isPlaying = false;
           this.updatePlayPauseIcon();
@@ -9820,6 +9890,11 @@ class SoraFyDesktopApp {
     const current = this.audio.currentTime || 0;
     const total = this.audio.duration || this.tracks[this.currentTrackIndex]?.duration_secs || 1;
     const pct = total > 0 ? (current / total) * 100 : 0;
+
+    // Reset restored seek once user has legitimately progressed into playback
+    if (current > 1 && this._restoredSeekPosition > 0) {
+      this._restoredSeekPosition = 0;
+    }
 
     // Periodically persist playback session state (throttled every 3 seconds)
     const now = Date.now();
@@ -12899,7 +12974,7 @@ class SoraFyDesktopApp {
                 // If currently playing track, reload immediately to play verified audio
                 const isCurrentPlaying = (this.tracks[this.currentTrackIndex]?.id === track.id || this.tracks[this.currentTrackIndex]?.title === track.title);
                 if (isCurrentPlaying) {
-                  this.loadTrack(this.currentTrackIndex, true);
+                  this.loadTrack(this.currentTrackIndex, true, this.audio?.currentTime || 0);
                 }
 
                 this.showToast(`Sumber audio dikunci: ${c.title}`);
