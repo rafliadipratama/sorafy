@@ -2534,7 +2534,10 @@ class SoraFyDesktopApp {
       this.settingLanguage.value = initialLang;
     }
     if (this.settingAudioQuality) this.settingAudioQuality.value = this.appSettings.audioQuality || 'high';
-    if (this.settingVolumeNorm) this.settingVolumeNorm.checked = !!this.appSettings.volumeNormalization;
+    if (this.settingVolumeNorm) {
+      this.settingVolumeNorm.checked = !!this.appSettings.volumeNormalization;
+      this.setVolumeNormalization(!!this.appSettings.volumeNormalization);
+    }
     if (this.settingMetadataProvider) {
       this.settingMetadataProvider.value = this.appSettings.metadataProvider || 'spotify';
     }
@@ -2740,6 +2743,7 @@ class SoraFyDesktopApp {
     if (this.settingVolumeNorm) {
       this.settingVolumeNorm.addEventListener("change", (e) => {
         this.appSettings.volumeNormalization = e.target.checked;
+        this.setVolumeNormalization(e.target.checked);
         persistSettings();
         this.showToast(this.currentLanguage === 'id' ? `Normalisasi volume ${e.target.checked ? 'diaktifkan' : 'dinonaktifkan'}` : `Volume normalization ${e.target.checked ? 'enabled' : 'disabled'}`);
       });
@@ -11323,6 +11327,7 @@ class SoraFyDesktopApp {
       if (!AudioContextClass) return;
 
       this.audioCtx = new AudioContextClass();
+      this.audioContext = this.audioCtx; // Expose standard AudioContext alias
       this.audioSourceNode = this.audioCtx.createMediaElementSource(this.audio);
 
       // 1. Preamp Gain Node (Headroom & Anti-Clipping Attenuation)
@@ -11370,15 +11375,19 @@ class SoraFyDesktopApp {
       lastNode.connect(this.airFilterNode);
       lastNode = this.airFilterNode;
 
-      // 5. Dynamics Compressor (Safe Headroom & Anti-Clipping Limiter)
-      this.normalizerNode = this.audioCtx.createDynamicsCompressor();
-      this.normalizerNode.threshold.value = -18;
-      this.normalizerNode.knee.value = 24;
-      this.normalizerNode.ratio.value = 8;
-      this.normalizerNode.attack.value = 0.003;
-      this.normalizerNode.release.value = 0.25;
-      lastNode.connect(this.normalizerNode);
-      lastNode = this.normalizerNode;
+      // 5. Dynamics Compressor (Calibrated Loudness Normalization & Anti-Clipping Limiter)
+      this.compressorNode = this.audioCtx.createDynamicsCompressor();
+      this.normalizerNode = this.compressorNode; // Backward compatibility alias
+      lastNode.connect(this.compressorNode);
+      lastNode = this.compressorNode;
+
+      // 5b. Master Makeup Gain Node (Calibrated Streaming Output & Transparent Bypass)
+      this.masterGainNode = this.audioCtx.createGain();
+      lastNode.connect(this.masterGainNode);
+      lastNode = this.masterGainNode;
+
+      // Apply initial volume normalization setting
+      this.setVolumeNormalization(!!(this.appSettings && this.appSettings.volumeNormalization));
 
       // 6. AnalyserNode for Real-Time Frequency Spectrum Display
       this.analyserNode = this.audioCtx.createAnalyser();
@@ -11394,6 +11403,84 @@ class SoraFyDesktopApp {
 
     this.renderEqualizerBands();
     this.updateHeadroomTag();
+  }
+
+  setVolumeNormalization(enabled) {
+    const isNorm = !!enabled;
+    let params;
+    try {
+      if (typeof getNormalizationParams === "function") {
+        params = getNormalizationParams(isNorm);
+      } else if (typeof window !== "undefined" && typeof window.getNormalizationParams === "function") {
+        params = window.getNormalizationParams(isNorm);
+      } else if (typeof window !== "undefined" && window.AudioNodes && typeof window.AudioNodes.getNormalizationParams === "function") {
+        params = window.AudioNodes.getNormalizationParams(isNorm);
+      } else if (typeof require !== "undefined") {
+        const { getNormalizationParams: gnp } = require("./modules/audio-nodes");
+        params = gnp(isNorm);
+      }
+    } catch (_) {}
+
+    if (!params) {
+      params = isNorm
+        ? { threshold: -18, knee: 12, ratio: 4.0, attack: 0.003, release: 0.25, masterGain: 1.15 }
+        : { threshold: 0, knee: 0, ratio: 1.0, attack: 0.003, release: 0.25, masterGain: 1.0 };
+    }
+
+    const curTime = (this.audioCtx && typeof this.audioCtx.currentTime === "number")
+      ? this.audioCtx.currentTime
+      : (this.audioContext && typeof this.audioContext.currentTime === "number")
+        ? this.audioContext.currentTime
+        : 0;
+
+    const comp = this.compressorNode || this.normalizerNode;
+    if (comp) {
+      if (comp.threshold) {
+        if (typeof comp.threshold.setValueAtTime === "function") {
+          comp.threshold.setValueAtTime(params.threshold, curTime);
+        } else {
+          comp.threshold.value = params.threshold;
+        }
+      }
+      if (comp.ratio) {
+        if (typeof comp.ratio.setValueAtTime === "function") {
+          comp.ratio.setValueAtTime(params.ratio, curTime);
+        } else {
+          comp.ratio.value = params.ratio;
+        }
+      }
+      if (comp.knee && params.knee !== undefined) {
+        if (typeof comp.knee.setValueAtTime === "function") {
+          comp.knee.setValueAtTime(params.knee, curTime);
+        } else {
+          comp.knee.value = params.knee;
+        }
+      }
+      if (comp.attack && params.attack !== undefined) {
+        if (typeof comp.attack.setValueAtTime === "function") {
+          comp.attack.setValueAtTime(params.attack, curTime);
+        } else {
+          comp.attack.value = params.attack;
+        }
+      }
+      if (comp.release && params.release !== undefined) {
+        if (typeof comp.release.setValueAtTime === "function") {
+          comp.release.setValueAtTime(params.release, curTime);
+        } else {
+          comp.release.value = params.release;
+        }
+      }
+    }
+
+    if (this.masterGainNode && this.masterGainNode.gain) {
+      if (typeof this.masterGainNode.gain.setValueAtTime === "function") {
+        this.masterGainNode.gain.setValueAtTime(params.masterGain, curTime);
+      } else {
+        this.masterGainNode.gain.value = params.masterGain;
+      }
+    }
+
+    return params;
   }
 
   ensureAudioContextActive() {
@@ -13663,24 +13750,32 @@ class SoraFyDesktopApp {
 }
 
 // Instantiate on DOMContentLoaded
-document.addEventListener("DOMContentLoaded", () => {
-  window.sorafyApp = new SoraFyDesktopApp();
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    window.sorafyApp = new SoraFyDesktopApp();
 
-  // Hardware Media Keys & OS Tray Action Hook
-  if (window.electronAPI && typeof window.electronAPI.onMediaAction === 'function') {
-    window.electronAPI.onMediaAction((action) => {
-      if (!window.sorafyApp) return;
-      if (action === 'play-pause') {
-        window.sorafyApp.togglePlayPause();
-      } else if (action === 'next') {
-        window.sorafyApp.playNext();
-      } else if (action === 'prev') {
-        window.sorafyApp.playPrevious();
-      } else if (action === 'stop') {
-        if (window.sorafyApp.audio && !window.sorafyApp.audio.paused) {
+    // Hardware Media Keys & OS Tray Action Hook
+    if (window.electronAPI && typeof window.electronAPI.onMediaAction === 'function') {
+      window.electronAPI.onMediaAction((action) => {
+        if (!window.sorafyApp) return;
+        if (action === 'play-pause') {
           window.sorafyApp.togglePlayPause();
+        } else if (action === 'next') {
+          window.sorafyApp.playNext();
+        } else if (action === 'prev') {
+          window.sorafyApp.playPrevious();
+        } else if (action === 'stop') {
+          if (window.sorafyApp.audio && !window.sorafyApp.audio.paused) {
+            window.sorafyApp.togglePlayPause();
+          }
         }
-      }
-    });
-  }
-});
+      });
+    }
+  });
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    SoraFyDesktopApp
+  };
+}
