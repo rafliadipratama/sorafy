@@ -170,6 +170,10 @@ test('resolveLocalAudioPath finds existing file on disk and returns full path', 
 
     const nonExistentTrack = { title: 'Karma Police', artist: 'Radiohead' };
     expect(resolveLocalAudioPath(nonExistentTrack, tempDir)).toBeNull();
+
+    // Verify raw_path fast-path returns valid existing file directly
+    const fastPathTrack = { title: 'Different Name', artist: 'Different Artist', raw_path: testFile };
+    expect(resolveLocalAudioPath(fastPathTrack)).toBe(testFile);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }

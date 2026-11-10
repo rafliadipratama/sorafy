@@ -170,8 +170,23 @@ function matchDownloadedTrack(track, downloadedTracks) {
  * @returns {string|null} Full filesystem path or null
  */
 function resolveLocalAudioPath(track, baseDir) {
-  const dir = baseDir || path.join(os.homedir(), 'Music', 'SoraFy');
-  if (!fs.existsSync(dir)) return null;
+  if (!track || typeof track !== 'object') return null;
+
+  // Fast-path: if track already carries a valid raw_path on disk, verify and return directly
+  if (typeof track.raw_path === 'string' && track.raw_path) {
+    try {
+      if (fs && typeof fs.existsSync === 'function' && fs.existsSync(track.raw_path)) {
+        const stat = fs.statSync(track.raw_path);
+        if (stat.isFile() && stat.size > 0) {
+          return track.raw_path;
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (!fs || typeof fs.existsSync !== 'function') return null;
+  const dir = baseDir || (os && typeof os.homedir === 'function' ? path.join(os.homedir(), 'Music', 'SoraFy') : '');
+  if (!dir || !fs.existsSync(dir)) return null;
 
   const candidateFilenames = getExpectedLocalFilenames(track);
 

@@ -2748,6 +2748,14 @@ class SoraFyDesktopApp {
     } catch (_) {}
   }
 
+  syncThumbarState() {
+    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+      try {
+        window.electronAPI.setThumbarState({ isPlaying: !!this.isPlaying });
+      } catch (_) {}
+    }
+  }
+
   onPlay() {
     this.isPlaying = true;
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
@@ -2756,11 +2764,7 @@ class SoraFyDesktopApp {
       } catch (_) {}
       this.updateMediaSessionPosition();
     }
-    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
-      try {
-        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
-      } catch (_) {}
-    }
+    this.syncThumbarState();
   }
 
   onPause() {
@@ -2770,11 +2774,7 @@ class SoraFyDesktopApp {
         navigator.mediaSession.playbackState = 'paused';
       } catch (_) {}
     }
-    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
-      try {
-        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
-      } catch (_) {}
-    }
+    this.syncThumbarState();
   }
 
   // =========================================================================
@@ -9604,9 +9604,6 @@ class SoraFyDesktopApp {
       this.isPlaying = true;
       this.updatePlayPauseIcon();
       this.showPlayerBuffering(true);
-      if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
-        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
-      }
     }
 
     if (!track.video_id && track.id && track.id.startsWith("yt_")) {
@@ -9882,9 +9879,6 @@ class SoraFyDesktopApp {
       this.updatePlayPauseIcon();
       if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
-      }
-      if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
-        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
       }
     }
   }
@@ -10254,9 +10248,6 @@ class SoraFyDesktopApp {
       this.syncJamState();
       if (typeof this.onPause === 'function') this.onPause();
       if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
-      if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
-        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
-      }
       const cur = this.tracks[this.currentTrackIndex];
       if (cur) this.updateDiscordPresence(cur);
     } else {
@@ -10271,9 +10262,6 @@ class SoraFyDesktopApp {
         this.syncJamState();
         if (typeof this.onPlay === 'function') this.onPlay();
         if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
-        if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
-          window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
-        }
         const cur = this.tracks[this.currentTrackIndex];
         if (cur) this.updateDiscordPresence(cur);
         if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
@@ -10290,9 +10278,6 @@ class SoraFyDesktopApp {
           this.updatePlayPauseIcon();
           if (typeof this.onPause === 'function') this.onPause();
           if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
-          if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
-            window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
-          }
           this.showToast("Unable to play audio");
         }
       });
@@ -10315,7 +10300,9 @@ class SoraFyDesktopApp {
         this.screenPlayerVideoOverlay.classList.add("active");
       }
     }
-    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+    if (typeof this.syncThumbarState === 'function') {
+      this.syncThumbarState();
+    } else if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
       window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
     }
   }
