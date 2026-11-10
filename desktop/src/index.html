@@ -6,6 +6,10 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>SoraFy - High-Fidelity Music Streaming</title>
   <link rel="stylesheet" href="style.css">
+  <script src="modules/bulk-importer.js"></script>
+  <script src="modules/audio-nodes.js"></script>
+  <script src="modules/audio-deck-state.js"></script>
+  <script src="modules/local-interceptor.js"></script>
   <script src="iconsax-bundle.js"></script>
   <script>
     try {
@@ -60,6 +64,9 @@
           <span class="sidebar-section-title" data-i18n="sidebar_library">My Library</span>
         </div>
         <div style="display: flex; align-items: center; gap: 4px;">
+          <button class="sidebar-add-playlist-btn" id="sidebarMigrateLibraryBtn" title="Migrasi Musik / Import Library" data-i18n-title="tooltip_sidebar_migrate">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          </button>
           <button class="sidebar-add-playlist-btn" id="sidebarImportPlaylistBtn" title="Import Hub: Spotify, Apple Music & YouTube" data-i18n-title="tooltip_sidebar_import">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
           </button>
@@ -75,6 +82,14 @@
         <button class="lib-pill" data-filter="playlists" data-i18n="lib_filter_playlists">Playlists</button>
         <button class="lib-pill" data-filter="artists" data-i18n="lib_filter_artists">Artists</button>
         <button class="lib-pill" data-filter="albums" data-i18n="lib_filter_albums">Albums</button>
+      </div>
+
+      <!-- Migration / Import Library Quick Action -->
+      <div class="sidebar-migrate-action-wrap">
+        <button class="sidebar-migrate-btn btn-open-import-library" id="sidebarMigrateLibraryActionBtn" title="Migrasi Musik / Import Library">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+          <span data-i18n="sidebar_migrate_music">Migrasi Musik / Import</span>
+        </button>
       </div>
 
       <nav class="nav-menu spotify-library-nav" id="userPlaylistsNav">
@@ -541,7 +556,7 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>
                 Shuffle
               </button>
-              <button class="hero-secondary-btn" id="playlistDownloadAllBtn" title="Download entire playlist for offline listening">
+              <button class="hero-secondary-btn btn-download-playlist" id="playlistDownloadAllBtn" title="Download entire playlist for offline listening">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 <span id="playlistDownloadAllLabel">Download</span>
               </button>
@@ -904,6 +919,153 @@
       <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px;">
         <button class="hero-secondary-btn" id="cancelUnifiedImportBtn" data-i18n="btn_cancel">Cancel</button>
         <button class="hero-play-btn" id="submitUnifiedImportBtn" data-i18n="import_hub_start">Start Import</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Music Library Migration / Bulk Import Modal -->
+  <div id="modal-import-library" class="modal-backdrop import-library-backdrop" style="display: none;">
+    <div class="modal-card import-library-card">
+      <!-- Modal Header -->
+      <div class="import-library-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div class="import-header-icon-wrap">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E599" stroke-width="2.2">
+              <path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="import-library-title" data-i18n="import_library_title">Import Music Library / Migrasi Musik</h3>
+            <span class="import-library-subtitle" data-i18n="import_library_subtitle">Soundiiz, TuneMyMusic, SpotMYBackup (.csv, .json, .txt) & Multi-URL</span>
+          </div>
+        </div>
+        <button class="control-btn modal-close-btn" id="closeImportLibraryModalBtn" title="Close" data-i18n-title="btn_close">
+          <iconsax-icon name="close-circle" type="linear" size="20" color="currentColor"></iconsax-icon>
+        </button>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="import-tabs-header">
+        <button type="button" class="import-tab-btn active" id="tabBtnImportFile" data-tab="file">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span data-i18n="import_tab_file">Upload File (.csv / .json)</span>
+        </button>
+        <button type="button" class="import-tab-btn" id="tabBtnImportLinks" data-tab="links">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <span data-i18n="import_tab_links">Multiple Links</span>
+        </button>
+      </div>
+
+      <!-- Tab 1: File Upload & Drag-and-Drop Area -->
+      <div class="import-tab-content" id="tabContentImportFile">
+        <div class="import-drop-zone" id="importDropZone">
+          <div class="drop-zone-icon">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#00E599" stroke-width="1.8">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+          </div>
+          <div class="drop-zone-primary-text" data-i18n="import_drop_primary">
+            Tarik &amp; lepas file ekspor musik di sini atau klik untuk memilih
+          </div>
+          <div class="drop-zone-sub-text" data-i18n="import_drop_sub">
+            Format didukung: Soundiiz, TuneMyMusic, SpotMYBackup (.csv, .json, .txt)
+          </div>
+          <button type="button" class="hero-secondary-btn import-browse-btn" id="importFilePickBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span data-i18n="import_choose_file">Pilih File</span>
+          </button>
+          <input type="file" id="importFileInput" accept=".csv,.json,.txt" style="display: none;">
+        </div>
+
+        <!-- Selected File Preview Badge -->
+        <div class="import-file-info" id="importFileInfo" style="display: none;">
+          <div class="import-file-info-left">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00E599" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+            <div class="import-file-meta">
+              <span class="import-file-name" id="importFileName">library.csv</span>
+              <span class="import-file-size" id="importFileSize">120 KB</span>
+            </div>
+          </div>
+          <button type="button" class="import-clear-file-btn" id="importClearFileBtn" title="Hapus file terpilih">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 2: Multiple Links Textarea -->
+      <div class="import-tab-content" id="tabContentImportLinks" style="display: none;">
+        <label for="importMultiUrlInput" class="import-field-label" data-i18n="import_links_label">
+          Tempel Tautan Playlist (1 tautan per baris):
+        </label>
+        <textarea id="importMultiUrlInput" class="modal-input import-textarea" rows="5" placeholder="https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M&#10;https://music.apple.com/us/playlist/todays-hits/...&#10;https://music.youtube.com/playlist?list=..."></textarea>
+        <div class="import-field-hint" data-i18n="import_links_hint">
+          Mendukung link playlist Spotify, Apple Music, dan YouTube Music.
+        </div>
+      </div>
+
+      <!-- Destination Choice (Radio Group) -->
+      <div class="import-destination-box">
+        <span class="import-field-label" data-i18n="import_dest_label">Tujuan Penyimpanan / Destination:</span>
+        <div class="import-dest-options">
+          <label class="import-radio-label">
+            <input type="radio" name="importDestination" id="destPlaylist" value="playlist" checked>
+            <span class="import-radio-custom"></span>
+            <div class="import-radio-text">
+              <strong data-i18n="import_dest_playlist_title">Buat Playlist Baru Otomatis</strong>
+              <small data-i18n="import_dest_playlist_desc">Membuat playlist baru sesuai nama di file/tautan</small>
+            </div>
+          </label>
+          <label class="import-radio-label">
+            <input type="radio" name="importDestination" id="destLiked" value="liked">
+            <span class="import-radio-custom"></span>
+            <div class="import-radio-text">
+              <strong data-i18n="import_dest_liked_title">Simpan ke Liked Songs</strong>
+              <small data-i18n="import_dest_liked_desc">Menambahkan seluruh lagu langsung ke koleksi Lagu Disukai</small>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Progress Section (Hidden initially) -->
+      <div id="import-library-progress" class="import-progress-section" style="display: none;">
+        <div class="import-progress-header">
+          <span class="import-progress-status" id="importProgressStatus">Mempersiapkan impor...</span>
+          <span class="import-progress-percent" id="importProgressPercent">0%</span>
+        </div>
+        <div class="import-progress-bar-track">
+          <div class="import-progress-bar" id="importProgressBar" style="width: 0%;"></div>
+        </div>
+      </div>
+
+      <!-- Footer Action Buttons -->
+      <div class="import-library-footer">
+        <button type="button" class="hero-secondary-btn" id="cancelImportLibraryBtn" data-i18n="btn_cancel">Batal</button>
+        <button type="button" class="hero-play-btn" id="startImportLibraryBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          <span data-i18n="import_start_btn">Mulai Impor</span>
+        </button>
       </div>
     </div>
   </div>

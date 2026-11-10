@@ -6,9 +6,12 @@
  * and local file matching for offline-first playback.
  */
 
-const fs = require('node:fs');
-const path = require('node:path');
-const os = require('node:os');
+let fs, path, os;
+try {
+  fs = typeof require !== 'undefined' ? require('node:fs') : null;
+  path = typeof require !== 'undefined' ? require('node:path') : null;
+  os = typeof require !== 'undefined' ? require('node:os') : null;
+} catch (_) {}
 
 // Standard supported offline audio extensions
 const SUPPORTED_EXTENSIONS = ['.mp3', '.opus', '.m4a', '.flac', '.ogg', '.wav', '.webm'];
@@ -201,11 +204,24 @@ function resolveLocalAudioPath(track, baseDir) {
   return null;
 }
 
-module.exports = {
-  SUPPORTED_EXTENSIONS,
-  cleanMetadataString,
-  sanitizeFilenameChars,
-  getExpectedLocalFilenames,
-  matchDownloadedTrack,
-  resolveLocalAudioPath
-};
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    SUPPORTED_EXTENSIONS,
+    cleanMetadataString,
+    sanitizeFilenameChars,
+    getExpectedLocalFilenames,
+    matchDownloadedTrack,
+    resolveLocalAudioPath
+  };
+}
+
+if (typeof window !== 'undefined') {
+  window.LocalInterceptor = {
+    SUPPORTED_EXTENSIONS,
+    cleanMetadataString,
+    sanitizeFilenameChars,
+    getExpectedLocalFilenames,
+    matchDownloadedTrack,
+    resolveLocalAudioPath
+  };
+}
