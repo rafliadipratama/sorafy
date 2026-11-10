@@ -3,6 +3,19 @@
 // Live Streaming Playback, LRCLIB Synced Lyrics & Studio Equalizer DSP
 // Musicfy Recommendation & Discovery Algorithm Engine
 
+let _deckStateModule = null;
+function getAudioDeckStateHelper() {
+  if (_deckStateModule) return _deckStateModule;
+  if (typeof window !== "undefined" && window.AudioDeckState) return window.AudioDeckState;
+  try {
+    if (typeof require !== "undefined") {
+      _deckStateModule = require("./modules/audio-deck-state");
+      return _deckStateModule;
+    }
+  } catch (_) {}
+  return null;
+}
+
 const DEFAULT_PLUGINS = [
   {
     id: "ytmusic",
@@ -1522,10 +1535,19 @@ class SoraFyDesktopApp {
     this.activeSideTab = "lyrics";
     this.previousVolume = 0.85;
 
-    // Spotify-Style Instant Engine: Dual Preload Player & Queue Prefetcher
-    this.preloadAudio = new Audio();
-    this.preloadAudio.preload = "auto";
-    this.preloadAudio.volume = 0;
+    // Dual-Deck Architecture: Deck A (Primary) & Deck B (Preload / Secondary)
+    this.deckA = this.audio || (typeof Audio !== "undefined" ? new Audio() : null);
+    this.deckB = typeof Audio !== "undefined" ? new Audio() : null;
+    if (this.deckB) {
+      this.deckB.preload = "auto";
+      this.deckB.volume = 0;
+    }
+    this.preloadAudio = this.deckB;
+    this.activeDeck = "A";
+    this.preloadDeck = "B";
+    this.deckAGainNode = null;
+    this.deckBGainNode = null;
+    this.isCrossfading = false;
     this.isNextTrackPreloaded = false;
     this.preloadedTrackIndex = -1;
 
@@ -2221,6 +2243,303 @@ class SoraFyDesktopApp {
         }
       }, intervalMs);
     });
+  }
+
+  get queue() {
+    return this.tracks;
+  }
+  set queue(val) {
+    this.tracks = val;
+  }
+  get currentIndex() {
+    return this.currentTrackIndex;
+  }
+  set currentIndex(val) {
+    this.currentTrackIndex = val;
+  }
+
+  // =========================================================
+  // Dual-Deck Gapless & True Crossfade Engine
+  // =========================================================
+  bindDeckEvents(element, deckName) {
+    if (!element || typeof element.addEventListener !== "function") return;
+
+    element.addEventListener("timeupdate", () => {
+      if (this.activeDeck === deckName) {
+        this.onTimeUpdate();
+      }
+    });
+
+    element.addEventListener("loadedmetadata", () => {
+      if (this.activeDeck === deckName && element.duration && !isNaN(element.duration)) {
+        const realSecs = Math.round(element.duration);
+        if (this.durationLabel) this.durationLabel.textContent = this.formatTime(realSecs);
+        if (this.screenPlayerDuration) {
+          this.screenPlayerDuration.textContent = this.formatTime(realSecs);
+        }
+        if (this.tracks && this.tracks[this.currentTrackIndex]) {
+          this.tracks[this.currentTrackIndex].duration_secs = realSecs;
+        }
+        if (typeof document !== "undefined") {
+          const activeRows = document.querySelectorAll('.track-row.active .track-row-duration, .ytm-song-item.active .ytm-song-duration, .queue-item.active .queue-item-duration');
+          activeRows.forEach(el => el.textContent = this.formatTime(realSecs));
+        }
+      }
+    });
+
+    element.addEventListener("error", () => {
+      if (this.activeDeck === deckName) {
+        console.warn("Audio element error on src:", element.src, element.error);
+        const cur = this.tracks ? this.tracks[this.currentTrackIndex] : null;
+        if (cur && cur.fallback_url && element.src !== cur.fallback_url) {
+          console.log("Switching to fallback preview stream:", cur.fallback_url);
+          element.src = cur.fallback_url;
+          element.play().catch(() => {});
+        } else {
+          this.isPlaying = false;
+          if (typeof this.updatePlayPauseIcon === "function") this.updatePlayPauseIcon();
+        }
+      }
+    });
+
+    element.addEventListener("ended", () => {
+      if (this.activeDeck === deckName) {
+        this.onTrackEnded();
+      }
+    });
+
+    element.addEventListener("waiting", () => {
+      if (this.activeDeck === deckName && typeof this.showPlayerBuffering === "function") {
+        this.showPlayerBuffering(true);
+      }
+    });
+
+    element.addEventListener("canplay", () => {
+      if (this.activeDeck === deckName && typeof this.showPlayerBuffering === "function") {
+        this.showPlayerBuffering(false);
+      }
+    });
+
+    element.addEventListener("playing", () => {
+      if (this.activeDeck === deckName && typeof this.showPlayerBuffering === "function") {
+        this.showPlayerBuffering(false);
+      }
+    });
+
+    element.addEventListener("play", () => {
+      if (this.activeDeck === deckName) {
+        if (typeof this.showPlayerBuffering === "function") this.showPlayerBuffering(false);
+        if (this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
+          this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
+        }
+        if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
+          if (this.screenPlayerNativeVideo.paused) {
+            this.screenPlayerNativeVideo.play().catch(() => {});
+          }
+        }
+      }
+    });
+
+    element.addEventListener("pause", () => {
+      if (this.activeDeck === deckName) {
+        if (this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
+          this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
+        }
+        if (this.screenPlayerNativeVideo && !this.screenPlayerNativeVideo.paused) {
+          this.screenPlayerNativeVideo.pause();
+        }
+        if (typeof this.savePlaybackSession === "function") this.savePlaybackSession();
+      }
+    });
+
+    element.addEventListener("seeked", () => {
+      if (this.activeDeck === deckName && this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
+        this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
+      }
+    });
+  }
+
+  applyDeckGains(currentGain, nextGain) {
+    const activeGainNode = this.activeDeck === 'A' ? this.deckAGainNode : this.deckBGainNode;
+    const preloadGainNode = this.activeDeck === 'A' ? this.deckBGainNode : this.deckAGainNode;
+    const curTime = (this.audioCtx && typeof this.audioCtx.currentTime === 'number')
+      ? this.audioCtx.currentTime
+      : (this.audioContext && typeof this.audioContext.currentTime === 'number')
+        ? this.audioContext.currentTime
+        : 0;
+
+    if (activeGainNode && activeGainNode.gain) {
+      if (typeof activeGainNode.gain.setValueAtTime === 'function') {
+        activeGainNode.gain.setValueAtTime(currentGain, curTime);
+      } else {
+        activeGainNode.gain.value = currentGain;
+      }
+    }
+    if (preloadGainNode && preloadGainNode.gain) {
+      if (typeof preloadGainNode.gain.setValueAtTime === 'function') {
+        preloadGainNode.gain.setValueAtTime(nextGain, curTime);
+      } else {
+        preloadGainNode.gain.value = nextGain;
+      }
+    }
+
+    const activeAudio = this.activeDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+    const preloadAudio = this.activeDeck === 'A' ? (this.deckB || this.preloadAudio) : (this.deckA || this.audio);
+
+    const baseVolume = (this.volumeSlider && !isNaN(parseFloat(this.volumeSlider.value)))
+      ? parseFloat(this.volumeSlider.value)
+      : (typeof this.currentVolume === 'number' ? this.currentVolume : 0.85);
+
+    if (activeAudio) {
+      try {
+        activeAudio.volume = Math.max(0, Math.min(1, baseVolume * currentGain));
+      } catch (_) {}
+    }
+    if (preloadAudio) {
+      try {
+        preloadAudio.volume = Math.max(0, Math.min(1, baseVolume * nextGain));
+      } catch (_) {}
+    }
+  }
+
+  resetDeckGains() {
+    this.isCrossfading = false;
+    this.applyDeckGains(1.0, 0.0);
+  }
+
+  handleCrossfadeTick() {
+    const activeAudio = this.activeDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+    const preloadAudio = this.activeDeck === 'A' ? (this.deckB || this.preloadAudio) : (this.deckA || this.audio);
+    if (!activeAudio) {
+      return { currentGain: 1.0, nextGain: 0.0, isCrossfading: false, progress: 0 };
+    }
+
+    const currentTime = (typeof activeAudio.currentTime === 'number' && !isNaN(activeAudio.currentTime))
+      ? activeAudio.currentTime
+      : 0;
+    const duration = (typeof activeAudio.duration === 'number' && !isNaN(activeAudio.duration) && activeAudio.duration > 0)
+      ? activeAudio.duration
+      : ((this.tracks && this.tracks[this.currentTrackIndex]?.duration_secs) || 0);
+
+    const crossfadeDuration = (this.appSettings && typeof this.appSettings.crossfadeDuration === 'number')
+      ? this.appSettings.crossfadeDuration
+      : 0;
+
+    if (crossfadeDuration <= 0 || duration <= 0) {
+      if (this.isCrossfading) {
+        this.resetDeckGains();
+      }
+      return { currentGain: 1.0, nextGain: 0.0, isCrossfading: false, progress: 0 };
+    }
+
+    const helper = getAudioDeckStateHelper();
+    const effectiveCrossfade = helper && typeof helper.getEffectiveCrossfadeDuration === 'function'
+      ? helper.getEffectiveCrossfadeDuration(duration, crossfadeDuration)
+      : (crossfadeDuration >= duration ? Math.max(0, Math.floor(duration * 0.4)) : crossfadeDuration);
+
+    if (effectiveCrossfade <= 0) {
+      if (this.isCrossfading) {
+        this.resetDeckGains();
+      }
+      return { currentGain: 1.0, nextGain: 0.0, isCrossfading: false, progress: 0 };
+    }
+
+    const windowStart = duration - effectiveCrossfade;
+    const gains = helper && typeof helper.calculateCrossfadeGains === 'function'
+      ? helper.calculateCrossfadeGains(currentTime, duration, crossfadeDuration)
+      : (currentTime < windowStart
+        ? { currentGain: 1.0, nextGain: 0.0, isCrossfading: false, progress: 0 }
+        : {
+            currentGain: Math.max(0, Math.min(1, 1 - ((currentTime - windowStart) / effectiveCrossfade))),
+            nextGain: Math.max(0, Math.min(1, (currentTime - windowStart) / effectiveCrossfade)),
+            isCrossfading: true,
+            progress: Math.max(0, Math.min(1, (currentTime - windowStart) / effectiveCrossfade))
+          });
+
+    if (currentTime >= windowStart && duration > 0) {
+      if (!this.isCrossfading) {
+        this.isCrossfading = true;
+        if (preloadAudio && preloadAudio.src && preloadAudio.paused) {
+          preloadAudio.currentTime = 0;
+          try {
+            const playPromise = preloadAudio.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+              playPromise.catch(e => {
+                console.warn("Crossfade secondary deck autoplay notice:", e);
+              });
+            }
+          } catch (e) {
+            console.warn("Crossfade secondary deck play call notice:", e);
+          }
+        }
+      }
+
+      this.applyDeckGains(gains.currentGain, gains.nextGain);
+
+      if (gains.currentGain <= 0 && gains.nextGain >= 1.0) {
+        if (typeof this.swapDecks === 'function') {
+          this.swapDecks();
+        }
+      }
+    } else if (this.isCrossfading) {
+      this.resetDeckGains();
+    }
+
+    return gains;
+  }
+
+  swapDecks() {
+    const oldActiveDeck = this.activeDeck;
+    const newActiveDeck = oldActiveDeck === 'A' ? 'B' : 'A';
+    this.activeDeck = newActiveDeck;
+    this.preloadDeck = oldActiveDeck;
+
+    const oldActiveAudio = oldActiveDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+    const newActiveAudio = newActiveDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+
+    if (oldActiveAudio) {
+      try {
+        oldActiveAudio.pause();
+        oldActiveAudio.currentTime = 0;
+      } catch (_) {}
+    }
+
+    this.audio = newActiveAudio;
+    this.preloadAudio = oldActiveAudio;
+
+    this.applyDeckGains(1.0, 0.0);
+    this.isCrossfading = false;
+    this.isNextTrackPreloaded = false;
+
+    if (typeof this.preloadedTrackIndex === 'number' && this.preloadedTrackIndex !== -1 && this.tracks && this.tracks[this.preloadedTrackIndex]) {
+      this.currentTrackIndex = this.preloadedTrackIndex;
+      this.preloadedTrackIndex = -1;
+    } else if (this.tracks && this.tracks.length > 0) {
+      if (this.isShuffled) {
+        this.currentTrackIndex = Math.floor(Math.random() * this.tracks.length);
+      } else {
+        this.currentTrackIndex = (this.currentTrackIndex + 1) % this.tracks.length;
+      }
+    }
+
+    const currentTrack = (this.tracks && this.tracks[this.currentTrackIndex]) ? this.tracks[this.currentTrackIndex] : null;
+    if (currentTrack) {
+      if (typeof this.updateScreenPlayer === 'function') this.updateScreenPlayer();
+      if (typeof this.highlightActiveSongItems === 'function') this.highlightActiveSongItems();
+      if (typeof this.updateMediaSession === 'function') this.updateMediaSession(currentTrack);
+      if (typeof this.updateDiscordPresence === 'function') this.updateDiscordPresence(currentTrack);
+      if (typeof this.renderQueue === 'function') this.renderQueue();
+      if (this.playerTitle) {
+        this.playerTitle.innerHTML = `
+          <span class="title-text">${typeof this.escapeHtml === 'function' ? this.escapeHtml(currentTrack.title) : currentTrack.title}</span>
+          ${currentTrack.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
+        `;
+      }
+      if (typeof this.renderBottomPlayerArtist === 'function') this.renderBottomPlayerArtist(currentTrack);
+      if (this.playerArtwork && currentTrack.artwork_url) this.playerArtwork.src = currentTrack.artwork_url;
+      if (typeof this.fetchTrackLyrics === 'function') this.fetchTrackLyrics(currentTrack);
+      if (typeof this.recordPlayHistory === 'function') this.recordPlayHistory(currentTrack);
+    }
   }
 
   // Official Verified Artist Rosette Checkmark
@@ -4054,55 +4373,9 @@ class SoraFyDesktopApp {
       }
     });
 
-    this.audio.addEventListener("timeupdate", () => this.onTimeUpdate());
-    this.audio.addEventListener("loadedmetadata", () => {
-      if (this.audio.duration && !isNaN(this.audio.duration)) {
-        const realSecs = Math.round(this.audio.duration);
-        this.durationLabel.textContent = this.formatTime(realSecs);
-        if (this.screenPlayerDuration) {
-          this.screenPlayerDuration.textContent = this.formatTime(realSecs);
-        }
-        if (this.tracks[this.currentTrackIndex]) {
-          this.tracks[this.currentTrackIndex].duration_secs = realSecs;
-        }
-        const activeRows = document.querySelectorAll('.track-row.active .track-row-duration, .ytm-song-item.active .ytm-song-duration, .queue-item.active .queue-item-duration');
-        activeRows.forEach(el => el.textContent = this.formatTime(realSecs));
-      }
-    });
-    this.audio.addEventListener("error", () => {
-      console.warn("Audio element error on src:", this.audio.src, this.audio.error);
-      const cur = this.tracks[this.currentTrackIndex];
-      if (cur && cur.fallback_url && this.audio.src !== cur.fallback_url) {
-        console.log("Switching to fallback preview stream:", cur.fallback_url);
-        this.audio.src = cur.fallback_url;
-        this.audio.play().catch(() => {});
-      } else {
-        this.isPlaying = false;
-        this.updatePlayPauseIcon();
-      }
-    });
-    this.audio.addEventListener("ended", () => this.onTrackEnded());
-    this.audio.addEventListener("waiting", () => this.showPlayerBuffering(true));
-    this.audio.addEventListener("canplay", () => this.showPlayerBuffering(false));
-    this.audio.addEventListener("playing", () => this.showPlayerBuffering(false));
-
-    this.audio.addEventListener("play", () => {
-      this.showPlayerBuffering(false);
-      this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
-      if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
-        if (this.screenPlayerNativeVideo.paused) {
-          this.screenPlayerNativeVideo.play().catch(() => {});
-        }
-      }
-    });
-    this.audio.addEventListener("pause", () => {
-      this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
-      if (this.screenPlayerNativeVideo && !this.screenPlayerNativeVideo.paused) {
-        this.screenPlayerNativeVideo.pause();
-      }
-      this.savePlaybackSession();
-    });
-    this.audio.addEventListener("seeked", () => this.updateDiscordPresence(this.tracks[this.currentTrackIndex]));
+    // Bind Dual-Deck event listeners to Deck A and Deck B
+    this.bindDeckEvents(this.deckA || this.audio, 'A');
+    this.bindDeckEvents(this.deckB || this.preloadAudio, 'B');
 
     // Playback session persistence hooks (on window close, unload, pagehide, and Electron app-before-close)
     window.addEventListener("beforeunload", () => this.savePlaybackSession(true));
@@ -9142,6 +9415,15 @@ class SoraFyDesktopApp {
         this.audio.pause();
       } catch (_) {}
     }
+
+    // Clean up any ongoing crossfade and secondary deck to prevent audio ghosting
+    this.resetDeckGains();
+    if (this.preloadAudio) {
+      try {
+        this.preloadAudio.pause();
+        this.preloadAudio.currentTime = 0;
+      } catch (_) {}
+    }
     this._currentLoadId = (this._currentLoadId || 0) + 1;
     const loadId = this._currentLoadId;
 
@@ -9465,14 +9747,12 @@ class SoraFyDesktopApp {
   warmupAudioBuffer(url) {
     if (!url) return;
     try {
-      if (!this.preloadAudio) {
-        this.preloadAudio = new Audio();
-        this.preloadAudio.preload = "auto";
-        this.preloadAudio.volume = 0;
-      }
-      if (this.preloadAudio.src !== url) {
-        this.preloadAudio.src = url;
-        this.preloadAudio.load();
+      const preloadEl = this.activeDeck === 'A' ? (this.deckB || this.preloadAudio) : (this.deckA || this.audio);
+      if (preloadEl) {
+        if (preloadEl.src !== url) {
+          preloadEl.src = url;
+          preloadEl.load();
+        }
       }
     } catch (_) {}
   }
@@ -9868,6 +10148,7 @@ class SoraFyDesktopApp {
     if (!this.tracks || this.tracks.length === 0) return;
     // Friendly UX: if song has played > 3 seconds, replay from start first
     if (this.audio && this.audio.currentTime > 3) {
+      this.resetDeckGains();
       this.audio.currentTime = 0;
       return;
     }
@@ -9883,10 +10164,15 @@ class SoraFyDesktopApp {
       return;
     }
     if (this.repeatMode === 2) {
+      this.resetDeckGains();
       this.audio.currentTime = 0;
       this.audio.play();
     } else {
-      this.playNext();
+      if (this.isCrossfading) {
+        this.swapDecks();
+      } else {
+        this.playNext();
+      }
     }
   }
 
@@ -9959,11 +10245,19 @@ class SoraFyDesktopApp {
 
     this.syncLyrics(Math.max(0, (current * 1000) + this.getCurrentTrackLyricsOffset()));
 
-    // Spotify-Style Instant Playback: Trigger preload of the next track when 6s into song or 25s left
-    if ((current > 6 || (total > 30 && total - current < 25)) && !this.isNextTrackPreloaded) {
+    // Dual-Deck Queue Prefetcher: Trigger preload when within prefetch window (<= 15s remaining)
+    const helper = getAudioDeckStateHelper();
+    const shouldPrefetch = helper && typeof helper.shouldTriggerPrefetch === 'function'
+      ? helper.shouldTriggerPrefetch(current, total, this.isNextTrackPreloaded)
+      : ((total > 0 && total - current <= 15) && !this.isNextTrackPreloaded);
+
+    if (shouldPrefetch) {
       this.isNextTrackPreloaded = true;
       this.preloadNextTrack();
     }
+
+    // Dual-Deck Gapless & True Crossfade Engine Tick
+    this.handleCrossfadeTick();
   }
 
   formatTime(secs) {
@@ -11328,16 +11622,42 @@ class SoraFyDesktopApp {
 
       this.audioCtx = new AudioContextClass();
       this.audioContext = this.audioCtx; // Expose standard AudioContext alias
-      this.audioSourceNode = this.audioCtx.createMediaElementSource(this.audio);
+
+      // Dual-Deck independent gain nodes connected to unified DSP equalizer chain
+      this.deckAGainNode = this.audioCtx.createGain();
+      this.deckBGainNode = this.audioCtx.createGain();
+      this.deckAGainNode.gain.value = (this.activeDeck === 'A') ? 1.0 : 0.0;
+      this.deckBGainNode.gain.value = (this.activeDeck === 'B') ? 1.0 : 0.0;
+
+      const deckAEl = this.deckA || this.audio;
+      const deckBEl = this.deckB || this.preloadAudio;
+
+      if (deckAEl) {
+        try {
+          this.audioSourceNode = this.audioCtx.createMediaElementSource(deckAEl);
+          this.audioSourceNode.connect(this.deckAGainNode);
+        } catch (e) {
+          console.warn("Deck A AudioSourceNode notice:", e);
+        }
+      }
+      if (deckBEl) {
+        try {
+          this.preloadAudioSourceNode = this.audioCtx.createMediaElementSource(deckBEl);
+          this.preloadAudioSourceNode.connect(this.deckBGainNode);
+        } catch (e) {
+          console.warn("Deck B AudioSourceNode notice:", e);
+        }
+      }
 
       // 1. Preamp Gain Node (Headroom & Anti-Clipping Attenuation)
       this.preampNode = this.audioCtx.createGain();
       const preampFactor = Math.pow(10, (this.currentPreamp || 0) / 20);
       this.preampNode.gain.value = this.isEqBypassed ? 1.0 : preampFactor;
 
-      let lastNode = this.audioSourceNode;
-      lastNode.connect(this.preampNode);
-      lastNode = this.preampNode;
+      if (this.deckAGainNode) this.deckAGainNode.connect(this.preampNode);
+      if (this.deckBGainNode) this.deckBGainNode.connect(this.preampNode);
+
+      let lastNode = this.preampNode;
 
       // 2. 10-Band ISO Graphic Equalizer Filters (Direct Form II Biquads)
       this.eqFilters = EQ_FREQUENCIES.map((freq, idx) => {
