@@ -13058,6 +13058,11 @@ class SoraFyDesktopApp {
         return;
       }
 
+      if (typeof window === "undefined" || !window.electronAPI || typeof window.electronAPI.importExternalPlaylist !== "function") {
+        this.showToast(isId ? "Impor tautan hanya tersedia di aplikasi desktop SoraFy." : "Link import is only available on SoraFy desktop.");
+        return;
+      }
+
       if (this.startImportLibraryBtn) this.startImportLibraryBtn.disabled = true;
       this.updateImportLibraryProgress(10, isId ? `Memproses 1 dari ${urls.length} link...` : `Processing 1 of ${urls.length} link(s)...`, true);
       await new Promise(r => setTimeout(r, 0));
@@ -13146,6 +13151,13 @@ class SoraFyDesktopApp {
           } catch (linkErr) {
             console.warn(`Error resolving link ${url}:`, linkErr);
           }
+        }
+
+        if (importedTracksTotal === 0) {
+          this.showToast(isId ? "Tidak ada lagu yang berhasil diimpor dari tautan yang diberikan." : "No tracks could be imported from the provided links.");
+          this.updateImportLibraryProgress(0, "", false);
+          if (this.startImportLibraryBtn) this.startImportLibraryBtn.disabled = false;
+          return;
         }
 
         if (destination === "liked") {
