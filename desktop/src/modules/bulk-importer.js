@@ -146,7 +146,17 @@ function parseCsv(rawText) {
   const titlePatterns = ['title', 'track name', 'song name', 'track', 'song', 'name', 'track title', /^track[\s_-]?name$/i, /^song[\s_-]?name$/i, /^title$/i];
   const artistPatterns = ['artist', 'artist name', 'artists', 'artist(s)', 'performer', 'creator', 'author', /^artist[\s_-]?name$/i, /^artist$/i];
   const albumPatterns = ['album', 'album name', 'album title', /^album[\s_-]?name$/i, /^album$/i];
-  const durationPatterns = ['duration', 'duration (ms)', 'duration_ms', 'time', 'length', /^duration/i, /^length/i];
+  const durationPatterns = [
+    'duration',
+    'track duration',
+    'duration (ms)',
+    'duration_ms',
+    'time',
+    'length',
+    /track[\s_-]?duration/i,
+    /duration/i,
+    /^length/i
+  ];
   const playlistPatterns = ['playlist', 'playlist name', 'folder', 'collection', /^playlist[\s_-]?name$/i, /^playlist$/i];
 
   let headerRowIndex = -1;
@@ -160,13 +170,19 @@ function parseCsv(rawText) {
     const r = rows[i];
     const tIdx = findHeaderIndex(r, titlePatterns);
     const aIdx = findHeaderIndex(r, artistPatterns);
-    if (tIdx !== -1 || aIdx !== -1) {
+    const albIdx = findHeaderIndex(r, albumPatterns);
+    const dIdx = findHeaderIndex(r, durationPatterns);
+    const pIdx = findHeaderIndex(r, playlistPatterns);
+
+    // Require both title and artist, or at least two distinct matched columns
+    const matchedCount = [tIdx, aIdx, albIdx, dIdx, pIdx].filter(idx => idx !== -1).length;
+    if ((tIdx !== -1 && aIdx !== -1) || matchedCount >= 2) {
       headerRowIndex = i;
       titleIdx = tIdx;
       artistIdx = aIdx;
-      albumIdx = findHeaderIndex(r, albumPatterns);
-      durationIdx = findHeaderIndex(r, durationPatterns);
-      playlistIdx = findHeaderIndex(r, playlistPatterns);
+      albumIdx = albIdx;
+      durationIdx = dIdx;
+      playlistIdx = pIdx;
       break;
     }
   }
@@ -220,9 +236,9 @@ function parseCsv(rawText) {
  */
 function extractTrackFromJson(raw) {
   if (!raw || typeof raw !== 'object') return null;
-  const item = raw.track || raw;
+  const item = (raw.track && typeof raw.track === 'object') ? raw.track : raw;
 
-  let title = item.name || item.title || item.trackName || item.songName || '';
+  let title = (typeof raw.track === 'string' ? raw.track : '') || item.name || item.title || item.trackName || item.songName || '';
   if (typeof title !== 'string') title = String(title || '');
   title = title.trim();
 

@@ -165,3 +165,48 @@ test('auto-detects fileType if not specified', () => {
   const resJson = parseLibraryData(json);
   expect(resJson.playlists[0].tracks[0].title).toBe('Paranoid Android');
 });
+
+// 6. Regression tests for specific edge cases
+test('parses Spotify YourLibrary.json with track property as string', () => {
+  const json = JSON.stringify({
+    tracks: [
+      { artist: "Radiohead", album: "In Rainbows", track: "Reckoner" },
+      { artist: "The Beatles", album: "Abbey Road", track: "Something" }
+    ]
+  });
+  const result = parseLibraryData(json, 'json');
+  expect(result.playlists.length).toBe(1);
+  expect(result.playlists[0].tracks.length).toBe(2);
+  expect(result.playlists[0].tracks[0].title).toBe('Reckoner');
+  expect(result.playlists[0].tracks[0].artist).toBe('Radiohead');
+  expect(result.playlists[0].tracks[0].album).toBe('In Rainbows');
+  expect(result.playlists[0].tracks[1].title).toBe('Something');
+});
+
+test('parses Soundiiz CSV with "Track duration" header correctly', () => {
+  const csv = `Title,Artist,Album,Track duration
+Paranoid Android,Radiohead,OK Computer,06:23
+Nude,Radiohead,In Rainbows,04:15`;
+  const result = parseLibraryData(csv, 'csv');
+  expect(result.playlists.length).toBe(1);
+  expect(result.playlists[0].tracks.length).toBe(2);
+  expect(result.playlists[0].tracks[0].title).toBe('Paranoid Android');
+  expect(result.playlists[0].tracks[0].duration).toBe(383); // 6*60 + 23 = 383
+  expect(result.playlists[0].tracks[1].duration).toBe(255); // 4*60 + 15 = 255
+});
+
+test('does not misidentify row 0 of headerless CSV as a header when title matches keyword', () => {
+  const csv = `Name,The Beatles,Abbey Road
+Track,The Weeknd,Starboy
+Song,Blur,Parklife`;
+  const result = parseLibraryData(csv, 'csv');
+  expect(result.playlists.length).toBe(1);
+  expect(result.playlists[0].tracks.length).toBe(3);
+  expect(result.playlists[0].tracks[0].title).toBe('Name');
+  expect(result.playlists[0].tracks[0].artist).toBe('The Beatles');
+  expect(result.playlists[0].tracks[0].album).toBe('Abbey Road');
+  expect(result.playlists[0].tracks[1].title).toBe('Track');
+  expect(result.playlists[0].tracks[1].artist).toBe('The Weeknd');
+  expect(result.playlists[0].tracks[2].title).toBe('Song');
+  expect(result.playlists[0].tracks[2].artist).toBe('Blur');
+});
