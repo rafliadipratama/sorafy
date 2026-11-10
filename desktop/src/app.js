@@ -1848,6 +1848,8 @@ class SoraFyDesktopApp {
     this.playlistEditBtn = document.getElementById("playlistEditBtn");
     this.playlistDeleteBtn = document.getElementById("playlistDeleteBtn");
     this.playlistOpenFolderBtn = document.getElementById("playlistOpenFolderBtn");
+    this.playlistDownloadAllBtn = document.getElementById("playlistDownloadAllBtn");
+    this.playlistDownloadAllLabel = document.getElementById("playlistDownloadAllLabel");
     this.playlistTrackList = document.getElementById("playlistTrackList");
 
     // Nav Items
@@ -2368,6 +2370,8 @@ class SoraFyDesktopApp {
         ? this.audioContext.currentTime
         : 0;
 
+    const hasGainNodes = Boolean(activeGainNode && preloadGainNode && activeGainNode.gain && preloadGainNode.gain);
+
     if (activeGainNode && activeGainNode.gain) {
       if (typeof activeGainNode.gain.setValueAtTime === 'function') {
         activeGainNode.gain.setValueAtTime(currentGain, curTime);
@@ -2390,14 +2394,15 @@ class SoraFyDesktopApp {
       ? parseFloat(this.volumeSlider.value)
       : (typeof this.currentVolume === 'number' ? this.currentVolume : 0.85);
 
+    // If Web Audio GainNodes are active, maintain audio.volume = baseVolume to prevent double attenuation
     if (activeAudio) {
       try {
-        activeAudio.volume = Math.max(0, Math.min(1, baseVolume * currentGain));
+        activeAudio.volume = Math.max(0, Math.min(1, hasGainNodes ? baseVolume : baseVolume * currentGain));
       } catch (_) {}
     }
     if (preloadAudio) {
       try {
-        preloadAudio.volume = Math.max(0, Math.min(1, baseVolume * nextGain));
+        preloadAudio.volume = Math.max(0, Math.min(1, hasGainNodes ? baseVolume : baseVolume * nextGain));
       } catch (_) {}
     }
   }
@@ -2405,6 +2410,12 @@ class SoraFyDesktopApp {
   resetDeckGains() {
     this.isCrossfading = false;
     this.applyDeckGains(1.0, 0.0);
+    if (this.preloadAudio) {
+      try {
+        this.preloadAudio.pause();
+        this.preloadAudio.currentTime = 0;
+      } catch (_) {}
+    }
   }
 
   handleCrossfadeTick() {
@@ -3868,6 +3879,12 @@ class SoraFyDesktopApp {
       });
     }
 
+    if (this.playlistDownloadAllBtn) {
+      this.playlistDownloadAllBtn.addEventListener("click", () => {
+        this.downloadCurrentPlaylist();
+      });
+    }
+
     if (this.playlistOpenFolderBtn) {
       this.playlistOpenFolderBtn.addEventListener("click", () => {
         if (window.electronAPI && typeof window.electronAPI.openDownloadFolder === 'function') {
@@ -4384,6 +4401,13 @@ class SoraFyDesktopApp {
     if (window.electronAPI && typeof window.electronAPI.onAppBeforeClose === "function") {
       window.electronAPI.onAppBeforeClose(() => {
         this.savePlaybackSession(true);
+      });
+    }
+
+    // 1-Click Offline Playlist Download Progress Hook
+    if (window.electronAPI && typeof window.electronAPI.onDownloadPlaylistProgress === "function") {
+      window.electronAPI.onDownloadPlaylistProgress((progress) => {
+        this.handleDownloadPlaylistProgress(progress);
       });
     }
 
@@ -7842,6 +7866,7 @@ class SoraFyDesktopApp {
       this.playlistLikeAlbumBtn.style.display = "inline-flex";
       this.updateAlbumLikeButton(album);
     }
+    if (this.playlistDownloadAllBtn) this.playlistDownloadAllBtn.style.display = "inline-flex";
 
     const typeBadge = document.getElementById("playlistTypeBadge");
     if (typeBadge) typeBadge.textContent = this.currentLanguage === "id" ? "Album Resmi" : "Official Album";
@@ -7911,6 +7936,7 @@ class SoraFyDesktopApp {
     if (this.playlistEditBtn) this.playlistEditBtn.style.display = isUserPl ? "inline-flex" : "none";
     if (this.playlistLikeAlbumBtn) this.playlistLikeAlbumBtn.style.display = "none";
     if (this.playlistOpenFolderBtn) this.playlistOpenFolderBtn.style.display = (playlist.is_special === "downloads") ? "inline-flex" : "none";
+    if (this.playlistDownloadAllBtn) this.playlistDownloadAllBtn.style.display = (playlist.is_special === "downloads") ? "none" : "inline-flex";
 
     if (this.playlistCoverWrapper) {
       this.playlistCoverWrapper.classList.toggle("editable", isUserPl);
@@ -9480,6 +9506,28 @@ class SoraFyDesktopApp {
 
     // Record listening taste affinity for persistent "se-genre & se-kultur" profile
     this.recordTasteAffinity(track);
+
+    // Local-First Audio Interceptor: check if audio is already downloaded locally in ~/Music/SoraFy
+    if (window.electronAPI && typeof window.electronAPI.checkLocalAudioExists === 'function' && !track.is_local) {
+      try {
+        const localResult = await window.electronAPI.checkLocalAudioExists(track);
+        if (loadId !== this._currentLoadId) return;
+        if (localResult && localResult.exists && localResult.url) {
+          track.fallback_url = track.stream_url;
+          track.stream_url = localResult.url;
+          track.raw_path = localResult.path;
+          track.is_local = true;
+          track.is_full_stream = true;
+          track.audio_format = track.audio_format || {};
+          track.audio_format.codec = "Offline HD";
+          track.audio_format.bitrate_kbps = 320;
+          if (this.playerBadge) this.playerBadge.textContent = "Offline HD";
+          if (this.screenPlayerBadge) this.screenPlayerBadge.textContent = "Offline HD";
+        }
+      } catch (err) {
+        console.warn("Local audio interceptor notice:", err);
+      }
+    }
 
     // Spotify/Apple Music Instant Stream: Skip network resolver if already preloaded or cached
     if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!track.is_full_stream || !track.stream_url)) {
@@ -12546,6 +12594,85 @@ class SoraFyDesktopApp {
     } catch (err) {
       console.error("Download error:", err);
       this.showToast(`Download failed: ${err.message}`);
+    }
+  }
+
+  // =========================================================
+  // 1-Click Offline Playlist Downloader (Batch in ~/Music/SoraFy)
+  // =========================================================
+  async downloadCurrentPlaylist() {
+    const playlist = this.currentPlaylist;
+    if (!playlist) return;
+    const tracks = playlist.tracks || [];
+    if (!tracks.length) {
+      this.showToast(this.currentLanguage === "id" ? "Tidak ada lagu untuk diunduh di playlist ini." : "No tracks in this playlist to download.");
+      return;
+    }
+
+    if (!window.electronAPI || typeof window.electronAPI.downloadPlaylistBatch !== 'function') {
+      this.showToast("Batch downloads are only available on SoraFy desktop app.");
+      return;
+    }
+
+    if (this._isDownloadingPlaylist) {
+      this.showToast(this.currentLanguage === "id" ? "Pengunduhan playlist sedang berjalan..." : "Playlist download is already in progress...");
+      return;
+    }
+
+    this._isDownloadingPlaylist = true;
+    this.updatePlaylistDownloadButtonState(true, `0/${tracks.length} (0%)`);
+    this.showToast(this.currentLanguage === "id"
+      ? `Mulai mengunduh playlist "${playlist.title}" (${tracks.length} lagu)...`
+      : `Starting download of playlist "${playlist.title}" (${tracks.length} tracks)...`);
+
+    try {
+      const res = await window.electronAPI.downloadPlaylistBatch({
+        playlistName: playlist.title,
+        tracks: tracks
+      });
+
+      if (res && res.success) {
+        this.showToast(this.currentLanguage === "id"
+          ? `Unduhan selesai: ${res.downloaded} diunduh, ${res.skipped} sudah ada.`
+          : `Download completed: ${res.downloaded} downloaded, ${res.skipped} already saved.`);
+        if (typeof window.electronAPI.getDownloadedTracks === 'function') {
+          const dlTracks = await window.electronAPI.getDownloadedTracks();
+          this.downloadedTracks = Array.isArray(dlTracks) ? dlTracks : [];
+          this.renderUserPlaylists();
+        }
+      } else {
+        this.showToast(`Batch download failed: ${res?.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error("Batch download error:", err);
+      this.showToast(`Batch download failed: ${err.message}`);
+    } finally {
+      this._isDownloadingPlaylist = false;
+      this.updatePlaylistDownloadButtonState(false);
+    }
+  }
+
+  updatePlaylistDownloadButtonState(isDownloading, progressText = '') {
+    if (!this.playlistDownloadAllBtn) return;
+    const label = this.playlistDownloadAllLabel || this.playlistDownloadAllBtn.querySelector("span");
+    if (isDownloading) {
+      this.playlistDownloadAllBtn.classList.add("loading");
+      this.playlistDownloadAllBtn.disabled = true;
+      if (label) label.textContent = progressText ? `Downloading (${progressText})` : "Downloading...";
+    } else {
+      this.playlistDownloadAllBtn.classList.remove("loading");
+      this.playlistDownloadAllBtn.disabled = false;
+      if (label) label.textContent = this.currentLanguage === "id" ? "Unduh Playlist" : "Download";
+    }
+  }
+
+  handleDownloadPlaylistProgress(progress) {
+    if (!progress) return;
+    if (progress.status === 'completed') {
+      this.updatePlaylistDownloadButtonState(false);
+    } else if (this._isDownloadingPlaylist) {
+      const text = `${progress.current}/${progress.total} (${progress.percentage}%)`;
+      this.updatePlaylistDownloadButtonState(true, text);
     }
   }
 

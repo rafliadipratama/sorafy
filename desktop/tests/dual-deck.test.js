@@ -243,6 +243,25 @@ test('SoraFyDesktopApp.prototype.applyDeckGains sets gain on Web Audio nodes and
   mockApp.applyDeckGains(0.5, 0.5);
   expect(deckAGainNode.gain.value).toBeCloseTo(0.5);
   expect(deckBGainNode.gain.value).toBeCloseTo(0.5);
+  // Web Audio GainNodes are active: maintain baseVolume (0.8) on audio elements so volume is not attenuated twice
+  expect(deckA.volume).toBeCloseTo(0.8);
+  expect(deckB.volume).toBeCloseTo(0.8);
+});
+
+test('SoraFyDesktopApp.prototype.applyDeckGains scales element volume directly when GainNodes absent', () => {
+  const deckA = createMockAudioElement();
+  const deckB = createMockAudioElement();
+
+  const mockApp = {
+    activeDeck: 'A',
+    preloadDeck: 'B',
+    deckA,
+    deckB,
+    currentVolume: 0.8,
+    applyDeckGains: SoraFyDesktopApp.prototype.applyDeckGains
+  };
+
+  mockApp.applyDeckGains(0.5, 0.5);
   expect(deckA.volume).toBeCloseTo(0.4); // 0.8 * 0.5
   expect(deckB.volume).toBeCloseTo(0.4); // 0.8 * 0.5
 });
@@ -377,4 +396,6 @@ test('manual loadTrack / skip resets crossfade state to prevent audio ghosting',
   expect(mockApp.isCrossfading).toBe(false);
   expect(deckAGainNode.gain.value).toBe(1.0);
   expect(deckBGainNode.gain.value).toBe(0.0);
+  expect(deckB.paused).toBe(true);
+  expect(deckB.currentTime).toBe(0);
 });

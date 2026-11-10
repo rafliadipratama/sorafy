@@ -52,6 +52,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   recordListenEvent: (eventData) => ipcRenderer.invoke('record-listen-event', eventData),
   getListeningStats: () => ipcRenderer.invoke('get-listening-stats'),
   clearListeningStats: () => ipcRenderer.invoke('clear-listening-stats'),
+  checkLocalAudioExists: (track) => ipcRenderer.invoke('check-local-audio-exists', track),
+  downloadPlaylistBatch: (data) => ipcRenderer.invoke('download-playlist-batch', data),
+  onDownloadPlaylistProgress: (callback) => {
+    ipcRenderer.on('download-playlist-progress', (_event, progress) => {
+      if (typeof callback === 'function') callback(progress);
+    });
+  },
+  onDownloadProgress: (callback) => {
+    ipcRenderer.on('download-playlist-progress', (_event, progress) => {
+      if (typeof callback === 'function') callback(progress);
+    });
+  },
   onJamAction: (callback) => {
     ipcRenderer.on('jam-action', (_event, action) => {
       if (typeof callback === 'function') callback(action);

@@ -7,6 +7,12 @@ const fs = require('fs');
 const os = require('os');
 const net = require('net');
 const des = require('des.js');
+const {
+  resolveLocalAudioPath,
+  getExpectedLocalFilenames,
+  matchDownloadedTrack,
+  cleanMetadataString
+} = require('./src/modules/local-interceptor');
 try {
   const candidateEnvPaths = [
     path.join(__dirname, '.env'),
@@ -4323,14 +4329,22 @@ ipcMain.handle('import-external-playlist', async (event, url) => {
   }
 });
 
-// IPC Handler: Offline Track Downloader (Local Audio Storage)
-ipcMain.handle('download-track', async (event, track) => {
-  if (!track || !track.title) return { success: false, error: 'Invalid track data.' };
-
+// Local Downloaded Music Library Directory Helper
+function getDownloadDirectory() {
   const downloadDir = path.join(os.homedir(), 'Music', 'SoraFy');
   if (!fs.existsSync(downloadDir)) {
-    fs.mkdirSync(downloadDir, { recursive: true });
+    try {
+      fs.mkdirSync(downloadDir, { recursive: true });
+    } catch (_) {}
   }
+  return downloadDir;
+}
+
+// Local Audio Storage & Single Track Downloader
+async function downloadSingleTrack(track) {
+  if (!track || !track.title) return { success: false, error: 'Invalid track data.' };
+
+  const downloadDir = getDownloadDirectory();
 
   const cleanTitle = (track.title || 'Track').replace(/[/\\?%*:|"<>]/g, '_').trim();
   const cleanArtist = (track.artist || 'Artist').replace(/[/\\?%*:|"<>]/g, '_').trim();
@@ -4403,18 +4417,118 @@ ipcMain.handle('download-track', async (event, track) => {
       }
     );
   });
+}
+
+// IPC Handler: Offline Track Downloader (Single Track)
+ipcMain.handle('download-track', async (event, track) => {
+  return await downloadSingleTrack(track);
 });
 
-// Local Downloaded Music Library Manager
-function getDownloadDirectory() {
-  const downloadDir = path.join(os.homedir(), 'Music', 'SoraFy');
-  if (!fs.existsSync(downloadDir)) {
-    try {
-      fs.mkdirSync(downloadDir, { recursive: true });
-    } catch (_) {}
+// IPC Handler: Check if local audio exists in ~/Music/SoraFy (Local-First Playback)
+ipcMain.handle('check-local-audio-exists', async (event, track) => {
+  if (!track || (!track.title && !track.filename)) {
+    return { exists: false, path: null, url: null };
   }
-  return downloadDir;
-}
+
+  const downloadDir = getDownloadDirectory();
+  const fullPath = resolveLocalAudioPath(track, downloadDir);
+  if (fullPath) {
+    const url = (localProxyPort > 0)
+      ? `http://127.0.0.1:${localProxyPort}/local-file?path=${encodeURIComponent(fullPath)}`
+      : `file://${fullPath}`;
+    return {
+      exists: true,
+      path: fullPath,
+      url: url
+    };
+  }
+
+  return { exists: false, path: null, url: null };
+});
+
+// IPC Handler: 1-Click Batch Playlist Downloader (with concurrency = 2 and progress reporting)
+ipcMain.handle('download-playlist-batch', async (event, payload) => {
+  const tracks = (payload && Array.isArray(payload.tracks)) ? payload.tracks : [];
+  const playlistName = (payload && payload.playlistName) ? payload.playlistName : 'Playlist';
+
+  if (tracks.length === 0) {
+    return { success: false, error: 'No tracks provided for batch download.', total: 0, downloaded: 0, skipped: 0, failed: 0 };
+  }
+
+  const downloadDir = getDownloadDirectory();
+  const total = tracks.length;
+  let completed = 0;
+  let downloaded = 0;
+  let skipped = 0;
+  let failed = 0;
+
+  const emitProgress = (currentTrack, status = 'downloading') => {
+    if (event && event.sender && !event.sender.isDestroyed()) {
+      const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+      event.sender.send('download-playlist-progress', {
+        current: completed,
+        total: total,
+        percentage: percentage,
+        currentTrack: currentTrack ? (currentTrack.title || 'Track') : null,
+        status: status,
+        playlistName: playlistName
+      });
+    }
+  };
+
+  emitProgress(tracks[0], 'starting');
+
+  const concurrency = 2;
+  let currentIndex = 0;
+
+  async function worker() {
+    while (currentIndex < tracks.length) {
+      const idx = currentIndex++;
+      const track = tracks[idx];
+      if (!track) continue;
+
+      // Skip already downloaded local tracks
+      const existing = resolveLocalAudioPath(track, downloadDir);
+      if (existing) {
+        skipped++;
+        completed++;
+        emitProgress(track, 'skipped');
+        continue;
+      }
+
+      try {
+        const res = await downloadSingleTrack(track);
+        if (res && res.success) {
+          downloaded++;
+        } else {
+          failed++;
+        }
+      } catch (err) {
+        console.warn(`[Batch Download] Error downloading "${track.title}":`, err.message);
+        failed++;
+      }
+
+      completed++;
+      emitProgress(track, 'downloading');
+    }
+  }
+
+  const workers = [];
+  for (let i = 0; i < Math.min(concurrency, tracks.length); i++) {
+    workers.push(worker());
+  }
+  await Promise.all(workers);
+
+  emitProgress(null, 'completed');
+
+  return {
+    success: true,
+    total: total,
+    downloaded: downloaded,
+    skipped: skipped,
+    failed: failed
+  };
+});
 
 ipcMain.handle('get-downloaded-tracks', async () => {
   try {
