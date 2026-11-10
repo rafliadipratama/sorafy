@@ -1,24 +1,34 @@
-import React, { useState } from 'react';
-import { Copy, TickCircle } from 'iconsax-react';
+import React, { useState, useEffect } from 'react';
+import { DocumentDownload, Copy, TickCircle, ShieldTick } from 'iconsax-react';
 import {
   OfficialAppleIcon,
   OfficialWindowsIcon,
   OfficialLinuxIcon,
+  OfficialAndroidIcon,
   OfficialHomebrewIcon,
   OfficialFlathubIcon,
   OfficialSnapcraftIcon,
   OfficialArchIcon,
   OfficialGithubIcon,
 } from './OfficialIcons';
+import {
+  PLATFORMS,
+  detectPlatform,
+  type PlatformId,
+  CURRENT_VERSION,
+} from '../data/downloads';
 
 interface Props {
   lang?: 'en' | 'id';
 }
 
 export default function HeroDownloadsBox({ lang = 'en' }: Props) {
+  const [platform, setPlatform] = useState<PlatformId>('windows');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const releaseUrl = "https://github.com/rafliadipratama/sorafy/releases/latest";
+  useEffect(() => {
+    setPlatform(detectPlatform());
+  }, []);
 
   const packageManagers = [
     { id: 'brew', name: 'Homebrew', icon: OfficialHomebrewIcon, cmd: 'brew install --cask sorafy' },
@@ -29,59 +39,167 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
   ];
 
   const macCmd = 'sudo xattr -r -d com.apple.quarantine /Applications/SoraFy.app';
+  const linuxCmd = 'chmod +x SoraFy-2.0.0.AppImage && ./SoraFy-2.0.0.AppImage';
 
   const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedKey(id);
-      setTimeout(() => setCopiedKey(null), 2000);
-    });
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedKey(id);
+        setTimeout(() => setCopiedKey(null), 2000);
+      });
+    }
   };
+
+  const currentConfig = PLATFORMS[platform];
+  const primaryPkg = currentConfig.packages.find(p => p.id === currentConfig.primaryPackageId) || currentConfig.packages[0];
+
+  const PlatformIcon = {
+    windows: OfficialWindowsIcon,
+    macos: OfficialAppleIcon,
+    linux: OfficialLinuxIcon,
+    android: OfficialAndroidIcon,
+  }[platform];
 
   return (
     <div className="flex flex-col items-center w-full max-w-lg">
       {/* Downloads Box Container */}
-      <div className="relative w-full bg-surface border-2 border-subtle hover:border-[#00E599]/30 rounded-2xl p-6 sm:p-7 shadow-2xl transition-all">
+      <div className="relative w-full bg-surface border-2 border-subtle hover:border-[#00E599]/30 rounded-2xl p-5 sm:p-7 shadow-2xl transition-all">
         {/* Top Centered Floating Badge */}
         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#00E599] text-neutral-950 font-black text-xs uppercase tracking-widest px-4 py-1 rounded-full border border-neutral-950 shadow-md">
-          {lang === 'id' ? 'UNDUHAN' : 'DOWNLOADS'}
+          {lang === 'id' ? 'UNDUHAN LANGSUNG' : 'DIRECT DOWNLOAD'}
         </div>
 
-        {/* 3 Main Platform Buttons */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 mt-2">
+        {/* 1-Click Primary Download CTA (Smart Auto-Detected) */}
+        <div className="mt-2 flex flex-col gap-2">
           <a
-            href={releaseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-surface-elevated hover:bg-surface-subtle border border-medium hover:border-[#00E599]/40 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-lg transition-all hover:-translate-y-0.5 shadow-sm"
+            href={primaryPkg.downloadUrl}
+            className="group relative flex flex-col items-center justify-center bg-[#00E599] hover:bg-[#00B377] text-neutral-950 rounded-xl px-4 py-3.5 transition-all shadow-lg hover:shadow-[#00E599]/20 hover:-translate-y-0.5"
+            title={`${primaryPkg.name} (${primaryPkg.filename})`}
           >
-            <OfficialAppleIcon className="w-4 h-4 shrink-0" />
-            <span>macOS</span>
+            <div className="flex items-center gap-2.5">
+              <PlatformIcon className="w-5 h-5 shrink-0 text-neutral-950" />
+              <span className="font-extrabold text-sm sm:text-base tracking-tight">
+                {lang === 'id'
+                  ? `Unduh untuk ${currentConfig.name} (${primaryPkg.format})`
+                  : `Download for ${currentConfig.name} (${primaryPkg.format})`}
+              </span>
+              <DocumentDownload size={18} variant="Bold" className="shrink-0 group-hover:translate-y-0.5 transition-transform" />
+            </div>
+            <span className="text-[11px] font-medium text-neutral-900/80 mt-1">
+              {currentConfig.ctaSubtext[lang]}
+            </span>
           </a>
 
-          <a
-            href={releaseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-surface-elevated hover:bg-surface-subtle border border-medium hover:border-[#00E599]/40 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-lg transition-all hover:-translate-y-0.5 shadow-sm"
-          >
-            <OfficialWindowsIcon className="w-4 h-4 shrink-0" />
-            <span>Windows</span>
-          </a>
-
-          <a
-            href={releaseUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 sm:gap-2 bg-surface-elevated hover:bg-surface-subtle border border-medium hover:border-[#00E599]/40 text-white font-bold text-xs sm:text-sm py-2.5 px-2 rounded-lg transition-all hover:-translate-y-0.5 shadow-sm"
-          >
-            <OfficialLinuxIcon className="w-4 h-4 shrink-0" />
-            <span>Linux</span>
-          </a>
+          {/* Quick Platform Switcher Bar */}
+          <div className="flex items-center justify-between gap-1 pt-2">
+            <span className="text-[11px] font-semibold text-neutral-500 hidden sm:inline">
+              {lang === 'id' ? 'Pilih OS lain:' : 'Other OS:'}
+            </span>
+            <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-end flex-1">
+              {(['windows', 'macos', 'linux', 'android'] as PlatformId[]).map((pid) => {
+                const Icon = {
+                  windows: OfficialWindowsIcon,
+                  macos: OfficialAppleIcon,
+                  linux: OfficialLinuxIcon,
+                  android: OfficialAndroidIcon,
+                }[pid];
+                const isActive = platform === pid;
+                return (
+                  <button
+                    key={pid}
+                    type="button"
+                    onClick={() => setPlatform(pid)}
+                    className={`flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all ${
+                      isActive
+                        ? 'bg-surface-elevated text-[#00E599] border border-[#00E599]/40 shadow-sm'
+                        : 'text-neutral-400 hover:text-white bg-canvas hover:bg-surface-subtle border border-subtle'
+                    }`}
+                  >
+                    <Icon className="w-3.5 h-3.5 shrink-0" />
+                    <span>{PLATFORMS[pid].name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        {/* Package Manager Section */}
-        <p className="mt-5 text-center text-xs font-medium text-neutral-400">
-          {lang === 'id' ? 'Atau pasang dari repositori paket:' : 'Or install from a package repository:'}
+        {/* OS Specific Guidance & Trust Helper */}
+        <div className="mt-4 pt-3.5 border-t border-subtle text-neutral-400 text-[11px] leading-relaxed">
+          {platform === 'windows' && (
+            <div className="flex items-center gap-2 bg-canvas border border-subtle/80 px-3 py-2 rounded-lg text-neutral-300">
+              <ShieldTick size={16} variant="Linear" className="text-[#00E599] shrink-0" />
+              <span>
+                {lang === 'id'
+                  ? 'Bebas malware & virus. Jika muncul layar SmartScreen, klik "More info" → "Run anyway".'
+                  : 'Verified malware-free. If SmartScreen appears, click "More info" → "Run anyway".'}
+              </span>
+            </div>
+          )}
+
+          {platform === 'macos' && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-neutral-300">
+                {lang === 'id'
+                  ? 'Pengguna Mac: Jika dicegah oleh Gatekeeper, jalankan perintah ini di Terminal:'
+                  : 'macOS users: If blocked by Gatekeeper quarantine, run in Terminal:'}
+              </span>
+              <div className="flex items-center justify-between gap-2 bg-canvas border border-subtle px-2.5 py-1.5 rounded font-mono-code text-[10px] text-neutral-300">
+                <span className="truncate">{macCmd}</span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(macCmd, 'mac-quarantine')}
+                  className="text-neutral-400 hover:text-[#00E599] shrink-0"
+                  title="Copy command"
+                >
+                  {copiedKey === 'mac-quarantine' ? (
+                    <TickCircle size={14} variant="Bold" className="text-[#00E599]" />
+                  ) : (
+                    <Copy size={14} variant="Linear" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {platform === 'linux' && (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-neutral-300">
+                {lang === 'id' ? 'Untuk menjalankan AppImage langsung:' : 'To execute AppImage directly:'}
+              </span>
+              <div className="flex items-center justify-between gap-2 bg-canvas border border-subtle px-2.5 py-1.5 rounded font-mono-code text-[10px] text-neutral-300">
+                <span className="truncate">{linuxCmd}</span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(linuxCmd, 'linux-chmod')}
+                  className="text-neutral-400 hover:text-[#00E599] shrink-0"
+                  title="Copy command"
+                >
+                  {copiedKey === 'linux-chmod' ? (
+                    <TickCircle size={14} variant="Bold" className="text-[#00E599]" />
+                  ) : (
+                    <Copy size={14} variant="Linear" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {platform === 'android' && (
+            <div className="flex items-center gap-2 bg-canvas border border-subtle/80 px-3 py-2 rounded-lg text-neutral-300">
+              <ShieldTick size={16} variant="Linear" className="text-[#00E599] shrink-0" />
+              <span>
+                {lang === 'id'
+                  ? 'Buka file APK yang diunduh lalu izinkan "Install unknown apps" jika diminta oleh browser.'
+                  : 'Open the downloaded APK and allow "Install unknown apps" if prompted by your browser.'}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Package Manager Repositories Section */}
+        <p className="mt-4 text-center text-xs font-medium text-neutral-400">
+          {lang === 'id' ? 'Atau pasang dari repositori paket terminal:' : 'Or install from package repository:'}
         </p>
 
         <div className="mt-2.5 flex flex-wrap justify-center gap-2">
@@ -113,47 +231,27 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
           })}
         </div>
 
-        {/* All downloads text link */}
+        {/* All downloads & SHA-256 Checksums Link */}
         <a
           href="#downloads"
           className="mt-4 block text-center text-xs font-semibold text-[#00E599] hover:underline"
         >
-          {lang === 'id' ? 'Semua opsi unduhan & paket →' : 'All downloads & package details →'}
+          {lang === 'id'
+            ? 'Semua paket (.deb, .zip, .dmg), checksum SHA-256 & info rilis →'
+            : 'All packages (.deb, .zip, .dmg), SHA-256 checksums & release notes →'}
         </a>
-
-        {/* macOS Tip Callout */}
-        <div className="mt-5 pt-4 border-t border-subtle text-neutral-400 text-center text-[11px] leading-relaxed">
-          <p>
-            <strong className="text-white">macOS users:</strong> macOS may block SoraFy from opening. Run this in Terminal:
-          </p>
-          <div className="mt-2 flex items-center justify-between gap-2 bg-canvas border border-subtle px-3 py-1.5 rounded text-left font-mono-code text-[10px] text-neutral-300">
-            <span className="truncate">{macCmd}</span>
-            <button
-              type="button"
-              onClick={() => copyToClipboard(macCmd, 'mac-quarantine')}
-              className="text-neutral-400 hover:text-[#00E599] shrink-0"
-              title="Copy command"
-            >
-              {copiedKey === 'mac-quarantine' ? (
-                <TickCircle size={14} variant="Bold" className="text-[#00E599]" />
-              ) : (
-                <Copy size={14} variant="Linear" />
-              )}
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* GitHub Learn More Button */}
-      <div className="mt-6">
+      <div className="mt-5">
         <a
           href="https://github.com/rafliadipratama/sorafy"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center justify-center gap-2.5 bg-surface hover:bg-surface-elevated border border-medium hover:border-strong text-white font-bold text-sm px-7 py-3 rounded-xl transition-all shadow-md hover:-translate-y-0.5"
+          className="inline-flex items-center justify-center gap-2.5 bg-surface hover:bg-surface-elevated border border-medium hover:border-strong text-white font-bold text-sm px-7 py-2.5 rounded-xl transition-all shadow-md hover:-translate-y-0.5"
         >
           <OfficialGithubIcon className="w-4 h-4 shrink-0" />
-          <span>Learn more</span>
+          <span>{lang === 'id' ? 'Lihat Kode Sumber di GitHub' : 'View Source on GitHub'}</span>
         </a>
       </div>
     </div>

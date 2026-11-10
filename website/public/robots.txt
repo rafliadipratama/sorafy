@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rafliadipratama.github.io/sorafy/sitemap-index.xml

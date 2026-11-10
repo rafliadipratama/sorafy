@@ -1,11 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { DocumentDownload } from 'iconsax-react';
+import { DocumentDownload, Copy, TickCircle, ShieldTick, ExportSquare } from 'iconsax-react';
 import {
   OfficialWindowsIcon,
   OfficialLinuxIcon,
   OfficialAppleIcon,
   OfficialAndroidIcon,
 } from './OfficialIcons';
+import {
+  PLATFORMS,
+  detectPlatform,
+  type PlatformId,
+  RELEASE_BASE_URL,
+  CURRENT_VERSION,
+} from '../data/downloads';
 
 interface Props {
   lang: 'en' | 'id';
@@ -17,27 +24,28 @@ interface Props {
 }
 
 export default function Downloads({
-  lang,
+  lang = 'en',
   eyebrow,
   title,
   desc,
-  recommendedText,
-  universalText,
 }: Props) {
-  const [platform, setPlatform] = useState<'windows' | 'linux' | 'macos' | 'android'>('linux');
+  const [platform, setPlatform] = useState<PlatformId>('windows');
+  const [copiedHash, setCopiedHash] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const ua = navigator.userAgent.toLowerCase();
-    const plat = (navigator.platform || '').toLowerCase();
-
-    if (ua.includes('android')) setPlatform('android');
-    else if (ua.includes('iphone') || ua.includes('ipad') || plat.includes('mac') || ua.includes('macintosh')) setPlatform('macos');
-    else if (plat.includes('win') || ua.includes('windows')) setPlatform('windows');
-    else if (plat.includes('linux') || ua.includes('linux')) setPlatform('linux');
+    setPlatform(detectPlatform());
   }, []);
 
-  const releaseBase = "https://github.com/rafliadipratama/sorafy/releases/latest";
+  const copyChecksum = (hash: string, pkgId: string) => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(hash).then(() => {
+        setCopiedHash(pkgId);
+        setTimeout(() => setCopiedHash(null), 2500);
+      });
+    }
+  };
+
+  const currentPlatform = PLATFORMS[platform];
 
   return (
     <section className="py-24 border-t border-subtle" id="downloads">
@@ -111,193 +119,122 @@ export default function Downloads({
           </div>
         </div>
 
-        {/* Content Panes */}
-        <div className="max-w-3xl mx-auto">
-          {/* Windows Pane */}
-          {platform === 'windows' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-surface border border-[#00E599]/30 rounded-2xl p-7 flex flex-col justify-between gap-5 relative">
-                <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-subtle border border-emerald-subtle text-[#00E599]">
-                  {recommendedText}
-                </span>
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-2">SoraFy for Windows (.exe)</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Standard Windows installer with desktop shortcuts, auto-updater, and start menu integration.
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1 text-[11px] font-mono-code text-neutral-500">
-                    <span>Version: 2.0.0</span>
-                    <span>Windows 10 / 11 (64-bit)</span>
-                  </div>
-                </div>
-                <a
-                  href={releaseBase}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
+        {/* Dynamic Package Cards Grid */}
+        <div className="max-w-4xl mx-auto">
+          <div className={`grid grid-cols-1 ${currentPlatform.packages.length > 1 ? 'sm:grid-cols-2' : 'max-w-md mx-auto'} gap-6`}>
+            {currentPlatform.packages.map((pkg) => {
+              const isRecommended = pkg.id === currentPlatform.primaryPackageId;
+              return (
+                <div
+                  key={pkg.id}
+                  className={`bg-surface rounded-2xl p-6 sm:p-7 flex flex-col justify-between gap-5 relative transition-all ${
+                    isRecommended
+                      ? 'border-2 border-[#00E599]/40 shadow-lg shadow-[#00E599]/5'
+                      : 'border border-subtle hover:border-medium'
+                  }`}
                 >
-                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
-                  <span>Download Installer (.exe)</span>
-                </a>
-              </div>
+                  {pkg.badge && (
+                    <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-subtle border border-emerald-subtle text-[#00E599]">
+                      {pkg.badge[lang]}
+                    </span>
+                  )}
 
-              <div className="bg-surface border border-subtle hover:border-medium rounded-2xl p-7 flex flex-col justify-between gap-5">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-2">Windows Portable (.zip)</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    No installation required. Extract anywhere and launch immediately from flash drives or external disks.
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1 text-[11px] font-mono-code text-neutral-500">
-                    <span>Version: 2.0.0</span>
-                    <span>Standalone Portable</span>
+                  <div>
+                    <h3 className="text-lg font-bold text-white mb-2">{pkg.name}</h3>
+                    <p className="text-xs text-neutral-400 leading-relaxed">
+                      {pkg.desc[lang]}
+                    </p>
+
+                    <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1.5 text-[11px] font-mono-code text-neutral-400">
+                      <div className="flex items-center justify-between">
+                        <span>Version:</span>
+                        <span className="text-white font-bold">{CURRENT_VERSION}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Target:</span>
+                        <span>{pkg.arch}</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span>Size:</span>
+                        <span>{pkg.size}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2.5">
+                    {/* Direct 1-Click Download Button */}
+                    <a
+                      href={pkg.downloadUrl}
+                      className={`w-full inline-flex items-center justify-center gap-2 font-bold text-sm py-3 rounded-lg transition-all ${
+                        isRecommended
+                          ? 'bg-[#00E599] hover:bg-[#00B377] text-neutral-950 shadow-md'
+                          : 'bg-surface-elevated hover:bg-surface-subtle border border-subtle hover:border-medium text-white'
+                      }`}
+                    >
+                      <DocumentDownload size={18} variant="Bold" className="shrink-0" />
+                      <span>
+                        {lang === 'id' ? `Unduh Langsung (${pkg.format})` : `Direct Download (${pkg.format})`}
+                      </span>
+                    </a>
+
+                    {/* SHA-256 Verification Bar */}
+                    {pkg.sha256 && (
+                      <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded bg-canvas border border-subtle text-[10px] font-mono-code text-neutral-400">
+                        <span className="truncate">
+                          SHA256: {pkg.sha256.slice(0, 12)}...{pkg.sha256.slice(-8)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => copyChecksum(pkg.sha256!, pkg.id)}
+                          className="flex items-center gap-1 text-neutral-400 hover:text-[#00E599] shrink-0 font-medium transition-colors"
+                          title="Copy full SHA-256 checksum"
+                        >
+                          {copiedHash === pkg.id ? (
+                            <>
+                              <TickCircle size={13} variant="Bold" className="text-[#00E599]" />
+                              <span className="text-[#00E599] text-[9px]">{lang === 'id' ? 'Tersalin' : 'Copied'}</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy size={13} variant="Linear" />
+                              <span className="text-[9px]">{lang === 'id' ? 'Salin' : 'Copy'}</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <a
-                  href={releaseBase}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-surface-elevated hover:bg-surface-subtle border border-subtle hover:border-medium text-white font-semibold text-sm py-3 rounded-lg transition-all"
-                >
-                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
-                  <span>Download Portable (.zip)</span>
-                </a>
+              );
+            })}
+          </div>
+
+          {/* Security & GitHub Release Trust Footer */}
+          <div className="mt-10 p-5 rounded-2xl bg-surface border border-subtle flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
+            <div className="flex items-center gap-3">
+              <ShieldTick size={24} variant="Bold" className="text-[#00E599] shrink-0" />
+              <div>
+                <p className="font-bold text-white">
+                  {lang === 'id' ? '100% Open Source & Bebas Malware' : '100% Open Source & Verified Malware-Free'}
+                </p>
+                <p className="text-[11px] text-neutral-400">
+                  {lang === 'id'
+                    ? 'Dibuat otomatis oleh CI/CD GitHub Actions publik tanpa campur tangan kode tersembunyi.'
+                    : 'Compiled automatically in public GitHub Actions without hidden binaries or trackers.'}
+                </p>
               </div>
             </div>
-          )}
 
-          {/* Linux Pane */}
-          {platform === 'linux' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-surface border border-[#00E599]/30 rounded-2xl p-7 flex flex-col justify-between gap-5 relative">
-                <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-subtle border border-emerald-subtle text-[#00E599]">
-                  {universalText}
-                </span>
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-2">AppImage Package</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Self-contained executable for Ubuntu, Fedora, Arch, Debian, openSUSE, and any standard Linux distribution.
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1 text-[11px] font-mono-code text-neutral-500">
-                    <span>Executable AppImage</span>
-                    <span>glibc 2.31+</span>
-                  </div>
-                </div>
-                <a
-                  href={releaseBase}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
-                >
-                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
-                  <span>Download AppImage</span>
-                </a>
-              </div>
-
-              <div className="bg-surface border border-subtle hover:border-medium rounded-2xl p-7 flex flex-col justify-between gap-5">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-2">Debian / Ubuntu (.deb)</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Native package for Debian, Ubuntu, Linux Mint, and Pop!_OS with system package manager integration.
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1 text-[11px] font-mono-code text-neutral-500">
-                    <span>Native .deb</span>
-                    <span>Apt compatible</span>
-                  </div>
-                </div>
-                <a
-                  href={releaseBase}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-surface-elevated hover:bg-surface-subtle border border-subtle hover:border-medium text-white font-semibold text-sm py-3 rounded-lg transition-all"
-                >
-                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
-                  <span>Download .deb Package</span>
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* macOS Pane */}
-          {platform === 'macos' && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div className="bg-surface border border-[#00E599]/30 rounded-2xl p-7 flex flex-col justify-between gap-5 relative">
-                <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-subtle border border-emerald-subtle text-[#00E599]">
-                  Apple Silicon
-                </span>
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-2">macOS (Apple Silicon M1-M4)</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Native ARM64 DMG bundle optimized for Apple Silicon MacBooks, Mac mini, and Mac Studio.
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1 text-[11px] font-mono-code text-neutral-500">
-                    <span>macOS 12.0 Monterey or later</span>
-                    <span>Native ARM64</span>
-                  </div>
-                </div>
-                <a
-                  href={releaseBase}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
-                >
-                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
-                  <span>Download Apple Silicon DMG</span>
-                </a>
-              </div>
-
-              <div className="bg-surface border border-subtle hover:border-medium rounded-2xl p-7 flex flex-col justify-between gap-5">
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-2">macOS Intel (.dmg)</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Standard x86_64 DMG package for Intel-powered Apple Mac computers.
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1 text-[11px] font-mono-code text-neutral-500">
-                    <span>macOS 11.0 Big Sur or later</span>
-                    <span>Intel x86_64</span>
-                  </div>
-                </div>
-                <a
-                  href={releaseBase}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-surface-elevated hover:bg-surface-subtle border border-subtle hover:border-medium text-white font-semibold text-sm py-3 rounded-lg transition-all"
-                >
-                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
-                  <span>Download Intel DMG</span>
-                </a>
-              </div>
-            </div>
-          )}
-
-          {/* Android Pane */}
-          {platform === 'android' && (
-            <div className="max-w-md mx-auto">
-              <div className="bg-surface border border-[#00E599]/30 rounded-2xl p-7 flex flex-col justify-between gap-5 relative">
-                <span className="absolute top-4 right-4 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-subtle border border-emerald-subtle text-[#00E599]">
-                  Jetpack Compose Native
-                </span>
-                <div>
-                  <h3 className="text-lg font-bold text-white mb-2">SoraFy for Android (.apk)</h3>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
-                    Built with Jetpack Compose Material 3 and Media3 audio notification controls for phones and tablets.
-                  </p>
-                  <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1 text-[11px] font-mono-code text-neutral-500">
-                    <span>Android 8.0 Oreo or later</span>
-                    <span>arm64-v8a</span>
-                  </div>
-                </div>
-                <a
-                  href={releaseBase}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full inline-flex items-center justify-center gap-2 bg-[#00E599] hover:bg-[#00B377] text-neutral-950 font-bold text-sm py-3 rounded-lg transition-all"
-                >
-                  <DocumentDownload size={18} variant="Linear" className="shrink-0" />
-                  <span>Download Android APK</span>
-                </a>
-              </div>
-            </div>
-          )}
+            <a
+              href={RELEASE_BASE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00E599] hover:underline shrink-0"
+            >
+              <span>{lang === 'id' ? 'Lihat Semua Rilis di GitHub' : 'View All GitHub Releases'}</span>
+              <ExportSquare size={14} variant="Linear" />
+            </a>
+          </div>
         </div>
       </div>
     </section>

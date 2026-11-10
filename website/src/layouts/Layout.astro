@@ -8,12 +8,31 @@ interface Props {
 }
 
 const {
-  title = "SoraFy — Free, High-Fidelity Music Streaming Player",
+  title = "SoraFy — Free Open-Source Music Player & Spotify Alternative (Zero Ads)",
   description = "SoraFy is a free, open-source high-fidelity music streaming app without ads or tracking. Search any song, sync real-time lyrics, import playlists, and control playback from your phone and terminal.",
   lang = "en"
 } = Astro.props;
 
+const siteUrl = "https://rafliadipratama.github.io";
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const canonicalUrl = lang === 'id' ? `${siteUrl}${base}/id` : `${siteUrl}${base}`;
+const ogImageUrl = `${siteUrl}${base}/assets/logo_monogram.png`;
+
+const schemaData = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "SoraFy",
+  "operatingSystem": "Windows 10/11, macOS, Linux, Android",
+  "applicationCategory": "MultimediaApplication",
+  "offers": {
+    "@type": "Offer",
+    "price": "0.00",
+    "priceCurrency": "USD"
+  },
+  "description": description,
+  "url": canonicalUrl,
+  "downloadUrl": "https://github.com/rafliadipratama/sorafy/releases/latest"
+};
 ---
 
 <!DOCTYPE html>
@@ -23,14 +42,30 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+  <link rel="alternate" hreflang="en" href={`${siteUrl}${base}`} />
+  <link rel="alternate" hreflang="id" href={`${siteUrl}${base}/id`} />
+  <link rel="alternate" hreflang="x-default" href={`${siteUrl}${base}`} />
+
   <link rel="icon" href={`${base}/favicon.png`} type="image/png" />
   <link rel="apple-touch-icon" href={`${base}/favicon.png`} />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonicalUrl} />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <meta property="og:image" content={`${base}/assets/logo_monogram.png`} />
+  <meta property="og:image" content={ogImageUrl} />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:url" content={canonicalUrl} />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImageUrl} />
+
+  <!-- Schema.org SoftwareApplication JSON-LD -->
+  <script type="application/ld+json" is:inline set:html={JSON.stringify(schemaData)} />
 
   <!-- Google Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
