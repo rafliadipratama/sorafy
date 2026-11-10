@@ -1108,6 +1108,25 @@ const I18N_DICTIONARY = {
     add_to_playlist_title: "Add to Playlist",
     btn_done: "Done",
 
+    // Music Library Migration & Bulk Importer Modal
+    sidebar_migrate_music: "Migrate Music / Import",
+    tooltip_sidebar_migrate: "Migrate Music / Import Library",
+    import_library_title: "Import Music Library / Migrate Music",
+    import_library_subtitle: "Soundiiz, TuneMyMusic, SpotMYBackup (.csv, .json, .txt) & Multi-URL",
+    import_tab_file: "Upload File (.csv / .json)",
+    import_tab_links: "Multiple Links",
+    import_drop_primary: "Drag & drop your export file here or click to browse",
+    import_drop_sub: "Supported formats: Soundiiz, TuneMyMusic, SpotMYBackup (.csv, .json, .txt)",
+    import_choose_file: "Choose File",
+    import_links_label: "Paste Playlist Links (1 link per line):",
+    import_links_hint: "Supports Spotify, Apple Music, and YouTube Music playlist links.",
+    import_dest_label: "Save Destination:",
+    import_dest_playlist_title: "Create New Playlist Automatically",
+    import_dest_playlist_desc: "Creates new playlist(s) based on file name or metadata",
+    import_dest_liked_title: "Save to Liked Songs",
+    import_dest_liked_desc: "Adds all tracks directly into your Liked Songs collection",
+    import_start_btn: "Start Import",
+
     // Sleep Timer
     sleep_timer_title: "Sleep Timer",
     sleep_timer_desc: "Playback will stop automatically after the timer expires.",
@@ -1430,6 +1449,25 @@ const I18N_DICTIONARY = {
     btn_save: "Simpan Perubahan",
     add_to_playlist_title: "Tambah ke Playlist",
     btn_done: "Selesai",
+
+    // Music Library Migration & Bulk Importer Modal
+    sidebar_migrate_music: "Migrasi Musik / Impor",
+    tooltip_sidebar_migrate: "Migrasi Musik / Impor Library",
+    import_library_title: "Impor Library Musik / Migrasi Musik",
+    import_library_subtitle: "Soundiiz, TuneMyMusic, SpotMYBackup (.csv, .json, .txt) & Multi-URL",
+    import_tab_file: "Unggah File (.csv / .json)",
+    import_tab_links: "Tautan Banyak (Multi-URL)",
+    import_drop_primary: "Tarik & lepas file ekspor musik di sini atau klik untuk memilih",
+    import_drop_sub: "Format didukung: Soundiiz, TuneMyMusic, SpotMYBackup (.csv, .json, .txt)",
+    import_choose_file: "Pilih File",
+    import_links_label: "Tempel Tautan Playlist (1 tautan per baris):",
+    import_links_hint: "Mendukung tautan playlist Spotify, Apple Music, dan YouTube Music.",
+    import_dest_label: "Tujuan Penyimpanan:",
+    import_dest_playlist_title: "Buat Playlist Baru Otomatis",
+    import_dest_playlist_desc: "Membuat playlist baru sesuai nama di file/tautan",
+    import_dest_liked_title: "Simpan ke Liked Songs",
+    import_dest_liked_desc: "Menambahkan seluruh lagu langsung ke koleksi Lagu Disukai",
+    import_start_btn: "Mulai Impor",
 
     // Sleep Timer
     sleep_timer_title: "Pengatur Waktu Tidur",
@@ -12853,6 +12891,13 @@ class SoraFyDesktopApp {
     }
 
     if (this.activeImportTab === "file") {
+      // Fallback: asynchronously read file text if not yet populated
+      if (!this.selectedImportFileContent && this.selectedImportFile && typeof this.selectedImportFile.text === "function") {
+        try {
+          this.selectedImportFileContent = await this.selectedImportFile.text();
+        } catch (_) {}
+      }
+
       if (!this.selectedImportFileContent) {
         this.showToast(isId ? "Silakan pilih atau tarik file terlebih dahulu" : "Please select or drop a file first");
         return;
@@ -12865,6 +12910,7 @@ class SoraFyDesktopApp {
       else if (fileName.endsWith(".txt")) fileType = "text";
 
       this.updateImportLibraryProgress(20, isId ? "Mem-parsing data musik..." : "Parsing music data...", true);
+      await new Promise(r => setTimeout(r, 0));
       if (this.startImportLibraryBtn) this.startImportLibraryBtn.disabled = true;
 
       try {
@@ -12880,6 +12926,7 @@ class SoraFyDesktopApp {
         }
 
         this.updateImportLibraryProgress(60, isId ? `Mengimpor ${totalTracks} lagu...` : `Importing ${totalTracks} tracks...`, true);
+        await new Promise(r => setTimeout(r, 0));
 
         if (destination === "liked") {
           let likedTracks = [];
@@ -12896,9 +12943,17 @@ class SoraFyDesktopApp {
             }
           }
 
+          let processed = 0;
           let addedCount = 0;
           for (const pl of playlists) {
             for (const t of (pl.tracks || [])) {
+              processed++;
+              if (processed % 100 === 0) {
+                const currentPct = 60 + Math.min(35, Math.round((processed / totalTracks) * 35));
+                this.updateImportLibraryProgress(currentPct, isId ? `Mengimpor ${processed}/${totalTracks} lagu...` : `Importing ${processed}/${totalTracks} tracks...`, true);
+                await new Promise(r => setTimeout(r, 0));
+              }
+
               const trackId = t.id || `tr_imp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
               const exists = likedTracks.some(exist =>
                 (exist.id && exist.id === trackId) ||
@@ -12941,21 +12996,33 @@ class SoraFyDesktopApp {
           if (typeof this.renderUserPlaylists === "function") this.renderUserPlaylists();
 
           this.updateImportLibraryProgress(100, isId ? "Selesai!" : "Complete!", true);
+          await new Promise(r => setTimeout(r, 0));
           this.showToast(isId ? `Berhasil mengimpor ${addedCount} lagu!` : `Successfully imported ${addedCount} tracks!`);
         } else {
           let lastCreatedPl = null;
+          let processed = 0;
           for (let i = 0; i < playlists.length; i++) {
             const pl = playlists[i];
             const plTitle = pl.name || `Imported Playlist ${i + 1}`;
-            const plTracks = (pl.tracks || []).map(t => ({
-              id: t.id || `tr_imp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-              title: t.title || "Unknown Title",
-              artist: t.artist || "Unknown Artist",
-              album: t.album || "",
-              duration: t.duration || 0,
-              artwork_url: t.artwork_url || this.DEFAULT_TRACK_ART,
-              source: "imported"
-            }));
+            const plTracks = [];
+            for (const t of (pl.tracks || [])) {
+              processed++;
+              if (processed % 100 === 0) {
+                const currentPct = 60 + Math.min(35, Math.round((processed / totalTracks) * 35));
+                this.updateImportLibraryProgress(currentPct, isId ? `Memproses ${processed}/${totalTracks} lagu...` : `Processing ${processed}/${totalTracks} tracks...`, true);
+                await new Promise(r => setTimeout(r, 0));
+              }
+
+              plTracks.push({
+                id: t.id || `tr_imp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                title: t.title || "Unknown Title",
+                artist: t.artist || "Unknown Artist",
+                album: t.album || "",
+                duration: t.duration || 0,
+                artwork_url: t.artwork_url || this.DEFAULT_TRACK_ART,
+                source: "imported"
+              });
+            }
 
             const newPl = {
               id: `upl_imp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}_${i}`,
@@ -12977,6 +13044,7 @@ class SoraFyDesktopApp {
           if (typeof this.renderUserPlaylists === "function") this.renderUserPlaylists();
 
           this.updateImportLibraryProgress(100, isId ? "Selesai!" : "Complete!", true);
+          await new Promise(r => setTimeout(r, 0));
           this.showToast(isId ? `Berhasil mengimpor ${totalTracks} lagu ke ${playlists.length} playlist!` : `Successfully imported ${totalTracks} tracks into ${playlists.length} playlist(s)!`);
 
           if (lastCreatedPl && typeof this.openPlaylistDetail === "function") {
@@ -13005,6 +13073,7 @@ class SoraFyDesktopApp {
 
       if (this.startImportLibraryBtn) this.startImportLibraryBtn.disabled = true;
       this.updateImportLibraryProgress(10, isId ? `Memproses 1 dari ${urls.length} link...` : `Processing 1 of ${urls.length} link(s)...`, true);
+      await new Promise(r => setTimeout(r, 0));
 
       let importedTracksTotal = 0;
       let lastCreatedPl = null;
@@ -13014,6 +13083,7 @@ class SoraFyDesktopApp {
           const url = urls[i];
           const pct = Math.round(((i) / urls.length) * 80) + 10;
           this.updateImportLibraryProgress(pct, isId ? `Mengimpor link (${i + 1}/${urls.length})...` : `Importing link (${i + 1}/${urls.length})...`, true);
+          await new Promise(r => setTimeout(r, 0));
 
           try {
             if (typeof window !== "undefined" && window.electronAPI && typeof window.electronAPI.importExternalPlaylist === "function") {
@@ -13106,6 +13176,7 @@ class SoraFyDesktopApp {
         }
 
         this.updateImportLibraryProgress(100, isId ? "Selesai!" : "Complete!", true);
+        await new Promise(r => setTimeout(r, 0));
         this.showToast(isId ? `Berhasil mengimpor ${importedTracksTotal} lagu!` : `Successfully imported ${importedTracksTotal} tracks!`);
 
         if (destination === "playlist" && lastCreatedPl && typeof this.openPlaylistDetail === "function") {
@@ -14860,6 +14931,11 @@ if (typeof document !== "undefined") {
 
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
-    SoraFyDesktopApp
+    SoraFyDesktopApp,
+    I18N_DICTIONARY
   };
+}
+
+if (typeof window !== "undefined") {
+  window.I18N_DICTIONARY = I18N_DICTIONARY;
 }

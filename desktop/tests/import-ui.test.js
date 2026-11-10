@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { SoraFyDesktopApp } = require('../src/app');
+const { SoraFyDesktopApp, I18N_DICTIONARY } = require('../src/app');
 const BulkImporter = require('../src/modules/bulk-importer');
 
 function expect(actual) {
@@ -547,6 +547,87 @@ test('handleStartImportLibrary alerts user when file is empty or no valid links 
     elements.importMultiUrlInput.value = 'invalid non-url text';
     await app.handleStartImportLibrary();
     expect(toasts.some(t => t.includes('setidaknya satu tautan'))).toBe(true);
+  } finally {
+    global.document = originalDoc;
+    global.window = originalWindow;
+  }
+});
+
+// -------------------------------------------------------------
+// 10. Translation Dictionary Integrity: All 17 keys present
+// -------------------------------------------------------------
+test('I18N_DICTIONARY defines all 17 library import translation keys in both en and id', () => {
+  const REQUIRED_I18N_KEYS = [
+    'sidebar_migrate_music',
+    'tooltip_sidebar_migrate',
+    'import_library_title',
+    'import_library_subtitle',
+    'import_tab_file',
+    'import_tab_links',
+    'import_drop_primary',
+    'import_drop_sub',
+    'import_choose_file',
+    'import_links_label',
+    'import_links_hint',
+    'import_dest_label',
+    'import_dest_playlist_title',
+    'import_dest_playlist_desc',
+    'import_dest_liked_title',
+    'import_dest_liked_desc',
+    'import_start_btn'
+  ];
+
+  expect(I18N_DICTIONARY).toBeDefined();
+  expect(I18N_DICTIONARY.en).toBeDefined();
+  expect(I18N_DICTIONARY.id).toBeDefined();
+
+  for (const key of REQUIRED_I18N_KEYS) {
+    assert.ok(
+      typeof I18N_DICTIONARY.en[key] === 'string' && I18N_DICTIONARY.en[key].trim().length > 0,
+      `Missing or empty 'en' translation for key: ${key}`
+    );
+    assert.ok(
+      typeof I18N_DICTIONARY.id[key] === 'string' && I18N_DICTIONARY.id[key].trim().length > 0,
+      `Missing or empty 'id' translation for key: ${key}`
+    );
+  }
+});
+
+// -------------------------------------------------------------
+// 11. Async File Text Fallback & Progress Yielding
+// -------------------------------------------------------------
+test('handleStartImportLibrary falls back to selectedImportFile.text() and yields progress', async () => {
+  const { app, elements, toasts, setDestination, mockDocument } = createMockModalEnv();
+  const originalDoc = global.document;
+  const originalWindow = global.window;
+
+  global.document = mockDocument;
+  global.window = { BulkImporter };
+
+  try {
+    app.initImportLibraryModal();
+    setDestination('playlist');
+    app.activeImportTab = 'file';
+
+    let textMethodCalled = false;
+    const mockFile = {
+      name: 'delayed.csv',
+      text: async () => {
+        textMethodCalled = true;
+        return 'Title,Artist\nSong A,Artist A\nSong B,Artist B';
+      }
+    };
+
+    app.selectedImportFile = mockFile;
+    app.selectedImportFileContent = null; // simulate file content not yet loaded by event
+
+    await app.handleStartImportLibrary();
+
+    expect(textMethodCalled).toBe(true);
+    expect(app.userPlaylists.length).toBe(1);
+    expect(app.userPlaylists[0].tracks.length).toBe(2);
+    expect(elements.importProgressBar.style.width).toBe('100%');
+    expect(toasts.some(t => t.includes('Berhasil mengimpor 2 lagu'))).toBe(true);
   } finally {
     global.document = originalDoc;
     global.window = originalWindow;
