@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, session, Menu, Tray, globalShortcut, dialog, net: electronNet, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, session, Menu, Tray, globalShortcut, dialog, net: electronNet, shell, nativeImage } = require('electron');
 const path = require('path');
 const http = require('http');
 const https = require('https');
@@ -400,7 +400,8 @@ const localAudioProxy = http.createServer((req, res) => {
         '.opus': 'audio/opus',
         '.ogg': 'audio/ogg',
         '.flac': 'audio/flac',
-        '.wav': 'audio/wav'
+        '.wav': 'audio/wav',
+        '.webm': 'audio/webm'
       };
       const contentType = mimeTypes[ext] || 'audio/mpeg';
 
@@ -3073,6 +3074,73 @@ function createTray() {
   }
 }
 
+// =========================================================
+// Windows Taskbar Thumbnail Toolbar (win32 Thumbar Controls)
+// =========================================================
+const THUMBAR_ICONS = {
+  play: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAaElEQVR4Ae3BMQ7EIAxFwRfg4Pjk3l+4QhHCoK3CDNe1xAMvCodcmGhscmFBI8mFhEKCC0mNBS5saky4cKjwZ5UJC11YYMKgssBCFyZMGBQSHiGpkmShCwMTBpVNFroQTBgUDj3C9W0/ldpAP/Z6GocAAAAASUVORK5CYII=',
+  pause: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAP0lEQVR4Ae3BMQ7AMAzEMFn//3Pq0UM6FbcUJln/V7w4jaEaw2kM1biQMAmTMAmTMAmTMAmTMAmTMAmTtb56AM1LCBwKrBc2AAAAAElFTkSuQmCC',
+  prev: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAZUlEQVR4Ae3BMQ7DMAwEwT1B//8yfWVgUDBFJ02gGY7/JxJhfJDRNCgIo0kkwliQsUEkwnggo2DQFEaBSISxQcaCSITRIONm8GOTL5CxMHlBxoNBk4yCySYZGyZFMhoGBTKOY+UCI7gcMAFc4ccAAAAASUVORK5CYII=',
+  next: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAYAAADgdz34AAAAcElEQVR4Ae3BywrDMAxFwePHh1tfrt6CF0UkQXbaTckMj/9XuMGFD0UIKptcSOgscmFBJ8mFDZUEFzZ1LrhwU+eAC19S+bHGAZuGsMCEoHHBpiEkmBBUEoqwqZFk0xBOmBA0Ftk0hMCEoLKpCI/H2wvRGzxI1tH3vwAAAABJRU5ErkJggg=='
+};
+
+let thumbarIconsCache = null;
+function getThumbarIcons() {
+  if (!thumbarIconsCache && nativeImage && typeof nativeImage.createFromDataURL === 'function') {
+    try {
+      thumbarIconsCache = {
+        prev: nativeImage.createFromDataURL(THUMBAR_ICONS.prev),
+        play: nativeImage.createFromDataURL(THUMBAR_ICONS.play),
+        pause: nativeImage.createFromDataURL(THUMBAR_ICONS.pause),
+        next: nativeImage.createFromDataURL(THUMBAR_ICONS.next)
+      };
+    } catch (e) {
+      console.warn('[Thumbar] Error generating nativeImages:', e && e.message ? e.message : e);
+    }
+  }
+  return thumbarIconsCache;
+}
+
+function updateWindowsThumbar(isPlaying = false) {
+  if (process.platform !== 'win32' || !mainWindow || mainWindow.isDestroyed()) return;
+  try {
+    const icons = getThumbarIcons();
+    if (!icons) return;
+
+    mainWindow.setThumbarButtons([
+      {
+        tooltip: 'Previous Track',
+        icon: icons.prev,
+        click: () => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('media-action', 'prev');
+          }
+        }
+      },
+      {
+        tooltip: isPlaying ? 'Pause' : 'Play',
+        icon: isPlaying ? icons.pause : icons.play,
+        click: () => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('media-action', 'play-pause');
+          }
+        }
+      },
+      {
+        tooltip: 'Next Track',
+        icon: icons.next,
+        click: () => {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('media-action', 'next');
+          }
+        }
+      }
+    ]);
+  } catch (err) {
+    console.warn('[Thumbar] Failed to update Windows taskbar thumbbar buttons:', err && err.message ? err.message : err);
+  }
+}
+
 function createWindow() {
   const win = new BrowserWindow({
     width: 1280,
@@ -3094,6 +3162,13 @@ function createWindow() {
   mainWindow = win;
   win.loadFile(path.join(__dirname, 'src/index.html'));
   win.setMenuBarVisibility(false);
+
+  win.once('ready-to-show', () => {
+    updateWindowsThumbar(false);
+  });
+  win.webContents.once('did-finish-load', () => {
+    updateWindowsThumbar(false);
+  });
 
   win.on('close', (e) => {
     try {
@@ -4987,6 +5062,12 @@ ipcMain.on('clear-discord-presence', () => {
   discordRpc.clearActivity();
 });
 
+// IPC Handler: Windows Taskbar ThumbBar Controls State
+ipcMain.on('set-thumbar-state', (_event, payload) => {
+  const isPlaying = Boolean(payload && payload.isPlaying);
+  updateWindowsThumbar(isPlaying);
+});
+
 app.whenReady().then(() => {
   if (session && session.defaultSession) {
     const CHROME_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
@@ -5135,3 +5216,11 @@ app.on('window-all-closed', () => {
 app.on('will-quit', () => {
   process.exit(0);
 });
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    updateWindowsThumbar,
+    getThumbarIcons,
+    THUMBAR_ICONS
+  };
+}

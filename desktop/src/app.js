@@ -2330,6 +2330,7 @@ class SoraFyDesktopApp {
 
     element.addEventListener("play", () => {
       if (this.activeDeck === deckName) {
+        if (typeof this.onPlay === "function") this.onPlay();
         if (typeof this.showPlayerBuffering === "function") this.showPlayerBuffering(false);
         if (this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
           this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
@@ -2344,6 +2345,7 @@ class SoraFyDesktopApp {
 
     element.addEventListener("pause", () => {
       if (this.activeDeck === deckName) {
+        if (typeof this.onPause === "function") this.onPause();
         if (this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
           this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
         }
@@ -2355,8 +2357,13 @@ class SoraFyDesktopApp {
     });
 
     element.addEventListener("seeked", () => {
-      if (this.activeDeck === deckName && this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
-        this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
+      if (this.activeDeck === deckName) {
+        if (this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
+          this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
+        }
+        if (typeof this.updateMediaSessionPosition === "function") {
+          this.updateMediaSessionPosition();
+        }
       }
     });
   }
@@ -2615,39 +2622,82 @@ class SoraFyDesktopApp {
   }
 
   updateMediaSession(track) {
-    if (!('mediaSession' in navigator) || !track) return;
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator) || !track) return;
     try {
       const artUrl = track.artwork_url || this.DEFAULT_TRACK_ART;
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: track.title || 'Track Title',
-        artist: track.artist || 'Artist',
-        album: track.album || 'SoraFy Music',
-        artwork: [
-          { src: artUrl, sizes: '96x96', type: 'image/jpeg' },
-          { src: artUrl, sizes: '128x128', type: 'image/jpeg' },
-          { src: artUrl, sizes: '256x256', type: 'image/jpeg' },
-          { src: artUrl, sizes: '512x512', type: 'image/jpeg' }
-        ]
-      });
+      const artType = (typeof artUrl === 'string' && (artUrl.includes('.png') ? 'image/png' : (artUrl.includes('.webp') ? 'image/webp' : 'image/jpeg'))) || 'image/jpeg';
+
+      if (typeof MediaMetadata !== 'undefined') {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: track.title || 'Track Title',
+          artist: track.artist || 'Artist',
+          album: track.album || 'SoraFy Music',
+          artwork: [
+            { src: artUrl, sizes: '96x96', type: artType },
+            { src: artUrl, sizes: '128x128', type: artType },
+            { src: artUrl, sizes: '192x192', type: artType },
+            { src: artUrl, sizes: '256x256', type: artType },
+            { src: artUrl, sizes: '384x384', type: artType },
+            { src: artUrl, sizes: '512x512', type: artType }
+          ]
+        });
+      }
 
       navigator.mediaSession.playbackState = this.isPlaying ? 'playing' : 'paused';
+      this.updateMediaSessionPosition();
     } catch (e) {
       console.warn("MediaSession update note:", e);
     }
   }
 
   updateMediaSessionPosition() {
-    if (!('mediaSession' in navigator) || !this.audio || !('setPositionState' in navigator.mediaSession)) return;
+    if (typeof navigator === 'undefined' || !('mediaSession' in navigator) || !this.audio || typeof navigator.mediaSession?.setPositionState !== 'function') return;
     try {
-      const dur = this.audio.duration;
+      const rawDur = (typeof this.audio.duration === 'number' && isFinite(this.audio.duration) && this.audio.duration > 0)
+        ? this.audio.duration
+        : ((this.tracks && this.tracks[this.currentTrackIndex]?.duration_secs) || 0);
+      const dur = Number(rawDur);
       if (dur && isFinite(dur) && dur > 0) {
+        const rawCur = typeof this.audio.currentTime === 'number' ? this.audio.currentTime : 0;
+        const cur = (isFinite(rawCur) && rawCur >= 0) ? Math.min(rawCur, dur) : 0;
+        const rawRate = typeof this.audio.playbackRate === 'number' ? this.audio.playbackRate : 1.0;
+        const rate = (isFinite(rawRate) && rawRate > 0) ? rawRate : 1.0;
         navigator.mediaSession.setPositionState({
           duration: dur,
-          playbackRate: this.audio.playbackRate || 1.0,
-          position: Math.min(this.audio.currentTime || 0, dur)
+          playbackRate: rate,
+          position: cur
         });
       }
     } catch (_) {}
+  }
+
+  onPlay() {
+    this.isPlaying = true;
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.playbackState = 'playing';
+      } catch (_) {}
+      this.updateMediaSessionPosition();
+    }
+    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+      try {
+        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
+      } catch (_) {}
+    }
+  }
+
+  onPause() {
+    this.isPlaying = false;
+    if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
+      try {
+        navigator.mediaSession.playbackState = 'paused';
+      } catch (_) {}
+    }
+    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+      try {
+        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
+      } catch (_) {}
+    }
   }
 
   // =========================================================================
@@ -3660,6 +3710,9 @@ class SoraFyDesktopApp {
           if (this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
             this.screenPlayerNativeVideo.currentTime = seekTime;
           }
+          if (typeof this.updateMediaSessionPosition === 'function') {
+            this.updateMediaSessionPosition();
+          }
         }
         this.isSeekingScreen = false;
       });
@@ -3717,6 +3770,9 @@ class SoraFyDesktopApp {
           this.audio.currentTime = seekTime;
           if (this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
             this.screenPlayerNativeVideo.currentTime = seekTime;
+          }
+          if (typeof this.updateMediaSessionPosition === 'function') {
+            this.updateMediaSessionPosition();
           }
         }
       });
@@ -4429,6 +4485,9 @@ class SoraFyDesktopApp {
           this.audio.currentTime = seekTime;
           if (this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
             this.screenPlayerNativeVideo.currentTime = seekTime;
+          }
+          if (typeof this.updateMediaSessionPosition === 'function') {
+            this.updateMediaSessionPosition();
           }
         }
         this.isSeekingBottom = false;
@@ -9457,6 +9516,9 @@ class SoraFyDesktopApp {
       this.isPlaying = true;
       this.updatePlayPauseIcon();
       this.showPlayerBuffering(true);
+      if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
+      }
     }
 
     if (!track.video_id && track.id && track.id.startsWith("yt_")) {
@@ -9730,8 +9792,11 @@ class SoraFyDesktopApp {
       this.isPlaying = false;
       this.showPlayerBuffering(false);
       this.updatePlayPauseIcon();
-      if ('mediaSession' in navigator) {
+      if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
         navigator.mediaSession.playbackState = 'paused';
+      }
+      if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
       }
     }
   }
@@ -10099,7 +10164,11 @@ class SoraFyDesktopApp {
       this.isPlaying = false;
       this.updatePlayPauseIcon();
       this.syncJamState();
-      if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      if (typeof this.onPause === 'function') this.onPause();
+      if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+      if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+        window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
+      }
       const cur = this.tracks[this.currentTrackIndex];
       if (cur) this.updateDiscordPresence(cur);
     } else {
@@ -10112,7 +10181,11 @@ class SoraFyDesktopApp {
         this.isPlaying = true;
         this.updatePlayPauseIcon();
         this.syncJamState();
-        if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+        if (typeof this.onPlay === 'function') this.onPlay();
+        if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
+        if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+          window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
+        }
         const cur = this.tracks[this.currentTrackIndex];
         if (cur) this.updateDiscordPresence(cur);
         if (this.currentScreenMode === "video" && this.screenPlayerNativeVideo && this.screenPlayerNativeVideo.src) {
@@ -10127,7 +10200,11 @@ class SoraFyDesktopApp {
         } catch (e2) {
           this.isPlaying = false;
           this.updatePlayPauseIcon();
-          if ('mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+          if (typeof this.onPause === 'function') this.onPause();
+          if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
+          if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+            window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
+          }
           this.showToast("Unable to play audio");
         }
       });
@@ -10149,6 +10226,9 @@ class SoraFyDesktopApp {
       if (!this.isPlaying && this.currentScreenMode === "video") {
         this.screenPlayerVideoOverlay.classList.add("active");
       }
+    }
+    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
+      window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
     }
   }
 
@@ -10245,6 +10325,12 @@ class SoraFyDesktopApp {
     if (!this._lastJamSync || (now - this._lastJamSync > 1000)) {
       this._lastJamSync = now;
       this.syncJamState();
+    }
+
+    // Throttled sync to OS Native Media Session position (every 1 second)
+    if (!this._lastMediaSessionSync || (now - this._lastMediaSessionSync > 1000)) {
+      this._lastMediaSessionSync = now;
+      this.updateMediaSessionPosition();
     }
 
     // Nuclear Feature 5: Record listening analytics event (at 30s or 50% duration)

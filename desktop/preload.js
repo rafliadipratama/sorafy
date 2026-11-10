@@ -78,5 +78,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('media-action', (_event, action) => {
       if (typeof callback === 'function') callback(action);
     });
-  }
+  },
+  setThumbarState: (state) => ipcRenderer.send('set-thumbar-state', state)
 });
