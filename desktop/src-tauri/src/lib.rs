@@ -12,11 +12,14 @@ use infrastructure::{
     InnertubeCatalogClient, LocalStorageAdapter, LrcLibClient, MockAudioEngine,
 };
 
+pub use infrastructure::AudioProxy;
+
 pub fn build_app_state() -> AppState {
     let audio_player = Arc::new(Mutex::new(MockAudioEngine::new()));
     let catalog_repo = Arc::new(InnertubeCatalogClient::default());
     let lyrics_repo = Arc::new(LrcLibClient::default());
     let storage_repo = Arc::new(LocalStorageAdapter::new());
+    let audio_proxy = AudioProxy::bind_sync().ok().map(Arc::new);
 
     let player_service = Arc::new(PlayerService::new(audio_player));
     let catalog_service = Arc::new(CatalogService::new(catalog_repo));
@@ -30,5 +33,6 @@ pub fn build_app_state() -> AppState {
         lyrics: lyrics_service,
         library: library_service,
         plugins: plugin_service,
+        audio_proxy,
     }
 }

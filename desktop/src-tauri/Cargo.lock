@@ -921,12 +921,15 @@ version = "1.0.0"
 dependencies = [
  "async-trait",
  "dirs",
+ "httparse",
+ "percent-encoding",
  "regex",
  "reqwest",
  "serde",
  "serde_json",
  "thiserror",
  "tokio",
+ "url",
 ]
 
 [[package]]

@@ -7,6 +7,7 @@ use crate::application::lyrics_service::LyricsService;
 use crate::application::player_service::PlayerService;
 use crate::application::plugin_service::PluginService;
 use crate::domain::model::{Artist, EqualizerPreset, Lyrics, PlaybackState, PluginMeta, Track};
+use crate::infrastructure::AudioProxy;
 
 pub struct AppState {
     pub player: Arc<PlayerService>,
@@ -14,6 +15,7 @@ pub struct AppState {
     pub lyrics: Arc<LyricsService>,
     pub library: Arc<LibraryService>,
     pub plugins: Arc<PluginService>,
+    pub audio_proxy: Option<Arc<AudioProxy>>,
 }
 
 #[derive(Serialize, Deserialize)]
