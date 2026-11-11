@@ -100,7 +100,11 @@ class PlatformBridge {
     }
     if (this.isTauri) {
       try {
-        const res = await this._invoke('resolve_full_stream', { data });
+        const normalizedData = data ? {
+          ...data,
+          videoId: data.videoId || data.video_id || (data.id && data.id.startsWith('yt_') ? data.id.replace(/^yt_/, '') : data.id) || '',
+        } : {};
+        const res = await this._invoke('resolve_full_stream', { data: normalizedData });
         return this._unwrap(res);
       } catch (err) {
         console.warn('Tauri resolve_full_stream failed, falling back:', err);

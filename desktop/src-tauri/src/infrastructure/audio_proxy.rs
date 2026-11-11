@@ -1,5 +1,9 @@
+use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
+
+const IOS_USER_AGENT: &str = "com.google.ios.youtube/21.03.3 (iPad7,6; U; CPU iPadOS 17_7_10 like Mac OS X; en-US)";
+const DESKTOP_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
 
 const QUERY_VALUE_ENCODE_SET: &percent_encoding::AsciiSet = &percent_encoding::NON_ALPHANUMERIC
     .remove(b'-')
@@ -19,6 +23,9 @@ impl AudioProxy {
         let port = listener.local_addr()?.port();
         let client = reqwest::Client::builder()
             .danger_accept_invalid_certs(false)
+            .tcp_nodelay(true)
+            .pool_max_idle_per_host(16)
+            .pool_idle_timeout(Duration::from_secs(90))
             .build()
             .unwrap_or_else(|_| reqwest::Client::new());
 
@@ -44,6 +51,9 @@ impl AudioProxy {
             if let Ok(tokio_listener) = TcpListener::from_std(std_listener) {
                 let client = reqwest::Client::builder()
                     .danger_accept_invalid_certs(false)
+                    .tcp_nodelay(true)
+                    .pool_max_idle_per_host(16)
+                    .pool_idle_timeout(Duration::from_secs(90))
                     .build()
                     .unwrap_or_else(|_| reqwest::Client::new());
 
@@ -100,6 +110,8 @@ async fn handle_client_connection(
     mut stream: tokio::net::TcpStream,
     client: reqwest::Client,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let _ = stream.set_nodelay(true);
+
     let mut buf = [0u8; 4096];
     let mut bytes_read = 0;
 
@@ -132,6 +144,7 @@ async fn handle_client_connection(
 Access-Control-Allow-Origin: *\r\n\
 Access-Control-Allow-Methods: GET, HEAD, OPTIONS\r\n\
 Access-Control-Allow-Headers: Range, Content-Type, Accept, Authorization, *\r\n\
+Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges\r\n\
 Access-Control-Max-Age: 86400\r\n\
 Accept-Ranges: bytes\r\n\
 Content-Length: 0\r\n\
@@ -205,9 +218,9 @@ Missing target url";
     // 4. Send request to upstream media server
     let is_ios = target_url.contains("c=IOS") || target_url.contains("c=ios");
     let user_agent = if is_ios {
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1"
+        IOS_USER_AGENT
     } else {
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
+        DESKTOP_USER_AGENT
     };
 
     let mut upstream_req = if method.eq_ignore_ascii_case("HEAD") {
@@ -239,18 +252,35 @@ Connection: close\r\n\
     let status = upstream_resp.status();
     let upstream_headers = upstream_resp.headers();
 
-    let mut content_type = upstream_headers
+    let raw_content_type = upstream_headers
         .get(reqwest::header::CONTENT_TYPE)
         .and_then(|v| v.to_str().ok())
-        .unwrap_or("audio/mp4")
-        .to_string();
+        .unwrap_or("");
 
-    if target_url.contains(".webm")
-        || target_url.contains("mime=audio%2Fwebm")
+    let content_type = if target_url.contains("mime=audio%2Fwebm")
         || target_url.contains("mime=audio/webm")
+        || target_url.contains(".webm")
+        || raw_content_type.contains("audio/webm")
+        || raw_content_type.contains("opus")
     {
-        content_type = "audio/webm".to_string();
-    }
+        "audio/webm"
+    } else if target_url.contains("mime=audio%2Fmp4")
+        || target_url.contains("mime=audio/mp4")
+        || target_url.contains(".m4a")
+        || target_url.contains(".mp4")
+        || raw_content_type.contains("audio/mp4")
+        || raw_content_type.contains("aac")
+    {
+        "audio/mp4"
+    } else if target_url.contains(".flac") || raw_content_type.contains("audio/flac") || target_url.contains("monochrome.st") {
+        "audio/flac"
+    } else if target_url.contains(".mp3") || raw_content_type.contains("audio/mpeg") {
+        "audio/mpeg"
+    } else if !raw_content_type.is_empty() && !raw_content_type.contains("octet-stream") {
+        raw_content_type
+    } else {
+        "audio/mp4"
+    };
 
     let content_range = upstream_headers
         .get(reqwest::header::CONTENT_RANGE)
@@ -264,7 +294,8 @@ Connection: close\r\n\
         "HTTP/1.1 {} {}\r\n\
 Access-Control-Allow-Origin: *\r\n\
 Access-Control-Allow-Methods: GET, HEAD, OPTIONS\r\n\
-Access-Control-Allow-Headers: Range, Content-Type, Accept, *\r\n\
+Access-Control-Allow-Headers: Range, Content-Type, Accept, Authorization, *\r\n\
+Access-Control-Expose-Headers: Content-Range, Content-Length, Accept-Ranges\r\n\
 Accept-Ranges: bytes\r\n\
 Content-Type: {}\r\n",
         status.as_u16(),
@@ -280,20 +311,24 @@ Content-Type: {}\r\n",
     }
     resp_header.push_str("Connection: close\r\n\r\n");
 
-    stream.write_all(resp_header.as_bytes()).await?;
-
-    // 5. Stream body chunks for GET requests
+    // 5. Stream body chunks for GET requests with 64KB buffering
     if !method.eq_ignore_ascii_case("HEAD") {
+        let mut writer = tokio::io::BufWriter::with_capacity(64 * 1024, stream);
+        writer.write_all(resp_header.as_bytes()).await?;
+
         let mut body_res = upstream_resp;
         while let Ok(Some(chunk)) = body_res.chunk().await {
-            if stream.write_all(&chunk).await.is_err() {
+            if writer.write_all(&chunk).await.is_err() {
                 // Client aborted or closed socket early
                 break;
             }
         }
+        let _ = writer.flush().await;
+    } else {
+        stream.write_all(resp_header.as_bytes()).await?;
+        let _ = stream.flush().await;
     }
 
-    let _ = stream.flush().await;
     Ok(())
 }
 

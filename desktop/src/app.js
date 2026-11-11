@@ -9605,10 +9605,11 @@ class SoraFyDesktopApp {
     // Spotify/Apple Music Instant Stream: Skip network resolver if already preloaded or cached
     if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!track.is_full_stream || !track.stream_url)) {
       try {
+        const vid = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : track.id);
         const full = await window.electronAPI.resolveFullStream({
           title: track.title,
           artist: track.artist,
-          videoId: track.video_id,
+          videoId: vid,
           isVideo: !!track.is_video
         });
         if (loadId !== this._currentLoadId) return;

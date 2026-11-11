@@ -61,12 +61,18 @@ pub struct ResolveStreamRequest {
 #[serde(rename_all = "camelCase")]
 pub struct ResolvedStreamPayload {
     pub url: String,
+    pub raw_url: String,
     #[serde(alias = "video_id")]
     pub video_id: String,
     pub title: String,
     pub artist: String,
+    pub duration: u64,
+    pub bitrate: u32,
+    pub mime_type: String,
+    pub provider: String,
     #[serde(alias = "audio_quality")]
     pub audio_quality: String,
+    pub is_full: bool,
     pub proxied: bool,
 }
 
@@ -119,21 +125,37 @@ pub async fn resolve_full_stream(
     state: &AppState,
     request: ResolveStreamRequest,
 ) -> CommandResponse<ResolvedStreamPayload> {
-    let mut video_id = request.video_id.unwrap_or_default();
+    let mut video_id = request.video_id.unwrap_or_default().trim().to_string();
+    if video_id.starts_with("yt_") {
+        video_id = video_id.trim_start_matches("yt_").to_string();
+    }
     let mut title = request.title.unwrap_or_default();
     let mut artist = request.artist.unwrap_or_default();
 
-    // If video_id is empty, try resolving from search
+    // If video_id is empty, try resolving from YouTube Music first (matching Electron)
     if video_id.is_empty() && (!title.is_empty() || !artist.is_empty()) {
-        let q = format!("{} {}", title, artist).trim().to_string();
-        if let Ok(tracks) = state.catalog.search_tracks(&q).await {
+        let q = format!("{} {}", artist, title).trim().to_string();
+        if let Ok(tracks) = state.youtubei.search(&q, Some("song")).await {
             if let Some(t) = tracks.first() {
-                video_id = t.id.clone();
+                video_id = t.id.trim_start_matches("yt_").to_string();
                 if title.is_empty() {
                     title = t.title.clone();
                 }
                 if artist.is_empty() {
                     artist = t.artist.clone();
+                }
+            }
+        }
+        if video_id.is_empty() {
+            if let Ok(tracks) = state.catalog.search_tracks(&q).await {
+                if let Some(t) = tracks.first() {
+                    video_id = t.id.clone();
+                    if title.is_empty() {
+                        title = t.title.clone();
+                    }
+                    if artist.is_empty() {
+                        artist = t.artist.clone();
+                    }
                 }
             }
         }
@@ -165,6 +187,7 @@ pub async fn resolve_full_stream(
         {
             return CommandResponse::ok(ResolvedStreamPayload {
                 url: resolved.url,
+                raw_url: resolved.raw_url,
                 video_id: video_id.clone(),
                 title: if resolved.title != "Unknown Title" {
                     resolved.title
@@ -176,7 +199,12 @@ pub async fn resolve_full_stream(
                 } else {
                     artist
                 },
+                duration: resolved.duration_secs,
+                bitrate: resolved.bitrate,
+                mime_type: resolved.mime_type,
+                provider: resolved.provider,
                 audio_quality: resolved.audio_quality,
+                is_full: true,
                 proxied: resolved.proxied,
             });
         }
@@ -212,15 +240,21 @@ pub async fn resolve_full_stream(
             let (url, proxied) = if let Some(ref proxy) = state.audio_proxy {
                 (proxy.get_proxied_url(&raw_url), true)
             } else {
-                (raw_url, false)
+                (raw_url.clone(), false)
             };
 
             CommandResponse::ok(ResolvedStreamPayload {
                 url,
+                raw_url: raw_url.clone(),
                 video_id,
                 title,
                 artist,
+                duration: 0,
+                bitrate: 160000,
+                mime_type: "audio/mpeg".to_string(),
+                provider: "Fallback Stream".to_string(),
                 audio_quality: "high".to_string(),
+                is_full: true,
                 proxied,
             })
         }

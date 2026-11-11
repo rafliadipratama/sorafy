@@ -337,12 +337,20 @@ pub fn parse_ytdlp_stdout(stdout: &str) -> Option<RawStreamInfo> {
         }
     }
 
+    let (mime_type, provider, bitrate) = if raw_url.as_ref().map_or(false, |u| {
+        u.contains("audio%2Fmp4") || u.contains("mime=audio/mp4") || u.contains(".m4a")
+    }) {
+        ("audio/mp4".to_string(), "AAC 320k".to_string(), 320_000)
+    } else {
+        ("audio/webm".to_string(), "Opus HD".to_string(), 160_000)
+    };
+
     raw_url.map(|url| RawStreamInfo {
         raw_url: url,
         duration_secs,
-        bitrate: 160_000,
-        mime_type: "audio/webm".to_string(),
-        provider: "Opus HD".to_string(),
+        bitrate,
+        mime_type,
+        provider,
     })
 }
 
@@ -423,12 +431,18 @@ pub fn parse_ios_player_response(json: &serde_json::Value) -> Option<RawStreamIn
         })
         .unwrap_or(0);
 
+    let provider = if mime_type.contains("mp4") {
+        "AAC 320k".to_string()
+    } else {
+        "Opus HD".to_string()
+    };
+
     Some(RawStreamInfo {
         raw_url,
         duration_secs,
         bitrate,
         mime_type,
-        provider: "SoraFy HD Stream".to_string(),
+        provider,
     })
 }
 
@@ -550,7 +564,7 @@ mod tests {
         assert_eq!(info.raw_url, "https://googlevideo.com/playback_140");
         assert_eq!(info.duration_secs, 195);
         assert_eq!(info.bitrate, 128000);
-        assert_eq!(info.provider, "SoraFy HD Stream");
+        assert_eq!(info.provider, "AAC 320k");
     }
 
     #[tokio::test]
