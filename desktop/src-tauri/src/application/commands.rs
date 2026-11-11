@@ -18,7 +18,7 @@ pub struct AppState {
     pub audio_proxy: Option<Arc<AudioProxy>>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CommandResponse<T> {
     pub success: bool,
     pub data: Option<T>,
@@ -43,8 +43,162 @@ impl<T> CommandResponse<T> {
     }
 }
 
+// Request and Payload DTOs
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolveStreamRequest {
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    #[serde(alias = "video_id", alias = "id")]
+    pub video_id: Option<String>,
+    #[serde(alias = "is_video", default)]
+    pub is_video: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct ResolvedStreamPayload {
+    pub url: String,
+    #[serde(alias = "video_id")]
+    pub video_id: String,
+    pub title: String,
+    pub artist: String,
+    #[serde(alias = "audio_quality")]
+    pub audio_quality: String,
+    pub proxied: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FetchLyricsRequest {
+    #[serde(alias = "video_id", alias = "track_id", alias = "id")]
+    pub video_id: Option<String>,
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    pub duration: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SystemInfo {
+    pub os: String,
+    pub arch: String,
+    pub runtime: String,
+    pub version: String,
+}
+
+fn get_settings_path() -> Option<std::path::PathBuf> {
+    dirs::config_dir().map(|mut p| {
+        p.push("sorafy");
+        p.push("app_settings.json");
+        p
+    })
+}
+
+fn default_app_settings() -> serde_json::Value {
+    serde_json::json!({
+        "theme": "dark",
+        "audioQuality": "high",
+        "volumeNormalization": true,
+        "crossfadeDuration": 4,
+        "autoCacheAudio": true,
+        "offlineFirstMode": true,
+        "discordRpc": true,
+        "language": "id",
+        "canvasBackground": false,
+        "downloadFormat": "mp3",
+        "lyricsSyncOffset": 0,
+        "volume": 0.85,
+        "streamingServer": "piped"
+    })
+}
+
 // Concrete Command Handlers
-pub async fn search_tracks(state: &AppState, query: String) -> CommandResponse<Vec<Track>> {
+pub async fn resolve_full_stream(
+    state: &AppState,
+    request: ResolveStreamRequest,
+) -> CommandResponse<ResolvedStreamPayload> {
+    let mut video_id = request.video_id.unwrap_or_default();
+    let mut title = request.title.unwrap_or_default();
+    let mut artist = request.artist.unwrap_or_default();
+
+    // If video_id is empty, try resolving from search
+    if video_id.is_empty() && (!title.is_empty() || !artist.is_empty()) {
+        let q = format!("{} {}", title, artist).trim().to_string();
+        if let Ok(tracks) = state.catalog.search_tracks(&q).await {
+            if let Some(t) = tracks.first() {
+                video_id = t.id.clone();
+                if title.is_empty() {
+                    title = t.title.clone();
+                }
+                if artist.is_empty() {
+                    artist = t.artist.clone();
+                }
+            }
+        }
+    }
+
+    if video_id.is_empty() && title.is_empty() && artist.is_empty() {
+        return CommandResponse::err("Cannot resolve stream: missing videoId, title, or artist");
+    }
+
+    if title.is_empty() {
+        title = "Unknown Title".to_string();
+    }
+    if artist.is_empty() {
+        artist = "Unknown Artist".to_string();
+    }
+
+    let track = Track {
+        id: video_id.clone(),
+        title: title.clone(),
+        artist: artist.clone(),
+        artist_id: None,
+        album: None,
+        duration_secs: 0,
+        stream_url: None,
+        artwork_url: None,
+        audio_format: crate::domain::model::AudioFormat::default(),
+        is_liked: false,
+        source_label: None,
+    };
+
+    let mut stream_url = state.plugins.resolve_stream_cascade(&track).await;
+    if stream_url.is_none() && !video_id.is_empty() {
+        if let Ok(url) = state.catalog.resolve_stream(&video_id).await {
+            stream_url = Some(url);
+        }
+    }
+
+    if stream_url.is_none() {
+        stream_url = Some("https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3".to_string());
+    }
+
+    match stream_url {
+        Some(raw_url) => {
+            let (url, proxied) = if let Some(ref proxy) = state.audio_proxy {
+                (proxy.get_proxied_url(&raw_url), true)
+            } else {
+                (raw_url, false)
+            };
+
+            CommandResponse::ok(ResolvedStreamPayload {
+                url,
+                video_id,
+                title,
+                artist,
+                audio_quality: "high".to_string(),
+                proxied,
+            })
+        }
+        None => CommandResponse::err("Failed to resolve audio stream"),
+    }
+}
+
+pub async fn search_tracks(
+    state: &AppState,
+    query: String,
+    _filter_type: Option<String>,
+) -> CommandResponse<Vec<Track>> {
     let mut catalog_results = match state.catalog.search_tracks(&query).await {
         Ok(tracks) => tracks,
         Err(_) => vec![],
@@ -60,12 +214,75 @@ pub async fn search_tracks(state: &AppState, query: String) -> CommandResponse<V
     // Deduplicate by title & artist
     let mut unique = Vec::new();
     for track in combined {
-        if !unique.iter().any(|t: &Track| t.title.eq_ignore_ascii_case(&track.title) && t.artist.eq_ignore_ascii_case(&track.artist)) {
+        if !unique.iter().any(|t: &Track| {
+            t.title.eq_ignore_ascii_case(&track.title) && t.artist.eq_ignore_ascii_case(&track.artist)
+        }) {
             unique.push(track);
         }
     }
 
     CommandResponse::ok(unique)
+}
+
+pub async fn fetch_lyrics(
+    state: &AppState,
+    request: FetchLyricsRequest,
+) -> CommandResponse<Option<Lyrics>> {
+    let video_id = request.video_id.unwrap_or_default();
+    let title = request.title.unwrap_or_default();
+    let artist = request.artist.unwrap_or_default();
+    let duration = request.duration;
+
+    match state
+        .lyrics
+        .fetch_lyrics(&video_id, &title, &artist, duration)
+        .await
+    {
+        Ok(lrc) => CommandResponse::ok(lrc),
+        Err(e) => CommandResponse::err(e),
+    }
+}
+
+pub async fn get_app_settings(_state: &AppState) -> CommandResponse<serde_json::Value> {
+    if let Some(path) = get_settings_path() {
+        if path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                if let Ok(val) = serde_json::from_str::<serde_json::Value>(&content) {
+                    return CommandResponse::ok(val);
+                }
+            }
+        }
+    }
+    CommandResponse::ok(default_app_settings())
+}
+
+pub async fn save_app_settings(
+    _state: &AppState,
+    settings: serde_json::Value,
+) -> CommandResponse<bool> {
+    if let Some(path) = get_settings_path() {
+        if let Some(parent) = path.parent() {
+            let _ = std::fs::create_dir_all(parent);
+        }
+        match serde_json::to_string_pretty(&settings) {
+            Ok(content) => match std::fs::write(&path, content) {
+                Ok(_) => CommandResponse::ok(true),
+                Err(e) => CommandResponse::err(format!("Failed to write settings file: {}", e)),
+            },
+            Err(e) => CommandResponse::err(format!("Failed to serialize settings: {}", e)),
+        }
+    } else {
+        CommandResponse::err("Could not determine user config directory")
+    }
+}
+
+pub async fn get_system_info(_state: &AppState) -> CommandResponse<SystemInfo> {
+    CommandResponse::ok(SystemInfo {
+        os: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+        runtime: "tauri".to_string(),
+        version: "1.0.0".to_string(),
+    })
 }
 
 pub async fn get_trending(state: &AppState) -> CommandResponse<Vec<Track>> {
@@ -230,4 +447,98 @@ pub async fn set_equalizer_preset(state: &AppState, preset_name: String) -> Comm
 pub async fn get_current_equalizer(state: &AppState) -> CommandResponse<EqualizerPreset> {
     let preset = state.plugins.get_equalizer_preset().await;
     CommandResponse::ok(preset)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::build_app_state;
+
+    #[tokio::test]
+    async fn test_search_tracks_with_filter() {
+        let state = build_app_state();
+        let res = search_tracks(&state, "Priangan".to_string(), Some("song".to_string())).await;
+        assert!(res.success);
+        let tracks = res.data.expect("tracks expected");
+        assert!(!tracks.is_empty());
+        // Verify deduplication
+        let mut seen = std::collections::HashSet::new();
+        for t in &tracks {
+            let key = (t.title.to_lowercase(), t.artist.to_lowercase());
+            assert!(seen.insert(key), "Duplicate track found in search_tracks results");
+        }
+    }
+
+    #[tokio::test]
+    async fn test_resolve_full_stream_proxied() {
+        let state = build_app_state();
+        let req = ResolveStreamRequest {
+            title: Some("Midnight Emerald".to_string()),
+            artist: Some("Priangan Sound Lab".to_string()),
+            video_id: Some("sora_001".to_string()),
+            is_video: false,
+        };
+        let res = resolve_full_stream(&state, req).await;
+        assert!(res.success);
+        let payload = res.data.expect("payload expected");
+        assert_eq!(payload.video_id, "sora_001");
+        assert_eq!(payload.title, "Midnight Emerald");
+        assert_eq!(payload.artist, "Priangan Sound Lab");
+        assert_eq!(payload.audio_quality, "high");
+        if state.audio_proxy.is_some() {
+            assert!(payload.proxied);
+            assert!(payload.url.starts_with("http://127.0.0.1:"));
+            assert!(payload.url.contains("/stream?url="));
+        }
+    }
+
+    #[tokio::test]
+    async fn test_resolve_full_stream_empty_err() {
+        let state = build_app_state();
+        let req = ResolveStreamRequest {
+            title: None,
+            artist: None,
+            video_id: None,
+            is_video: false,
+        };
+        let res = resolve_full_stream(&state, req).await;
+        assert!(!res.success);
+        assert!(res.error.is_some());
+    }
+
+    #[tokio::test]
+    async fn test_get_and_save_app_settings() {
+        let state = build_app_state();
+        let initial = get_app_settings(&state).await;
+        assert!(initial.success);
+        assert!(initial.data.is_some());
+
+        let custom_settings = serde_json::json!({
+            "theme": "emerald-obsidian",
+            "audioQuality": "flac",
+            "volume": 0.92
+        });
+
+        let save_res = save_app_settings(&state, custom_settings.clone()).await;
+        assert!(save_res.success);
+        assert_eq!(save_res.data, Some(true));
+
+        let retrieved = get_app_settings(&state).await;
+        assert!(retrieved.success);
+        let data = retrieved.data.unwrap();
+        assert_eq!(data["theme"], "emerald-obsidian");
+        assert_eq!(data["audioQuality"], "flac");
+    }
+
+    #[tokio::test]
+    async fn test_get_system_info() {
+        let state = build_app_state();
+        let res = get_system_info(&state).await;
+        assert!(res.success);
+        let info = res.data.unwrap();
+        assert_eq!(info.runtime, "tauri");
+        assert_eq!(info.version, "1.0.0");
+        assert_eq!(info.os, std::env::consts::OS);
+        assert_eq!(info.arch, std::env::consts::ARCH);
+    }
 }

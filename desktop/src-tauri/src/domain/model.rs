@@ -35,6 +35,7 @@ pub struct Track {
     pub album: Option<String>,
     pub duration_secs: u64,
     pub stream_url: Option<String>,
+    #[serde(alias = "thumbnail_url", alias = "thumbnailUrl")]
     pub artwork_url: Option<String>,
     pub audio_format: AudioFormat,
     pub is_liked: bool,
@@ -72,14 +73,18 @@ pub struct Playlist {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LyricLine {
+    #[serde(alias = "timestampMs")]
     pub timestamp_ms: u64,
     pub text: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Lyrics {
+    #[serde(alias = "videoId", alias = "id")]
     pub track_id: String,
+    #[serde(alias = "plainLyrics")]
     pub plain_lyrics: Option<String>,
+    #[serde(alias = "syncedLines")]
     pub synced_lines: Vec<LyricLine>,
 }
 

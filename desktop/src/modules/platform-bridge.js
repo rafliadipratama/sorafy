@@ -81,11 +81,15 @@ class PlatformBridge {
     throw new Error(`Tauri invoke unavailable for command: ${cmd}`);
   }
 
-  _unwrap(res) {
+  static _unwrap(res) {
     if (res && typeof res === 'object' && 'data' in res && res.data !== undefined) {
       return res.data;
     }
     return res;
+  }
+
+  _unwrap(res) {
+    return PlatformBridge._unwrap(res);
   }
 
   // --- Core Media & Catalog Methods ---
@@ -127,7 +131,13 @@ class PlatformBridge {
       try {
         const res = await this._invoke('search_tracks', { query, filterType });
         const unwrapped = this._unwrap(res);
-        return Array.isArray(unwrapped) ? unwrapped : [];
+        return Array.isArray(unwrapped)
+          ? unwrapped.map((t) => ({
+              ...t,
+              thumbnail_url: t.thumbnail_url || t.artwork_url || null,
+              artwork_url: t.artwork_url || t.thumbnail_url || null
+            }))
+          : [];
       } catch (err) {
         console.warn('Tauri search_tracks failed:', err);
       }
@@ -163,7 +173,32 @@ class PlatformBridge {
     return null;
   }
 
-  async fetchYouTubeLyrics(videoId) {
+  async fetchLyrics(request) {
+    const payload = typeof request === 'string' ? { videoId: request } : (request || {});
+    if (this.isElectron && this._electronAPI?.fetchLyrics) {
+      return await this._electronAPI.fetchLyrics(payload);
+    }
+    if (this.isElectron && this._electronAPI?.fetchYouTubeLyrics) {
+      return await this._electronAPI.fetchYouTubeLyrics(payload.videoId || payload.id);
+    }
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('fetch_lyrics', payload);
+        return this._unwrap(res);
+      } catch (err) {
+        console.warn('Tauri fetch_lyrics failed:', err);
+      }
+    }
+    return null;
+  }
+
+  async fetchYouTubeLyrics(videoId, title, artist, duration) {
+    if (typeof videoId === 'object' && videoId !== null) {
+      return await this.fetchLyrics(videoId);
+    }
+    if (title !== undefined || artist !== undefined || duration !== undefined) {
+      return await this.fetchLyrics({ videoId, title, artist, duration });
+    }
     if (this.isElectron && this._electronAPI?.fetchYouTubeLyrics) {
       return await this._electronAPI.fetchYouTubeLyrics(videoId);
     }
