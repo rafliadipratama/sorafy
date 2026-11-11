@@ -13,6 +13,7 @@ use infrastructure::{
 };
 
 pub use infrastructure::AudioProxy;
+pub use infrastructure::YtDlpExtractor;
 
 pub fn build_app_state() -> AppState {
     let audio_player = Arc::new(Mutex::new(MockAudioEngine::new()));
