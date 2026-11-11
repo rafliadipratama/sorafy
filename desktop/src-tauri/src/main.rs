@@ -114,6 +114,59 @@ async fn get_system_info(
     }
 }
 
+#[tauri::command]
+async fn get_yt_home_feed(
+    state: tauri::State<'_, AppStateWrapper>,
+    lang: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let res = commands::get_yt_home_feed(&state.0, lang).await;
+    if res.success {
+        Ok(res.data.unwrap_or_else(|| serde_json::json!({})))
+    } else {
+        Err(res.error.unwrap_or_else(|| "Failed to fetch home feed".to_string()))
+    }
+}
+
+#[tauri::command]
+async fn fetch_yt_radio_queue(
+    state: tauri::State<'_, AppStateWrapper>,
+    video_id: String,
+    continuation_token: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let res = commands::fetch_yt_radio_queue(&state.0, video_id, continuation_token).await;
+    if res.success {
+        Ok(res.data.unwrap_or_else(|| serde_json::json!({ "tracks": [], "continuation": null })))
+    } else {
+        Err(res.error.unwrap_or_else(|| "Failed to fetch radio queue".to_string()))
+    }
+}
+
+#[tauri::command]
+async fn browse_yt(
+    state: tauri::State<'_, AppStateWrapper>,
+    browse_id: String,
+) -> Result<serde_json::Value, String> {
+    let res = commands::browse_yt(&state.0, browse_id).await;
+    if res.success {
+        Ok(res.data.unwrap_or_else(|| serde_json::json!({})))
+    } else {
+        Err(res.error.unwrap_or_else(|| "Failed to browse YouTube".to_string()))
+    }
+}
+
+#[tauri::command]
+async fn get_search_suggestions(
+    state: tauri::State<'_, AppStateWrapper>,
+    query: String,
+) -> Result<Vec<String>, String> {
+    let res = commands::get_search_suggestions(&state.0, query).await;
+    if res.success {
+        Ok(res.data.unwrap_or_default())
+    } else {
+        Err(res.error.unwrap_or_else(|| "Failed to fetch search suggestions".to_string()))
+    }
+}
+
 fn main() {
     let rt = tokio::runtime::Runtime::new().expect("failed to initialize Tokio runtime");
     let _guard = rt.enter();
@@ -134,7 +187,11 @@ fn main() {
             fetch_lyrics,
             get_app_settings,
             save_app_settings,
-            get_system_info
+            get_system_info,
+            get_yt_home_feed,
+            fetch_yt_radio_queue,
+            browse_yt,
+            get_search_suggestions
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -13,6 +13,7 @@ use infrastructure::{
 };
 
 pub use infrastructure::AudioProxy;
+pub use infrastructure::YouTubeiClient;
 pub use infrastructure::YtDlpExtractor;
 
 pub fn build_app_state() -> AppState {
@@ -21,6 +22,8 @@ pub fn build_app_state() -> AppState {
     let lyrics_repo = Arc::new(LrcLibClient::default());
     let storage_repo = Arc::new(LocalStorageAdapter::new());
     let audio_proxy = AudioProxy::bind_sync().ok().map(Arc::new);
+    let youtubei = Arc::new(YouTubeiClient::new());
+    let ytdlp = Arc::new(YtDlpExtractor::new());
 
     let player_service = Arc::new(PlayerService::new(audio_player));
     let catalog_service = Arc::new(CatalogService::new(catalog_repo));
@@ -35,5 +38,7 @@ pub fn build_app_state() -> AppState {
         library: library_service,
         plugins: plugin_service,
         audio_proxy,
+        youtubei,
+        ytdlp,
     }
 }

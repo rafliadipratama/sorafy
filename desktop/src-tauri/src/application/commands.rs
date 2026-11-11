@@ -7,7 +7,7 @@ use crate::application::lyrics_service::LyricsService;
 use crate::application::player_service::PlayerService;
 use crate::application::plugin_service::PluginService;
 use crate::domain::model::{Artist, EqualizerPreset, Lyrics, PlaybackState, PluginMeta, Track};
-use crate::infrastructure::AudioProxy;
+use crate::infrastructure::{AudioProxy, YouTubeiClient, YtDlpExtractor};
 
 pub struct AppState {
     pub player: Arc<PlayerService>,
@@ -16,6 +16,8 @@ pub struct AppState {
     pub library: Arc<LibraryService>,
     pub plugins: Arc<PluginService>,
     pub audio_proxy: Option<Arc<AudioProxy>>,
+    pub youtubei: Arc<YouTubeiClient>,
+    pub ytdlp: Arc<YtDlpExtractor>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -148,6 +150,38 @@ pub async fn resolve_full_stream(
         artist = "Unknown Artist".to_string();
     }
 
+    // 1. First try native yt-dlp & iOS InnerTube resolution through YtDlpExtractor with AudioProxy
+    let clean_vid = video_id.trim_start_matches("yt_").trim();
+    if !clean_vid.is_empty() {
+        if let Ok(resolved) = state
+            .ytdlp
+            .resolve_stream_with_meta(
+                clean_vid,
+                Some(title.as_str()),
+                Some(artist.as_str()),
+                state.audio_proxy.as_deref(),
+            )
+            .await
+        {
+            return CommandResponse::ok(ResolvedStreamPayload {
+                url: resolved.url,
+                video_id: video_id.clone(),
+                title: if resolved.title != "Unknown Title" {
+                    resolved.title
+                } else {
+                    title
+                },
+                artist: if resolved.artist != "Unknown Artist" {
+                    resolved.artist
+                } else {
+                    artist
+                },
+                audio_quality: resolved.audio_quality,
+                proxied: resolved.proxied,
+            });
+        }
+    }
+
     let track = Track {
         id: video_id.clone(),
         title: title.clone(),
@@ -197,19 +231,29 @@ pub async fn resolve_full_stream(
 pub async fn search_tracks(
     state: &AppState,
     query: String,
-    _filter_type: Option<String>,
+    filter_type: Option<String>,
 ) -> CommandResponse<Vec<Track>> {
-    let mut catalog_results = match state.catalog.search_tracks(&query).await {
+    let mut yt_results = match state.youtubei.search(&query, filter_type.as_deref()).await {
         Ok(tracks) => tracks,
-        Err(_) => vec![],
+        Err(_) => match state.catalog.search_tracks(&query).await {
+            Ok(tracks) => tracks,
+            Err(_) => vec![],
+        },
     };
+
+    // If youtubei returned empty, also check catalog fallback
+    if yt_results.is_empty() {
+        if let Ok(mut cat_tracks) = state.catalog.search_tracks(&query).await {
+            yt_results.append(&mut cat_tracks);
+        }
+    }
 
     // Also fetch from enabled plugins (Monochrome FLAC, Deezer, JioSaavn, Jamendo)
     let plugin_results = state.plugins.search_all_plugins(&query).await;
 
     // Combine with plugin results prioritized first
     let mut combined = plugin_results;
-    combined.append(&mut catalog_results);
+    combined.append(&mut yt_results);
 
     // Deduplicate by title & artist
     let mut unique = Vec::new();
@@ -222,6 +266,52 @@ pub async fn search_tracks(
     }
 
     CommandResponse::ok(unique)
+}
+
+pub async fn get_yt_home_feed(
+    state: &AppState,
+    lang: Option<String>,
+) -> CommandResponse<serde_json::Value> {
+    let language = lang.unwrap_or_else(|| "id".to_string());
+    match state.youtubei.get_home_feed(&language).await {
+        Ok(feed) => CommandResponse::ok(feed),
+        Err(e) => CommandResponse::err(e),
+    }
+}
+
+pub async fn fetch_yt_radio_queue(
+    state: &AppState,
+    video_id: String,
+    continuation_token: Option<String>,
+) -> CommandResponse<serde_json::Value> {
+    match state
+        .youtubei
+        .get_radio_queue(&video_id, continuation_token.as_deref())
+        .await
+    {
+        Ok(queue) => CommandResponse::ok(queue),
+        Err(e) => CommandResponse::err(e),
+    }
+}
+
+pub async fn browse_yt(
+    state: &AppState,
+    browse_id: String,
+) -> CommandResponse<serde_json::Value> {
+    match state.youtubei.browse(&browse_id).await {
+        Ok(data) => CommandResponse::ok(data),
+        Err(e) => CommandResponse::err(e),
+    }
+}
+
+pub async fn get_search_suggestions(
+    state: &AppState,
+    query: String,
+) -> CommandResponse<Vec<String>> {
+    match state.youtubei.get_search_suggestions(&query).await {
+        Ok(suggestions) => CommandResponse::ok(suggestions),
+        Err(e) => CommandResponse::err(e),
+    }
 }
 
 pub async fn fetch_lyrics(
@@ -540,5 +630,31 @@ mod tests {
         assert_eq!(info.version, "1.0.0");
         assert_eq!(info.os, std::env::consts::OS);
         assert_eq!(info.arch, std::env::consts::ARCH);
+    }
+
+    #[tokio::test]
+    async fn test_radio_queue_empty_id() {
+        let state = build_app_state();
+        let res = fetch_yt_radio_queue(&state, "".to_string(), None).await;
+        assert!(res.success);
+        let val = res.data.expect("data expected");
+        assert_eq!(val["tracks"], serde_json::json!([]));
+        assert!(val["continuation"].is_null());
+    }
+
+    #[tokio::test]
+    async fn test_search_suggestions_empty() {
+        let state = build_app_state();
+        let res = get_search_suggestions(&state, "".to_string()).await;
+        assert!(res.success);
+        assert_eq!(res.data, Some(vec![]));
+    }
+
+    #[tokio::test]
+    async fn test_browse_empty_id() {
+        let state = build_app_state();
+        let res = browse_yt(&state, "".to_string()).await;
+        assert!(!res.success);
+        assert!(res.error.is_some());
     }
 }

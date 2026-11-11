@@ -894,6 +894,68 @@ impl YouTubeiClient {
             "tracks": parsed_tracks
         }))
     }
+
+    /// Get search suggestions for a query
+    pub async fn get_search_suggestions(&self, query: &str) -> Result<Vec<String>, DomainError> {
+        let q = query.trim();
+        if q.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let payload = json!({
+            "input": q,
+            "context": {
+                "client": {
+                    "clientName": "WEB_REMIX",
+                    "clientVersion": "1.20240318.01.00",
+                    "hl": "id",
+                    "gl": "ID"
+                }
+            }
+        });
+
+        let data = self
+            .post_innertube("music/get_search_suggestions", payload, None)
+            .await?;
+
+        let mut suggestions = Vec::new();
+        let contents = data
+            .get("contents")
+            .and_then(|c| c.as_array())
+            .and_then(|arr| arr.get(0))
+            .and_then(|c| c.get("searchSuggestionsSectionRenderer"))
+            .and_then(|s| s.get("contents"))
+            .and_then(|c| c.as_array());
+
+        if let Some(items) = contents {
+            for item in items {
+                if let Some(renderer) = item.get("searchSuggestionRenderer") {
+                    let text = renderer
+                        .get("suggestion")
+                        .and_then(|s| s.get("runs"))
+                        .and_then(|runs| runs.as_array())
+                        .map(|runs| {
+                            runs.iter()
+                                .filter_map(|r| r.get("text").and_then(|t| t.as_str()))
+                                .collect::<Vec<&str>>()
+                                .join("")
+                        })
+                        .unwrap_or_default()
+                        .trim()
+                        .to_string();
+
+                    if !text.is_empty()
+                        && !is_indian_music_or_playlist(&text, "")
+                        && !suggestions.iter().any(|s: &String| s.eq_ignore_ascii_case(&text))
+                    {
+                        suggestions.push(text);
+                    }
+                }
+            }
+        }
+
+        Ok(suggestions)
+    }
 }
 
 #[cfg(test)]
