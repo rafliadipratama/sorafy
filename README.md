@@ -24,9 +24,9 @@ SoraFy is a free, open-source music player built around straightforward prioriti
 
 ### Where it runs
 - **Android**: Native Kotlin with Jetpack Compose, AndroidX Media3, and acoustic song identification.
-- **Linux**: Desktop build packaged as AppImage, deb, rpm, Snap, and Arch Linux AUR.
-- **Windows**: NSIS installer and portable executable for Windows 10 & 11.
-- **macOS**: Native DMG bundle for Apple Silicon and Intel Macs.
+- **Linux**: Dual-target desktop runtime (Electron & lightweight Tauri v2) packaged as AppImage, deb, rpm, Snap, and Arch Linux AUR.
+- **Windows**: Dual-target runtime (Electron & Tauri v2) with NSIS installer and portable executable for Windows 10 & 11.
+- **macOS**: Dual-target runtime (Electron & Tauri v2) with native DMG bundle for Apple Silicon and Intel Macs.
 - **Web**: Project documentation and static site hosted on [GitHub Pages](https://rafliadipratama.github.io/sorafy/).
 
 ---
@@ -136,13 +136,16 @@ cd android
 The output APK is generated in `android/app/build/outputs/apk/`.
 
 ### Desktop (Linux, Windows, macOS)
-Requirements: Node.js 20+ and npm.
+Requirements: Node.js 20+ and npm (and Rust 1.77+ for Tauri target). See [desktop/README.md](desktop/README.md) for full architecture and Fedora Linux prerequisites.
 ```bash
 cd desktop
 npm install
 
-# Start development app:
+# Start Electron development app:
 npm start
+
+# Or start ultra-lightweight Tauri v2 development app:
+npm run tauri:dev
 ```
 
 To configure Discord Rich Presence, copy `desktop/.env.example` to `desktop/.env` and add your client ID:
@@ -152,11 +155,15 @@ DISCORD_CLIENT_ID=YOUR_DISCORD_APPLICATION_ID
 
 Package for your current operating system:
 ```bash
+# Electron distribution packages:
 npm run build:linux  # AppImage & deb
 npm run build:win    # Windows installer
 npm run build:dmg    # macOS DMG
+
+# Tauri v2 native release binaries:
+npm run tauri:build
 ```
-Binary installers are written to `desktop/dist/`.
+Binary installers are written to `desktop/dist/` (Electron) and `desktop/src-tauri/target/release/` (Tauri).
 
 ### Website
 Requirements: Bun.
