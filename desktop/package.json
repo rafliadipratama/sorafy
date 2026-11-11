@@ -14,10 +14,7 @@
     "build:linux:all": "electron-builder --linux AppImage deb rpm snap",
     "build:snap": "electron-builder --linux snap",
     "build:win": "electron-builder --win nsis",
-    "dist": "electron-builder",
-    "tauri": "tauri",
-    "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "dist": "electron-builder"
   },
   "build": {
     "appId": "com.rafliadipratama.sorafy",
@@ -30,8 +27,7 @@
       "preload.js",
       ".env",
       "src/**/*",
-      "remote-web/**/*",
-      "!src-tauri/**/*"
+      "remote-web/**/*"
     ],
     "mac": {
       "category": "public.app-category.music",
@@ -39,7 +35,7 @@
         "dmg",
         "zip"
       ],
-      "icon": "src-tauri/icons/icon.png",
+      "icon": "src/assets/icons/icon.png",
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "identity": null,
@@ -70,7 +66,7 @@
       }
     },
     "linux": {
-      "icon": "src-tauri/icons/icon.png",
+      "icon": "src/assets/icons/icon.png",
       "executableName": "sorafy",
       "target": [
         "AppImage",
@@ -114,7 +110,7 @@
       "shortcutName": "SoraFy"
     },
     "win": {
-      "icon": "src-tauri/icons/icon.ico",
+      "icon": "src/assets/icons/icon.ico",
       "target": [
         "nsis",
         "portable"
@@ -133,8 +129,8 @@
     "desktop",
     "macos",
     "dmg",
-    "tauri",
-    "rust",
+    "linux",
+    "windows",
     "electron"
   ],
   "author": {
@@ -143,7 +139,6 @@
   },
   "license": "GPL-3.0",
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0",
     "electron": "^44.9.2",
     "electron-builder": "^26.15.3"
   },
