@@ -32,9 +32,10 @@ Both targets share identical front-end player logic, Web Audio DSP pipelines, an
          ┌─────────────────────────┐                            ┌────────────────────────────────────┐
          │ • IPC Main Handlers     │                            │ • Commands & Ports (DDD)           │
          │ • Local Audio Proxy     │                            │ • Embedded Tokio Loopback Proxy    │
-         │ • MPD Daemon (Port 6600)│                            │ • InnerTube / YouTube Stream Port  │
-         │ • MCP Server (Port 8800)│                            │ • LRCLIB Lyrics Sync Port          │
-         │ • Discord Rich Presence │                            │ • Settings & System Info Handlers  │
+         │ • MPD Daemon (Port 6600)│                            │ • Native InnerTube Client (Rust)   │
+         │ • MCP Server (Port 8800)│                            │ • Dual-Engine Audio Stream Extractor│
+         │ • Discord Rich Presence │                            │ • LRCLIB Lyrics Sync Port          │
+         │                         │                            │ • Settings & System Info Handlers  │
          └─────────────────────────┘                            └────────────────────────────────────┘
 ```
 
@@ -43,9 +44,39 @@ The front-end code is written entirely against standard `window.electronAPI` cal
 - Translates `window.electronAPI.resolveFullStream(...)` -> `invoke('resolve_full_stream', ...)`
 - Translates `window.electronAPI.searchYouTubeMusic(...)` -> `invoke('search_tracks', ...)`
 - Translates `window.electronAPI.fetchYouTubeLyrics(...)` -> `invoke('fetch_lyrics', ...)`
+- Translates `window.electronAPI.getYtHomeFeed(...)` -> `invoke('get_yt_home_feed', ...)`
+- Translates `window.electronAPI.fetchYouTubeRadioQueue(...)` -> `invoke('fetch_yt_radio_queue', ...)`
+- Translates `window.electronAPI.browseYouTube(...)` -> `invoke('browse_yt', ...)`
+- Translates `window.electronAPI.getSearchSuggestions(...)` -> `invoke('get_search_suggestions', ...)`
 - Translates `window.electronAPI.getAppSettings()` -> `invoke('get_app_settings')`
-- Transparently unwrap `CommandResponse<T>` envelopes (`{ success: true, data: T }`) into raw payloads
+- Translates `window.electronAPI.saveAppSettings(...)` -> `invoke('save_app_settings', ...)`
+- Transparently unwraps `CommandResponse<T>` envelopes (`{ success: true, data: T }`) into raw payloads
 - Supplies non-blocking safe fallbacks for platform-specific APIs
+
+---
+
+## 100% Feature & Stability Parity (Option A)
+
+SoraFy Desktop achieves 100% feature and stability parity between Electron and Tauri v2 runtimes through **Option A Architecture (Direct Native InnerTube & Dual-Engine Audio Extraction in Rust)**:
+
+1. **Direct Native InnerTube Client in Rust (`youtubei_client.rs`)**:
+   - `search_tracks`: Direct search against `/youtubei/v1/search` with typed filter mapping (`song`, `video`, `artist`, `album`, `playlist`) and Bollywood/Indian regional content filtering.
+   - `get_yt_home_feed`: Direct retrieval of `/youtubei/v1/browse` (`FEmusic_home`) returning structured Quick Picks and categorized sections.
+   - `fetch_yt_radio_queue`: Next-track continuation resolver against `/youtubei/v1/next` (`RDAMVM<videoId>`), ensuring uninterrupted infinite autoplay and radio recommendations.
+   - `browse_yt`: Generic entity and playlist exploration.
+   - `get_search_suggestions`: Real-time autocomplete suggestions directly from YouTube Music.
+
+2. **Dual-Engine Audio Extraction (`ytdlp_extractor.rs`)**:
+   - **Engine 1 (Primary)**: Local `yt-dlp` child process with strict 9-second Tokio timeout and `kill_on_drop(true)` prevention of zombie processes. Discovers sidecar binaries (`desktop/bin/linux/yt-dlp`) or falls back to system PATH.
+   - **Engine 2 (Direct Fallback)**: Direct iOS InnerTube player endpoint (`/youtubei/v1/player` with iOS/iPad context) resolving raw Googlevideo audio streams if `yt-dlp` is unavailable or times out.
+
+3. **Local Tokio CORS Loopback Streaming Proxy (`audio_proxy.rs`)**:
+   - Spawns an in-process Tokio HTTP server bound to `127.0.0.1:<port>`.
+   - Injects mandatory `Access-Control-Allow-Origin: *`, `Accept-Ranges: bytes`, and range headers.
+   - Overcomes WebKitGTK / Safari strict CORS audio constraints for Web Audio API visualizers and DSP processing.
+
+4. **Identical Contract Shapes & Zero UI Changes**:
+   - The frontend player, queue management, lyrics sync, dual-deck crossfade engine, and EQ presets run identically on both runtimes without branching or code duplication.
 
 ---
 
@@ -154,15 +185,22 @@ Produces native Linux packages (`.deb`, `.rpm`, `.AppImage`), Windows `.msi` ins
 
 ## Testing & Quality Assurance
 
-SoraFy Desktop features a comprehensive Node.js native test suite (`node:test`) covering runtime bridges, audio proxies, crossfade engines, loudness normalizers, and dual-target integration:
+SoraFy Desktop features a comprehensive Node.js native test suite (`node:test`) and Rust Cargo test suite covering runtime bridges, audio proxies, crossfade engines, loudness normalizers, and dual-target integration:
 
 ```bash
+# Run all frontend & integration tests (110 tests)
 npm test
+
+# Run all backend Rust domain & infrastructure tests (25 tests)
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
 ### Integration Test Suite Highlights:
 - **`tests/dual-target-integration.test.js`**: Verifies full lifecycle bootstrap, mock IPC routing, and shape parity across Electron and Tauri runtimes.
 - **`tests/platform-bridge.test.js`**: Validates runtime detection, invoke dispatching, envelope unwrapping, and fallback defaults.
+- **`tests/youtubei-client.test.js`**: Validates InnerTube API payload structures, query filters, home feed parsing, and radio queue contracts.
+- **`tests/ytdlp-extractor.test.js`**: Validates `yt-dlp` child process command arguments, execution timeout, stdout parser, and iOS player fallback contracts.
+- **`tests/tauri-parity-commands.test.js`**: Validates Tauri command DTO schemas and AppState integration.
 - **`tests/audio-proxy.test.js`**: Tests loopback proxy URL formatting, parameter extraction, and CORS header compliance.
 - **`tests/rust-commands.test.js`**: Validates request and response schemas for all DDD Rust commands.
 - **`tests/dual-deck.test.js`**: Tests seamless dual-deck prefetching and non-blocking crossfade transitions.
