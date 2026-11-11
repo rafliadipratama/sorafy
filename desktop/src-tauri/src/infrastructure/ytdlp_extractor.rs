@@ -175,6 +175,7 @@ impl YtDlpExtractor {
         let args = self.build_args(video_id);
 
         let mut cmd = tokio::process::Command::new(binary_path);
+        cmd.kill_on_drop(true);
         cmd.args(&args)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped());
