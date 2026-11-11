@@ -149,6 +149,17 @@ class PlatformBridge {
     if (this.isElectron && this._electronAPI?.getSearchSuggestions) {
       return await this._electronAPI.getSearchSuggestions(query);
     }
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('get_search_suggestions', { query });
+        const unwrapped = this._unwrap(res);
+        if (Array.isArray(unwrapped)) {
+          return unwrapped;
+        }
+      } catch (err) {
+        console.warn('Tauri get_search_suggestions failed:', err);
+      }
+    }
     return [];
   }
 
@@ -156,12 +167,34 @@ class PlatformBridge {
     if (this.isElectron && this._electronAPI?.browseYouTube) {
       return await this._electronAPI.browseYouTube(browseId);
     }
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('browse_yt', { browseId });
+        const unwrapped = this._unwrap(res);
+        if (unwrapped && typeof unwrapped === 'object') {
+          return unwrapped;
+        }
+      } catch (err) {
+        console.warn('Tauri browse_yt failed:', err);
+      }
+    }
     return { success: true, tracks: [] };
   }
 
   async getYtHomeFeed(lang = 'en') {
     if (this.isElectron && this._electronAPI?.getYtHomeFeed) {
       return await this._electronAPI.getYtHomeFeed(lang);
+    }
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('get_yt_home_feed', { lang });
+        const unwrapped = this._unwrap(res);
+        if (unwrapped && typeof unwrapped === 'object') {
+          return unwrapped;
+        }
+      } catch (err) {
+        console.warn('Tauri get_yt_home_feed failed:', err);
+      }
     }
     return { success: true, quickPicks: [] };
   }
@@ -217,7 +250,18 @@ class PlatformBridge {
     if (this.isElectron && this._electronAPI?.fetchYouTubeRadioQueue) {
       return await this._electronAPI.fetchYouTubeRadioQueue(videoId, continuationToken);
     }
-    return { tracks: [] };
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('fetch_yt_radio_queue', { videoId, continuationToken });
+        const unwrapped = this._unwrap(res);
+        if (unwrapped && Array.isArray(unwrapped.tracks)) {
+          return unwrapped;
+        }
+      } catch (err) {
+        console.warn('Tauri fetch_yt_radio_queue failed:', err);
+      }
+    }
+    return { tracks: [], continuation: null };
   }
 
   async importExternalPlaylist(url) {

@@ -96,16 +96,16 @@
 - Modify: `desktop/src-tauri/src/main.rs`
 - Test: `desktop/tests/tauri-parity-commands.test.js`
 
-- [ ] **Step 1: Write failing unit test for parity command contracts**
+- [x] **Step 1: Write failing unit test for parity command contracts**
   Create `desktop/tests/tauri-parity-commands.test.js` checking:
   - `get_yt_home_feed`: returns `{ success: true, quickPicks: [...], sections: [...] }`.
   - `fetch_yt_radio_queue`: returns `{ tracks: [...], continuation: string|null }`.
   - `browse_yt`: returns browse payload.
   - `get_search_suggestions`: returns query suggestion list.
   - `resolve_full_stream`: returns proxied URL with audio format metadata.
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
   `node --test desktop/tests/tauri-parity-commands.test.js`
-- [ ] **Step 3: Implement handlers in `desktop/src-tauri/src/application/commands.rs`**
+- [x] **Step 3: Implement handlers in `desktop/src-tauri/src/application/commands.rs`**
   - Wire `YouTubeiClient` and `YtDlpExtractor` into `AppState`.
   - Implement `get_yt_home_feed(state, lang)`.
   - Implement `fetch_yt_radio_queue(state, video_id, continuation_token)`.
@@ -113,12 +113,12 @@
   - Implement `get_search_suggestions(state, query)`.
   - Update `resolve_full_stream` to use `YtDlpExtractor` + proxy.
   - Update `search_tracks` to use `YouTubeiClient`.
-- [ ] **Step 4: Register in `desktop/src-tauri/src/main.rs`**
+- [x] **Step 4: Register in `desktop/src-tauri/src/main.rs`**
   Add all new commands to `tauri::generate_handler![...]`.
-- [ ] **Step 5: Verify Rust compiles and tests pass**
+- [x] **Step 5: Verify Rust compiles and tests pass**
   `cargo test --manifest-path desktop/src-tauri/Cargo.toml`
   `node --test desktop/tests/tauri-parity-commands.test.js`
-- [ ] **Step 6: Commit changes**
+- [x] **Step 6: Commit changes**
   `git commit -am "feat(tauri): expose home feed, radio queue, and browse commands in tauri backend"`
 
 ---
@@ -129,19 +129,19 @@
 - Modify: `desktop/src/modules/platform-bridge.js`
 - Test: `desktop/tests/platform-bridge.test.js`
 
-- [ ] **Step 1: Write unit test verifying bridge delegation for new commands**
+- [x] **Step 1: Write unit test verifying bridge delegation for new commands**
   Update `desktop/tests/platform-bridge.test.js` asserting that in Tauri mode:
   - `getYtHomeFeed()` invokes `get_yt_home_feed` and unwraps.
   - `fetchYouTubeRadioQueue()` invokes `fetch_yt_radio_queue` and unwraps.
   - `browseYouTube()` invokes `browse_yt` and unwraps.
   - `getSearchSuggestions()` invokes `get_search_suggestions` and unwraps.
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
   `node --test desktop/tests/platform-bridge.test.js`
-- [ ] **Step 3: Update `desktop/src/modules/platform-bridge.js`**
+- [x] **Step 3: Update `desktop/src/modules/platform-bridge.js`**
   Implement delegation for `getYtHomeFeed`, `fetchYouTubeRadioQueue`, `browseYouTube`, and `getSearchSuggestions` to Tauri `_invoke` with unwrapping and safe fallbacks.
-- [ ] **Step 4: Verify all desktop tests pass**
+- [x] **Step 4: Verify all desktop tests pass**
   `npm test --prefix desktop`
-- [ ] **Step 5: Commit changes**
+- [x] **Step 5: Commit changes**
   `git commit -am "feat(desktop): wire home feed, radio queue and suggestions in platform bridge"`
 
 ---

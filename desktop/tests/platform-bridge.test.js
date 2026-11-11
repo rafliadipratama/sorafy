@@ -250,6 +250,153 @@ test('Tauri mode maps getAppSettings and saveAppSettings', async () => {
   assert.strictEqual(mockStorage.getItem('sorafy_app_settings'), JSON.stringify({ theme: 'light', volumeNormalization: false }));
 });
 
+test('Tauri mode maps getYtHomeFeed to get_yt_home_feed and unwraps response', async () => {
+  const invokeCalls = [];
+  const mockInvoke = async (cmd, args) => {
+    invokeCalls.push({ cmd, args });
+    if (cmd === 'get_yt_home_feed') {
+      return {
+        success: true,
+        data: {
+          quickPicks: [{ id: 'yt_1', title: 'Song 1' }],
+          sections: [{ title: 'Explore', items: [] }]
+        }
+      };
+    }
+    throw new Error(`Unknown command ${cmd}`);
+  };
+
+  const bridge = createBridge({
+    runtime: 'tauri',
+    tauriInvoke: mockInvoke
+  });
+
+  const res = await bridge.getYtHomeFeed('id');
+  assert.strictEqual(invokeCalls.length, 1);
+  assert.strictEqual(invokeCalls[0].cmd, 'get_yt_home_feed');
+  assert.deepStrictEqual(invokeCalls[0].args, { lang: 'id' });
+  assert.strictEqual(res.quickPicks.length, 1);
+  assert.strictEqual(res.quickPicks[0].title, 'Song 1');
+  assert.strictEqual(res.sections.length, 1);
+});
+
+test('Tauri mode maps fetchYouTubeRadioQueue to fetch_yt_radio_queue and unwraps response', async () => {
+  const invokeCalls = [];
+  const mockInvoke = async (cmd, args) => {
+    invokeCalls.push({ cmd, args });
+    if (cmd === 'fetch_yt_radio_queue') {
+      return {
+        success: true,
+        data: {
+          tracks: [{ id: 'yt_next1', title: 'Radio Track 1', artist: 'Artist 1' }],
+          continuation: 'ctoken_123'
+        }
+      };
+    }
+    throw new Error(`Unknown command ${cmd}`);
+  };
+
+  const bridge = createBridge({
+    runtime: 'tauri',
+    tauriInvoke: mockInvoke
+  });
+
+  const res = await bridge.fetchYouTubeRadioQueue('vid_123', 'cont_prev');
+  assert.strictEqual(invokeCalls.length, 1);
+  assert.strictEqual(invokeCalls[0].cmd, 'fetch_yt_radio_queue');
+  assert.deepStrictEqual(invokeCalls[0].args, { videoId: 'vid_123', continuationToken: 'cont_prev' });
+  assert.strictEqual(res.tracks.length, 1);
+  assert.strictEqual(res.tracks[0].id, 'yt_next1');
+  assert.strictEqual(res.continuation, 'ctoken_123');
+});
+
+test('Tauri mode maps browseYouTube to browse_yt and unwraps response', async () => {
+  const invokeCalls = [];
+  const mockInvoke = async (cmd, args) => {
+    invokeCalls.push({ cmd, args });
+    if (cmd === 'browse_yt') {
+      return {
+        success: true,
+        data: {
+          browseId: args.browseId,
+          title: 'Top Hits',
+          tracks: [{ id: 't1', title: 'Hit 1' }]
+        }
+      };
+    }
+    throw new Error(`Unknown command ${cmd}`);
+  };
+
+  const bridge = createBridge({
+    runtime: 'tauri',
+    tauriInvoke: mockInvoke
+  });
+
+  const res = await bridge.browseYouTube('VLPL123');
+  assert.strictEqual(invokeCalls.length, 1);
+  assert.strictEqual(invokeCalls[0].cmd, 'browse_yt');
+  assert.deepStrictEqual(invokeCalls[0].args, { browseId: 'VLPL123' });
+  assert.strictEqual(res.browseId, 'VLPL123');
+  assert.strictEqual(res.tracks.length, 1);
+});
+
+test('Tauri mode maps getSearchSuggestions to get_search_suggestions and unwraps response', async () => {
+  const invokeCalls = [];
+  const mockInvoke = async (cmd, args) => {
+    invokeCalls.push({ cmd, args });
+    if (cmd === 'get_search_suggestions') {
+      return {
+        success: true,
+        data: ['coldplay', 'coldplay viva la vida']
+      };
+    }
+    throw new Error(`Unknown command ${cmd}`);
+  };
+
+  const bridge = createBridge({
+    runtime: 'tauri',
+    tauriInvoke: mockInvoke
+  });
+
+  const res = await bridge.getSearchSuggestions('cold');
+  assert.strictEqual(invokeCalls.length, 1);
+  assert.strictEqual(invokeCalls[0].cmd, 'get_search_suggestions');
+  assert.deepStrictEqual(invokeCalls[0].args, { query: 'cold' });
+  assert.deepStrictEqual(res, ['coldplay', 'coldplay viva la vida']);
+});
+
+test('Tauri mode handles invoke failure gracefully with safe fallbacks', async () => {
+  const mockInvoke = async (cmd) => {
+    throw new Error(`Simulated failure in ${cmd}`);
+  };
+
+  const bridge = createBridge({
+    runtime: 'tauri',
+    tauriInvoke: mockInvoke
+  });
+
+  const homeFeed = await bridge.getYtHomeFeed('en');
+  assert.deepStrictEqual(homeFeed, { success: true, quickPicks: [] });
+
+  const radioQueue = await bridge.fetchYouTubeRadioQueue('vid_123');
+  assert.deepStrictEqual(radioQueue, { tracks: [], continuation: null });
+
+  const browse = await bridge.browseYouTube('VLPL123');
+  assert.deepStrictEqual(browse, { success: true, tracks: [] });
+
+  const suggestions = await bridge.getSearchSuggestions('query');
+  assert.deepStrictEqual(suggestions, []);
+});
+
+test('Web mode returns safe defaults for home feed, radio queue, browse and suggestions', async () => {
+  const bridge = createBridge({ runtime: 'web' });
+
+  assert.deepStrictEqual(await bridge.getYtHomeFeed('id'), { success: true, quickPicks: [] });
+  assert.deepStrictEqual(await bridge.fetchYouTubeRadioQueue('vid_123'), { tracks: [], continuation: null });
+  assert.deepStrictEqual(await bridge.browseYouTube('browse_1'), { success: true, tracks: [] });
+  assert.deepStrictEqual(await bridge.getSearchSuggestions('test'), []);
+});
+
 // 4. Safe Fallback Defaults for Web and Unmapped Tauri Commands
 test('getYtHomeFeed returns safe fallback { success: true, quickPicks: [] }', async () => {
   const bridge = createBridge({ runtime: 'web' });
