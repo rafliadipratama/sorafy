@@ -115,6 +115,9 @@ async fn get_system_info(
 }
 
 fn main() {
+    let rt = tokio::runtime::Runtime::new().expect("failed to initialize Tokio runtime");
+    let _guard = rt.enter();
+
     println!("==================================================");
     println!("  SoraFy Desktop (Tauri v2 + Rust Architecture)");
     println!("  High-Fidelity Music Streaming for Linux & Windows");

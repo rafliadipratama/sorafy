@@ -26,10 +26,10 @@ dirs = "6.0"
 url = "2.5"
 percent-encoding = "2.3"
 httparse = "1.10"
-tauri = "2"
+tauri = { version = "2", features = [] }
 
 [features]
 default = []
 
 [build-dependencies]
-tauri-build = "2"
+tauri-build = { version = "2", features = [] }
