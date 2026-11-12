@@ -46,9 +46,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   verifyStreamCandidate: (data) => ipcRenderer.invoke('verify-stream-candidate', data),
   unverifyStream: (data) => ipcRenderer.invoke('unverify-stream', data),
   getStreamCandidates: (data) => ipcRenderer.invoke('get-stream-candidates', data),
-  getJamInfo: () => ipcRenderer.invoke('get-jam-info'),
-  sendJamState: (state) => ipcRenderer.send('update-jam-state', state),
-  getMcpInfo: () => ipcRenderer.invoke('get-mcp-info'),
   recordListenEvent: (eventData) => ipcRenderer.invoke('record-listen-event', eventData),
   getListeningStats: () => ipcRenderer.invoke('get-listening-stats'),
   clearListeningStats: () => ipcRenderer.invoke('clear-listening-stats'),
@@ -62,11 +59,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onDownloadProgress: (callback) => {
     ipcRenderer.on('download-playlist-progress', (_event, progress) => {
       if (typeof callback === 'function') callback(progress);
-    });
-  },
-  onJamAction: (callback) => {
-    ipcRenderer.on('jam-action', (_event, action) => {
-      if (typeof callback === 'function') callback(action);
     });
   },
   onAppBeforeClose: (callback) => {

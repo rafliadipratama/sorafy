@@ -7,21 +7,8 @@ public final class MusicStreamSource {
     private var visitorDataCache: String?
     private var streamCache: [String: (url: String, expire: Date)] = [:]
 
-    private let bannedKeywords: [String] = [
-        "t-series", "zee music", "bhangra", "dholak", "qawwali", "naat",
-        "sonu nigam", "arijit", "badshah", "sidhu", "shreya ghoshal", "kumar sanu",
-        "lata mangeshkar", "dj remix", "viral rimek", "pashmina", "punjabi", "bhojpuri",
-        "hawa hawa", "dilbar", "diljit", "neha kakkar", "yo yo honey"
-    ]
-
     public init(session: URLSession = .shared) {
         self.session = session
-    }
-
-    public func isIndianContent(title: String, artist: String) -> Bool {
-        let t = title.lowercased()
-        let a = artist.lowercased()
-        return bannedKeywords.contains { t.contains($0) || a.contains($0) }
     }
 
     // MARK: - InnerTube Search (YouTube Music)
@@ -46,14 +33,23 @@ public final class MusicStreamSource {
             ]
         ]
 
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload),
-              let (data, response) = try? await session.data(for: request),
-              let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload) else {
             return []
         }
+        request.httpBody = httpBody
 
-        return parseSearchResults(json: json)
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return []
+            }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                return []
+            }
+            return parseSearchResults(json: json)
+        } catch {
+            return []
+        }
     }
 
     private func parseSearchResults(json: [String: Any]) -> [Track] {
@@ -96,7 +92,6 @@ public final class MusicStreamSource {
                 }
 
                 let artistName = runs1.first?["text"] as? String ?? "Artis"
-                if isIndianContent(title: title, artist: artistName) { continue }
 
                 var albumTitle: String? = nil
                 if runs1.count > 2 {
@@ -174,11 +169,23 @@ public final class MusicStreamSource {
             ]
         ]
 
-        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload),
-              let (data, response) = try? await session.data(for: request),
-              let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200,
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let streamingData = json["streamingData"] as? [String: Any] else {
+        guard let httpBody = try? JSONSerialization.data(withJSONObject: payload) else {
+            return nil
+        }
+        request.httpBody = httpBody
+
+        let streamingData: [String: Any]
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return nil
+            }
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let parsedStreamingData = json["streamingData"] as? [String: Any] else {
+                return nil
+            }
+            streamingData = parsedStreamingData
+        } catch {
             return nil
         }
 

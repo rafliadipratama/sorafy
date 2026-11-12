@@ -219,6 +219,27 @@ function resolveLocalAudioPath(track, baseDir) {
   return null;
 }
 
+/**
+ * Checks whether a path resolves to a location strictly inside a directory.
+ * Symlinks are resolved on both sides so a link inside the directory cannot
+ * point outside of it. Returns false for non-existent paths.
+ *
+ * @param {string} filePath - Path to check
+ * @param {string} dir - Directory that must contain the path
+ * @returns {boolean} True when filePath is inside dir
+ */
+function isPathInsideDir(filePath, dir) {
+  if (!fs || !path || typeof filePath !== 'string' || !filePath || typeof dir !== 'string' || !dir) return false;
+  try {
+    const realFile = fs.realpathSync(filePath);
+    const realDir = fs.realpathSync(dir);
+    const rel = path.relative(realDir, realFile);
+    return rel !== '' && !rel.startsWith('..') && !path.isAbsolute(rel);
+  } catch (_) {
+    return false;
+  }
+}
+
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     SUPPORTED_EXTENSIONS,
@@ -226,7 +247,8 @@ if (typeof module !== 'undefined' && module.exports) {
     sanitizeFilenameChars,
     getExpectedLocalFilenames,
     matchDownloadedTrack,
-    resolveLocalAudioPath
+    resolveLocalAudioPath,
+    isPathInsideDir
   };
 }
 
@@ -237,6 +259,7 @@ if (typeof window !== 'undefined') {
     sanitizeFilenameChars,
     getExpectedLocalFilenames,
     matchDownloadedTrack,
-    resolveLocalAudioPath
+    resolveLocalAudioPath,
+    isPathInsideDir
   };
 }

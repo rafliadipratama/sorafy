@@ -5,7 +5,7 @@ import com.rafliadipratama.musiceuy.data.network.MusicStreamSource
 
 /**
  * Secondary JioSaavn Plugin for direct high-quality AAC streams (320kbps).
- * Protected by strict Indian language filtering and strict title/artist matching.
+ * Protected by strict title/artist matching.
  */
 class JioSaavnPlugin(
     private val streamSource: MusicStreamSource,

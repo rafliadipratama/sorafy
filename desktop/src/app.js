@@ -149,16 +149,6 @@ const DEFAULT_PLUGINS = [
     is_enabled: true
   },
   {
-    id: "mcp_server",
-    name: "Model Context Protocol (MCP)",
-    version: "2.0.0",
-    author: "Anthropic / Model Context Protocol",
-    description: "Built-in Streamable HTTP & SSE MCP server on port 8800. Enables AI assistants (Claude, Cursor, Windsurf) to play music, manage queue, and inspect lyrics.",
-    category: "Tools & Utilities",
-    icon: '<iconsax-icon name="cpu" type="bold" size="24" color="#00E599"></iconsax-icon>',
-    is_enabled: true
-  },
-  {
     id: "lastfm",
     name: "Last.fm Scrobbler",
     version: "1.0.0",
@@ -166,16 +156,6 @@ const DEFAULT_PLUGINS = [
     description: "Automatic scrobbling and artist biography integration directly to your Last.fm account.",
     category: "Social & Integration",
     icon: '<iconsax-icon name="chart-2" type="bold" size="24" color="#E11D48"></iconsax-icon>',
-    is_enabled: true
-  },
-  {
-    id: "mpd_daemon",
-    name: "Music Player Daemon (MPD)",
-    version: "0.23.5",
-    author: "MPD Protocol Spec",
-    description: "Built-in TCP socket server on port 6600. Allows standard Linux audio tools (mpc, ncmpcpp, mpDris2) to control playback and view library/queue.",
-    category: "Tools & Utilities",
-    icon: '<iconsax-icon name="setting-4" type="bold" size="24" color="#38BDF8"></iconsax-icon>',
     is_enabled: true
   }
 ];
@@ -1065,12 +1045,6 @@ const I18N_DICTIONARY = {
     setting_backup_all_desc: "Save your custom playlists, liked tracks, listening history, and sound preferences to a secure JSON file.",
     setting_restore_data: "Restore Data",
     setting_restore_data_desc: "Restore your playlists, liked tracks, and listening profile from a previously saved JSON file.",
-    setting_mcp_title: "Model Context Protocol (MCP Server)",
-    setting_mcp_desc: "Local AI integration for Claude Code, Cursor, Windsurf, and AI assistants.",
-    btn_copy_ai_config: "Copy AI Config",
-    setting_mpd_title: "Music Player Daemon (MPD Protocol)",
-    setting_mpd_desc: "Integrate Linux terminal controls for ncmpcpp, mpc, and mpDris2.",
-    btn_copy_cmd: "Copy Command",
     btn_clear_cache: "Clear Cache",
     btn_import_cookies: "Import cookies.txt",
     btn_check_engine: "Check / Download Engine",
@@ -1388,12 +1362,6 @@ const I18N_DICTIONARY = {
     setting_backup_all_desc: "Simpan semua playlist kustom, lagu favorit, riwayat, dan preferensi ke file JSON yang aman.",
     setting_restore_data: "Pulihkan Data",
     setting_restore_data_desc: "Pulihkan playlist, lagu favorit, dan riwayat Anda dari file JSON cadangan.",
-    setting_mcp_title: "Model Context Protocol (Server MCP)",
-    setting_mcp_desc: "Integrasi AI lokal untuk Claude Code, Cursor, Windsurf, dan asisten AI.",
-    btn_copy_ai_config: "Salin Config AI",
-    setting_mpd_title: "Music Player Daemon (Protokol MPD)",
-    setting_mpd_desc: "Integrasi kontrol terminal Linux untuk ncmpcpp, mpc, dan mpDris2.",
-    btn_copy_cmd: "Salin Perintah",
     btn_clear_cache: "Bersihkan Cache",
     btn_import_cookies: "Impor cookies.txt",
     btn_check_engine: "Periksa / Unduh Mesin",
@@ -1544,6 +1512,9 @@ class SoraFyDesktopApp {
     if (this.deckB) {
       this.deckB.preload = "auto";
       this.deckB.volume = 0;
+      // Required for createMediaElementSource: without it the element is tainted
+      // and the equalizer DSP chain outputs silence on this deck.
+      this.deckB.crossOrigin = "anonymous";
     }
     this.preloadAudio = this.deckB;
     this.activeDeck = "A";
@@ -4223,116 +4194,6 @@ class SoraFyDesktopApp {
       });
     }
 
-    // Hook Remote Actions (MPD & MCP AI Agents)
-    if (window.electronAPI && typeof window.electronAPI.onJamAction === 'function') {
-      window.electronAPI.onJamAction((action) => {
-        if (!action) return;
-        const act = action.action;
-        if (act === 'toggle-play') {
-          this.togglePlayPause();
-        } else if (act === 'play') {
-          if (this.audio && this.audio.paused) this.togglePlayPause();
-        } else if (act === 'pause') {
-          if (this.audio && !this.audio.paused) this.togglePlayPause();
-        } else if (act === 'next') {
-          this.playNext();
-        } else if (act === 'prev') {
-          this.playPrevious();
-        } else if (act === 'toggle-shuffle') {
-          this.toggleShuffle();
-        } else if (act === 'set-shuffle') {
-          this.isShuffled = !!action.value;
-          if (this.shuffleBtn) this.shuffleBtn.classList.toggle("active", this.isShuffled);
-          this.syncJamState();
-        } else if (act === 'toggle-repeat') {
-          this.toggleRepeat();
-        } else if (act === 'set-repeat') {
-          this.repeatMode = action.value === 'track' ? 2 : (action.value === 'context' ? 1 : 0);
-          if (this.repeatIcon) {
-            this.repeatIcon.setAttribute("color", this.repeatMode > 0 ? "var(--color-brand-primary)" : "currentColor");
-          }
-          this.syncJamState();
-        } else if (act === 'stop') {
-          if (this.audio) {
-            this.audio.pause();
-            this.audio.currentTime = 0;
-            this.isPlaying = false;
-            if (this.playPauseIcon) this.playPauseIcon.setAttribute("name", "play");
-            this.syncJamState();
-          }
-        } else if (act === 'seek' && typeof action.value === 'number') {
-          if (this.audio) {
-            this.audio.currentTime = action.value;
-            this.updateProgress();
-            this.syncJamState();
-          }
-        } else if (act === 'volume' && typeof action.value === 'number') {
-          this.setVolume(action.value);
-          this.syncJamState();
-        } else if (act === 'play-index' && typeof action.value === 'number') {
-          this.loadTrack(action.value, true);
-        } else if (act === 'remove-index' && typeof action.value === 'number') {
-          if (this.tracks && this.tracks[action.value]) {
-            this.tracks.splice(action.value, 1);
-            this.renderQueue();
-            this.syncJamState();
-          }
-        } else if (act === 'clear-queue') {
-          if (this.tracks) {
-            const cur = this.tracks[this.currentTrackIndex];
-            this.tracks = cur ? [cur] : [];
-            this.currentTrackIndex = 0;
-            this.renderQueue();
-            this.syncJamState();
-          }
-        } else if (act === 'play-track-now' && action.track) {
-          const t = action.track;
-          const newTrack = {
-            id: t.videoId || t.id,
-            video_id: t.videoId || t.id,
-            title: t.title,
-            artist: t.artist || '',
-            artwork_url: t.artwork || t.artwork_url || t.cover || this.DEFAULT_TRACK_ART,
-            duration_secs: t.durationSec || t.duration_secs || 0
-          };
-          this.tracks.splice(this.currentTrackIndex + 1, 0, newTrack);
-          this.loadTrack(this.currentTrackIndex + 1, true);
-        } else if (act === 'add-queue' && action.track) {
-          const t = action.track;
-          const newTrack = {
-            id: t.videoId || t.id,
-            video_id: t.videoId || t.id,
-            title: t.title,
-            artist: t.artist || '',
-            artwork_url: t.artwork || t.artwork_url || t.cover || this.DEFAULT_TRACK_ART,
-            duration_secs: t.durationSec || t.duration_secs || 0
-          };
-          this.addToQueue(newTrack);
-          this.syncJamState();
-        } else if (act === 'import-playlist-result' && action.playlist) {
-          const res = action.playlist;
-          if (res && res.tracks && res.tracks.length > 0) {
-            const playlistTitle = res.customName || res.title || `Imported ${res.provider || 'Playlist'}`;
-            const newPlaylist = {
-              id: `pl_imp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-              name: playlistTitle,
-              title: playlistTitle,
-              author: `Imported ${res.provider || 'External'}`,
-              description: `Imported via MCP from ${res.provider || 'Link'} (${res.tracks.length} tracks).`,
-              artwork_url: res.tracks[0]?.artwork_url || this.DEFAULT_TRACK_ART,
-              tracks: res.tracks,
-              track_count: `${res.tracks.length} Tracks`,
-              createdAt: Date.now()
-            };
-            this.userPlaylists.unshift(newPlaylist);
-            this.saveUserPlaylists();
-            this.renderUserPlaylists();
-            this.showToast(`MCP: Imported "${playlistTitle}" (${res.tracks.length} tracks)!`);
-          }
-        }
-      });
-    }
-
     if (this.closeAddToPlaylistModalBtn) {
       this.closeAddToPlaylistModalBtn.addEventListener("click", () => {
         this.addToPlaylistModal.style.display = "none";
@@ -6779,23 +6640,11 @@ class SoraFyDesktopApp {
     }
   }
 
-  // Filter to strictly exclude Indian songs, playlists, Bollywood, and regional Indian scripts
-  isIndianMusic(title = '', author = '') {
-    const str = `${title} ${author}`.toLowerCase();
-    const indianKeywords = /\b(hindi|bollywood|punjabi|tamil|telugu|india|indian|tollywood|malayalam|bhojpuri|gujarati|bengali|marathi|kannada|desi|bhangra|sufi|urdu|ghazal|qawwali|arijit|shreya|neha|jubin|badshah|sidhu|diljit|anirudh|pritam|himesh|t-series|zeemusic|speedrecords|geetmp3|whitehill)\b/i;
-    const indianScripts = /[\u0900-\u097F\u0A00-\u0A7F\u0A80-\u0AFF\u0B00-\u0B7F\u0B80-\u0BFF\u0C00-\u0C7F\u0C80-\u0CFF\u0D00-\u0D7F]/;
-    return indianKeywords.test(str) || indianScripts.test(str);
-  }
-
   renderCommunityPlaylistsDirect(playlists) {
     if (!this.ytmCommunityPlaylistsRow || !playlists || playlists.length === 0) return;
     this.ytmCommunityPlaylistsRow.innerHTML = "";
 
-    // Strictly keep only Indonesian and Global curated playlists
-    const cleanList = playlists.filter(pl => !this.isIndianMusic(pl.title || '', pl.author || ''));
-    if (cleanList.length === 0) return;
-
-    cleanList.slice(0, 16).forEach(pl => {
+    playlists.slice(0, 16).forEach(pl => {
       const card = document.createElement("div");
       card.className = "ytm-comm-card";
       const authorInitial = (pl.avatar_letter || pl.author?.charAt(0) || 'S').toUpperCase();
@@ -9746,7 +9595,6 @@ class SoraFyDesktopApp {
           this.isPlaying = true;
           this.showPlayerBuffering(false);
           this.updatePlayPauseIcon();
-          this.syncJamState();
           if (this.currentView === "player" && (track.is_video || this.currentScreenMode === "video")) {
             this.setScreenPlayerMode("video");
           }
@@ -10172,7 +10020,6 @@ class SoraFyDesktopApp {
       }
       this.isPlaying = false;
       this.updatePlayPauseIcon();
-      this.syncJamState();
       if (typeof this.onPause === 'function') this.onPause();
       if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       const cur = this.tracks[this.currentTrackIndex];
@@ -10186,7 +10033,6 @@ class SoraFyDesktopApp {
       this.audio.play().then(() => {
         this.isPlaying = true;
         this.updatePlayPauseIcon();
-        this.syncJamState();
         if (typeof this.onPlay === 'function') this.onPlay();
         if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
         const cur = this.tracks[this.currentTrackIndex];
@@ -10323,12 +10169,6 @@ class SoraFyDesktopApp {
       this.savePlaybackSession();
     }
 
-    // Throttled sync state to SoraFy Jam mobile remote (every 1 second)
-    if (!this._lastJamSync || (now - this._lastJamSync > 1000)) {
-      this._lastJamSync = now;
-      this.syncJamState();
-    }
-
     // Throttled sync to OS Native Media Session position (every 1 second)
     if (!this._lastMediaSessionSync || (now - this._lastMediaSessionSync > 1000)) {
       this._lastMediaSessionSync = now;
@@ -10424,7 +10264,6 @@ class SoraFyDesktopApp {
   // Synchronized Glowing Karaoke Lyrics with Notes-App Search Architecture
   loadLyrics(lyrics) {
     this.currentLyrics = lyrics;
-    this.syncJamState();
     this.lyricsContainer.innerHTML = "";
     this.lyricsLineElements = [];
     this.activeLyricIndex = -1;
@@ -13635,29 +13474,6 @@ class SoraFyDesktopApp {
         `;
       }
     }
-  }
-
-  // =========================================================
-  // SoraFy Jam: State Synchronization & QR Modal
-  // =========================================================
-  syncJamState() {
-    if (!window.electronAPI || typeof window.electronAPI.sendJamState !== 'function') return;
-    const cur = this.tracks ? this.tracks[this.currentTrackIndex] : null;
-    const lrc = (this.currentLyrics || []).map(l => ({
-      text: l.text || '',
-      time: typeof l.timestamp_ms === 'number' ? l.timestamp_ms : (l.time || -1)
-    }));
-    window.electronAPI.sendJamState({
-      isPlaying: this.audio ? !this.audio.paused : false,
-      currentTime: this.audio ? this.audio.currentTime : 0,
-      duration: this.audio && this.audio.duration ? this.audio.duration : (cur?.duration_secs || 0),
-      currentTrack: cur,
-      queue: this.tracks || [],
-      lyrics: lrc,
-      volume: this.audio ? this.audio.volume : 0.85,
-      isShuffle: Boolean(this.isShuffled),
-      repeatMode: this.repeatMode || 'off'
-    });
   }
 
   // =========================================================

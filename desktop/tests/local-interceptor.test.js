@@ -7,7 +7,8 @@ const {
   cleanMetadataString,
   getExpectedLocalFilenames,
   matchDownloadedTrack,
-  resolveLocalAudioPath
+  resolveLocalAudioPath,
+  isPathInsideDir
 } = require('../src/modules/local-interceptor');
 
 // Lightweight Jest-compatible assertion wrapper
@@ -176,6 +177,41 @@ test('resolveLocalAudioPath finds existing file on disk and returns full path', 
     expect(resolveLocalAudioPath(fastPathTrack)).toBe(testFile);
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test('isPathInsideDir only accepts existing files strictly inside the directory', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sorafy-contain-test-'));
+  try {
+    const musicDir = path.join(root, 'SoraFy');
+    const siblingDir = path.join(root, 'SoraFyEvil');
+    fs.mkdirSync(musicDir);
+    fs.mkdirSync(siblingDir);
+    const inside = path.join(musicDir, 'Artist - Song.mp3');
+    const sibling = path.join(siblingDir, 'secret.mp3');
+    const outside = path.join(root, 'id_rsa');
+    fs.writeFileSync(inside, 'audio');
+    fs.writeFileSync(sibling, 'secret');
+    fs.writeFileSync(outside, 'secret');
+
+    expect(isPathInsideDir(inside, musicDir)).toBe(true);
+    // Prefix-sharing sibling directory must not pass a naive startsWith check
+    expect(isPathInsideDir(sibling, musicDir)).toBe(false);
+    expect(isPathInsideDir(outside, musicDir)).toBe(false);
+    expect(isPathInsideDir(path.join(musicDir, '..', 'id_rsa'), musicDir)).toBe(false);
+    expect(isPathInsideDir(musicDir, musicDir)).toBe(false);
+    expect(isPathInsideDir(path.join(musicDir, 'missing.mp3'), musicDir)).toBe(false);
+    expect(isPathInsideDir('', musicDir)).toBe(false);
+    expect(isPathInsideDir(null, musicDir)).toBe(false);
+
+    // A symlink inside the folder that points outside must be rejected
+    const link = path.join(musicDir, 'link.mp3');
+    try {
+      fs.symlinkSync(outside, link);
+      expect(isPathInsideDir(link, musicDir)).toBe(false);
+    } catch (_) { /* symlinks unavailable (e.g. Windows without privilege) */ }
+  } finally {
+    fs.rmSync(root, { recursive: true, force: true });
   }
 });
 

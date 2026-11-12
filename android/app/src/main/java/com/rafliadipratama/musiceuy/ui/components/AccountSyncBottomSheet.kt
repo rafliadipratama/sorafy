@@ -399,10 +399,12 @@ private fun YouTubeLoginWebView(
                                 if (url != null && url.startsWith("https://music.youtube.com")) {
                                     val cookie = CookieManager.getInstance().getCookie(url)
                                     if (cookie != null && cookie.contains("SAPISID")) {
-                                        // Save credentials to local preferences
+                                        // Record only that sign-in succeeded. The cookie itself is
+                                        // never persisted: nothing reads it back, and plain prefs
+                                        // would expose a live Google session to backups.
                                         ctx.getSharedPreferences("musiceuy_yt_auth", android.content.Context.MODE_PRIVATE)
                                             .edit()
-                                            .putString("cookie", cookie)
+                                            .remove("cookie")
                                             .putBoolean("is_logged_in", true)
                                             .apply()
                                         onSuccess("Google Account", "YouTube Music User")

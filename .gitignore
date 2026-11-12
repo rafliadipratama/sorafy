@@ -36,3 +36,8 @@ desktop/bin/
 **/desktop/bin/
 
 NUCLEAR_FEATURES_SPEC.md
+# Android release signing (never commit)
+keystore.properties
+**/keystore.properties
+*.jks
+*.keystore

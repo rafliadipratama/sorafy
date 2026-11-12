@@ -51,7 +51,6 @@ sorafy/
 ├── android/         # Native Android app (Kotlin + Jetpack Compose)
 ├── desktop/         # Desktop application (macOS, Linux, Windows)
 │   ├── src/         # UI markup, player logic, and Web Audio DSP
-│   ├── remote-web/  # SoraFy Jam web client for phone browser remote
 │   └── src-tauri/   # Rust backend services and domain ports
 ├── packaging/       # Distro packaging configs (AUR, Flatpak, Homebrew, Snap, Winget)
 ├── shared/          # Brand assets and design tokens
@@ -76,10 +75,7 @@ sorafy/
 - **Context Menus**: Right-click any playlist, track, or artist to play, edit metadata, follow, or delete.
 - **Universal Importer**: Paste public playlist links from Spotify, Apple Music, or YouTube to resolve tracks without logging in.
 
-### Remote & Developer Tools
-- **SoraFy Jam (Port 4120)**: Control playback from your phone. Scan the desktop QR code to open the Jam web remote on your local Wi-Fi network without installing an app.
-- **MPD Socket Support (Port 6600)**: Talk to SoraFy using standard Linux terminal clients like `mpc` and `ncmpcpp`, or bind track data to Polybar and Waybar modules.
-- **AI Model Context Protocol (Port 8800)**: Connect coding assistants (Cursor, Claude Code, Windsurf) through JSON-RPC to inspect queue state, search music, or adjust volume while you work.
+### Integrations
 - **Discord Rich Presence**: Share current track titles, artist names, album art, and timestamps on your Discord profile.
 - **Acoustic Song Search (Android)**: Tap to listen to surrounding music and detect titles using Fast Fourier Transform audio fingerprinting.
 

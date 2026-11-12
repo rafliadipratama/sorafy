@@ -34,10 +34,6 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
       <div class="text-[11px] font-semibold text-neutral-400 truncate max-w-[200px]">
         SoraFy Desktop — High-Fidelity
       </div>
-      <div class="flex items-center gap-1 text-[10px] font-mono-code text-[#00E599] bg-emerald-subtle border border-emerald-subtle px-2 py-0.5 rounded-full">
-        <span class="w-1.5 h-1.5 rounded-full bg-[#00E599] animate-pulse"></span>
-        <span>Port 8800</span>
-      </div>
     </div>
 
     <!-- App Body (Compact Grid) -->
@@ -156,42 +152,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
         </button>
         <span class="text-[10px] font-mono-code text-neutral-400 ml-1">1:42 / 3:28</span>
       </div>
-      <div class="flex items-center gap-1.5">
-        <span class="text-[9px] font-mono-code px-1.5 py-0.5 rounded bg-surface border border-subtle text-neutral-400">Jam: 4120</span>
-        <span class="text-[9px] font-mono-code px-1.5 py-0.5 rounded bg-surface border border-subtle text-neutral-400">MPD: 6600</span>
-      </div>
     </div>
   </div>
 
-  <!-- Floating Mobile Mockup: SoraFy Jam Phone Remote -->
-  <div class="absolute -bottom-7 -left-3 sm:-left-6 z-20 w-[42%] max-w-[210px] -rotate-6 transition-transform group-hover:-rotate-3 shadow-2xl">
-    <div class="bg-surface border-2 border-medium hover:border-[#00E599] rounded-2xl overflow-hidden p-2.5 shadow-2xl bg-canvas/95 backdrop-blur-md">
-      <!-- Notch & Header -->
-      <div class="flex items-center justify-between border-b border-subtle pb-1.5 mb-2">
-        <div class="flex items-center gap-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#00E599]"></span>
-          <span class="text-[9px] font-bold text-white uppercase tracking-wider">SORAFY JAM</span>
-        </div>
-        <span class="text-[8px] font-mono-code text-[#00E599] bg-emerald-subtle px-1 rounded">WiFi</span>
-      </div>
-
-      <!-- Phone Track Card -->
-      <div class="w-full aspect-square rounded-lg bg-gradient-to-tr from-neutral-900 via-neutral-800 to-neutral-700 border border-subtle flex items-center justify-center mb-2 shadow-inner">
-        <img src={`${base}/assets/logo.png`} alt="SoraFy" class="w-10 h-10 object-contain drop-shadow" />
-      </div>
-
-      <!-- Track Info -->
-      <div class="text-center mb-2">
-        <p class="text-[10px] font-bold text-white truncate">Satu Bulan</p>
-        <p class="text-[8px] text-neutral-400 truncate">Bernadya</p>
-      </div>
-
-      <!-- Controls -->
-      <div class="flex items-center justify-center gap-3.5 text-neutral-300 py-1 bg-surface-elevated rounded-md border border-subtle text-[11px]">
-        <Previous size={11} variant="Bold" className="cursor-pointer hover:text-white transition-colors" />
-        <Pause size={13} variant="Bold" className="text-[#00E599] cursor-pointer hover:text-[#00B377] transition-colors" />
-        <Next size={11} variant="Bold" className="cursor-pointer hover:text-white transition-colors" />
-      </div>
-    </div>
-  </div>
 </div>

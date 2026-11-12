@@ -460,8 +460,6 @@ test('other unmapped methods provide safe non-crashing fallbacks', async () => {
   assert.deepStrictEqual(await bridge.getSearchSuggestions('foo'), []);
   assert.strictEqual(await bridge.resolveArtistProfile('Artist'), null);
   assert.deepStrictEqual(await bridge.getStreamCandidates({}), []);
-  assert.strictEqual(await bridge.getJamInfo(), null);
-  assert.strictEqual(await bridge.getMcpInfo(), null);
 
   // Void/event calls should never throw
   assert.doesNotThrow(() => bridge.updateDiscordPresence({}));
@@ -472,7 +470,6 @@ test('other unmapped methods provide safe non-crashing fallbacks', async () => {
   assert.doesNotThrow(() => bridge.onAppBeforeClose(() => {}));
   assert.doesNotThrow(() => bridge.onDownloadProgress(() => {}));
   assert.doesNotThrow(() => bridge.onDownloadPlaylistProgress(() => {}));
-  assert.doesNotThrow(() => bridge.onJamAction(() => {}));
 });
 
 // 5. Global Aliasing: window.electronAPI = window.sorafyBridge

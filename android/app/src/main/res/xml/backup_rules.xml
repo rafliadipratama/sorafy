@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 11 and below. Mirrors data_extraction_rules.xml: auth state is
+  never included in a backup.
+-->
+<full-backup-content>
+    <exclude domain="sharedpref" path="musiceuy_yt_auth.xml" />
+    <exclude domain="sharedpref" path="musiceuy_discord_rpc.xml" />
+    <exclude domain="sharedpref" path="musiceuy_lastfm.xml" />
+</full-backup-content>

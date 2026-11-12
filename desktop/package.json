@@ -26,8 +26,7 @@
       "electron-main.js",
       "preload.js",
       ".env",
-      "src/**/*",
-      "remote-web/**/*"
+      "src/**/*"
     ],
     "mac": {
       "category": "public.app-category.music",
@@ -145,7 +144,6 @@
   "dependencies": {
     "des.js": "^1.1.0",
     "dotenv": "^18.0.9",
-    "iconsax": "^0.1.1",
-    "qrcode": "^1.5.4"
+    "iconsax": "^0.1.1"
   }
 }

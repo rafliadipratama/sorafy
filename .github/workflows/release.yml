@@ -10,8 +10,14 @@ permissions:
   contents: write
 
 jobs:
+  # 0. Tests must pass before anything is built or published
+  tests:
+    name: Tests
+    uses: ./.github/workflows/ci.yml
+
   # 1. Build Android APK
   build-android:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,20 +30,53 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
-      - name: Build Android APK
+      - name: Decode release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SORAFY_KEYSTORE_BASE64 }}
         run: |
-          cd android
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Secret SORAFY_KEYSTORE_BASE64 is not set. A release build must be signed, so the build is stopped here rather than publishing an uninstallable APK. See android/keystore.properties.example."
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/release.jks
+
+      - name: Build Android APK
+        working-directory: ./android
+        env:
+          SORAFY_KEYSTORE_FILE: release.jks
+          SORAFY_KEYSTORE_PASSWORD: ${{ secrets.SORAFY_KEYSTORE_PASSWORD }}
+          SORAFY_KEY_ALIAS: ${{ secrets.SORAFY_KEY_ALIAS }}
+          SORAFY_KEY_PASSWORD: ${{ secrets.SORAFY_KEY_PASSWORD }}
+        run: |
           chmod +x ./gradlew
-          ./gradlew assembleRelease || ./gradlew assembleDebug
+          ./gradlew assembleRelease
+
+      - name: Verify the APK is signed
+        run: |
+          # build.gradle.kts deliberately leaves the APK unsigned when credentials
+          # are missing, so an unsigned output here means a secret is wrong.
+          if [ ! -f android/app/build/outputs/apk/release/app-release.apk ]; then
+            echo "::error::No signed app-release.apk was produced. Check the SORAFY_KEYSTORE_* secrets."
+            ls -R android/app/build/outputs/apk || true
+            exit 1
+          fi
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort | tail -n 1)
+          "$APKSIGNER" verify --print-certs android/app/build/outputs/apk/release/app-release.apk
+
+      - name: Remove the keystore from the runner
+        if: always()
+        run: rm -f android/release.jks
 
       - name: Upload Android Artifact
         uses: actions/upload-artifact@v4
         with:
           name: sorafy-android-apk
-          path: android/app/build/outputs/apk/**/*.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: error
 
   # 2. Build Linux AppImage & Deb (Electron Builder)
   build-linux:
+    needs: tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -60,7 +99,7 @@ jobs:
       - name: Build Linux Desktop Packages
         run: |
           cd desktop
-          npm install
+          npm ci
           npm run build:linux:all
 
       - name: Upload Linux Artifacts
@@ -75,6 +114,7 @@ jobs:
 
   # 3. Build Windows Executable (Electron Builder)
   build-windows:
+    needs: tests
     runs-on: windows-latest
     steps:
       - name: Checkout repository
@@ -94,7 +134,7 @@ jobs:
       - name: Build Windows Desktop Packages
         run: |
           cd desktop
-          npm install
+          npm ci
           npm run build:win
 
       - name: Upload Windows Artifacts
@@ -106,6 +146,7 @@ jobs:
 
   # 4. Build macOS Apple Silicon & Intel DMG (Electron Builder & DMG)
   build-macos:
+    needs: tests
     runs-on: macos-latest
     steps:
       - name: Checkout repository
@@ -127,7 +168,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: |
           cd desktop
-          npm install
+          npm ci
           npm run build:dmg
 
       - name: Upload macOS Artifacts
@@ -140,7 +181,7 @@ jobs:
 
   # 5. Create Unified GitHub Release with All Platforms
   publish-release:
-    needs: [build-android, build-linux, build-windows, build-macos]
+    needs: [tests, build-android, build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     steps:
       - name: Download all built artifacts

@@ -53,29 +53,6 @@ class MusicStreamSource(
     // JioSaavn DES 320kbps media decryption key
     private val desKey = "38346591".toByteArray(StandardCharsets.US_ASCII)
 
-    // Strict filter to eliminate Indian songs and Indian regional content
-    private val bannedLanguages = setOf(
-        "hindi", "punjabi", "bhojpuri", "tamil", "telugu", "marathi",
-        "bengali", "kannada", "gujarati", "malayalam", "urdu", "haryanvi",
-        "rajasthani", "odia", "assamese", "sanskrit"
-    )
-
-    private val bannedKeywords = listOf(
-        "t-series", "zee music", "bhangra", "dholak", "qawwali", "naat",
-        "sonu nigam", "arijit", "badshah", "sidhu", "shreya ghoshal", "kumar sanu",
-        "lata mangeshkar", "dj remix", "viral rimek", "pashmina", "punjabi", "bhojpuri",
-        "hawa hawa", "dilbar", "diljit", "neha kakkar", "yo yo honey"
-    )
-
-    fun isIndianContent(title: String, artist: String, language: String? = null): Boolean {
-        if (!language.isNullOrBlank() && bannedLanguages.contains(language.lowercase())) {
-            return true
-        }
-        val lowerT = title.lowercase()
-        val lowerA = artist.lowercase()
-        return bannedKeywords.any { lowerT.contains(it) || lowerA.contains(it) }
-    }
-
     /**
      * Ensures candidate audio stream matches requested song title and artist.
      * Prevents mismatched audio streams from playing under wrong titles.
@@ -93,6 +70,10 @@ class MusicStreamSource(
         val normCandA = normalize(candidateArtist)
 
         if (normExpT.isBlank() || normCandT.isBlank()) return false
+
+        // Reject unofficial covers, bootleg remixes, karaoke, etc. unless that is what was requested
+        val coverOrRemix = Regex("\\b(cover|karaoke|instrumental|tribute|remix|nightcore|slowed|sped\\s*up|reverb|techno|hardstyle|bootleg|flip|edit|drill|trap|acoustic|8d\\s*audio)\\b", RegexOption.IGNORE_CASE)
+        if (coverOrRemix.containsMatchIn(candidateTitle) && !coverOrRemix.containsMatchIn(expectedTitle)) return false
 
         // Check title match
         val titleMatch = normExpT == normCandT ||
@@ -610,7 +591,7 @@ class MusicStreamSource(
     /**
      * Primary YouTube Music search via InnerTube API.
      * Returns 100% verified official songs, real artist names, accurate duration,
-     * high-res album covers, and zero Indian clutter.
+     * and high-res album covers.
      */
     suspend fun searchYouTubeMusic(query: String): List<Track> = withContext(Dispatchers.IO) {
         val tracks = mutableListOf<Track>()
@@ -678,9 +659,6 @@ class MusicStreamSource(
                                     val album = if ((subRuns?.length() ?: 0) > 2) subRuns?.optJSONObject(2)?.optString("text", "") else ""
                                     val durationStr = if ((subRuns?.length() ?: 0) > 0) subRuns?.optJSONObject(subRuns.length() - 1)?.optString("text", "0:00") else "0:00"
                                     val durationSec = parseDurationToSeconds(durationStr ?: "")
-
-                                    // Ban any Indian content
-                                    if (isIndianContent(title, artist)) continue
 
                                     // Video ID
                                     val overlay = item.optJSONObject("overlay")?.optJSONObject("musicItemThumbnailOverlayRenderer")
@@ -811,7 +789,7 @@ class MusicStreamSource(
                                         ?.optJSONObject("text")
                                         ?.optJSONArray("runs")
                                     val name = nameRuns?.optJSONObject(0)?.optString("text", "") ?: ""
-                                    if (name.isBlank() || isIndianContent(name, name)) continue
+                                    if (name.isBlank()) continue
 
                                     val navEndpoint = item.optJSONObject("navigationEndpoint")
                                     val browseId = navEndpoint?.optJSONObject("browseEndpoint")?.optString("browseId", "") ?: ""
@@ -952,8 +930,6 @@ class MusicStreamSource(
                                         ?.optJSONArray("runs")
                                     val artistName = if ((subRuns?.length() ?: 0) > 2) subRuns?.optJSONObject(2)?.optString("text", "Artist") ?: "Artist" else "Artist"
                                     val year = if ((subRuns?.length() ?: 0) > 4) subRuns?.optJSONObject(4)?.optString("text", "") ?: "" else ""
-
-                                    if (isIndianContent(title, artistName)) continue
 
                                     val navEndpoint = item.optJSONObject("navigationEndpoint")
                                     val browseId = navEndpoint?.optJSONObject("browseEndpoint")?.optString("browseId", "") ?: ""
@@ -1481,7 +1457,7 @@ class MusicStreamSource(
             return@withContext ytTracks
         }
 
-        // 2. High-Quality Direct Stream (with strict Indian language filtering)
+        // 2. High-Quality Direct Stream
         val directSaavn = fetchSaavn(query.trim())
         if (directSaavn.isNotEmpty()) {
             return@withContext directSaavn
@@ -1511,8 +1487,6 @@ class MusicStreamSource(
                                 val artistObj = item.optJSONObject("artist")
                                 val artistName = artistObj?.optString("name", "Unknown Artist") ?: "Unknown Artist"
                                 val artistAvatar = artistObj?.optString("picture_medium", "")
-
-                                if (isIndianContent(title, artistName)) continue
 
                                 val albumObj = item.optJSONObject("album")
                                 val albumTitle = albumObj?.optString("title", "")
@@ -1589,12 +1563,8 @@ class MusicStreamSource(
                                 val id = item.optString("id", "")
                                 if (id.isBlank()) continue
 
-                                val language = item.optString("language", "").lowercase()
                                 val title = unescapeHtml(item.optString("song", item.optString("title", "Track")))
                                 val artistName = unescapeHtml(item.optString("singers", item.optString("primary_artists", "Artist")))
-
-                                // Block Indian languages & keywords completely
-                                if (isIndianContent(title, artistName, language)) continue
 
                                 val album = unescapeHtml(item.optString("album", ""))
                                 val duration = item.optString("duration", "0").toIntOrNull() ?: 0

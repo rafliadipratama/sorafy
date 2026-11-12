@@ -487,9 +487,10 @@ private fun AppleConnectAccountContent(
                                         if (url != null && url.startsWith("https://music.youtube.com")) {
                                             val cookie = CookieManager.getInstance().getCookie(url)
                                             if (cookie != null && cookie.contains("SAPISID")) {
+                                                // Only the sign-in flag is stored; see AccountSyncBottomSheet.
                                                 ctx.getSharedPreferences("musiceuy_yt_auth", android.content.Context.MODE_PRIVATE)
                                                     .edit()
-                                                    .putString("cookie", cookie)
+                                                    .remove("cookie")
                                                     .putBoolean("is_logged_in", true)
                                                     .apply()
                                                 isYtConnected = true

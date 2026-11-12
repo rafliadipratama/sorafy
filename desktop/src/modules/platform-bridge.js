@@ -63,7 +63,6 @@ class PlatformBridge {
     this._listeners = {
       downloadPlaylistProgress: new Set(),
       downloadProgress: new Set(),
-      jamAction: new Set(),
       appBeforeClose: new Set(),
       mediaAction: new Set()
     };
@@ -563,26 +562,6 @@ class PlatformBridge {
     return [];
   }
 
-  async getJamInfo() {
-    if (this.isElectron && this._electronAPI?.getJamInfo) {
-      return await this._electronAPI.getJamInfo();
-    }
-    return null;
-  }
-
-  sendJamState(state) {
-    if (this.isElectron && this._electronAPI?.sendJamState) {
-      this._electronAPI.sendJamState(state);
-    }
-  }
-
-  async getMcpInfo() {
-    if (this.isElectron && this._electronAPI?.getMcpInfo) {
-      return await this._electronAPI.getMcpInfo();
-    }
-    return null;
-  }
-
   async getSystemInfo() {
     if (this.isTauri) {
       try {
@@ -610,15 +589,6 @@ class PlatformBridge {
     }
     if (typeof callback === 'function') {
       this._listeners.downloadProgress.add(callback);
-    }
-  }
-
-  onJamAction(callback) {
-    if (this.isElectron && this._electronAPI?.onJamAction) {
-      return this._electronAPI.onJamAction(callback);
-    }
-    if (typeof callback === 'function') {
-      this._listeners.jamAction.add(callback);
     }
   }
 

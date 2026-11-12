@@ -1,8 +1,29 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+// Release signing credentials are read from keystore.properties (git-ignored)
+// or, in CI, from environment variables. They are deliberately never checked in.
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+    if (keystorePropsFile.exists()) {
+        keystorePropsFile.inputStream().use { load(it) }
+    }
+}
+fun signingSecret(propKey: String, envKey: String): String? =
+    (keystoreProps.getProperty(propKey) ?: System.getenv(envKey))?.takeIf { it.isNotBlank() }
+
+val releaseStorePath = signingSecret("storeFile", "SORAFY_KEYSTORE_FILE")
+val releaseStorePassword = signingSecret("storePassword", "SORAFY_KEYSTORE_PASSWORD")
+val releaseKeyAlias = signingSecret("keyAlias", "SORAFY_KEY_ALIAS")
+val releaseKeyPassword = signingSecret("keyPassword", "SORAFY_KEY_PASSWORD")
+val hasReleaseSigning = releaseStorePath != null && releaseStorePassword != null &&
+    releaseKeyAlias != null && releaseKeyPassword != null &&
+    rootProject.file(releaseStorePath).exists()
 
 android {
     namespace = "com.rafliadipratama.musiceuy"
@@ -31,10 +52,24 @@ android {
         }
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(releaseStorePath!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = true
+            isShrinkResources = true
+            // Never fall back to the debug key: anyone holding a debug keystore could
+            // sign a malicious "update". Without credentials the APK is left unsigned.
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

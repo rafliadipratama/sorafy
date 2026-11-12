@@ -12,9 +12,6 @@ const taglinesEn = [
   'with no premium tier',
   'for Windows, Mac, and Linux',
   'with 7-band parametric EQ',
-  'your AI agent can control',
-  'you can control from a phone',
-  'that speaks MPD',
   'with synchronized lyrics',
   'built for developers',
 ];
@@ -27,9 +24,6 @@ const taglinesId = [
   'tanpa biaya langganan',
   'untuk Linux, Windows, & Mac',
   'dengan 7-Band Parametric EQ',
-  'bisa dikontrol oleh AI agent',
-  'bisa dikontrol dari ponsel',
-  'mendukung protokol MPD',
   'dengan lirik sinkron kata per kata',
   'dirancang untuk developer',
 ];

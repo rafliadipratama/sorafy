@@ -1,7 +1,6 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import TerminalShowcase from './TerminalShowcase';
-import { Mobile, CommandSquare, CpuSetting, Chart21, Colorfilter } from 'iconsax-react';
+import { Chart21, Colorfilter } from 'iconsax-react';
 import { OfficialDiscordIcon } from './OfficialIcons';
 
 interface Props {
@@ -26,45 +25,9 @@ const t = useTranslations(lang);
       </p>
     </div>
 
-    <!-- 6 Superpowers Grid -->
+    <!-- Superpowers Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-14">
-      <!-- 1. Jam Remote -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
-        <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
-            <Mobile size={20} variant="Linear" className="text-[#00E599]" />
-          </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">Port 4120</span>
-        </div>
-        <h3 class="text-base font-bold text-white">{t('super_jam_title')}</h3>
-        <p class="text-xs text-neutral-400 leading-relaxed">{t('super_jam_desc')}</p>
-      </div>
-
-      <!-- 2. MPD Daemon -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
-        <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
-            <CommandSquare size={20} variant="Linear" className="text-[#00E599]" />
-          </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">Port 6600</span>
-        </div>
-        <h3 class="text-base font-bold text-white">{t('super_mpd_title')}</h3>
-        <p class="text-xs text-neutral-400 leading-relaxed">{t('super_mpd_desc')}</p>
-      </div>
-
-      <!-- 3. AI MCP -->
-      <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
-        <div class="flex items-center justify-between">
-          <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
-            <CpuSetting size={20} variant="Linear" className="text-[#00E599]" />
-          </div>
-          <span class="text-[11px] font-mono-code font-bold px-2 py-0.5 rounded bg-surface-elevated border border-subtle text-neutral-400">Port 8800</span>
-        </div>
-        <h3 class="text-base font-bold text-white">{t('super_mcp_title')}</h3>
-        <p class="text-xs text-neutral-400 leading-relaxed">{t('super_mcp_desc')}</p>
-      </div>
-
-      <!-- 4. Listening Recap -->
+      <!-- 1. Listening Recap -->
       <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
         <div class="flex items-center justify-between">
           <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
@@ -76,7 +39,7 @@ const t = useTranslations(lang);
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_recap_desc')}</p>
       </div>
 
-      <!-- 5. Discord RPC -->
+      <!-- 2. Discord RPC -->
       <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
         <div class="flex items-center justify-between">
           <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#5865F2]">
@@ -88,7 +51,7 @@ const t = useTranslations(lang);
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_discord_desc')}</p>
       </div>
 
-      <!-- 6. Themes -->
+      <!-- 3. Themes -->
       <div class="bg-surface border border-subtle hover:border-medium rounded-2xl p-6 flex flex-col gap-3 transition-colors">
         <div class="flex items-center justify-between">
           <div class="w-9 h-9 rounded bg-surface-elevated border border-subtle flex items-center justify-center text-[#00E599]">
@@ -100,14 +63,5 @@ const t = useTranslations(lang);
         <p class="text-xs text-neutral-400 leading-relaxed">{t('super_theme_desc')}</p>
       </div>
     </div>
-
-    <!-- Terminal Code Showcase Component -->
-    <TerminalShowcase client:visible lang={lang} />
-  </div>
-</section>
-    </div>
-
-    <!-- Terminal Code Showcase Component -->
-    <TerminalShowcase client:visible lang={lang} />
   </div>
 </section>

@@ -18,12 +18,6 @@ SoraFy Desktop is a production-grade, high-fidelity music streaming application 
   - Live timestamped karaoke lyrics powered by LRCLIB with manual timing calibration.
 - **DSP Equalizer Studio**:
   - 10-band parametric equalizer with dynamic Bass Boost and 3D Virtualizer soundstage expansion.
-- **SoraFy Jam Remote**:
-  - Control your desktop playback from your phone via QR Code or local WiFi network.
-- **MPD (Music Player Daemon) Protocol (Port 6600)**:
-  - Connect your favorite MPD clients (ncmpcpp, Cantata, Yams, etc.) to control SoraFy directly from the command line.
-- **Model Context Protocol (MCP) AI Audio Server (Port 8800)**:
-  - Control playback, search songs, inspect queues, and adjust volume using AI agent assistants (Claude Desktop, Antigravity, etc.).
 - **Discord Rich Presence (Kizzy)**:
   - Real-time "Listening to..." status on your Discord profile with album art and track progress.
 - **Local-First Audio Interceptor & Offline Library**:
@@ -52,8 +46,6 @@ SoraFy Desktop is a production-grade, high-fidelity music streaming application 
                          ┌───────────────────────────────────┐
                          │ • Dual-Engine Audio Stream Resolver│
                          │ • Local HTTP Audio & Embed Proxy  │
-                         │ • MPD Daemon Server (Port 6600)   │
-                         │ • AI MCP Tool Server (Port 8800)  │
                          │ • Discord Rich Presence Client    │
                          │ • Offline Storage & File Downloader│
                          │ • Windows Thumbar & Tray Controls │
