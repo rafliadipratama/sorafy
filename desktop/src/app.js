@@ -5540,6 +5540,11 @@ class SoraFyDesktopApp {
       artistsHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</span>`;
     }
 
+    const metricLabel = this.getTrackMetricLabel(track);
+    const metricHtml = metricLabel
+      ? `<span class="bullet">•</span><span class="track-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>`
+      : '';
+
     row.innerHTML = `
       <div class="track-row-num">
         <span class="num-text">${idx + 1}</span>
@@ -5552,7 +5557,7 @@ class SoraFyDesktopApp {
           <span class="title-text">${this.escapeHtml(track.title)}</span>
           ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
         </div>
-        <div class="track-row-sub">${artistsHtml}</div>
+        <div class="track-row-sub">${artistsHtml}${metricHtml}</div>
       </div>
       <div class="track-row-actions">
         <button class="track-row-add-btn" title="Add to Playlist" id="row_add_${this.escapeHtml(track.id)}">
@@ -5768,6 +5773,11 @@ class SoraFyDesktopApp {
           artistsHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</span>`;
         }
 
+        const metricLabel = this.getTrackMetricLabel(track);
+        const metricHtml = metricLabel
+          ? `<span class="bullet">•</span><span class="track-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>`
+          : '';
+
         item.innerHTML = `
           <div class="ytm-song-art-box">
             <img src="${this.safeImg(track.artwork_url)}" class="ytm-song-art" alt="${this.escapeHtml(track.title)}" data-fallback="track">
@@ -5780,7 +5790,7 @@ class SoraFyDesktopApp {
               <span class="title-text">${this.escapeHtml(track.title)}</span>
               ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
             </div>
-            <div class="ytm-song-sub">${artistsHtml}${track.album ? ' • ' + this.escapeHtml(track.album) : ''}</div>
+            <div class="ytm-song-sub">${artistsHtml}${track.album ? ' • ' + this.escapeHtml(track.album) : ''}${metricHtml}</div>
           </div>
           <div class="ytm-song-actions">
             <button class="track-row-heart ${isLiked ? 'liked' : ''}" title="Like" id="ytm_like_${this.escapeHtml(track.id)}">
@@ -9246,9 +9256,25 @@ class SoraFyDesktopApp {
 
   renderBottomPlayerArtist(track) {
     if (!this.playerArtist) return;
+    const metricLabel = this.getTrackMetricLabel(track);
+    const appendMetric = () => {
+      if (metricLabel) {
+        const sep = document.createElement("span");
+        sep.className = "player-artist-sep";
+        sep.textContent = " • ";
+        this.playerArtist.appendChild(sep);
+
+        const badge = document.createElement("span");
+        badge.className = `player-metric-badge ${track?.is_video ? 'is-video' : 'is-song'}`;
+        badge.textContent = metricLabel;
+        this.playerArtist.appendChild(badge);
+      }
+    };
+
     const artists = this.parseTrackArtists(track);
     if (!artists || artists.length === 0) {
       this.playerArtist.textContent = track ? (track.artist || "Artist") : "Select a track to play";
+      if (track) appendMetric();
       return;
     }
 
@@ -9271,6 +9297,8 @@ class SoraFyDesktopApp {
         this.playerArtist.appendChild(sep);
       }
     });
+
+    appendMetric();
   }
 
   savePlaybackSession(isSync = false) {
@@ -9505,6 +9533,12 @@ class SoraFyDesktopApp {
           track.audio_format.bitrate_kbps = Math.round((full.bitrate || 320000) / 1000);
           if (this.playerBadge) this.playerBadge.textContent = track.audio_format.codec;
           if (this.screenPlayerBadge) this.screenPlayerBadge.textContent = track.audio_format.codec;
+
+          if (full.viewCount && full.viewCount !== '0') {
+            track.view_count = full.viewCount;
+            this.renderBottomPlayerArtist(track);
+            this.updateScreenPlayer();
+          }
 
           // Update individual artwork if track currently has playlist mosaic or placeholder
           const fullArt = full.artwork_url || (full.videoId ? `https://i.ytimg.com/vi/${full.videoId}/hqdefault.jpg` : null);
@@ -10260,6 +10294,95 @@ class SoraFyDesktopApp {
     const m = Math.floor(secs / 60);
     const s = Math.floor(secs % 60);
     return `${m}:${s < 10 ? '0' : ''}${s}`;
+  }
+
+  formatMetricCount(val, isVideo = false, lang = 'id') {
+    if (!val && val !== 0) return '';
+    const isEn = (lang === 'en');
+
+    if (typeof val === 'string') {
+      val = val.replace(/\u00a0/g, ' ').trim();
+      const isIndoSource = /(?:pemutaran|diputar|ditonton|penayangan|\bjt\b|\brb\b)/i.test(val);
+      const isEnglishSource = /(?:plays|views|\bB\b|\bK\b)/i.test(val);
+
+      if (isIndoSource && !isEn) {
+        return val.replace(/x\s*ditonton/i, 'ditonton');
+      }
+      if (isEnglishSource && isEn) {
+        return val;
+      }
+      if (isIndoSource && isEn) {
+        let t = val.replace(/(\d+),(\d+)/, '$1.$2');
+        t = t.replace(/(\d+(?:\.\d+)?)\s*(M|jt|rb)\b/gi, (m, num, unit) => {
+          const u = unit.toLowerCase();
+          if (unit === 'M') return `${num}B`;
+          if (u === 'jt') return `${num}M`;
+          if (u === 'rb') return `${num}K`;
+          return m;
+        });
+        t = t.replace(/(?:x\s*)?ditonton|penayangan/gi, 'views');
+        t = t.replace(/pemutaran|diputar/gi, 'plays');
+        return t;
+      }
+      if (isEnglishSource && !isEn) {
+        let t = val.replace(/(\d+)\.(\d+)/, '$1,$2');
+        t = t.replace(/(\d+(?:,\d+)?)\s*([BMK])\b/gi, (m, num, unit) => {
+          const u = unit.toUpperCase();
+          if (u === 'B') return `${num} M`;
+          if (u === 'M') return `${num} jt`;
+          if (u === 'K') return `${num} rb`;
+          return m;
+        });
+        t = t.replace(/\bviews\b/gi, 'ditonton');
+        t = t.replace(/\bplays\b/gi, 'diputar');
+        return t;
+      }
+    }
+
+    const num = typeof val === 'number' ? val : parseInt(String(val).replace(/[^\d]/g, ''), 10);
+    if (!num || isNaN(num) || num <= 0) return '';
+
+    let countStr = '';
+    if (isEn) {
+      if (num >= 1e9) {
+        countStr = (num / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
+      } else if (num >= 1e6) {
+        countStr = (num / 1e6).toFixed(1).replace(/\.0$/, '') + 'M';
+      } else if (num >= 1e3) {
+        countStr = (num / 1e3).toFixed(1).replace(/\.0$/, '') + 'K';
+      } else {
+        countStr = num.toLocaleString('en-US');
+      }
+      return `${countStr} ${isVideo ? 'views' : 'plays'}`;
+    } else {
+      if (num >= 1e9) {
+        countStr = (num / 1e9).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' M';
+      } else if (num >= 1e6) {
+        countStr = (num / 1e6).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' jt';
+      } else if (num >= 1e3) {
+        countStr = (num / 1e3).toFixed(1).replace(/\.0$/, '').replace('.', ',') + ' rb';
+      } else {
+        countStr = num.toLocaleString('id-ID');
+      }
+      return `${countStr} ${isVideo ? 'ditonton' : 'diputar'}`;
+    }
+  }
+
+  getTrackMetricLabel(track) {
+    if (!track) return '';
+    const lang = (this.settings?.language === 'id' || this.currentLanguage === 'id') ? 'id' : 'en';
+    const isVideo = !!(track.is_video || (track.video_id && !track.id?.startsWith('yt_') && track.video_badge));
+
+    if (isVideo) {
+      if (track.view_count_text) return this.formatMetricCount(track.view_count_text, true, lang);
+      if (track.view_count) return this.formatMetricCount(track.view_count, true, lang);
+      if (track.play_count_text) return this.formatMetricCount(track.play_count_text, true, lang);
+    } else {
+      if (track.play_count_text) return this.formatMetricCount(track.play_count_text, false, lang);
+      if (track.view_count) return this.formatMetricCount(track.view_count, false, lang);
+      if (track.view_count_text) return this.formatMetricCount(track.view_count_text, false, lang);
+    }
+    return '';
   }
 
   formatTrackTitle(title) {
@@ -11193,6 +11316,7 @@ class SoraFyDesktopApp {
     // Render "Sedang Diputar"
     if (this.queueNowPlaying) {
       if (currentTrack) {
+        const curMetric = this.getTrackMetricLabel(currentTrack);
         this.queueNowPlaying.innerHTML = `
           <img src="${this.safeImg(currentTrack.artwork_url)}" class="queue-item-art" alt="${this.escapeHtml(currentTrack.title)}" data-fallback="track">
           <div class="queue-item-info">
@@ -11200,7 +11324,10 @@ class SoraFyDesktopApp {
               <span class="title-text">${this.escapeHtml(currentTrack.title)}</span>
               ${currentTrack.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
             </span>
-            <span class="queue-item-artist">${this.escapeHtml(currentTrack.artist)}</span>
+            <span class="queue-item-artist">
+              ${this.escapeHtml(currentTrack.artist)}
+              ${curMetric ? `<span class="queue-metric-sep">•</span><span class="queue-metric-badge ${currentTrack.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(curMetric)}</span>` : ''}
+            </span>
           </div>
           <span class="queue-item-duration">${this.formatTime(currentTrack.duration_secs || 0)}</span>
         `;
@@ -11246,6 +11373,7 @@ class SoraFyDesktopApp {
       item.draggable = true;
       item.dataset.index = queueIdx;
 
+      const trkMetric = this.getTrackMetricLabel(track);
       item.innerHTML = `
         <span class="queue-drag-handle" title="Drag to reorder">⋮⋮</span>
         <img src="${this.safeImg(track.artwork_url)}" class="queue-item-art" alt="${this.escapeHtml(track.title)}" data-fallback="track">
@@ -11254,7 +11382,10 @@ class SoraFyDesktopApp {
             <span class="title-text">${this.escapeHtml(track.title)}</span>
             ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
           </span>
-          <span class="queue-item-artist">${this.escapeHtml(track.artist)}</span>
+          <span class="queue-item-artist">
+            ${this.escapeHtml(track.artist)}
+            ${trkMetric ? `<span class="queue-metric-sep">•</span><span class="queue-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(trkMetric)}</span>` : ''}
+          </span>
         </div>
         <span class="queue-item-duration">${this.formatTime(track.duration_secs || 0)}</span>
         <button class="queue-item-remove" title="Remove from queue" data-action="remove">
@@ -11371,8 +11502,14 @@ class SoraFyDesktopApp {
       if (this.screenPlayerAudioView) this.screenPlayerAudioView.style.display = "none";
       if (this.screenPlayerVideoView) this.screenPlayerVideoView.style.display = "block";
       if (track) {
+        const metricLabel = this.getTrackMetricLabel(track);
         if (this.videoOverlayTitle) this.videoOverlayTitle.textContent = track.title || 'Video Title';
-        if (this.videoOverlayArtist) this.videoOverlayArtist.textContent = track.artist || '';
+        if (this.videoOverlayArtist) {
+          this.videoOverlayArtist.innerHTML = `
+            <span class="overlay-artist-name">${this.escapeHtml(track.artist || '')}</span>
+            ${metricLabel ? `<span class="screen-metric-sep">•</span><span class="screen-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>` : ''}
+          `;
+        }
       }
 
       // Dynamically resolve YouTube video ID if missing from track
@@ -11490,14 +11627,21 @@ class SoraFyDesktopApp {
         ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
       `;
     }
+    const metricLabel = this.getTrackMetricLabel(track);
     if (this.screenPlayerArtist) {
-      this.screenPlayerArtist.textContent = track.artist || 'Artis';
+      this.screenPlayerArtist.innerHTML = `
+        <span class="screen-artist-name">${this.escapeHtml(track.artist || 'Artis')}</span>
+        ${metricLabel ? `<span class="screen-metric-sep">•</span><span class="screen-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>` : ''}
+      `;
     }
     if (this.videoOverlayTitle) {
       this.videoOverlayTitle.textContent = track.title || 'Video Title';
     }
     if (this.videoOverlayArtist) {
-      this.videoOverlayArtist.textContent = track.artist || 'Artis';
+      this.videoOverlayArtist.innerHTML = `
+        <span class="overlay-artist-name">${this.escapeHtml(track.artist || 'Artis')}</span>
+        ${metricLabel ? `<span class="screen-metric-sep">•</span><span class="screen-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>` : ''}
+      `;
     }
     if (this.screenPlayerArtwork) {
       this.screenPlayerArtwork.src = track.artwork_url || this.DEFAULT_TRACK_ART;
@@ -11619,6 +11763,14 @@ class SoraFyDesktopApp {
       { key: "Speed / Rate", val: playbackRate },
       { key: "Stream Delivery", val: sourceKind }
     ];
+
+    const metricLabel = this.getTrackMetricLabel(track);
+    if (metricLabel) {
+      rows.splice(3, 0, {
+        key: track.is_video ? "Global Views" : "Global Plays",
+        val: metricLabel
+      });
+    }
 
     this.statsNerdsGrid.innerHTML = rows.map(r => `
       <div class="stats-nerds-row">

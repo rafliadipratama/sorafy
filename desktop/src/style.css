@@ -1008,6 +1008,38 @@ body {
   color: var(--color-text-tertiary);
 }
 
+.track-metric-badge,
+.player-metric-badge,
+.screen-metric-badge,
+.queue-metric-badge {
+  font-size: 11px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.track-metric-badge.is-song,
+.player-metric-badge.is-song,
+.screen-metric-badge.is-song,
+.queue-metric-badge.is-song {
+  color: var(--color-text-secondary, #94A3B8);
+}
+
+.track-metric-badge.is-video,
+.player-metric-badge.is-video,
+.screen-metric-badge.is-video,
+.queue-metric-badge.is-video {
+  color: #38BDF8;
+}
+
+.screen-metric-sep,
+.queue-metric-sep {
+  opacity: 0.6;
+  margin: 0 4px;
+  font-size: 10px;
+}
+
 .track-row-badge {
   width: 140px;
   display: flex;

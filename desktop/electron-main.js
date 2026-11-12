@@ -158,7 +158,7 @@ function resolveYtDlpStream(videoId) {
       const cookieArgs = getCookieArgs();
       execFile(
         getYtDlpBin(),
-        [...cookieArgs, '--print', '%(duration)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
+        [...cookieArgs, '--print', '%(duration)s', '--print', '%(view_count)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
         { timeout: 9000 },
         (error, stdout) => {
           if (error || !stdout) {
@@ -167,11 +167,17 @@ function resolveYtDlpStream(videoId) {
           const lines = stdout.trim().split('\n').map(l => l.trim()).filter(Boolean);
           let streamUrl = null;
           let duration = 0;
+          let viewCount = 0;
           for (const line of lines) {
             if (line.startsWith('http')) {
               streamUrl = line;
             } else if (/^\d+$/.test(line)) {
-              duration = parseInt(line, 10);
+              const n = parseInt(line, 10);
+              if (duration === 0) {
+                duration = n;
+              } else {
+                viewCount = n;
+              }
             }
           }
           if (streamUrl) {
@@ -186,6 +192,7 @@ function resolveYtDlpStream(videoId) {
               mimeType: 'audio/webm',
               provider: 'Opus HD',
               duration: duration,
+              viewCount: viewCount ? String(viewCount) : '0',
               isFull: true
             });
           } else {
@@ -722,6 +729,26 @@ function extractDurationFromListItem(r) {
   return 0;
 }
 
+function extractMetricsFromListItem(r) {
+  let playCountText = '';
+  let viewCountText = '';
+  if (!r) return { playCountText, viewCountText };
+  const cols = [...(r.flexColumns || []), ...(r.fixedColumns || [])];
+  for (const col of cols) {
+    const runs = col.musicResponsiveListItemFlexColumnRenderer?.text?.runs ||
+                 col.musicResponsiveListItemFixedColumnRenderer?.text?.runs || [];
+    for (const run of runs) {
+      const txt = (run.text || '').replace(/\u00a0/g, ' ').trim();
+      if (/(?:plays|pemutaran|diputar)/i.test(txt) && /\d/.test(txt)) {
+        playCountText = txt;
+      } else if (/(?:views|ditonton|penayangan)/i.test(txt) && /\d/.test(txt)) {
+        viewCountText = txt;
+      }
+    }
+  }
+  return { playCountText, viewCountText };
+}
+
 function isStrictMatch(expectedTitle, expectedArtist, candTitle, candArtist) {
   const normExpT = normalize(expectedTitle);
   const normCandT = normalize(candTitle);
@@ -902,6 +929,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                   const subText = sRuns.map(x => x.text).join('');
                   const durStr = sRuns.length > 0 ? sRuns[sRuns.length - 1]?.text : '';
                   const dSec = extractDurationFromListItem(r) || parseDurationSecs(durStr) || 0;
+                  const { playCountText: cardPlayCount, viewCountText: cardViewCount } = extractMetricsFromListItem(r);
                   const sThumbs = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails
                     || r.thumbnail?.croppedSquareThumbnailRenderer?.thumbnail?.thumbnails || [];
                   let sArt = sThumbs.length ? sThumbs[sThumbs.length - 1].url : '';
@@ -917,6 +945,8 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                       artist: title,
                       subtitle: subText,
                       duration_secs: dSec,
+                      play_count_text: cardPlayCount,
+                      view_count_text: cardViewCount,
                       artwork_url: sArt || `https://i.ytimg.com/vi/${sVid}/hqdefault.jpg`,
                       stream_url: '',
                       source_label: 'SoraFy Stream',
@@ -965,12 +995,22 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                     const heroArtist = card.subtitle?.runs?.find(r => r.navigationEndpoint?.browseEndpoint?.browseId?.startsWith('UC'))?.text
                       || (card.subtitle?.runs?.length > 2 ? card.subtitle.runs[2].text : '') || 'Artist';
 
+                    let heroPlayCount = '';
+                    let heroViewCount = '';
+                    for (const r of (card.subtitle?.runs || [])) {
+                      const txt = (r.text || '').replace(/\u00a0/g, ' ').trim();
+                      if (/(?:plays|pemutaran|diputar)/i.test(txt) && /\d/.test(txt)) heroPlayCount = txt;
+                      else if (/(?:views|ditonton|penayangan)/i.test(txt) && /\d/.test(txt)) heroViewCount = txt;
+                    }
+
                     itemsList.unshift({
                       id: 'yt_' + heroVid,
                       video_id: heroVid,
                       title: title.replace(/\s*\((?:official\s*)?(?:music\s*)?video\)/gi, '').trim(),
                       artist: heroArtist,
                       duration_secs: heroDuration || 0,
+                      play_count_text: heroPlayCount,
+                      view_count_text: heroViewCount,
                       artwork_url: artwork || `https://i.ytimg.com/vi/${heroVid}/hqdefault.jpg`,
                       stream_url: '',
                       is_video: filterType === 'video',
@@ -1031,6 +1071,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                 const album = subRuns.length > 2 ? subRuns[2]?.text : '';
                 const durationStr = subRuns.length > 0 ? subRuns[subRuns.length - 1]?.text : '';
                 const durationSec = extractDurationFromListItem(renderer) || parseDurationSecs(durationStr) || 0;
+                const { playCountText, viewCountText } = extractMetricsFromListItem(renderer);
 
                 // Video ID & Browse ID
                 const overlay = renderer.overlay?.musicItemThumbnailOverlayRenderer;
@@ -1136,6 +1177,8 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                       artist_browse_id: artistBrowseId,
                       album: album || title,
                       duration_secs: durationSec,
+                      play_count_text: playCountText,
+                      view_count_text: viewCountText,
                       artwork_url: artwork || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
                       stream_url: '',
                       is_video: true,
@@ -1163,6 +1206,8 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                       artist_browse_id: artistBrowseId,
                       album: album || title,
                       duration_secs: durationSec,
+                      play_count_text: playCountText,
+                      view_count_text: viewCountText,
                       artwork_url: artwork,
                       stream_url: '',
                       is_video: false,
@@ -1335,6 +1380,7 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
                     const label = b.musicInlineBadgeRenderer?.accessibilityData?.accessibilityData?.label?.toLowerCase() || '';
                     return icon === 'MUSIC_EXPLICIT_BADGE' || label.includes('explicit') || label.includes('eksplisit');
                   }));
+                  const { playCountText, viewCountText } = extractMetricsFromListItem(r);
                   parsedTracks.push({
                     id: 'yt_' + videoId,
                     video_id: videoId,
@@ -1342,6 +1388,8 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
                     artist: tArtist,
                     album: tAlbum || tTitle,
                     duration_secs: extractDurationFromListItem(r),
+                    play_count_text: playCountText,
+                    view_count_text: viewCountText,
                     artwork_url: artwork || avatarUrl || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
                     stream_url: '',
                     is_video: false,
@@ -1408,6 +1456,10 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
                 } else if (cTitle.includes('video') || cTitle.includes('langsung') || itVideoId) {
                   if (itTitle && itVideoId) {
                     const isOfficial = cTitle.includes('video') || /\b(official|mv|video musik)\b/i.test(itTitle);
+                    let vidViewCount = '';
+                    if (/(?:views|ditonton|penayangan)/i.test(itSub) && /\d/.test(itSub)) {
+                      vidViewCount = itSub.replace(/\u00a0/g, ' ').trim();
+                    }
                     parsedVideos.push({
                       id: 'yt_' + itVideoId,
                       video_id: itVideoId,
@@ -1415,6 +1467,7 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
                       artist: name,
                       artwork_url: itArt || `https://i.ytimg.com/vi/${itVideoId}/hqdefault.jpg`,
                       duration_secs: parseDurationSecs(itSub) || 0,
+                      view_count_text: vidViewCount,
                       is_official: isOfficial,
                       video_badge: isOfficial ? 'Official' : 'Live / Session'
                     });
@@ -1577,6 +1630,7 @@ async function resolveInnerTubeStream(videoId) {
         mimeType: chosen.mimeType || 'audio/mp4',
         provider: 'SoraFy HD Stream',
         duration: parseInt(json.videoDetails?.lengthSeconds, 10) || 0,
+        viewCount: json.videoDetails?.viewCount || '0',
         isFull: true
       };
     }
@@ -2437,6 +2491,19 @@ async function fetchYouTubeMusicRadioQueue(videoId, continuation = null, hl = 'e
         }
       }
 
+      let playCountText = '';
+      let viewCountText = '';
+      if (r.longBylineText?.runs) {
+        for (const run of r.longBylineText.runs) {
+          const txt = (run.text || '').replace(/\u00a0/g, ' ').trim();
+          if (/(?:plays|pemutaran|diputar)/i.test(txt) && /\d/.test(txt)) {
+            playCountText = txt;
+          } else if (/(?:views|ditonton|penayangan)/i.test(txt) && /\d/.test(txt)) {
+            viewCountText = txt;
+          }
+        }
+      }
+
       // Thumbnail artwork
       const thumbs = r.thumbnail?.thumbnails || [];
       let artwork = thumbs.length ? thumbs[thumbs.length - 1].url : '';
@@ -2451,6 +2518,8 @@ async function fetchYouTubeMusicRadioQueue(videoId, continuation = null, hl = 'e
         artwork: artwork,
         artwork_url: artwork,
         duration_secs: durationSecs,
+        play_count_text: playCountText,
+        view_count_text: viewCountText,
         source: 'ytmusic_automix'
       });
     }
