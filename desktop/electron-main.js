@@ -2361,7 +2361,7 @@ ipcMain.handle('fetch-yt-lyrics', async (event, videoId) => {
 });
 
 // Official YouTube Music Automix / Radio Queue Engine
-async function fetchYouTubeMusicRadioQueue(videoId, continuation = null) {
+async function fetchYouTubeMusicRadioQueue(videoId, continuation = null, hl = 'en', gl = 'US') {
   try {
     let cleanVid = (videoId || '').replace(/^yt_/, '').trim();
     if (!cleanVid && !continuation) return { tracks: [], continuation: null };
@@ -2372,8 +2372,8 @@ async function fetchYouTubeMusicRadioQueue(videoId, continuation = null) {
         client: {
           clientName: 'WEB_REMIX',
           clientVersion: '1.20240318.01.00',
-          hl: 'id',
-          gl: 'ID'
+          hl: hl || 'en',
+          gl: gl || 'US'
         }
       }
     } : {
@@ -2384,8 +2384,8 @@ async function fetchYouTubeMusicRadioQueue(videoId, continuation = null) {
         client: {
           clientName: 'WEB_REMIX',
           clientVersion: '1.20240318.01.00',
-          hl: 'id',
-          gl: 'ID'
+          hl: hl || 'en',
+          gl: gl || 'US'
         }
       }
     };
@@ -2462,8 +2462,8 @@ async function fetchYouTubeMusicRadioQueue(videoId, continuation = null) {
   }
 }
 
-ipcMain.handle('fetch-yt-radio-queue', async (event, videoId, continuationToken) => {
-  return await fetchYouTubeMusicRadioQueue(videoId, continuationToken);
+ipcMain.handle('fetch-yt-radio-queue', async (event, videoId, continuationToken, hl, gl) => {
+  return await fetchYouTubeMusicRadioQueue(videoId, continuationToken, hl, gl);
 });
 
 ipcMain.handle('browse-yt', async (event, browseId) => {

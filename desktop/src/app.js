@@ -9399,6 +9399,12 @@ class SoraFyDesktopApp {
       track.video_id = track.id.replace(/^yt_/, "");
     }
 
+    // Reset Automix radio continuation token when loading a different seed track
+    const seedVid = track.video_id || (track.id ? track.id.replace(/^yt_/, "") : "");
+    if (seedVid && this._currentAutomixSeedId && this._currentAutomixSeedId !== seedVid) {
+      this.ytmRadioContinuationToken = null;
+    }
+
     // Reset listening analytics scrobble session (Nuclear Feature 5)
     this._currentListenRecorded = false;
     this._currentListenTrack = track;
@@ -11043,6 +11049,7 @@ class SoraFyDesktopApp {
     this.tracks = [seedTrack];
     this.currentTrackIndex = 0;
     this.ytmRadioContinuationToken = null;
+    this._currentAutomixSeedId = null;
     this.loadTrack(0, true);
     const msg = this.currentLanguage === "id"
       ? `Memulai radio Automix: ${seedTrack.title}`
@@ -11053,7 +11060,95 @@ class SoraFyDesktopApp {
 
   async fetchAutomixQueue(seedTrack, forceRefresh = false) {
     if (!seedTrack) return [];
-    return await this.fetchMusifyQueue(seedTrack);
+    if (!window.electronAPI || typeof window.electronAPI.fetchYouTubeRadioQueue !== "function") {
+      return [];
+    }
+
+    try {
+      // 1. Resolve seed video ID
+      let vid = seedTrack.video_id;
+      if (!vid && seedTrack.id && seedTrack.id.startsWith("yt_")) {
+        vid = seedTrack.id.replace("yt_", "");
+      }
+      if (!vid && typeof window.electronAPI.resolveFullStream === "function") {
+        const stream = await window.electronAPI.resolveFullStream({
+          title: seedTrack.title,
+          artist: seedTrack.artist
+        }).catch(() => null);
+        if (stream && stream.videoId) vid = stream.videoId;
+      }
+      if (!vid && typeof window.electronAPI.searchYouTubeMusic === "function") {
+        const searchRes = await window.electronAPI.searchYouTubeMusic(`${seedTrack.artist} ${seedTrack.title}`, "song").catch(() => []);
+        if (searchRes && searchRes.length && (searchRes[0].videoId || searchRes[0].id)) {
+          vid = searchRes[0].videoId || (searchRes[0].id ? searchRes[0].id.replace("yt_", "") : "");
+        }
+      }
+
+      if (!vid) return [];
+
+      // If seed track changed or forced refresh, start a new fresh radio queue
+      if (this._currentAutomixSeedId !== vid || forceRefresh) {
+        this.ytmRadioContinuationToken = null;
+        this._currentAutomixSeedId = vid;
+      }
+
+      const continuation = this.ytmRadioContinuationToken;
+      const radioResult = await window.electronAPI.fetchYouTubeRadioQueue(vid, continuation).catch(() => null);
+
+      if (!radioResult || !Array.isArray(radioResult.tracks) || radioResult.tracks.length === 0) {
+        return [];
+      }
+
+      if (radioResult.continuation) {
+        this.ytmRadioContinuationToken = radioResult.continuation;
+      }
+
+      // Deduplicate against existing songs in current session
+      const existingIds = new Set();
+      const existingTitles = new Set();
+      this.tracks.forEach(t => {
+        if (t.id) existingIds.add(t.id);
+        if (t.video_id) existingIds.add(t.video_id);
+        if (t.title) existingTitles.add(t.title.toLowerCase().trim());
+      });
+
+      const now = Date.now();
+      const candidateTracks = [];
+
+      for (const t of radioResult.tracks) {
+        const tVid = t.video_id || (t.id ? t.id.replace("yt_", "") : "");
+        if (!tVid || existingIds.has(tVid) || existingIds.has(t.id)) continue;
+
+        const cleanTitle = (t.title || "").toLowerCase().trim();
+        if (cleanTitle && existingTitles.has(cleanTitle)) continue;
+
+        // Filter out low quality bootlegs, unofficial covers, karaoke, slowed/reverb
+        if (/\b(cover by|karaoke|instrumental|tribute to|lofi remix|originally performed by|as made famous by|backing track|dj\s+(?:remix|tiktok|jedag)|slowed\s*(?:and|\+)?\s*reverb)\b/i.test(t.title) ||
+            /\b(karaoke|tribute band|tribute crew|the karaoke|paris music)\b/i.test(t.artist || "")) {
+          continue;
+        }
+
+        // Skip Deprioritization: if artist was recently skipped quickly (< 5 mins), skip in this batch
+        const artLower = (t.artist || "").toLowerCase().trim();
+        if (this.recentlySkippedArtists && this.recentlySkippedArtists.has(artLower)) {
+          const skippedAt = this.recentlySkippedArtists.get(artLower);
+          if (now - skippedAt < 5 * 60 * 1000) {
+            continue;
+          }
+        }
+
+        existingIds.add(tVid);
+        existingIds.add(t.id);
+        if (cleanTitle) existingTitles.add(cleanTitle);
+
+        candidateTracks.push(t);
+      }
+
+      return candidateTracks;
+    } catch (err) {
+      console.warn("fetchAutomixQueue YT Music radio error:", err);
+      return [];
+    }
   }
 
   async ensureUpcomingQueue(force = false) {
@@ -11066,7 +11161,7 @@ class SoraFyDesktopApp {
       try {
         const currentTrack = this.tracks[this.currentTrackIndex];
         if (currentTrack) {
-          const newTracks = await this.fetchMusifyQueue(currentTrack);
+          const newTracks = await this.fetchAutomixQueue(currentTrack, force);
           if (newTracks && newTracks.length > 0) {
             this.tracks.push(...newTracks);
             this.renderQueue();

@@ -52,21 +52,47 @@ test('isCompatibleMusifyTrack enforces genre purity and rejects bootlegs and cro
   assert.strictEqual(isCompatibleMusifyTrack({ artist: 'Bernadya', title: 'Untungnya, Hidup Terus Berjalan' }, seedTrack, cluster), false);
 });
 
-test('fetchAutomixQueue routes directly to fetchMusifyQueue', async () => {
+test('fetchAutomixQueue queries YouTube Music Radio via fetchYouTubeRadioQueue, resets continuation on seed change, and filters bootlegs', async () => {
   const app = Object.create(SoraFyDesktopApp.prototype);
-  let musifyCalledWith = null;
+  app.tracks = [{ id: 'seed_1', video_id: 'seed_1', title: 'Karma Police', artist: 'Radiohead' }];
+  app.recentlySkippedArtists = new Map();
+  app.recentlySkippedArtists.set('skipped band', Date.now());
+  app.ytmRadioContinuationToken = 'old_stale_token';
+  app._currentAutomixSeedId = 'old_vid';
 
-  app.fetchMusifyQueue = async (seed) => {
-    musifyCalledWith = seed;
-    return [{ id: 'mock_1', title: 'Mock Song', artist: 'Radiohead' }];
+  let calledWithVid = null;
+  let calledWithCont = null;
+
+  global.window = {
+    electronAPI: {
+      fetchYouTubeRadioQueue: async (vid, cont) => {
+        calledWithVid = vid;
+        calledWithCont = cont;
+        return {
+          tracks: [
+            { id: 'yt_radio_1', video_id: 'radio_1', title: 'No Surprises', artist: 'Radiohead' },
+            { id: 'yt_radio_2', video_id: 'radio_2', title: 'Do I Wanna Know?', artist: 'Arctic Monkeys' },
+            { id: 'yt_radio_3', video_id: 'radio_3', title: 'Karma Police (Karaoke Version)', artist: 'The Karaoke Crew' },
+            { id: 'yt_radio_4', video_id: 'radio_4', title: 'Song by Skipped Band', artist: 'Skipped Band' }
+          ],
+          continuation: 'next_token_123'
+        };
+      }
+    }
   };
 
-  const seed = { artist: 'Radiohead', title: 'Karma Police' };
+  const seed = { id: 'seed_new', video_id: 'new_vid_123', artist: 'Radiohead', title: 'Karma Police' };
   const result = await app.fetchAutomixQueue(seed, true);
 
-  assert.strictEqual(musifyCalledWith, seed);
-  assert.strictEqual(result.length, 1);
-  assert.strictEqual(result[0].title, 'Mock Song');
+  // Verifies that a new seed resets continuation
+  assert.strictEqual(calledWithVid, 'new_vid_123');
+  assert.strictEqual(calledWithCont, null);
+  assert.strictEqual(app.ytmRadioContinuationToken, 'next_token_123');
+
+  // Verifies that karaoke and skipped artists were filtered out
+  assert.strictEqual(result.length, 2);
+  assert.strictEqual(result[0].title, 'No Surprises');
+  assert.strictEqual(result[1].title, 'Do I Wanna Know?');
 });
 
 test('fetchMusifyQueue interleaves catalog and peer artists while filtering duplicates and skipped artists', async () => {
