@@ -11,7 +11,7 @@ const taglinesEn = [
   'without ads or tracking',
   'with no premium tier',
   'for Windows, Mac, and Linux',
-  'with 7-band parametric EQ',
+  'with 10-band parametric EQ',
   'with synchronized lyrics',
   'built for developers',
 ];
@@ -23,7 +23,7 @@ const taglinesId = [
   'tanpa iklan atau pelacakan',
   'tanpa biaya langganan',
   'untuk Linux, Windows, & Mac',
-  'dengan 7-Band Parametric EQ',
+  'dengan 10-Band Parametric EQ',
   'dengan lirik sinkron kata per kata',
   'dirancang untuk developer',
 ];

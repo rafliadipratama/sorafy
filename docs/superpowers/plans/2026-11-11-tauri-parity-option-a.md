@@ -16,7 +16,7 @@
 - All existing 84 desktop unit tests must continue to pass (`npm test --prefix desktop`).
 - All new and existing Rust unit tests must pass (`cargo test --manifest-path desktop/src-tauri/Cargo.toml`).
 - Use loopback Tokio audio proxy (`http://127.0.0.1:<port>/stream?url=...`) for all remote Googlevideo audio to comply with WebKitGTK CORS rules.
-- Filter Indian/Bollywood regional keywords and scripts according to standard SoraFy catalog filter rules.
+- Maintain strict title and artist verification rules to prevent unintended cover/remix stream mismatches.
 
 ## Review Focus
 
@@ -48,7 +48,7 @@
   - Implement `get_home_feed(&self, lang: &str) -> Result<HomeFeedData, DomainError>`.
   - Implement `get_radio_queue(&self, video_id: &str, continuation: Option<&str>) -> Result<RadioQueueData, DomainError>`.
   - Implement `browse(&self, browse_id: &str) -> Result<BrowseData, DomainError>`.
-  - Include Indian/Bollywood keyword filtering.
+  - Maintain strict title and artist verification rules.
   - Add Rust unit tests in `youtubei_client.rs`.
 - [x] **Step 4: Register in `desktop/src-tauri/src/infrastructure/mod.rs`**
   Export `pub mod youtubei_client; pub use youtubei_client::YouTubeiClient;`.
