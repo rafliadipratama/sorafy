@@ -7,7 +7,9 @@ function createMockApp(lang = 'id') {
     settings: { language: lang },
     currentLanguage: lang,
     formatMetricCount: SoraFyDesktopApp.prototype.formatMetricCount,
-    getTrackMetricLabel: SoraFyDesktopApp.prototype.getTrackMetricLabel
+    getTrackMetricLabel: SoraFyDesktopApp.prototype.getTrackMetricLabel,
+    parseMetricToNumber: SoraFyDesktopApp.prototype.parseMetricToNumber,
+    normalizeSearchText: SoraFyDesktopApp.prototype.normalizeSearchText
   };
 }
 
@@ -85,4 +87,62 @@ test('getTrackMetricLabel accurately distinguishes songs (plays) from videos (vi
     view_count: '1624000000'
   };
   assert.strictEqual(app.getTrackMetricLabel(streamVideo), '1.6B views');
+});
+
+test('parseMetricToNumber converts metric text to accurate numbers', () => {
+  const app = createMockApp('id');
+  assert.strictEqual(app.parseMetricToNumber('2.3B plays'), 2300000000);
+  assert.strictEqual(app.parseMetricToNumber('122 jt pemutaran'), 122000000);
+  assert.strictEqual(app.parseMetricToNumber('10 rb pemutaran'), 10000);
+  assert.strictEqual(app.parseMetricToNumber('500K plays'), 500000);
+  assert.strictEqual(app.parseMetricToNumber('1.6B views'), 1600000000);
+  assert.strictEqual(app.parseMetricToNumber(12345), 12345);
+  assert.strictEqual(app.parseMetricToNumber(null), 0);
+});
+
+test('normalizeSearchText strips punctuation and handles hyphenated phrases', () => {
+  const app = createMockApp('id');
+  assert.strictEqual(app.normalizeSearchText('Ada titik-titik di ujung doa'), 'ada titik titik di ujung doa');
+  assert.strictEqual(app.normalizeSearchText('Ada Titik Titik di Ujung Doa'), 'ada titik titik di ujung doa');
+  assert.strictEqual(app.normalizeSearchText('Sal Priadi - Dari planet lain (Official Video)!'), 'sal priadi dari planet lain official video');
+});
+
+test('candidate matching prioritizes official track with 122M plays over cover with 10k plays', () => {
+  const app = createMockApp('id');
+  const query = 'ada titik titik di ujung doa';
+  const normQ = app.normalizeSearchText(query);
+  const cleanQ = query.trim().toLowerCase();
+
+  const candidates = [
+    {
+      id: 'eva_1',
+      title: 'Ada Titik Titik di Ujung Doa',
+      artist: 'Eva Pradila',
+      play_count_text: '10 rb pemutaran'
+    },
+    {
+      id: 'sal_1',
+      title: 'Ada titik-titik di ujung doa',
+      artist: 'Sal Priadi',
+      play_count_text: '122 jt pemutaran'
+    }
+  ];
+
+  const matched = candidates.filter(s => {
+    const normT = app.normalizeSearchText(s.title);
+    const st = s.title.trim().toLowerCase();
+    return normT === normQ || normT.startsWith(normQ) || normQ.startsWith(normT) ||
+           st === cleanQ || st.startsWith(cleanQ) || cleanQ.startsWith(st);
+  });
+
+  matched.sort((a, b) => {
+    const playsA = app.parseMetricToNumber(a.play_count_text || 0);
+    const playsB = app.parseMetricToNumber(b.play_count_text || 0);
+    return playsB - playsA;
+  });
+
+  assert.strictEqual(matched.length, 2);
+  assert.strictEqual(matched[0].artist, 'Sal Priadi');
+  assert.strictEqual(matched[0].id, 'sal_1');
+  assert.strictEqual(matched[1].artist, 'Eva Pradila');
 });

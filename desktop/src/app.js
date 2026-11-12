@@ -8420,6 +8420,8 @@ class SoraFyDesktopApp {
       badgeStyle = "background: rgba(239, 68, 68, 0.16); color: #F87171;";
       artworkUrl = item.artwork_url || (item.video_id ? `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg` : "");
       extraMeta = item.duration_secs ? this.formatTime(item.duration_secs) : '';
+      const metric = this.getTrackMetricLabel(item);
+      if (metric) extraMeta = extraMeta ? `${extraMeta} • ${metric}` : metric;
     } else if (type === "album") {
       isAlbum = true;
       title = item.title || "";
@@ -8436,6 +8438,8 @@ class SoraFyDesktopApp {
       badgeStyle = "background: rgba(0, 229, 153, 0.14); color: #00E599;";
       artworkUrl = item.artwork_url || this.DEFAULT_TRACK_ART;
       extraMeta = item.duration_secs ? this.formatTime(item.duration_secs) : '';
+      const metric = this.getTrackMetricLabel(item);
+      if (metric) extraMeta = extraMeta ? `${extraMeta} • ${metric}` : metric;
     }
 
     this.searchTopResultCard.innerHTML = `
@@ -8838,23 +8842,44 @@ class SoraFyDesktopApp {
         });
 
         const cleanQ = query.trim().toLowerCase();
+        const normQ = this.normalizeSearchText(query);
 
         // 1. Detect if the user is searching for a SONG title:
-        const matchingSong = (songs || []).find(s => {
+        // Find matching candidates and sort by play count so that official high-play versions take precedence over covers
+        const songCandidates = (songs || []).filter(s => {
           if (!s || !s.title) return false;
+          const normT = this.normalizeSearchText(s.title);
           const st = s.title.trim().toLowerCase();
-          return st === cleanQ || st.startsWith(cleanQ) || cleanQ.startsWith(st);
+          return normT === normQ || (normQ.length > 3 && normT.startsWith(normQ)) || (normT.length > 3 && normQ.startsWith(normT)) ||
+                 st === cleanQ || (cleanQ.length > 3 && st.startsWith(cleanQ)) || (st.length > 3 && cleanQ.startsWith(st));
         });
+
+        songCandidates.sort((a, b) => {
+          const playsA = this.parseMetricToNumber(a.play_count_text || a.view_count_text || a.view_count || 0);
+          const playsB = this.parseMetricToNumber(b.play_count_text || b.view_count_text || b.view_count || 0);
+          return playsB - playsA;
+        });
+
+        const matchingSong = songCandidates.length > 0 ? songCandidates[0] : null;
+
+        // Ensure matchingSong is at index 0 of songs so the songs list matches the Top Result
+        if (matchingSong && songs && songs.length > 0) {
+          const mIdx = songs.indexOf(matchingSong);
+          if (mIdx > 0) {
+            songs.splice(mIdx, 1);
+            songs.unshift(matchingSong);
+          }
+        }
 
         // 2. If a matching song exists and the song's real artist is different from the query,
         // strictly filter out any "artist" profile whose name matches the song title / query
         // (eliminates obscure YouTube channels named after popular songs)
         if (matchingSong) {
-          const songArtist = (matchingSong.artist || '').trim().toLowerCase();
-          if (songArtist && !songArtist.includes(cleanQ)) {
+          const songArtist = this.normalizeSearchText(matchingSong.artist || '');
+          if (songArtist && !songArtist.includes(normQ)) {
             artists = artists.filter(a => {
-              const an = (a.name || a.title || '').trim().toLowerCase();
-              return an !== cleanQ && !cleanQ.startsWith(an);
+              const an = this.normalizeSearchText(a.name || a.title || '');
+              return an !== normQ && !normQ.startsWith(an);
             });
           }
         }
@@ -8863,7 +8888,7 @@ class SoraFyDesktopApp {
 
         // 3. Render Top Result:
         // - If matchingSong is found (user searched for a song), always prioritize the song!
-        // - If no matching song, but a genuine artist matches cleanQ (e.g. "Sal Priadi"), prioritize Artist!
+        // - If no matching song, but a genuine artist matches cleanQ / normQ (e.g. "Sal Priadi"), prioritize Artist!
         // - Otherwise fallback to songs[0] -> videos[0] -> artists[0]
         let topItem = null;
         let topType = 'song';
@@ -8873,8 +8898,9 @@ class SoraFyDesktopApp {
           topType = 'song';
         } else {
           const matchedArtist = artists.find(a => {
-            const an = (a.name || a.title || '').trim().toLowerCase();
-            return an === cleanQ;
+            const an = this.normalizeSearchText(a.name || a.title || '');
+            const rawAn = (a.name || a.title || '').trim().toLowerCase();
+            return an === normQ || rawAn === cleanQ;
           });
 
           if (matchedArtist) {
@@ -8996,6 +9022,25 @@ class SoraFyDesktopApp {
           }));
         }
         if (songs && songs.length > 0) {
+          const normQ = this.normalizeSearchText(query);
+          const songCandidates = songs.filter(s => {
+            if (!s || !s.title) return false;
+            const normT = this.normalizeSearchText(s.title);
+            return normT === normQ || (normQ.length > 3 && normT.startsWith(normQ)) || (normT.length > 3 && normQ.startsWith(normT));
+          });
+          if (songCandidates.length > 0) {
+            songCandidates.sort((a, b) => {
+              const playsA = this.parseMetricToNumber(a.play_count_text || a.view_count_text || a.view_count || 0);
+              const playsB = this.parseMetricToNumber(b.play_count_text || b.view_count_text || b.view_count || 0);
+              return playsB - playsA;
+            });
+            const topCandidate = songCandidates[0];
+            const cIdx = songs.indexOf(topCandidate);
+            if (cIdx > 0) {
+              songs.splice(cIdx, 1);
+              songs.unshift(topCandidate);
+            }
+          }
           this.renderTopResultCard(songs[0], 'song', songs, []);
         } else if (this.searchTopResultSection) {
           this.searchTopResultSection.style.display = "none";
@@ -10383,6 +10428,39 @@ class SoraFyDesktopApp {
       if (track.view_count_text) return this.formatMetricCount(track.view_count_text, false, lang);
     }
     return '';
+  }
+
+  parseMetricToNumber(val) {
+    if (!val && val !== 0) return 0;
+    if (typeof val === 'number') return val > 0 ? Math.round(val) : 0;
+    const s = String(val).replace(/\u00a0/g, ' ').trim();
+    if (/^\d+$/.test(s)) return parseInt(s, 10);
+
+    const m = s.match(/([\d]+(?:[.,]\d+)?)\s*([a-zA-Z]+)?/);
+    if (!m) return 0;
+    const num = parseFloat(m[1].replace(',', '.'));
+    if (isNaN(num)) return 0;
+    const unit = (m[2] || '').toLowerCase();
+
+    if (unit === 'b' || unit === 'bil' || (m[2] === 'M' && /(?:pemutaran|diputar|ditonton|penayangan)/i.test(s))) {
+      return Math.round(num * 1e9);
+    }
+    if (unit === 'm' || unit === 'jt' || unit === 'mil' || unit === 'juta') {
+      return Math.round(num * 1e6);
+    }
+    if (unit === 'k' || unit === 'rb' || unit === 'ribu') {
+      return Math.round(num * 1e3);
+    }
+    return Math.round(num);
+  }
+
+  normalizeSearchText(str) {
+    if (!str) return '';
+    return String(str)
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   formatTrackTitle(title) {

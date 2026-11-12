@@ -749,6 +749,30 @@ function extractMetricsFromListItem(r) {
   return { playCountText, viewCountText };
 }
 
+function parseMetricToNumber(val) {
+  if (!val && val !== 0) return 0;
+  if (typeof val === 'number') return val > 0 ? Math.round(val) : 0;
+  const s = String(val).replace(/\u00a0/g, ' ').trim();
+  if (/^\d+$/.test(s)) return parseInt(s, 10);
+
+  const m = s.match(/([\d]+(?:[.,]\d+)?)\s*([a-zA-Z]+)?/);
+  if (!m) return 0;
+  const num = parseFloat(m[1].replace(',', '.'));
+  if (isNaN(num)) return 0;
+  const unit = (m[2] || '').toLowerCase();
+
+  if (unit === 'b' || unit === 'bil' || (m[2] === 'M' && /(?:pemutaran|diputar|ditonton|penayangan)/i.test(s))) {
+    return Math.round(num * 1e9);
+  }
+  if (unit === 'm' || unit === 'jt' || unit === 'mil' || unit === 'juta') {
+    return Math.round(num * 1e6);
+  }
+  if (unit === 'k' || unit === 'rb' || unit === 'ribu') {
+    return Math.round(num * 1e3);
+  }
+  return Math.round(num);
+}
+
 function isStrictMatch(expectedTitle, expectedArtist, candTitle, candArtist) {
   const normExpT = normalize(expectedTitle);
   const normCandT = normalize(candTitle);
@@ -1222,12 +1246,13 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
             }
           }
 
-          if (filterType === 'song' || filterType === 'all') {
-            const isUnwantedCover = /\b(cover\b|karaoke|instrumental|originally performed|in the style of|tribute|backing track|nightcore|slowed\s*\+\s*reverb|sped\s*up|8d\s*audio|bass\s*boosted|hardstyle|techno\s*mix|fan\s*made|parody|ringtone)\b/i;
+          if (filterType === 'song' || filterType === 'video' || filterType === 'all') {
+            const isUnwantedCover = /\b(cover\b|karaoke|instrumental|originally performed|in the style of|tribute|backing track|nightcore|slowed\s*(?:\+|and)?\s*reverb|sped\s*up|8d\s*audio|bass\s*boosted|hardstyle|techno\s*mix|fan\s*made|parody|ringtone)\b/i;
             const queryHasCover = isUnwantedCover.test(query);
 
             const qLower = (query || '').toLowerCase().trim();
-            const qTokens = qLower.split(/\s+/).filter(t => t.length > 1);
+            const qNorm = normalize(query);
+            const qTokens = qNorm.split(' ').filter(t => t.length > 1);
 
             itemsList.forEach((item, idx) => {
               let score = 500 - idx * 5; // Preserve YouTube Music's native algorithmic rank
@@ -1236,29 +1261,43 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
                 score += 800; // Curated #1 card from YouTube Music
               }
 
+              const titleNorm = normalize(item.title);
+              const artistNorm = normalize(item.artist);
               const titleLower = (item.title || '').toLowerCase();
               const artistLower = (item.artist || '').toLowerCase();
 
-              // Exact title or artist match bonus
-              if (titleLower === qLower || titleLower.startsWith(qLower)) {
-                score += 300;
-              }
-              if (artistLower.includes(qLower) || qLower.includes(artistLower)) {
+              // Exact title or artist match bonus with normalized punctuation (so hyphens/spaces match)
+              if (titleNorm === qNorm || (qNorm.length > 3 && titleNorm.startsWith(qNorm))) {
+                score += 450;
+              } else if (titleLower.includes(qLower)) {
                 score += 250;
+              }
+
+              if (artistNorm === qNorm || artistNorm.includes(qNorm) || (qNorm.length > 3 && qNorm.includes(artistNorm))) {
+                score += 350;
               }
 
               // Matching search tokens
               let matchedTokens = 0;
               for (const tok of qTokens) {
-                if (titleLower.includes(tok) || artistLower.includes(tok)) {
+                if (titleNorm.includes(tok) || artistNorm.includes(tok)) {
                   matchedTokens++;
                 }
               }
-              score += matchedTokens * 50;
+              score += matchedTokens * 60;
+
+              // Parse numeric play count / view count
+              const plays = parseMetricToNumber(item.play_count_text || item.view_count_text || item.view_count || 0);
+              item._plays = plays;
+
+              // Logarithmic play count bonus: heavily prioritizes globally played songs over obscure uploads
+              if (plays > 0) {
+                score += Math.round(Math.log10(plays + 1) * 120);
+              }
 
               // Official release bonus
               if (item.is_official || /\b(official\s*(?:music\s*)?video|official\s*audio|album\s*version)\b/i.test(item.title)) {
-                score += 180;
+                score += 200;
               }
 
               // Verified YouTube Channel (UC...)
@@ -1268,10 +1307,34 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
 
               // Demote unwanted covers, knockoffs, karaoke, slowed/reverb unless user asked for it
               if (!queryHasCover && isUnwantedCover.test(titleLower + ' ' + artistLower)) {
-                score -= 1000;
+                score -= 1200;
               }
 
               item._searchScore = score;
+            });
+
+            // Group by identical normalized title: boost highest played (original artist) and demote low-play copycats/covers
+            const titleGroups = new Map();
+            itemsList.forEach(it => {
+              const key = normalize(it.title);
+              if (key && key.length > 2) {
+                if (!titleGroups.has(key)) titleGroups.set(key, []);
+                titleGroups.get(key).push(it);
+              }
+            });
+
+            titleGroups.forEach((group) => {
+              if (group.length > 1) {
+                group.sort((a, b) => (b._plays || 0) - (a._plays || 0));
+                if (group[0]._plays > 100000) {
+                  group[0]._searchScore += 600;
+                  for (let i = 1; i < group.length; i++) {
+                    if (group[0]._plays >= (group[i]._plays || 0) * 5) {
+                      group[i]._searchScore -= 600;
+                    }
+                  }
+                }
+              }
             });
 
             itemsList.sort((a, b) => (b._searchScore || 0) - (a._searchScore || 0));
