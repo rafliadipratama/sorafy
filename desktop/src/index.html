@@ -6,6 +6,7 @@
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <title>SoraFy - High-Fidelity Music Streaming</title>
   <link rel="stylesheet" href="style.css">
+  <script src="modules/html-safety.js"></script>
   <script src="modules/platform-bridge.js"></script>
   <script src="modules/audio-nodes.js"></script>
   <script src="modules/audio-deck-state.js"></script>
@@ -1750,7 +1751,7 @@
 
             <div class="discord-settings-section-card discord-about-card">
               <div style="text-align: center; padding: 12px 0;">
-                <img src="assets/logo.png" alt="SoraFy Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" onerror="this.style.display='none'">
+                <img src="assets/logo.png" alt="SoraFy Logo" style="width: 72px; height: 72px; border-radius: 18px; margin-bottom: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);" data-fallback="hide">
                 <div style="font-size: 22px; font-weight: 800; color: #FFFFFF;">SoraFy Desktop</div>
                 <div style="font-size: 13px; color: #949ba4; margin-top: 4px;" data-i18n="about_version">Version 1.0.0 (Linux x64) • GPL-3.0 License</div>
                 <p style="font-size: 13px; color: #dbdee1; max-width: 440px; margin: 16px auto 24px; line-height: 1.6;" data-i18n="about_desc">

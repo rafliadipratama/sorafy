@@ -3,6 +3,29 @@
 // Live Streaming Playback, LRCLIB Synced Lyrics & Studio Equalizer DSP
 // Musicfy Recommendation & Discovery Algorithm Engine
 
+// Escaping helpers for remote metadata. Loaded the same way as the deck state
+// helper so app.js stays require()-able from the test suite.
+// Element ids embed remote track ids, which may contain CSS-significant
+// characters. Escape them so the lookup matches instead of throwing.
+function cssEscapeId(id) {
+  const str = String(id ?? "");
+  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") return CSS.escape(str);
+  return str.replace(/[^\w-]/g, (c) => "\\" + c);
+}
+
+let _htmlSafetyModule = null;
+function getHtmlSafety() {
+  if (_htmlSafetyModule) return _htmlSafetyModule;
+  if (typeof window !== "undefined" && window.HtmlSafety) return window.HtmlSafety;
+  try {
+    if (typeof require !== "undefined") {
+      _htmlSafetyModule = require("./modules/html-safety");
+      return _htmlSafetyModule;
+    }
+  } catch (_) {}
+  return null;
+}
+
 let _deckStateModule = null;
 function getAudioDeckStateHelper() {
   if (_deckStateModule) return _deckStateModule;
@@ -305,17 +328,7 @@ function parseLrc(lrcText) {
 // Notes-App In-Document Lyrics Search Engine
 // =========================================================
 function escapeHtml(str) {
-  if (!str) return '';
-  return str.replace(/[&<>"']/g, (m) => {
-    switch (m) {
-      case '&': return '&amp;';
-      case '<': return '&lt;';
-      case '>': return '&gt;';
-      case '"': return '&quot;';
-      case "'": return '&#039;';
-      default: return m;
-    }
-  });
+  return getHtmlSafety().escapeHtml(str);
 }
 
 class LyricsSearchEngine {
@@ -4970,7 +4983,7 @@ class SoraFyDesktopApp {
     const artistCard = document.createElement("div");
     artistCard.className = "search-hero-artist-card";
     artistCard.innerHTML = `
-      <img src="${topArtAvatar}" class="search-hero-avatar" alt="${this.escapeHtml(topArtName)}" onerror="this.src='${getArtistAvatar(topArtName)}'">
+      <img src="${this.safeImg(topArtAvatar)}" class="search-hero-avatar" alt="${this.escapeHtml(topArtName)}" data-fallback-src="${this.safeImg(getArtistAvatar(topArtName), DEFAULT_ARTIST_ART)}">
       <div class="search-hero-info">
         <h2 class="search-hero-name" title="${this.escapeHtml(topArtName)}">${this.escapeHtml(topArtName)}</h2>
         <div class="search-hero-sub">${this.escapeHtml(subLabel)}</div>
@@ -5033,7 +5046,7 @@ class SoraFyDesktopApp {
         const sub = track.subtitle || (dur ? `Track • ${dur}` : (track.artist || 'Track'));
 
         row.innerHTML = `
-          <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="search-hero-track-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(track.artwork_url)}" class="search-hero-track-art" alt="${this.escapeHtml(track.title)}" data-fallback="track">
           <div class="search-hero-track-info">
             <span class="search-hero-track-title">${this.escapeHtml(track.title)}</span>
             <span class="search-hero-track-sub">${this.escapeHtml(sub)}</span>
@@ -5074,7 +5087,7 @@ class SoraFyDesktopApp {
     card.className = "artist-card";
     card.innerHTML = `
       <div class="artist-card-art-box">
-        <img src="${artAvatar}" class="artist-card-art" alt="${this.escapeHtml(artName)}" onerror="this.src='${getArtistAvatar(artName)}'">
+        <img src="${this.safeImg(artAvatar)}" class="artist-card-art" alt="${this.escapeHtml(artName)}" data-fallback-src="${this.safeImg(getArtistAvatar(artName), DEFAULT_ARTIST_ART)}">
       </div>
       <div class="artist-card-name" title="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</div>
       <div class="artist-card-role">${this.escapeHtml(art.sub_label || 'Artist')}</div>
@@ -5093,7 +5106,7 @@ class SoraFyDesktopApp {
 
     card.innerHTML = `
       <div class="album-card-art-box">
-        <img src="${artwork}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+        <img src="${this.safeImg(artwork)}" class="album-card-art" alt="${this.escapeHtml(album.title)}" data-fallback="track">
         <div class="playlist-card-play-overlay">
           <iconsax-icon name="play" type="bold" size="20" color="#000000"></iconsax-icon>
         </div>
@@ -5519,7 +5532,7 @@ class SoraFyDesktopApp {
     let artistsHtml = '';
     if (artists.length > 0) {
       artistsHtml = artists.map(art => {
-        return `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${art.browse_id || ''}">${this.escapeHtml(art.name)}</span>`;
+        return `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${this.escapeHtml(art.browse_id || '')}">${this.escapeHtml(art.name)}</span>`;
       }).join('<span style="opacity: 0.6; margin: 0 2px;">, </span>');
     } else {
       const artName = track.artist || 'Artist';
@@ -5532,7 +5545,7 @@ class SoraFyDesktopApp {
         <span class="play-icon">▶</span>
         ${isActive && this.isPlaying ? '<div class="playing-bars"><span></span><span></span><span></span></div>' : ''}
       </div>
-      <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="track-row-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+      <img src="${this.safeImg(track.artwork_url)}" class="track-row-art" alt="${this.escapeHtml(track.title)}" data-fallback="track">
       <div class="track-row-info">
         <div class="track-row-title">
           <span class="title-text">${this.escapeHtml(track.title)}</span>
@@ -5541,14 +5554,14 @@ class SoraFyDesktopApp {
         <div class="track-row-sub">${artistsHtml}</div>
       </div>
       <div class="track-row-actions">
-        <button class="track-row-add-btn" title="Add to Playlist" id="row_add_${track.id}">
+        <button class="track-row-add-btn" title="Add to Playlist" id="row_add_${this.escapeHtml(track.id)}">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
-        <button class="track-row-heart ${isLiked ? 'liked' : ''}" title="Like" id="row_like_${track.id}">
+        <button class="track-row-heart ${isLiked ? 'liked' : ''}" title="Like" id="row_like_${this.escapeHtml(track.id)}">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="${isLiked ? '#00E599' : 'none'}" stroke="${isLiked ? '#00E599' : 'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
         </button>
         ${onRemove ? `
-          <button class="track-row-add-btn" title="Remove from Playlist" id="row_rem_${track.id}" style="color: #EF4444;">
+          <button class="track-row-add-btn" title="Remove from Playlist" id="row_rem_${this.escapeHtml(track.id)}" style="color: #EF4444;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         ` : ''}
@@ -5570,7 +5583,7 @@ class SoraFyDesktopApp {
       });
     });
 
-    const addBtn = row.querySelector(`#row_add_${track.id}`);
+    const addBtn = row.querySelector(`#row_add_${cssEscapeId(track.id)}`);
     if (addBtn) {
       addBtn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -5578,7 +5591,7 @@ class SoraFyDesktopApp {
       });
     }
 
-    const heartBtn = row.querySelector(`#row_like_${track.id}`);
+    const heartBtn = row.querySelector(`#row_like_${cssEscapeId(track.id)}`);
     if (heartBtn) {
       heartBtn.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -5594,7 +5607,7 @@ class SoraFyDesktopApp {
     }
 
     if (onRemove) {
-      const remBtn = row.querySelector(`#row_rem_${track.id}`);
+      const remBtn = row.querySelector(`#row_rem_${cssEscapeId(track.id)}`);
       if (remBtn) {
         remBtn.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -5747,7 +5760,7 @@ class SoraFyDesktopApp {
         let artistsHtml = '';
         if (artists.length > 0) {
           artistsHtml = artists.map(art => {
-            return `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${art.browse_id || ''}">${this.escapeHtml(art.name)}</span>`;
+            return `<span class="player-artist-link" data-artist="${this.escapeHtml(art.name)}" data-browse="${this.escapeHtml(art.browse_id || '')}">${this.escapeHtml(art.name)}</span>`;
           }).join('<span style="opacity: 0.6; margin: 0 2px;">, </span>');
         } else {
           const artName = track.artist || 'Artist';
@@ -5756,7 +5769,7 @@ class SoraFyDesktopApp {
 
         item.innerHTML = `
           <div class="ytm-song-art-box">
-            <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="ytm-song-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            <img src="${this.safeImg(track.artwork_url)}" class="ytm-song-art" alt="${this.escapeHtml(track.title)}" data-fallback="track">
             <div class="ytm-play-overlay">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </div>
@@ -5769,10 +5782,10 @@ class SoraFyDesktopApp {
             <div class="ytm-song-sub">${artistsHtml}${track.album ? ' • ' + this.escapeHtml(track.album) : ''}</div>
           </div>
           <div class="ytm-song-actions">
-            <button class="track-row-heart ${isLiked ? 'liked' : ''}" title="Like" id="ytm_like_${track.id}">
+            <button class="track-row-heart ${isLiked ? 'liked' : ''}" title="Like" id="ytm_like_${this.escapeHtml(track.id)}">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="${isLiked ? '#00E599' : 'none'}" stroke="${isLiked ? '#00E599' : 'currentColor'}" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             </button>
-            <button class="track-row-add-btn" title="Add to Playlist" id="ytm_add_${track.id}">
+            <button class="track-row-add-btn" title="Add to Playlist" id="ytm_add_${this.escapeHtml(track.id)}">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
             <span class="ytm-song-duration">${track.duration_secs ? this.formatTime(track.duration_secs) : ''}</span>
@@ -5797,7 +5810,7 @@ class SoraFyDesktopApp {
           });
         });
 
-        const likeBtn = item.querySelector(`#ytm_like_${track.id}`);
+        const likeBtn = item.querySelector(`#ytm_like_${cssEscapeId(track.id)}`);
         if (likeBtn) {
           likeBtn.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -5809,7 +5822,7 @@ class SoraFyDesktopApp {
           });
         }
 
-        const addBtn = item.querySelector(`#ytm_add_${track.id}`);
+        const addBtn = item.querySelector(`#ytm_add_${cssEscapeId(track.id)}`);
         if (addBtn) {
           addBtn.addEventListener("click", (e) => {
             e.stopPropagation();
@@ -5976,7 +5989,7 @@ class SoraFyDesktopApp {
         card.style.backgroundColor = item.bg;
         card.innerHTML = `
           <span class="mood-genre-title">${this.escapeHtml(item.name)}</span>
-          <img class="mood-genre-cover" src="${item.cover}" alt="${this.escapeHtml(item.name)}" loading="lazy" onerror="this.style.display='none'">
+          <img class="mood-genre-cover" src="${this.safeImg(item.cover)}" alt="${this.escapeHtml(item.name)}" loading="lazy" data-fallback="hide">
         `;
         card.addEventListener("click", () => {
           this.searchInput.value = item.name;
@@ -6027,7 +6040,7 @@ class SoraFyDesktopApp {
             card.className = "album-card";
             card.innerHTML = `
               <div class="album-card-art-box">
-                <img src="${album.artwork_url || this.DEFAULT_TRACK_ART}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+                <img src="${this.safeImg(album.artwork_url)}" class="album-card-art" alt="${this.escapeHtml(album.title)}" data-fallback="track">
               </div>
               <div class="album-card-title">${this.escapeHtml(album.title)}</div>
               <div class="album-card-year">${this.escapeHtml(album.year || ('Album • ' + (album.artist || 'Artist')))}</div>
@@ -6269,7 +6282,7 @@ class SoraFyDesktopApp {
       card.className = "playlist-card";
       card.innerHTML = `
         <div class="playlist-card-art-box">
-          <img src="${pl.artwork_url || this.DEFAULT_TRACK_ART}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(pl.artwork_url)}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" data-fallback="track">
           <div class="playlist-card-play-overlay">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
@@ -6418,7 +6431,7 @@ class SoraFyDesktopApp {
 
       card.innerHTML = `
         <div class="ytm-mix-card-art" style="background: #181818; position: relative; overflow: hidden; border-radius: 12px; aspect-ratio: 1/1;">
-          <img src="${chart.cover}" alt="${this.escapeHtml(chart.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(chart.cover)}" alt="${this.escapeHtml(chart.title)}" style="width: 100%; height: 100%; object-fit: cover;" data-fallback="track">
           <div class="mix-play-overlay" title="Play">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
@@ -6607,7 +6620,7 @@ class SoraFyDesktopApp {
 
         card.innerHTML = `
           <div class="ytm-video-art-box">
-            <img src="${highThumb}" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            <img src="${this.safeImg(highThumb)}" alt="${this.escapeHtml(vid.title)}" data-fallback="track">
             <div class="ytm-video-play-center">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
             </div>
@@ -6665,8 +6678,8 @@ class SoraFyDesktopApp {
 
       card.innerHTML = `
         <div class="ytm-comm-art-box">
-          <img src="${pl.artwork_url || this.DEFAULT_TRACK_ART}" alt="${this.escapeHtml(pl.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
-          <div class="ytm-comm-avatar">${authorInitial}</div>
+          <img src="${this.safeImg(pl.artwork_url)}" alt="${this.escapeHtml(pl.title)}" data-fallback="track">
+          <div class="ytm-comm-avatar">${this.escapeHtml(authorInitial)}</div>
           <div class="ytm-comm-play-overlay">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
@@ -6690,12 +6703,12 @@ class SoraFyDesktopApp {
     albums.slice(0, 18).forEach(alb => {
       const card = document.createElement("div");
       card.className = "ytm-release-card";
-      const artNameHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(alb.artist || 'Artist')}" data-browse="${alb.artist_browse_id || ''}">${this.escapeHtml(alb.artist || 'Artist')}</span>`;
+      const artNameHtml = `<span class="player-artist-link" data-artist="${this.escapeHtml(alb.artist || 'Artist')}" data-browse="${this.escapeHtml(alb.artist_browse_id || '')}">${this.escapeHtml(alb.artist || 'Artist')}</span>`;
       const sub = `${this.escapeHtml(alb.album_type || alb.year || 'Album')} • ${artNameHtml}`;
 
       card.innerHTML = `
         <div class="ytm-release-art-box">
-          <img src="${alb.artwork_url || this.DEFAULT_TRACK_ART}" alt="${this.escapeHtml(alb.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(alb.artwork_url)}" alt="${this.escapeHtml(alb.title)}" data-fallback="track">
           <div class="ytm-release-play-overlay">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>
@@ -7182,7 +7195,7 @@ class SoraFyDesktopApp {
         const artUrl = pl.artwork_url || (pl.tracks && pl.tracks[0]?.artwork_url) || "";
         const author = pl.author || (pl.source ? (pl.source.charAt(0).toUpperCase() + pl.source.slice(1)) : "SoraFy");
         const artMarkup = artUrl
-          ? `<div class="lib-sidebar-art-wrap"><img src="${artUrl}" alt="${this.escapeHtml(pl.title || 'Playlist')}" class="lib-sidebar-art-img" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'music-playlist\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';"></div>`
+          ? `<div class="lib-sidebar-art-wrap"><img src="${this.safeImg(artUrl)}" alt="${this.escapeHtml(pl.title || 'Playlist')}" class="lib-sidebar-art-img" data-fallback-icon="music-playlist"></div>`
           : `<div class="lib-sidebar-art-wrap"><iconsax-icon name="music-playlist" type="bold" size="20" color="#949ba4"></iconsax-icon></div>`;
 
         allItems.push({
@@ -7225,7 +7238,7 @@ class SoraFyDesktopApp {
           (this.currentArtistName && this.currentArtistName.toLowerCase() === artName.toLowerCase())
         ));
         const artMarkup = avatarUrl
-          ? `<div class="lib-sidebar-art-wrap artist"><img src="${avatarUrl}" alt="${this.escapeHtml(artName)}" class="lib-sidebar-art-img circle" onerror="this.onerror=null; this.parentElement.innerHTML='<iconsax-icon name=\\'user\\' type=\\'bold\\' size=\\'20\\' color=\\'#949ba4\\'></iconsax-icon>';"></div>`
+          ? `<div class="lib-sidebar-art-wrap artist"><img src="${this.safeImg(avatarUrl)}" alt="${this.escapeHtml(artName)}" class="lib-sidebar-art-img circle" data-fallback-icon="user"></div>`
           : `<div class="lib-sidebar-art-wrap artist"><iconsax-icon name="user" type="bold" size="20" color="#949ba4"></iconsax-icon></div>`;
 
         allItems.push({
@@ -7252,7 +7265,7 @@ class SoraFyDesktopApp {
       likedAlbums.forEach(album => {
         const isAlbumActive = (this.currentView === "playlist" && this.currentPlaylist && (this.currentPlaylist.id === album.id || this.currentPlaylist.title === album.title));
         const artUrl = album.artwork_url || this.DEFAULT_TRACK_ART;
-        const artMarkup = `<div class="lib-sidebar-art-wrap"><img src="${artUrl}" alt="${this.escapeHtml(album.title)}" class="lib-sidebar-art-img" onerror="this.src='${this.DEFAULT_TRACK_ART}'"></div>`;
+        const artMarkup = `<div class="lib-sidebar-art-wrap"><img src="${this.safeImg(artUrl)}" alt="${this.escapeHtml(album.title)}" class="lib-sidebar-art-img" data-fallback="track"></div>`;
 
         allItems.push({
           key: `album:${album.id}`,
@@ -8071,7 +8084,7 @@ class SoraFyDesktopApp {
     this.artistBioText.textContent = `Loading official profile for ${artistName}...`;
     let avatar = prefetchedBio?.avatar_url || getArtistAvatar(artistName);
     this.artistAvatarImg.src = avatar;
-    this.artistHeroBanner.style.backgroundImage = `url('${avatar}')`;
+    this.artistHeroBanner.style.backgroundImage = `url("${this.safeCssImg(avatar, DEFAULT_ARTIST_ART)}")`;
 
     const isFollowed = this.followedArtists.has(artistName.toLowerCase().trim());
     this.artistFollowBtn.textContent = isFollowed ? "Following" : "+ Follow";
@@ -8109,7 +8122,7 @@ class SoraFyDesktopApp {
         }
         if (effectiveBio.avatar_url) {
           this.artistAvatarImg.src = effectiveBio.avatar_url;
-          this.artistHeroBanner.style.backgroundImage = `url('${effectiveBio.avatar_url}')`;
+          this.artistHeroBanner.style.backgroundImage = `url("${this.safeCssImg(effectiveBio.avatar_url, DEFAULT_ARTIST_ART)}")`;
           MASTER_ARTIST_AVATARS[artistName.toLowerCase().trim()] = effectiveBio.avatar_url;
           if (effectiveBio.name) {
             MASTER_ARTIST_AVATARS[effectiveBio.name.toLowerCase().trim()] = effectiveBio.avatar_url;
@@ -8231,9 +8244,9 @@ class SoraFyDesktopApp {
 
       card.innerHTML = `
         <div class="video-thumb-wrapper">
-          <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(vid.artwork_url || `https://i.ytimg.com/vi/${encodeURIComponent(vid.video_id || '')}/hqdefault.jpg`)}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" data-fallback="track">
           <div class="video-badges-row">
-            <span class="${badgeClass}">${badgeText}</span>
+            <span class="${badgeClass}">${this.escapeHtml(badgeText)}</span>
           </div>
           <span class="video-duration-pill">${vid.duration_secs ? this.formatTime(vid.duration_secs) : ''}</span>
         </div>
@@ -8277,7 +8290,7 @@ class SoraFyDesktopApp {
       card.className = "album-card";
       card.innerHTML = `
         <div class="album-card-art-box">
-          <img src="${album.artwork_url || this.DEFAULT_TRACK_ART}" class="album-card-art" alt="${this.escapeHtml(album.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(album.artwork_url)}" class="album-card-art" alt="${this.escapeHtml(album.title)}" data-fallback="track">
           <div class="playlist-card-play-overlay">
             <iconsax-icon name="play" type="bold" size="20" color="#000000"></iconsax-icon>
           </div>
@@ -8302,8 +8315,8 @@ class SoraFyDesktopApp {
         const chip = document.createElement("div");
         chip.className = "peer-chip";
         chip.innerHTML = `
-          <img src="${getArtistAvatar(name)}" class="peer-avatar" alt="${name}">
-          <span style="font-size: 13px; font-weight: 600;">${name}</span>
+          <img src="${this.safeImg(getArtistAvatar(name), DEFAULT_ARTIST_ART)}" class="peer-avatar" alt="${this.escapeHtml(name)}">
+          <span style="font-size: 13px; font-weight: 600;">${this.escapeHtml(name)}</span>
         `;
         chip.addEventListener("click", () => this.openArtistDetail(name));
         this.artistPeerRow.appendChild(chip);
@@ -8315,7 +8328,7 @@ class SoraFyDesktopApp {
       const chip = document.createElement("div");
       chip.className = "peer-chip";
       chip.innerHTML = `
-        <img src="${peer.avatar_url || getArtistAvatar(peer.name)}" class="peer-avatar" alt="${this.escapeHtml(peer.name)}" onerror="this.src='${getArtistAvatar(peer.name)}'">
+        <img src="${this.safeImg(peer.avatar_url || getArtistAvatar(peer.name), DEFAULT_ARTIST_ART)}" class="peer-avatar" alt="${this.escapeHtml(peer.name)}" data-fallback-src="${this.safeImg(getArtistAvatar(peer.name), DEFAULT_ARTIST_ART)}">
         <span style="font-size: 13px; font-weight: 600;">${this.escapeHtml(peer.name)}</span>
       `;
       chip.addEventListener("click", () => this.openArtistDetail(peer.name, peer.browse_id));
@@ -8415,18 +8428,18 @@ class SoraFyDesktopApp {
     }
 
     this.searchTopResultCard.innerHTML = `
-      <div class="top-result-backdrop" style="background-image: url('${artworkUrl}');"></div>
+      <div class="top-result-backdrop" style="background-image: url(&quot;${this.safeCssImg(artworkUrl)}&quot;);"></div>
       <div class="top-result-gradient"></div>
       <div class="top-result-content">
-        <img src="${artworkUrl}" class="top-result-art ${isArtist ? 'top-result-art-artist' : ''}" alt="${this.escapeHtml(title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'" style="${isArtist ? 'border-radius: 50%;' : ''}">
+        <img src="${this.safeImg(artworkUrl)}" class="top-result-art ${isArtist ? 'top-result-art-artist' : ''}" alt="${this.escapeHtml(title)}" data-fallback="track" style="${isArtist ? 'border-radius: 50%;' : ''}">
         <div class="top-result-info">
           <div class="top-result-badge-row">
-            <span class="${badgeClass}" style="${badgeStyle}">
+            <span class="${this.escapeHtml(badgeClass)}" style="${this.escapeHtml(badgeStyle)}">
               ${isVideo ? '<iconsax-icon name="video-play" type="bold" size="13" color="#F87171"></iconsax-icon>' : ''}
               ${isArtist ? '<iconsax-icon name="star" type="bold" size="13" color="#A78BFA"></iconsax-icon>' : ''}
               ${isAlbum ? '<iconsax-icon name="music-playlist" type="bold" size="13" color="#60A5FA"></iconsax-icon>' : ''}
               ${!isVideo && !isArtist && !isAlbum ? '<iconsax-icon name="music" type="bold" size="13" color="#00E599"></iconsax-icon>' : ''}
-              <span>${badgeText}</span>
+              <span>${this.escapeHtml(badgeText)}</span>
             </span>
           </div>
           <div class="top-result-title" title="${this.escapeHtml(title)}">${this.escapeHtml(title)}</div>
@@ -8640,7 +8653,7 @@ class SoraFyDesktopApp {
       if (item.type === "entity") {
         const isArtist = item.subtitle && (item.subtitle.toLowerCase().includes("artist") || item.subtitle.toLowerCase().includes("artis"));
         el.innerHTML = `
-          ${item.thumbnail ? `<img class="suggestion-item-thumb ${isArtist ? 'artist' : ''}" src="${escapeHtml(item.thumbnail)}" alt="" onerror="this.style.display='none'">` : `
+          ${item.thumbnail ? `<img class="suggestion-item-thumb ${isArtist ? 'artist' : ''}" src="${getHtmlSafety().safeImageUrl(item.thumbnail, '')}" alt="" data-fallback="hide">` : `
             <div class="suggestion-item-icon">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
             </div>
@@ -8902,9 +8915,9 @@ class SoraFyDesktopApp {
 
             card.innerHTML = `
               <div class="video-thumb-wrapper">
-                <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+                <img src="${this.safeImg(vid.artwork_url || `https://i.ytimg.com/vi/${encodeURIComponent(vid.video_id || '')}/hqdefault.jpg`)}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" data-fallback="track">
                 <div class="video-badges-row">
-                  <span class="${badgeClass}">${badgeText}</span>
+                  <span class="${badgeClass}">${this.escapeHtml(badgeText)}</span>
                 </div>
                 <span class="video-duration-pill">${vid.duration_secs ? this.formatTime(vid.duration_secs) : ''}</span>
               </div>
@@ -9065,9 +9078,9 @@ class SoraFyDesktopApp {
 
           card.innerHTML = `
             <div class="video-thumb-wrapper">
-              <img src="${vid.artwork_url || `https://i.ytimg.com/vi/${vid.video_id}/hqdefault.jpg`}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+              <img src="${this.safeImg(vid.artwork_url || `https://i.ytimg.com/vi/${encodeURIComponent(vid.video_id || '')}/hqdefault.jpg`)}" class="video-thumb" alt="${this.escapeHtml(vid.title)}" data-fallback="track">
               <div class="video-badges-row">
-                <span class="${badgeClass}">${badgeText}</span>
+                <span class="${badgeClass}">${this.escapeHtml(badgeText)}</span>
               </div>
               <span class="video-duration-pill">${vid.duration_secs ? this.formatTime(vid.duration_secs) : ''}</span>
             </div>
@@ -9129,7 +9142,7 @@ class SoraFyDesktopApp {
           card.className = "playlist-card";
           card.innerHTML = `
             <div class="playlist-card-art-box">
-              <img src="${pl.artwork_url || this.DEFAULT_TRACK_ART}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+              <img src="${this.safeImg(pl.artwork_url)}" class="playlist-card-art" alt="${this.escapeHtml(pl.title)}" data-fallback="track">
               <div class="playlist-card-play-overlay">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
               </div>
@@ -10761,13 +10774,18 @@ class SoraFyDesktopApp {
   }
 
   escapeHtml(str) {
-    if (!str) return "";
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+    return getHtmlSafety().escapeHtml(str);
+  }
+
+  // Image URL for a quoted src="" attribute. Remote metadata may carry any scheme,
+  // so anything that is not http(s)/data:image/bundled falls back to the placeholder.
+  safeImg(url, fallback = this.DEFAULT_TRACK_ART) {
+    return getHtmlSafety().safeImageUrl(url, fallback);
+  }
+
+  // Image URL for a CSS url("...") value (style.backgroundImage).
+  safeCssImg(url, fallback = this.DEFAULT_TRACK_ART) {
+    return getHtmlSafety().safeCssUrl(url, fallback);
   }
 
   // =========================================================
@@ -11153,7 +11171,7 @@ class SoraFyDesktopApp {
     if (this.queueNowPlaying) {
       if (currentTrack) {
         this.queueNowPlaying.innerHTML = `
-          <img src="${currentTrack.artwork_url || this.DEFAULT_TRACK_ART}" class="queue-item-art" alt="${this.escapeHtml(currentTrack.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(currentTrack.artwork_url)}" class="queue-item-art" alt="${this.escapeHtml(currentTrack.title)}" data-fallback="track">
           <div class="queue-item-info">
             <span class="queue-item-title">
               <span class="title-text">${this.escapeHtml(currentTrack.title)}</span>
@@ -11207,7 +11225,7 @@ class SoraFyDesktopApp {
 
       item.innerHTML = `
         <span class="queue-drag-handle" title="Drag to reorder">⋮⋮</span>
-        <img src="${track.artwork_url || this.DEFAULT_TRACK_ART}" class="queue-item-art" alt="${this.escapeHtml(track.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+        <img src="${this.safeImg(track.artwork_url)}" class="queue-item-art" alt="${this.escapeHtml(track.title)}" data-fallback="track">
         <div class="queue-item-info">
           <span class="queue-item-title">
             <span class="title-text">${this.escapeHtml(track.title)}</span>
@@ -11494,7 +11512,7 @@ class SoraFyDesktopApp {
 
     if (this.screenPlayerMeshBackdrop) {
       if (track.artwork_url) {
-        this.screenPlayerMeshBackdrop.style.backgroundImage = `url("${track.artwork_url}")`;
+        this.screenPlayerMeshBackdrop.style.backgroundImage = `url("${this.safeCssImg(track.artwork_url)}")`;
         this.screenPlayerMeshBackdrop.style.opacity = "0.75";
       } else {
         this.screenPlayerMeshBackdrop.style.backgroundImage = "none";
@@ -12240,23 +12258,23 @@ class SoraFyDesktopApp {
       card.innerHTML = `
         <div class="plugin-header">
           <div class="plugin-info">
-            <div class="plugin-icon-box">${plugin.icon || '<iconsax-icon name="box" type="bold" size="22" color="#b5bac1"></iconsax-icon>'}</div>
+            <div class="plugin-icon-box">${plugin.icon ? this.escapeHtml(plugin.icon) : '<iconsax-icon name="box" type="bold" size="22" color="#b5bac1"></iconsax-icon>'}</div>
             <div class="plugin-meta-col">
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="plugin-title">${plugin.name}</span>
-                <span class="plugin-category-badge">${plugin.category}</span>
-                <span class="plugin-author-version">v${plugin.version}</span>
+                <span class="plugin-title">${this.escapeHtml(plugin.name)}</span>
+                <span class="plugin-category-badge">${this.escapeHtml(plugin.category)}</span>
+                <span class="plugin-author-version">v${this.escapeHtml(plugin.version)}</span>
               </div>
-              <p class="plugin-desc">${plugin.description}</p>
+              <p class="plugin-desc">${this.escapeHtml(plugin.description)}</p>
             </div>
           </div>
         </div>
         <div class="plugin-footer">
-          <span class="plugin-status-text ${isEnabled ? 'active' : 'disabled'}" id="status_${plugin.id}">
+          <span class="plugin-status-text ${isEnabled ? 'active' : 'disabled'}" id="status_${this.escapeHtml(plugin.id)}">
             ${isEnabled ? '● Active' : '○ Inactive'}
           </span>
           <label class="toggle-switch">
-            <input type="checkbox" ${isEnabled ? 'checked' : ''} id="toggle_${plugin.id}">
+            <input type="checkbox" ${isEnabled ? 'checked' : ''} id="toggle_${this.escapeHtml(plugin.id)}">
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -12679,7 +12697,7 @@ class SoraFyDesktopApp {
           </div>
           <div class="track-row-info" style="flex: 1; min-width: 0;">
             <div class="track-row-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 14px;">${this.escapeHtml(track.title)}</div>
-            <div class="track-row-artist" style="font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(track.artist)} • <span style="font-size: 11px; padding: 1px 4px; border-radius: 4px; background: rgba(255,255,255,0.06);">${codecBadge}</span></div>
+            <div class="track-row-artist" style="font-size: 12px; color: var(--color-text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${this.escapeHtml(track.artist)} • <span style="font-size: 11px; padding: 1px 4px; border-radius: 4px; background: rgba(255,255,255,0.06);">${this.escapeHtml(codecBadge)}</span></div>
           </div>
           <div style="font-size: 12px; color: var(--color-text-secondary); min-width: 60px; text-align: right; margin-right: 12px;">${sizeStr}</div>
           <div class="track-row-actions" style="display: flex; align-items: center; gap: 6px;">
@@ -12899,15 +12917,15 @@ class SoraFyDesktopApp {
       cardEl.className = "curated-playlist-card";
       cardEl.innerHTML = `
         <div class="curated-card-cover-wrapper">
-          <img src="${c.artwork}" alt="${c.title}" class="curated-card-cover" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(c.artwork)}" alt="${this.escapeHtml(c.title)}" class="curated-card-cover" data-fallback="track">
           <div class="curated-card-play-overlay">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
           </div>
         </div>
         <div class="curated-card-info">
           <div class="personalized-badge">TASTE MIX</div>
-          <div class="curated-card-title" title="${c.title}">${c.title}</div>
-          <div class="curated-card-author">${c.subtitle}</div>
+          <div class="curated-card-title" title="${this.escapeHtml(c.title)}">${this.escapeHtml(c.title)}</div>
+          <div class="curated-card-author">${this.escapeHtml(c.subtitle)}</div>
         </div>
       `;
       cardEl.addEventListener("click", () => c.action());
@@ -12993,7 +13011,7 @@ class SoraFyDesktopApp {
           <iconsax-icon class="play-icon" name="play" type="bold" size="14" color="#00E599"></iconsax-icon>
         </div>
         <div class="track-row-art-box" style="position: relative; width: 42px; height: 42px; border-radius: 8px; overflow: hidden; background: #181D24; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-          <img src="${artUrl}" alt="${this.escapeHtml(track.title)}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(artUrl)}" alt="${this.escapeHtml(track.title)}" style="width: 100%; height: 100%; object-fit: cover;" data-fallback="track">
         </div>
         <div class="track-row-info" style="flex: 1; min-width: 0;">
           <div class="track-row-title" style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; font-size: 14px;">${this.escapeHtml(track.title)}</div>
@@ -13052,7 +13070,7 @@ class SoraFyDesktopApp {
 
       card.innerHTML = `
         <div class="curated-card-cover-wrapper">
-          <img src="${artUrl}" alt="${this.escapeHtml(album.title)}" class="curated-card-cover" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(artUrl)}" alt="${this.escapeHtml(album.title)}" class="curated-card-cover" data-fallback="track">
           <div class="curated-card-play-overlay">
             <iconsax-icon name="play" type="bold" size="20" color="#07080A"></iconsax-icon>
           </div>
@@ -13113,7 +13131,7 @@ class SoraFyDesktopApp {
       card.className = "library-artist-card";
 
       const avatarMarkup = avatarUrl
-        ? `<img src="${avatarUrl}" alt="${this.escapeHtml(artName)}" class="library-artist-avatar" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(artName)}&background=181D24&color=00E599';">`
+        ? `<img src="${this.safeImg(avatarUrl)}" alt="${this.escapeHtml(artName)}" class="library-artist-avatar" data-fallback-src="${this.safeImg(`https://ui-avatars.com/api/?name=${encodeURIComponent(artName)}&background=181D24&color=00E599`, DEFAULT_ARTIST_ART)}">`
         : `<div class="library-artist-avatar" style="display:flex; align-items:center; justify-content:center; background:#181D24;"><iconsax-icon name="user" type="bold" size="36" color="#00E599"></iconsax-icon></div>`;
 
       card.innerHTML = `
@@ -13173,7 +13191,7 @@ class SoraFyDesktopApp {
 
       card.innerHTML = `
         <div class="curated-card-cover-wrapper">
-          <img src="${artUrl}" alt="${this.escapeHtml(pl.title)}" class="curated-card-cover" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+          <img src="${this.safeImg(artUrl)}" alt="${this.escapeHtml(pl.title)}" class="curated-card-cover" data-fallback="track">
           <div class="curated-card-play-overlay">
             <iconsax-icon name="play" type="bold" size="20" color="#07080A"></iconsax-icon>
           </div>
@@ -13405,20 +13423,20 @@ class SoraFyDesktopApp {
             : (c.isCurrent ? '<span class="candidate-tag current">Sedang Diputar</span>' : `<span class="candidate-tag">${c.type === 'video' ? 'Video' : 'Lagu'}</span>`);
 
           item.innerHTML = `
-            <img src="${c.artwork || this.DEFAULT_TRACK_ART}" class="candidate-art" alt="${this.escapeHtml(c.title)}" onerror="this.src='${this.DEFAULT_TRACK_ART}'">
+            <img src="${this.safeImg(c.artwork)}" class="candidate-art" alt="${this.escapeHtml(c.title)}" data-fallback="track">
             <div class="candidate-info">
               <div class="candidate-title" title="${this.escapeHtml(c.title)}">${this.escapeHtml(c.title)}</div>
               <div class="candidate-meta">
                 <span>${this.escapeHtml(c.artist || 'Artist')}</span>
                 <span>•</span>
-                <span>${c.duration || '--:--'}</span>
+                <span>${this.escapeHtml(c.duration || '--:--')}</span>
                 ${tagHtml}
               </div>
             </div>
             <div class="candidate-actions">
               ${c.isVerified
                 ? '<button class="candidate-btn active-verified" disabled>✓ Terkunci</button>'
-                : `<button class="candidate-btn btn-pick-candidate" data-vid="${c.videoId}">${c.isCurrent ? 'Kunci Sumber Ini' : 'Pilih & Kunci'}</button>`
+                : `<button class="candidate-btn btn-pick-candidate" data-vid="${this.escapeHtml(c.videoId)}">${c.isCurrent ? 'Kunci Sumber Ini' : 'Pilih & Kunci'}</button>`
               }
             </div>
           `;
@@ -13991,7 +14009,7 @@ class SoraFyDesktopApp {
 
           div.innerHTML = `
             <div class="ranking-rank ${rankClass}">#${idx + 1}</div>
-            <img class="ranking-art artist" src="${this.escapeHtml(avatar)}" onerror="this.src='assets/logo.png'">
+            <img class="ranking-art artist" src="${this.safeImg(avatar, 'assets/logo.png')}" data-fallback="logo">
             <div class="ranking-info">
               <div class="ranking-title">${this.escapeHtml(item.name)}</div>
               <div class="ranking-sub">${mins} ${isId ? 'menit didengar' : 'mins streamed'}</div>
@@ -14027,7 +14045,7 @@ class SoraFyDesktopApp {
 
           div.innerHTML = `
             <div class="ranking-rank ${rankClass}">#${idx + 1}</div>
-            <img class="ranking-art" src="${this.escapeHtml(art)}" onerror="this.src='assets/logo.png'">
+            <img class="ranking-art" src="${this.safeImg(art, 'assets/logo.png')}" data-fallback="logo">
             <div class="ranking-info">
               <div class="ranking-title">${this.escapeHtml(item.title)}</div>
               <div class="ranking-sub">${this.escapeHtml(item.artist)}</div>
@@ -14071,7 +14089,7 @@ class SoraFyDesktopApp {
       const timeAgo = this.formatTimeAgo(item.timestamp);
 
       row.innerHTML = `
-        <img class="ranking-art" src="${this.escapeHtml(art)}" onerror="this.src='assets/logo.png'">
+        <img class="ranking-art" src="${this.safeImg(art, 'assets/logo.png')}" data-fallback="logo">
         <div class="ranking-info">
           <div class="ranking-title">${this.escapeHtml(item.title)}</div>
           <div class="ranking-sub">${this.escapeHtml(item.artist)}</div>
@@ -14114,6 +14132,34 @@ class SoraFyDesktopApp {
     if (months < 12) return isId ? `${months} bulan lalu` : `${months} months ago`;
     return new Date(timestamp).toLocaleDateString(isId ? "id-ID" : "en-US", { month: "short", day: "numeric" });
   }
+}
+
+// Image fallbacks. Markup marks images with data-fallback* attributes instead of
+// inline onerror handlers, so no remote string is ever parsed as script.
+// <img> error events do not bubble, hence the capture-phase listener.
+if (typeof document !== "undefined") {
+  const FALLBACK_SRC = { track: DEFAULT_TRACK_ART, logo: "assets/logo.png" };
+  document.addEventListener("error", (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== "IMG" || img.dataset.fallbackDone) return;
+    img.dataset.fallbackDone = "1";
+
+    const { fallback, fallbackSrc, fallbackIcon } = img.dataset;
+    if (fallbackIcon && img.parentElement) {
+      const icon = document.createElement("iconsax-icon");
+      icon.setAttribute("name", fallbackIcon);
+      icon.setAttribute("type", "bold");
+      icon.setAttribute("size", "20");
+      icon.setAttribute("color", "#949ba4");
+      img.replaceWith(icon);
+    } else if (fallback === "hide") {
+      img.style.display = "none";
+    } else if (fallbackSrc) {
+      img.src = fallbackSrc;
+    } else if (FALLBACK_SRC[fallback]) {
+      img.src = FALLBACK_SRC[fallback];
+    }
+  }, true);
 }
 
 // Instantiate on DOMContentLoaded
