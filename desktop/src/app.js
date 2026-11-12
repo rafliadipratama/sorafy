@@ -660,6 +660,12 @@ function isCompatibleMusifyTrack(candidate, seedTrack, seedCluster) {
   const candTit = (candidate.title || "").toLowerCase().trim();
   const seedArt = (seedTrack.artist || "").toLowerCase().trim();
 
+  // Reject generic bootlegs, unofficial covers, karaoke, slowed/reverb
+  if (/\b(cover by|karaoke|instrumental|tribute to|lofi remix|originally performed by|as made famous by|backing track|dj\s+(?:remix|tiktok|jedag)|slowed\s*(?:and|\+)?\s*reverb)\b/i.test(candTit) ||
+      /\b(karaoke|tribute band|tribute crew|the karaoke|paris music)\b/i.test(candArt)) {
+    return false;
+  }
+
   // Same artist is always 100% compatible
   if (candArt.includes(seedArt) || seedArt.includes(candArt)) {
     return true;
@@ -672,11 +678,6 @@ function isCompatibleMusifyTrack(candidate, seedTrack, seedCluster) {
         return false;
       }
     }
-  }
-
-  // Reject generic bootlegs, unofficial covers, karaoke
-  if (/\b(cover by|karaoke version|instrumental karaoke|tribute to|lofi remix cover|dj\s+(?:remix|tiktok|jedag))\b/i.test(candTit)) {
-    return false;
   }
 
   // Strict culture isolation
@@ -10937,6 +10938,7 @@ class SoraFyDesktopApp {
     const sameArtistSongs = [];
     const peerArtistSongs = [];
 
+    const now = Date.now();
     const addTrack = (track, isSameArtist) => {
       if (!track || !track.title) return;
       const vid = track.video_id || (track.id ? track.id.replace(/^yt_/, "") : "");
@@ -10948,6 +10950,15 @@ class SoraFyDesktopApp {
       if (sameArtistSongs.some(c => (c.title || "").toLowerCase().trim() === tLower)) return;
       if (peerArtistSongs.some(c => (c.title || "").toLowerCase().trim() === tLower)) return;
       if (this.tracks.some(c => (c.title || "").toLowerCase().trim() === tLower)) return;
+
+      // Skip Deprioritization: if artist was recently skipped quickly (< 5 mins), skip in this batch
+      const artLower = (track.artist || "").toLowerCase().trim();
+      if (this.recentlySkippedArtists && this.recentlySkippedArtists.has(artLower)) {
+        const skippedAt = this.recentlySkippedArtists.get(artLower);
+        if (now - skippedAt < 5 * 60 * 1000) {
+          return;
+        }
+      }
 
       // Ensure strict vibe and cultural compatibility
       if (!isCompatibleMusifyTrack(track, seedTrack, cluster)) return;
@@ -10981,9 +10992,9 @@ class SoraFyDesktopApp {
       // 2. Strict Peer Artists from the Exact Same Culture & Genre (Musify 60% ratio)
       if (cluster && cluster.keywords) {
         const peerKeywords = cluster.keywords.filter(k => !lowerArtist.includes(k) && !k.includes(lowerArtist));
-        const samplePeers = peerKeywords.sort(() => 0.5 - Math.random()).slice(0, 4);
+        const samplePeers = peerKeywords.sort(() => 0.5 - Math.random()).slice(0, 5);
         for (const peer of samplePeers) {
-          if (peerArtistSongs.length >= 18) break;
+          if (peerArtistSongs.length >= 20) break;
           const peerTracks = await window.electronAPI.searchYouTubeMusic(`${peer} hits`, "song").catch(() => []);
           if (Array.isArray(peerTracks)) {
             peerTracks.slice(0, 4).forEach(t => addTrack(t, false));
@@ -11042,90 +11053,7 @@ class SoraFyDesktopApp {
 
   async fetchAutomixQueue(seedTrack, forceRefresh = false) {
     if (!seedTrack) return [];
-    if (!window.electronAPI || typeof window.electronAPI.fetchYouTubeRadioQueue !== "function") {
-      return await this.fetchMusifyQueue(seedTrack);
-    }
-
-    try {
-      // 1. Resolve seed video ID
-      let vid = seedTrack.video_id;
-      if (!vid && seedTrack.id && seedTrack.id.startsWith("yt_")) {
-        vid = seedTrack.id.replace("yt_", "");
-      }
-      if (!vid && typeof window.electronAPI.resolveFullStream === "function") {
-        const stream = await window.electronAPI.resolveFullStream({
-          title: seedTrack.title,
-          artist: seedTrack.artist
-        }).catch(() => null);
-        if (stream && stream.videoId) vid = stream.videoId;
-      }
-      if (!vid && typeof window.electronAPI.searchYouTubeMusic === "function") {
-        const searchRes = await window.electronAPI.searchYouTubeMusic(`${seedTrack.artist} ${seedTrack.title}`, "song").catch(() => []);
-        if (searchRes && searchRes.length && (searchRes[0].videoId || searchRes[0].id)) {
-          vid = searchRes[0].videoId || (searchRes[0].id ? searchRes[0].id.replace("yt_", "") : "");
-        }
-      }
-
-      if (!vid && !this.ytmRadioContinuationToken) {
-        return await this.fetchMusifyQueue(seedTrack);
-      }
-
-      const continuation = forceRefresh ? null : this.ytmRadioContinuationToken;
-      const radioResult = await window.electronAPI.fetchYouTubeRadioQueue(vid, continuation).catch(() => null);
-
-      if (!radioResult || !Array.isArray(radioResult.tracks) || radioResult.tracks.length === 0) {
-        return await this.fetchMusifyQueue(seedTrack);
-      }
-
-      if (radioResult.continuation) {
-        this.ytmRadioContinuationToken = radioResult.continuation;
-      }
-
-      // Deduplicate against existing songs in current session
-      const existingIds = new Set();
-      const existingTitles = new Set();
-      this.tracks.forEach(t => {
-        if (t.id) existingIds.add(t.id);
-        if (t.video_id) existingIds.add(t.video_id);
-        if (t.title) existingTitles.add(t.title.toLowerCase().trim());
-      });
-
-      const now = Date.now();
-      const candidateTracks = [];
-
-      for (const t of radioResult.tracks) {
-        const tVid = t.video_id || (t.id ? t.id.replace("yt_", "") : "");
-        if (!tVid || existingIds.has(tVid) || existingIds.has(t.id)) continue;
-
-        const cleanTitle = (t.title || "").toLowerCase().trim();
-        if (cleanTitle && existingTitles.has(cleanTitle)) continue;
-
-        // Skip Deprioritization: if artist was recently skipped quickly (< 5 mins), skip in this batch
-        const artLower = (t.artist || "").toLowerCase().trim();
-        if (this.recentlySkippedArtists.has(artLower)) {
-          const skippedAt = this.recentlySkippedArtists.get(artLower);
-          if (now - skippedAt < 5 * 60 * 1000) {
-            continue;
-          }
-        }
-
-        existingIds.add(tVid);
-        existingIds.add(t.id);
-        if (cleanTitle) existingTitles.add(cleanTitle);
-
-        candidateTracks.push(t);
-      }
-
-      // If deduplication removed all tracks, fallback to raw candidate tracks or Musify queue
-      if (candidateTracks.length === 0 && radioResult.tracks.length > 0) {
-        return radioResult.tracks.slice(0, 15);
-      }
-
-      return candidateTracks;
-    } catch (err) {
-      console.warn("fetchAutomixQueue note:", err);
-      return await this.fetchMusifyQueue(seedTrack);
-    }
+    return await this.fetchMusifyQueue(seedTrack);
   }
 
   async ensureUpcomingQueue(force = false) {
@@ -11138,7 +11066,7 @@ class SoraFyDesktopApp {
       try {
         const currentTrack = this.tracks[this.currentTrackIndex];
         if (currentTrack) {
-          const newTracks = await this.fetchAutomixQueue(currentTrack, force);
+          const newTracks = await this.fetchMusifyQueue(currentTrack);
           if (newTracks && newTracks.length > 0) {
             this.tracks.push(...newTracks);
             this.renderQueue();
@@ -14190,7 +14118,10 @@ if (typeof document !== "undefined") {
 if (typeof module !== "undefined" && module.exports) {
   module.exports = {
     SoraFyDesktopApp,
-    I18N_DICTIONARY
+    I18N_DICTIONARY,
+    detectMusifyCulture,
+    isCompatibleMusifyTrack,
+    MUSIFY_CULTURE_CLUSTERS
   };
 }
 
