@@ -21,7 +21,7 @@ data class Track(
     val isDownloaded: Boolean = false,
     val fileSizeBytes: Long = 0L,
     val playCount: String? = null,
-    val sourceLabel: String = "Lagu Resmi",
+    val sourceLabel: String = "Official Track",
     val featuredArtists: List<String> = emptyList(),
     val isVideo: Boolean = false
 ) {

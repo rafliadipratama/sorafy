@@ -39,18 +39,13 @@ enum class NavigationTab(
         R.drawable.ic_iconsax_home_2_bold,
         R.drawable.ic_iconsax_home_2_linear
     ),
-    SEARCH(
-        R.string.nav_search,
-        R.drawable.ic_iconsax_search_normal_bold,
-        R.drawable.ic_iconsax_search_normal_linear
-    ),
     LIBRARY(
         R.string.nav_library,
         R.drawable.ic_iconsax_music_library_2_bold,
         R.drawable.ic_iconsax_music_library_2_linear
     ),
-    PLUGINS(
-        R.string.nav_plugins,
+    SETTINGS(
+        R.string.nav_settings,
         R.drawable.ic_iconsax_setting_2_bold,
         R.drawable.ic_iconsax_setting_2_linear
     )

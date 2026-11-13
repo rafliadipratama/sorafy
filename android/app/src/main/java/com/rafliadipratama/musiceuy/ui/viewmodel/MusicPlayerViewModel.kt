@@ -75,7 +75,7 @@ data class PlayerUiState(
     val musicVideos: List<Track> = emptyList(),
     val recommendationCategories: List<com.rafliadipratama.musiceuy.data.model.HomeCategoryItem> = emptyList(),
     val isNewReleasesSheetVisible: Boolean = false,
-    val selectedHomeFilter: String = "Semua",
+    val selectedHomeFilter: String = "All",
     val favoriteArtists: List<String> = emptyList(),
     val playlists: List<Playlist> = emptyList(),
     val selectedPlaylist: Playlist? = null,
@@ -625,7 +625,7 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
                         recommendationCategories = explore.recommendationCategories,
                         notInterestedTrackIds = notInterestedIds,
                         notInterestedArtists = notInterestedArtists,
-                        downloadNotificationMessage = "Beranda berhasil disegarkan."
+                        downloadNotificationMessage = "Home feed refreshed"
                     )
                 }
                 resolveMissingArtistAvatars(sortedArtists)
@@ -2112,7 +2112,7 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(selectedHomeFilter = category) }
         viewModelScope.launch {
             val tasteProfile = withContext(Dispatchers.IO) { historyManager.getTasteProfile() }
-            if (category == "Semua") {
+            if (category == "Semua" || category == "All") {
                 val favArtists = withContext(Dispatchers.IO) { historyManager.getFavoriteArtists() }
                 val homeData = withContext(Dispatchers.IO) { streamSource.fetchExploreHome(favArtists, tasteProfile = tasteProfile) }
                 val sortedArtists = withContext(Dispatchers.IO) { historyManager.getSortedPopularArtists(homeData.popularArtists) }
@@ -2334,13 +2334,17 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    fun clearAppCache() {
+        clearAudioCache()
+    }
+
     fun clearAudioCache() {
         com.rafliadipratama.musiceuy.data.local.MusicCacheManager.clearCache(getApplication())
         val newCacheSize = com.rafliadipratama.musiceuy.data.local.MusicCacheManager.getCacheSizeBytes(getApplication())
         _uiState.update {
             it.copy(
                 audioCacheSizeBytes = newCacheSize,
-                downloadNotificationMessage = "Cache streaming audio berhasil dibersihkan."
+                downloadNotificationMessage = "Audio streaming cache cleared."
             )
         }
     }

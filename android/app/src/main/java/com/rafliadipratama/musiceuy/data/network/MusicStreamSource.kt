@@ -2273,15 +2273,15 @@ class MusicStreamSource(
      */
     suspend fun fetchMoodCategoryTracks(category: String): List<Track> = withContext(Dispatchers.IO) {
         val query = when (category) {
-            "Fokus / Belajar", "Fokus" -> "lofi study chill beats focus instrumental"
-            "Santai & Chill", "Santai" -> "lagu santai akustik indie senja indonesia"
-            "Workout / Energi", "Workout" -> "workout gym energetic hype edm motivation"
-            "Pesta / Party", "Pesta" -> "party dance club hits remix"
-            "Pop Indonesia", "Pop" -> "pop indonesia terbaru terbaik hits 2026"
+            "Focus & Study", "Fokus / Belajar", "Fokus", "Focus" -> "lofi study chill beats focus instrumental"
+            "Chill & Relax", "Santai & Chill", "Santai", "Chill" -> "lagu santai akustik indie senja indonesia"
+            "Workout Energy", "Workout & Energi", "Workout / Energi", "Workout" -> "workout gym energetic hype edm motivation"
+            "Pesta / Party", "Pesta", "Party" -> "party dance club hits remix"
+            "Indo Pop", "Pop Indonesia", "Pop" -> "pop indonesia terbaru terbaik hits 2026"
             "Indie Indonesia", "Indie" -> "indie pop indonesia terbaik senja"
-            "Rock" -> "rock indonesia hits terbaik classic alternative"
+            "Rock & Alternative", "Rock & Alternatif", "Rock" -> "rock indonesia hits terbaik classic alternative"
             "Dangdut Koplo", "Dangdut" -> "dangdut koplo terbaru viral hits 2026"
-            "Rilisan Baru" -> "lagu baru rilis indonesia hits 2026"
+            "Rilisan Baru", "New Releases" -> "lagu baru rilis indonesia hits 2026"
             else -> "lagu trending indonesia terpopuler 2026"
         }
         searchYouTubeMusic(query)

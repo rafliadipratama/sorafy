@@ -63,6 +63,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -98,6 +99,7 @@ private data class ExploreGenre(
 @Composable
 fun SearchScreen(
     viewModel: MusicPlayerViewModel,
+    onBackClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -156,8 +158,25 @@ fun SearchScreen(
                     .padding(horizontal = 20.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                if (onBackClick != null) {
+                    IconButton(
+                        onClick = onBackClick,
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceContainerHigh)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_iconsax_arrow_left_linear),
+                            contentDescription = stringResource(id = R.string.back),
+                            tint = TextPrimary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
                 Text(
-                    text = "Pencarian",
+                    text = stringResource(id = R.string.nav_search),
                     color = TextPrimary,
                     fontSize = 26.sp,
                     fontWeight = FontWeight.Black,
@@ -505,7 +524,7 @@ fun SearchScreen(
                     if (uiState.searchCategory == "Semua" || uiState.searchCategory == "Artis") {
                         if (uiState.searchResultArtists.isNotEmpty()) {
                             item {
-                                SearchSectionHeader(title = "Artis Terkait", icon = Icons.Default.Person)
+                                SearchSectionHeader(title = "Related Artists", icon = Icons.Default.Person)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(16.dp)

@@ -52,6 +52,7 @@ import com.rafliadipratama.musiceuy.ui.screens.PlaylistDetailScreen
 import com.rafliadipratama.musiceuy.ui.screens.PluginsScreen
 import com.rafliadipratama.musiceuy.ui.screens.SearchScreen
 import com.rafliadipratama.musiceuy.ui.screens.ProfileScreen
+import com.rafliadipratama.musiceuy.ui.screens.SettingsScreen
 import com.rafliadipratama.musiceuy.ui.components.LyricsShareDialog
 import com.rafliadipratama.musiceuy.ui.theme.MusicEuyTheme
 import com.rafliadipratama.musiceuy.ui.theme.ObsidianBackground
@@ -76,8 +77,12 @@ class MainActivity : ComponentActivity() {
             ) {
                 MusicEuyTheme {
                     var selectedTab by remember { mutableStateOf(NavigationTab.HOME) }
+                    var isSearchOverlayOpen by remember { mutableStateOf(false) }
 
                     // Back Handlers (Highest to Lowest Priority)
+                    BackHandler(enabled = isSearchOverlayOpen) {
+                        isSearchOverlayOpen = false
+                    }
                     BackHandler(enabled = uiState.isPlayerExpanded) {
                         viewModel.collapsePlayer()
                     }
@@ -168,14 +173,27 @@ class MainActivity : ComponentActivity() {
                     when (selectedTab) {
                         NavigationTab.HOME -> HomeScreen(
                             viewModel = viewModel,
-                            onNavigateToSearch = { selectedTab = NavigationTab.SEARCH }
+                            onNavigateToSearch = { isSearchOverlayOpen = true }
                         )
-                        NavigationTab.SEARCH -> SearchScreen(viewModel = viewModel)
                         NavigationTab.LIBRARY -> LibraryScreen(
                             viewModel = viewModel,
                             onNavigateToHome = { selectedTab = NavigationTab.HOME }
                         )
-                        NavigationTab.PLUGINS -> PluginsScreen(viewModel = viewModel)
+                        NavigationTab.SETTINGS -> SettingsScreen(
+                            viewModel = viewModel
+                        )
+                    }
+
+                    // Search Screen Overlay
+                    AnimatedVisibility(
+                        visible = isSearchOverlayOpen,
+                        enter = slideInVertically(initialOffsetY = { it }),
+                        exit = slideOutVertically(targetOffsetY = { it })
+                    ) {
+                        SearchScreen(
+                            viewModel = viewModel,
+                            onBackClick = { isSearchOverlayOpen = false }
+                        )
                     }
 
                     // Artist Detail Screen Overlay
@@ -280,6 +298,7 @@ class MainActivity : ComponentActivity() {
                                         selectedTab = selectedTab,
                                         onTabSelected = { tab ->
                                             selectedTab = tab
+                                            isSearchOverlayOpen = false
                                             if (uiState.selectedArtist != null) viewModel.closeArtistDetail()
                                             if (uiState.selectedPlaylist != null) viewModel.closePlaylist()
                                             if (uiState.isDownloadedScreenVisible) viewModel.closeDownloadedTracks()
@@ -461,6 +480,13 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                         }
+                    }
+
+                    // Equalizer & Audio Effects Sheet (Global when player is collapsed)
+                    if (uiState.isEqualizerSheetVisible && !uiState.isPlayerExpanded) {
+                        com.rafliadipratama.musiceuy.ui.components.EqualizerBottomSheet(
+                            onDismiss = { viewModel.dismissEqualizer() }
+                        )
                     }
 
                     // In-App Multi-Language Selection Dialog

@@ -107,7 +107,7 @@ internal fun PortraitPlayerLayout(
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
-                    text = if (uiState.isQueueVisible) "ANTREAN" else if (uiState.isLyricsVisible) "LIRIK LAGU" else "SEDANG MEMUTAR",
+                    text = if (uiState.isQueueVisible) "QUEUE" else if (uiState.isLyricsVisible) "LYRICS" else "NOW PLAYING",
                     color = TextSecondary,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,

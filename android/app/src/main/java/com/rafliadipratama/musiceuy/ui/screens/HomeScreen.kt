@@ -132,36 +132,36 @@ fun HomeScreen(
 
     val homeFilterPills = remember(uiState.favoriteArtists) {
         val userFavs = uiState.favoriteArtists.take(4)
-        val defaultPills = listOf("Pop Indonesia", "Indie", "Santai & Chill", "Fokus / Belajar", "Rock", "Dangdut", "Workout")
-        (listOf("Semua") + userFavs + defaultPills).distinct()
+        val defaultPills = listOf("Indo Pop", "Indie", "Chill & Relax", "Focus & Study", "Rock & Alternative", "Dangdut", "Workout Energy")
+        (listOf("All") + userFavs + defaultPills).distinct()
     }
 
     val officialCharts = remember {
         listOf(
             OfficialChart(
                 "Top 50 Indonesia",
-                "Charts Resmi Indonesia",
+                "Trending music charts",
                 "VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G",
                 listOf(Color(0xFF007991), Color(0xFF78FFD6)),
                 "https://yt3.googleusercontent.com/wHZJ1dYK2lbb3ocVJMe1fE_FWf_pZI2ydIOwgSV9YeZcJpYSc8vAHHjt6_o4bRU9InAGeomx0v4n=s576"
             ),
             OfficialChart(
                 "Top 50 Global",
-                "Charts Global Terpopuler",
+                "Trending music charts",
                 "VLPLOHoVaTp8R7dqEEhhaOG7yfDoj_y2BrZ4",
                 listOf(Color(0xFF8A2387), Color(0xFFE94057)),
                 "https://yt3.googleusercontent.com/t4PqTAJLy66M235aV912vM8pEKnAC0QM_zfhSomgdnQYYmBDJxoOzh1l0gWA7CRf9r_XyyEn0Go=s576"
             ),
             OfficialChart(
                 "Viral Hits Indonesia",
-                "Trending Viral Indonesia",
+                "Trending music charts",
                 "VLOLAK5uy_n7Ig_LAUbKE6_ZeQ1pwHmJcEhwX7BekBo",
                 listOf(Color(0xFF11998E), Color(0xFF38EF7D)),
                 "https://yt3.googleusercontent.com/2qHUJ20mtWoAZBU80LpQkNfu7EXSKKNs8K-MFFV5vIuFKDseRNHb1cVbmuzmfHvNJKKZGJ-cJKI=s576"
             ),
             OfficialChart(
-                "Rilisan Baru 2026",
-                "Rilisan Musik Terbaru",
+                "New Releases 2026",
+                "Trending music charts",
                 "VLPL4fGSI1pDJn4lW6MJA2q37CfnraqAizqE",
                 listOf(Color(0xFFFF416C), Color(0xFFFF4B2B)),
                 "https://yt3.googleusercontent.com/DF1qlviHbfG6kvfw1FBVtGGP-QHA-vpDs4-JZ-h51QCmPbW6XEzRIzcAkanyTzw9k4hopm62hJk=s576"
@@ -171,12 +171,12 @@ fun HomeScreen(
 
     val topCategories = remember {
         listOf(
-            TopCategory("Santai & Chill", "Santai & Chill", R.drawable.ic_iconsax_headphone_linear, listOf(Color(0xFF141A22), Color(0xFF1C2430))),
-            TopCategory("Fokus & Belajar", "Fokus / Belajar", R.drawable.ic_iconsax_coffee_linear, listOf(Color(0xFF141A22), Color(0xFF1E2632))),
-            TopCategory("Workout & Energi", "Workout", R.drawable.ic_iconsax_flash_linear, listOf(Color(0xFF141A22), Color(0xFF222834))),
-            TopCategory("Pop Indonesia", "Pop Indonesia", R.drawable.ic_iconsax_music_linear, listOf(Color(0xFF141A22), Color(0xFF1A222C))),
+            TopCategory("Chill & Relax", "Chill & Relax", R.drawable.ic_iconsax_headphone_linear, listOf(Color(0xFF141A22), Color(0xFF1C2430))),
+            TopCategory("Focus & Study", "Focus & Study", R.drawable.ic_iconsax_coffee_linear, listOf(Color(0xFF141A22), Color(0xFF1E2632))),
+            TopCategory("Workout Energy", "Workout Energy", R.drawable.ic_iconsax_flash_linear, listOf(Color(0xFF141A22), Color(0xFF222834))),
+            TopCategory("Indo Pop", "Indo Pop", R.drawable.ic_iconsax_music_linear, listOf(Color(0xFF141A22), Color(0xFF1A222C))),
             TopCategory("Indie Vibe", "Indie", R.drawable.ic_iconsax_radio_linear, listOf(Color(0xFF141A22), Color(0xFF1D232E))),
-            TopCategory("Rock & Alternatif", "Rock", R.drawable.ic_iconsax_musicnote_linear, listOf(Color(0xFF141A22), Color(0xFF212530)))
+            TopCategory("Rock & Alternative", "Rock & Alternative", R.drawable.ic_iconsax_musicnote_linear, listOf(Color(0xFF141A22), Color(0xFF212530)))
         )
     }
 
@@ -217,22 +217,42 @@ fun HomeScreen(
                     )
                 }
 
-                // Shazam In-App Music Recognition Button (Official Icon)
-                Box(
-                    modifier = Modifier
-                        .size(38.dp)
-                        .clip(CircleShape)
-                        .background(SurfaceContainerHigh)
-                        .pressBounce(pressedScale = 0.90f)
-                        .clickable { isShazamDialogVisible = true },
-                    contentAlignment = Alignment.Center
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(id = R.drawable.ic_shazam),
-                        contentDescription = "Kenali Lagu",
-                        tint = Color.Unspecified,
-                        modifier = Modifier.size(20.dp)
-                    )
+                    IconButton(
+                        onClick = onNavigateToSearch,
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceContainerHigh)
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_iconsax_search_normal_linear),
+                            contentDescription = "Search",
+                            tint = TextPrimary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+
+                    // Shazam In-App Music Recognition Button (Official Icon)
+                    Box(
+                        modifier = Modifier
+                            .size(38.dp)
+                            .clip(CircleShape)
+                            .background(SurfaceContainerHigh)
+                            .pressBounce(pressedScale = 0.90f)
+                            .clickable { isShazamDialogVisible = true },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_shazam),
+                            contentDescription = "Recognize Music",
+                            tint = Color.Unspecified,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                 }
             }
 
@@ -560,7 +580,7 @@ fun HomeScreen(
 
                         // 1. Kategori Teratas (YouTube Music Style)
                         item {
-                            SectionHeader(title = "Kategori Teratas", iconRes = R.drawable.ic_iconsax_music_filter_bold)
+                            SectionHeader(title = "Top Categories", iconRes = R.drawable.ic_iconsax_music_filter_bold)
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -585,7 +605,7 @@ fun HomeScreen(
                                                 interactionSource = catInteractionSource,
                                                 indication = null
                                             ) {
-                                                viewModel.selectHomeFilter(if (isSelected) "Semua" else category.filterPill)
+                                                viewModel.selectHomeFilter(if (isSelected) "All" else category.filterPill)
                                             }
                                             .padding(horizontal = 14.dp, vertical = 12.dp)
                                     ) {
@@ -618,10 +638,10 @@ fun HomeScreen(
                         }
                     }
 
-                    // 2. Putar Cepat Favoritmu (Swipe ke kiri 4-lagu per kolom style Musicfy & YouTube Music)
+                    // 2. Quick Picks (Swipe ke kiri 4-lagu per kolom style Musicfy & YouTube Music)
                     if (uiState.mostPlayedTracks.isNotEmpty()) {
                         item {
-                            SectionHeader(title = "Putar Cepat Favoritmu", iconRes = R.drawable.ic_iconsax_flash_bold)
+                            SectionHeader(title = "Quick Picks", iconRes = R.drawable.ic_iconsax_flash_bold)
                             Spacer(modifier = Modifier.height(6.dp))
                             HorizontalSongColumns(
                                 tracks = uiState.mostPlayedTracks.take(16),
@@ -661,10 +681,10 @@ fun HomeScreen(
                             }
                         }
 
-                        // 4. Playlist Populer (Carousel Cover Persegi Style Musicfy & YouTube Music)
+                        // 4. Popular Playlists (Carousel Cover Persegi Style Musicfy & YouTube Music)
                         if (uiState.communityPlaylists.isNotEmpty()) {
                             item {
-                                SectionHeader(title = "Playlist Populer", iconRes = R.drawable.ic_iconsax_music_playlist_bold)
+                                SectionHeader(title = "Popular Playlists", iconRes = R.drawable.ic_iconsax_music_playlist_bold)
                                 LazyRow(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -688,7 +708,7 @@ fun HomeScreen(
                                 SectionHeader(
                                     title = stringResource(id = R.string.home_albums_singles),
                                     iconRes = R.drawable.ic_iconsax_music_bold,
-                                    actionText = "Lihat Semua",
+                                    actionText = "See All",
                                     onActionClick = { viewModel.toggleNewReleasesSheet(true) }
                                 )
                                 LazyRow(
@@ -712,7 +732,7 @@ fun HomeScreen(
                         if (uiState.musicVideos.isNotEmpty()) {
                             item {
                                 SectionHeader(
-                                    title = "Video Musik Untukmu",
+                                    title = "Music Videos For You",
                                     iconRes = R.drawable.ic_iconsax_play_bold
                                 )
                                 LazyRow(
@@ -763,10 +783,10 @@ fun HomeScreen(
                         // 8. Top Trending di Indonesia (Swipe ke kiri 4-lagu per kolom style Musicfy & YouTube Music)
                         if (uiState.trendingTracks.isNotEmpty()) {
                             item {
-                                val trendingTitle = if (uiState.selectedHomeFilter != "Semua") {
-                                    "Pilihan: ${uiState.selectedHomeFilter}"
+                                val trendingTitle = if (uiState.selectedHomeFilter != "Semua" && uiState.selectedHomeFilter != "All") {
+                                    "Selected: ${uiState.selectedHomeFilter}"
                                 } else {
-                                    "Top Trending di Indonesia"
+                                    "Top Trending"
                                 }
                                 SectionHeader(title = trendingTitle, iconRes = R.drawable.ic_iconsax_chart_2_bold)
                                 Spacer(modifier = Modifier.height(6.dp))
@@ -879,7 +899,7 @@ fun HomeScreen(
                                     }
                                 }
                             }) {
-                                Text("Coba Lagi", color = BrandGreen, fontWeight = FontWeight.Bold)
+                                Text("Try Again", color = BrandGreen, fontWeight = FontWeight.Bold)
                             }
                             Spacer(modifier = Modifier.width(8.dp))
                         }
@@ -887,7 +907,7 @@ fun HomeScreen(
                             isShazamDialogVisible = false
                             ShazamRecognitionService.reset()
                         }) {
-                            Text("Tutup", color = TextSecondary)
+                            Text("Close", color = TextSecondary)
                         }
                     }
                 },

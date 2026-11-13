@@ -254,14 +254,14 @@ fun ArtistDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Lagu Populer",
+                        text = "Popular Songs",
                         color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )
                     if (legitimateTracks.isNotEmpty()) {
                         Text(
-                            text = "Geser ke kiri untuk lainnya",
+                            text = "Swipe for more",
                             color = TextMuted,
                             fontSize = 12.sp
                         )
