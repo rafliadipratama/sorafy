@@ -33,6 +33,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 import com.rafliadipratama.musiceuy.data.local.LocalMusicHistoryManager
+import com.rafliadipratama.musiceuy.data.local.SkippedArtistCooldown
+import com.rafliadipratama.musiceuy.data.network.MusifyAutomixEngine
+import com.rafliadipratama.musiceuy.data.network.CultureCluster
 import com.rafliadipratama.musiceuy.data.model.Album
 import com.rafliadipratama.musiceuy.data.model.Artist
 import com.rafliadipratama.musiceuy.data.model.Playlist
@@ -150,6 +153,9 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
     val appUpdateManager = com.rafliadipratama.musiceuy.data.network.AppUpdateManager(application)
     private val lrcClient = LrcLibClient(cacheDir = application.filesDir)
     private var sleepTimerJob: Job? = null
+    private val skippedArtistCooldown = SkippedArtistCooldown()
+    private var isFetchingAutomix = false
+    private var automixJob: Job? = null
 
     private val _uiState = MutableStateFlow(
         PlayerUiState(
@@ -745,7 +751,11 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
             }
         }
 
-        val currentQueue = newQueue ?: _uiState.value.queue.ifEmpty { listOf(track) }
+        val currentQueue = when {
+            newQueue != null -> newQueue
+            _uiState.value.queue.any { it.id == track.id } -> _uiState.value.queue
+            else -> listOf(track)
+        }
         val isLiked = _uiState.value.likedTrackIds.contains(track.id)
         val activeTrack = track.copy(isLiked = isLiked)
 
@@ -762,6 +772,10 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
                 currentVideoStreamUrl = null,
                 error = null
             )
+        }
+
+        if (newQueue == null || newQueue.size <= 1) {
+            fetchAutomixQueue(track)
         }
 
         if (_uiState.value.isVideoMode) {
@@ -1037,11 +1051,37 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
 
     fun nextTrack() {
         val state = _uiState.value
-        val currentIndex = state.queue.indexOfFirst { it.id == state.currentTrack?.id }
+        val currentTrack = state.currentTrack
+
+        // If track position was < 15 seconds (currentPositionMs in 1..14_999), record cooldown skip
+        if (currentTrack != null && state.currentPositionMs in 1..14_999L) {
+            skippedArtistCooldown.recordSkip(currentTrack.artist.name)
+        }
+
+        val currentIndex = state.queue.indexOfFirst { it.id == currentTrack?.id }
+
+        // If nearing end of queue (currentIndex >= queue.size - 2), trigger fetchAutomixQueue in background
+        if (currentTrack != null && currentIndex != -1 && currentIndex >= state.queue.size - 2) {
+            fetchAutomixQueue(currentTrack)
+        }
+
         if (currentIndex != -1 && currentIndex < state.queue.size - 1) {
-            playTrack(state.queue[currentIndex + 1])
+            playTrack(state.queue[currentIndex + 1], state.queue)
         } else if (state.repeatMode == RepeatMode.ALL && state.queue.isNotEmpty()) {
-            playTrack(state.queue.first())
+            playTrack(state.queue.first(), state.queue)
+        } else if (currentIndex == state.queue.size - 1 && state.repeatMode != RepeatMode.ALL) {
+            viewModelScope.launch {
+                if (isFetchingAutomix) {
+                    kotlinx.coroutines.withTimeoutOrNull(4000L) {
+                        automixJob?.join()
+                    }
+                }
+                val updatedState = _uiState.value
+                val newIndex = updatedState.queue.indexOfFirst { it.id == currentTrack?.id }
+                if (newIndex != -1 && newIndex < updatedState.queue.size - 1) {
+                    playTrack(updatedState.queue[newIndex + 1], updatedState.queue)
+                }
+            }
         }
     }
 
@@ -1053,9 +1093,9 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
         }
         val currentIndex = state.queue.indexOfFirst { it.id == state.currentTrack?.id }
         if (currentIndex > 0) {
-            playTrack(state.queue[currentIndex - 1])
+            playTrack(state.queue[currentIndex - 1], state.queue)
         } else if (state.queue.isNotEmpty()) {
-            playTrack(state.queue.last())
+            playTrack(state.queue.last(), state.queue)
         }
     }
 
@@ -1088,16 +1128,102 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
             RepeatMode.ALL -> nextTrack()
             RepeatMode.OFF -> {
                 val currentIndex = state.queue.indexOfFirst { it.id == state.currentTrack?.id }
-                if (currentIndex < state.queue.size - 1) {
+                if (currentIndex != -1 && currentIndex < state.queue.size - 1) {
                     nextTrack()
-                } else if (state.isAutoplayEnabled && state.currentTrack != null) {
-                    triggerAutoplay(state.currentTrack)
                 } else {
-                    mediaController?.pause()
-                    seekTo(0)
+                    val currentTrack = state.currentTrack
+                    if (currentTrack != null) {
+                        viewModelScope.launch {
+                            if (isFetchingAutomix) {
+                                kotlinx.coroutines.withTimeoutOrNull(5000L) {
+                                    automixJob?.join()
+                                }
+                            } else {
+                                val job = fetchAutomixQueue(currentTrack)
+                                kotlinx.coroutines.withTimeoutOrNull(5000L) {
+                                    job.join()
+                                }
+                            }
+                            val updatedState = _uiState.value
+                            val newIndex = updatedState.queue.indexOfFirst { it.id == currentTrack.id }
+                            if (newIndex != -1 && newIndex < updatedState.queue.size - 1) {
+                                playTrack(updatedState.queue[newIndex + 1], updatedState.queue)
+                            } else if (state.isAutoplayEnabled) {
+                                triggerAutoplay(currentTrack)
+                            } else {
+                                mediaController?.pause()
+                                seekTo(0)
+                            }
+                        }
+                    } else {
+                        mediaController?.pause()
+                        seekTo(0)
+                    }
                 }
             }
         }
+    }
+
+    fun fetchAutomixQueue(seedTrack: Track, resetQueue: Boolean = false): Job {
+        automixJob?.cancel()
+        val job = viewModelScope.launch(Dispatchers.IO) {
+            isFetchingAutomix = true
+            try {
+                if (!_uiState.value.isOnline) return@launch
+                val cluster = MusifyAutomixEngine.detectCulture(seedTrack.artist.name, seedTrack.title)
+                val notInterestedIds = _uiState.value.notInterestedTrackIds
+                val notInterestedArtists = _uiState.value.notInterestedArtists
+                val rawRadio = streamSource.fetchSongRadio(seedTrack)
+
+                val currentQueue = _uiState.value.queue
+                val existingIds = currentQueue.map { it.id }.toSet()
+                val existingTitles = currentQueue.map { it.title.trim().lowercase() }.toSet()
+
+                val validSongs = mutableListOf<Track>()
+                val seenIds = existingIds.toMutableSet()
+                val seenTitles = existingTitles.toMutableSet()
+
+                for (candidate in rawRadio) {
+                    if (candidate.id == seedTrack.id) continue
+                    if (seenIds.contains(candidate.id)) continue
+                    val normTitle = candidate.title.trim().lowercase()
+                    if (seenTitles.contains(normTitle)) continue
+                    if (skippedArtistCooldown.isCooldownActive(candidate.artist.name)) continue
+                    if (notInterestedIds.contains(candidate.id)) continue
+                    if (notInterestedArtists.contains(candidate.artist.name.trim().lowercase())) continue
+                    if (!MusifyAutomixEngine.isCompatibleTrack(candidate, seedTrack, cluster)) continue
+
+                    validSongs.add(candidate)
+                    seenIds.add(candidate.id)
+                    seenTitles.add(normTitle)
+                }
+
+                if (validSongs.isNotEmpty()) {
+                    withContext(Dispatchers.Main) {
+                        _uiState.update { state ->
+                            val existingInQueue = state.queue.map { it.id }.toSet()
+                            val newUnique = validSongs.filter { it.id !in existingInQueue }
+                            val finalQueue = if (resetQueue) {
+                                listOf(seedTrack) + newUnique
+                            } else {
+                                state.queue + newUnique
+                            }
+                            state.copy(queue = finalQueue)
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                if (e !is kotlinx.coroutines.CancellationException) {
+                    android.util.Log.e("MusicEuy", "fetchAutomixQueue failed: ${e.message}", e)
+                }
+            } finally {
+                if (automixJob == coroutineContext[Job]) {
+                    isFetchingAutomix = false
+                }
+            }
+        }
+        automixJob = job
+        return job
     }
 
     fun triggerAutoplay(endedTrack: Track) {
