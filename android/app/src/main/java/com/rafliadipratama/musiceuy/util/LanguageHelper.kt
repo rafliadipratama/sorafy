@@ -26,7 +26,7 @@ object LanguageHelper {
 
     fun getSavedLanguageCode(context: Context): String {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getString(KEY_LANGUAGE, "system") ?: "system"
+        return prefs.getString(KEY_LANGUAGE, "en") ?: "en"
     }
 
     fun saveLanguageCode(context: Context, code: String) {

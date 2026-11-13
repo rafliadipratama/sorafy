@@ -23,6 +23,7 @@
     <string name="nav_search">Cari</string>
     <string name="nav_library">Koleksi</string>
     <string name="nav_plugins">Ekstensi</string>
+    <string name="nav_settings">Pengaturan</string>
 
     <!-- Home Screen -->
     <string name="home_continue_listening">Lanjutkan Mendengarkan</string>

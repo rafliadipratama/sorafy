@@ -123,7 +123,7 @@ data class PlayerUiState(
     val searchHistory: List<String> = emptyList(),
     val lastPlayedTrack: Track? = null,
     val lastPlayedPositionMs: Long = 0L,
-    val currentLanguageCode: String = "system",
+    val currentLanguageCode: String = "en",
     val isLanguageDialogVisible: Boolean = false,
     val isProfileVisible: Boolean = false,
     val userProfile: com.rafliadipratama.musiceuy.data.local.UserProfile = com.rafliadipratama.musiceuy.data.local.UserProfile(),
@@ -171,7 +171,7 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
 
     init {
         com.rafliadipratama.musiceuy.audio.AudioEffectManager.initFromPrefs(application)
-        val initialLang = com.rafliadipratama.musiceuy.util.LanguageHelper.getSavedLanguageCode(application)
+        val initialLang = com.rafliadipratama.musiceuy.util.LanguageHelper.getSavedLanguageCode(application).ifBlank { "en" }
         val initialProfile = userProfileManager.getProfile()
         val savedLastPlayed = historyManager.getLastPlayedTrack()
         val savedQueue = historyManager.getLastPlaybackQueue()
