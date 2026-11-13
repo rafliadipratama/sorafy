@@ -186,8 +186,8 @@ fun GlowLyricsLine(
 
     val lineBorderModifier = if (isActiveSearchMatch) {
         Modifier
-            .background(Color(0xFFFFB74D).copy(alpha = 0.16f), RoundedCornerShape(14.dp))
-            .border(1.5.dp, Color(0xFFFFB74D).copy(alpha = 0.85f), RoundedCornerShape(14.dp))
+            .background(Color(0x2200E599), ContinuousCornerShape(12.dp))
+            .border(1.dp, Color(0x6600E599), ContinuousCornerShape(12.dp))
     } else Modifier
 
     val textAlign = when (alignment) {
@@ -235,7 +235,7 @@ fun GlowLyricsLine(
         Box(
             modifier = Modifier
                 .then(lineBorderModifier)
-                .clip(RoundedCornerShape(14.dp))
+                .clip(ContinuousCornerShape(12.dp))
                 .background(Color.White.copy(alpha = pressAlpha))
                 .clickable(interactionSource = interactionSource, indication = null) {
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -416,7 +416,7 @@ fun GlowLyricsLine(
     }
 }
 
-/** Draws soft radial aura for active lyric line, aligned to the singing voice */
+/** Subtle neutral ambient highlight for active lyric line, avoiding neon AI-slop glows */
 private fun DrawScope.drawGlowAura(color: Color, alpha: Float, alignment: LyricsAlignment) {
     val cx = when (alignment) {
         LyricsAlignment.START -> size.width * 0.35f
@@ -424,13 +424,12 @@ private fun DrawScope.drawGlowAura(color: Color, alpha: Float, alignment: Lyrics
         LyricsAlignment.END -> size.width * 0.65f
     }
     val cy = size.height / 2f
-    val radius = maxOf(size.width, size.height) * 0.65f
+    val radius = maxOf(size.width, size.height) * 0.5f
 
     drawCircle(
         brush = Brush.radialGradient(
             colors = listOf(
-                color.copy(alpha = alpha * 0.40f),
-                color.copy(alpha = alpha * 0.12f),
+                Color.White.copy(alpha = alpha * 0.05f),
                 Color.Transparent
             ),
             center = Offset(cx, cy),
