@@ -6,6 +6,7 @@ public struct NowPlayingView: View {
 
     @State private var isDraggingSeekbar = false
     @State private var dragPositionSec = 0.0
+    @State private var volume: Double = 0.8
 
     public init(viewModel: MusicPlayerViewModel) {
         self.viewModel = viewModel
@@ -193,6 +194,30 @@ public struct NowPlayingView: View {
                     }
                 }
                 .padding(.top, 18)
+
+                // Apple Music Volume Slider
+                HStack(spacing: 12) {
+                    Button {
+                        volume = 0.0
+                    } label: {
+                        Image(systemName: "speaker.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.55))
+                    }
+
+                    Slider(value: $volume, in: 0...1.0)
+                        .tint(.white)
+
+                    Button {
+                        volume = 1.0
+                    } label: {
+                        Image(systemName: "speaker.wave.3.fill")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.55))
+                    }
+                }
+                .padding(.horizontal, 32)
+                .padding(.top, 16)
 
                 // Bottom Action Bar (Lyrics & Details)
                 HStack(spacing: 40) {

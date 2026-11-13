@@ -79,11 +79,11 @@
 ### Task 3: Port to iOS (`iosApp/`)
 
 **Files:**
-- Modify: `iosApp/SoraFy/Views/Player/PlayerView.swift`
+- Modify: `iosApp/SoraFy/Views/Player/NowPlayingView.swift`
 
-- [ ] **Step 1: Check `track.isVideo` before rendering video toggle button**
-- [ ] **Step 2: Add Apple Music volume slider row using MPVolumeView or custom SwiftUI slider**
-- [ ] **Step 3: Commit**
+- [x] **Step 1: Check `track.isVideo` before rendering video toggle button**
+- [x] **Step 2: Add Apple Music volume slider row using MPVolumeView or custom SwiftUI slider**
+- [x] **Step 3: Commit**
 
 ---
 
