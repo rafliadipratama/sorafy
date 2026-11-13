@@ -116,6 +116,19 @@ export default function Downloads({
               <OfficialAndroidIcon className="w-4 h-4 shrink-0" />
               <span>Android</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => setPlatform('ios')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition-all ${
+                platform === 'ios'
+                  ? 'bg-surface-elevated text-[#00E599] border border-[#00E599]/30 shadow-sm'
+                  : 'text-neutral-400 hover:text-white'
+              }`}
+            >
+              <OfficialAppleIcon className="w-4 h-4 shrink-0" />
+              <span>iOS (iPhone)</span>
+            </button>
           </div>
         </div>
 

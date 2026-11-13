@@ -1,4 +1,4 @@
-export type PlatformId = 'windows' | 'macos' | 'linux' | 'android';
+export type PlatformId = 'windows' | 'macos' | 'linux' | 'android' | 'ios';
 
 export interface DownloadPackage {
   id: string;
@@ -203,6 +203,34 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
         sha256: '3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f'
       }
     ]
+  },
+  ios: {
+    id: 'ios',
+    name: 'iOS',
+    primaryPackageId: 'ios-ipa',
+    ctaSubtext: {
+      en: 'v2.0.0 • iOS 16.0+ (ARM64) • SideStore & TrollStore IPA',
+      id: 'v2.0.0 • iOS 16.0+ (ARM64) • IPA untuk SideStore & TrollStore'
+    },
+    packages: [
+      {
+        id: 'ios-ipa',
+        name: 'SoraFy for iOS (.ipa)',
+        filename: 'SoraFy-iOS.ipa',
+        format: '.ipa',
+        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-iOS.ipa',
+        size: '~210 KB',
+        arch: 'arm64 • iOS 16.0+',
+        badge: {
+          en: 'Sideload IPA',
+          id: 'Sideload IPA'
+        },
+        desc: {
+          en: 'Native Swift/SwiftUI app with background audio, lock screen controls, and synced lyrics. Install via SideStore, Sideloadly, or TrollStore.',
+          id: 'Aplikasi native Swift/SwiftUI lengkap dengan background audio, kontrol lock screen, dan lirik sinkron. Pasang via SideStore, Sideloadly, atau TrollStore.'
+        }
+      }
+    ]
   }
 };
 
@@ -212,9 +240,8 @@ export function detectPlatform(): PlatformId {
   const plat = (navigator.platform || '').toLowerCase();
 
   if (ua.includes('android')) return 'android';
-  if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod') || plat.includes('mac') || ua.includes('macintosh')) {
-    return 'macos';
-  }
+  if (ua.includes('iphone') || ua.includes('ipad') || ua.includes('ipod')) return 'ios';
+  if (plat.includes('mac') || ua.includes('macintosh')) return 'macos';
   if (plat.includes('linux') || ua.includes('linux')) return 'linux';
   return 'windows';
 }

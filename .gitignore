@@ -28,6 +28,8 @@ node_modules/
 # Electron / Web distribution builds
 dist/
 **/dist/
+dist-ios/
+*.ipa
 .astro/
 **/.astro/
 
