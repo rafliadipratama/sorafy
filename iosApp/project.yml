@@ -19,6 +19,7 @@ targets:
         INFOPLIST_FILE: SoraFy/Resources/Info.plist
         TARGETED_DEVICE_FAMILY: "1,2"
         SWIFT_VERSION: "5.9"
+        GENERATE_INFOPLIST_FILE: "NO"
         CODE_SIGN_IDENTITY: ""
         CODE_SIGNING_REQUIRED: "NO"
         CODE_SIGNING_ALLOWED: "NO"

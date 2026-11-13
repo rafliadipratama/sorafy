@@ -1,0 +1,57 @@
+name: Build iOS IPA Package
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'iosApp/**'
+      - '.github/workflows/ios-build.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-ios-ipa:
+    name: Build SoraFy iOS IPA
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Select Xcode version
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app || sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        working-directory: ./iosApp
+        run: xcodegen generate
+
+      - name: Build and Archive iOS App
+        working-directory: ./iosApp
+        run: |
+          xcodebuild archive \
+            -project SoraFy.xcodeproj \
+            -scheme SoraFy \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/SoraFy.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package IPA for Sideloading (SideStore / TrollStore)
+        working-directory: ./iosApp
+        run: |
+          mkdir -p Payload
+          cp -r build/SoraFy.xcarchive/Products/Applications/SoraFy.app Payload/
+          zip -r SoraFy-iOS.ipa Payload
+          ls -lh SoraFy-iOS.ipa
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SoraFy-iOS-ipa
+          path: iosApp/SoraFy-iOS.ipa
+          if-no-files-found: error
