@@ -2105,7 +2105,7 @@ class MusicStreamSource(
                                         ?.optJSONArray("thumbnails")
                                     var itemCover = itemThumbs?.optJSONObject(itemThumbs.length() - 1)?.optString("url", "") ?: ""
                                     if (itemCover.isBlank() && videoId.isNotBlank()) {
-                                        itemCover = "https://i.ytimg.com/vi/$videoId/hqdefault.jpg"
+                                        itemCover = "https://i.ytimg.com/vi/$videoId/hq720.jpg"
                                     }
                                     val finalCover = if (itemCover.isNotBlank()) itemCover else defaultCover
 
@@ -2328,7 +2328,7 @@ class MusicStreamSource(
             val vId = track.id.removePrefix("yt:")
             track.copy(
                 isVideo = true,
-                coverUrl = "https://i.ytimg.com/vi/$vId/hqdefault.jpg"
+                coverUrl = "https://i.ytimg.com/vi/$vId/hq720.jpg"
             )
         }
     }
@@ -2347,7 +2347,7 @@ class MusicStreamSource(
                             val vId = track.id.removePrefix("yt:")
                             track.copy(
                                 isVideo = true,
-                                coverUrl = "https://i.ytimg.com/vi/$vId/hqdefault.jpg"
+                                coverUrl = "https://i.ytimg.com/vi/$vId/hq720.jpg"
                             )
                         }
                     } catch (_: Exception) {
@@ -2369,7 +2369,7 @@ class MusicStreamSource(
                 val vId = track.id.removePrefix("yt:")
                 track.copy(
                     isVideo = true,
-                    coverUrl = "https://i.ytimg.com/vi/$vId/hqdefault.jpg"
+                    coverUrl = "https://i.ytimg.com/vi/$vId/hq720.jpg"
                 )
             }.distinctBy { it.id }
         } catch (e: Exception) {

@@ -118,7 +118,8 @@ private data class TopCategory(
     val title: String,
     val filterPill: String,
     val iconRes: Int,
-    val gradient: List<Color>
+    val gradient: List<Color>,
+    val coverUrl: String
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -171,12 +172,48 @@ fun HomeScreen(
 
     val topCategories = remember {
         listOf(
-            TopCategory("Chill & Relax", "Chill & Relax", R.drawable.ic_iconsax_headphone_linear, listOf(Color(0xFF141A22), Color(0xFF1C2430))),
-            TopCategory("Focus & Study", "Focus & Study", R.drawable.ic_iconsax_coffee_linear, listOf(Color(0xFF141A22), Color(0xFF1E2632))),
-            TopCategory("Workout Energy", "Workout Energy", R.drawable.ic_iconsax_flash_linear, listOf(Color(0xFF141A22), Color(0xFF222834))),
-            TopCategory("Indo Pop", "Indo Pop", R.drawable.ic_iconsax_music_linear, listOf(Color(0xFF141A22), Color(0xFF1A222C))),
-            TopCategory("Indie Vibe", "Indie", R.drawable.ic_iconsax_radio_linear, listOf(Color(0xFF141A22), Color(0xFF1D232E))),
-            TopCategory("Rock & Alternative", "Rock & Alternative", R.drawable.ic_iconsax_musicnote_linear, listOf(Color(0xFF141A22), Color(0xFF212530)))
+            TopCategory(
+                title = "Chill & Relax",
+                filterPill = "Chill & Relax",
+                iconRes = R.drawable.ic_iconsax_headphone_linear,
+                gradient = listOf(Color(0xFF141A22), Color(0xFF1C2430)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000020408713c731caaf1f800615a"
+            ),
+            TopCategory(
+                title = "Focus & Study",
+                filterPill = "Focus & Study",
+                iconRes = R.drawable.ic_iconsax_coffee_linear,
+                gradient = listOf(Color(0xFF141A22), Color(0xFF1E2632)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000026020f2f6476db518ef747da4"
+            ),
+            TopCategory(
+                title = "Workout Energy",
+                filterPill = "Workout Energy",
+                iconRes = R.drawable.ic_iconsax_flash_linear,
+                gradient = listOf(Color(0xFF141A22), Color(0xFF222834)),
+                coverUrl = "https://i.scdn.co/image/ab67706f00000002385ff7ec006cdc4922f52557"
+            ),
+            TopCategory(
+                title = "Indo Pop",
+                filterPill = "Indo Pop",
+                iconRes = R.drawable.ic_iconsax_music_linear,
+                gradient = listOf(Color(0xFF141A22), Color(0xFF1A222C)),
+                coverUrl = "https://yt3.googleusercontent.com/PR-EXqPEf4aHFFLHknd2II-rvvVINdq7mS_eaHe4NEX11w2P6N8SztkPlouSzvGX6gtuMeeJXro=s576"
+            ),
+            TopCategory(
+                title = "Indie Vibe",
+                filterPill = "Indie",
+                iconRes = R.drawable.ic_iconsax_radio_linear,
+                gradient = listOf(Color(0xFF141A22), Color(0xFF1D232E)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000027dea5c0e18df3727eacdc4e1"
+            ),
+            TopCategory(
+                title = "Rock & Alternative",
+                filterPill = "Rock & Alternative",
+                iconRes = R.drawable.ic_iconsax_musicnote_linear,
+                gradient = listOf(Color(0xFF141A22), Color(0xFF212530)),
+                coverUrl = "https://i.scdn.co/image/ab67706f00000002694bf33281695f3b7542a09a"
+            )
         )
     }
 
@@ -592,7 +629,7 @@ fun HomeScreen(
                                     val catInteractionSource = remember { MutableInteractionSource() }
                                     Box(
                                         modifier = Modifier
-                                            .size(width = 145.dp, height = 70.dp)
+                                            .size(width = 152.dp, height = 70.dp)
                                             .clip(ContinuousCornerShape(16.dp))
                                             .background(Brush.linearGradient(category.gradient))
                                             .border(
@@ -607,7 +644,7 @@ fun HomeScreen(
                                             ) {
                                                 viewModel.selectHomeFilter(if (isSelected) "All" else category.filterPill)
                                             }
-                                            .padding(horizontal = 14.dp, vertical = 12.dp)
+                                            .padding(start = 12.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)
                                     ) {
                                         Row(
                                             modifier = Modifier.fillMaxSize(),
@@ -617,18 +654,20 @@ fun HomeScreen(
                                             Text(
                                                 text = category.title,
                                                 color = Color.White,
-                                                fontSize = 13.sp,
+                                                fontSize = 12.5.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 2,
                                                 overflow = TextOverflow.Ellipsis,
                                                 modifier = Modifier.weight(1f)
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
-                                            Icon(
-                                                painter = painterResource(id = category.iconRes),
-                                                contentDescription = null,
-                                                tint = Color.White.copy(alpha = 0.9f),
-                                                modifier = Modifier.size(20.dp)
+                                            AsyncImage(
+                                                model = category.coverUrl,
+                                                contentDescription = category.title,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .size(38.dp)
+                                                    .clip(ContinuousCornerShape(10.dp))
                                             )
                                         }
                                     }

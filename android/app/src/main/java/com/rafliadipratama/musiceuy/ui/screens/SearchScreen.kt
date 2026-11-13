@@ -61,6 +61,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -93,7 +94,8 @@ import com.rafliadipratama.musiceuy.ui.viewmodel.MusicPlayerViewModel
 private data class ExploreGenre(
     val title: String,
     val query: String,
-    val gradientColors: List<Color>
+    val gradientColors: List<Color>,
+    val coverUrl: String
 )
 
 @Composable
@@ -117,14 +119,54 @@ fun SearchScreen(
 
     val exploreGenres = remember {
         listOf(
-            ExploreGenre("Pop Indonesia", "Pop Indonesia Hits", listOf(Color(0xFFE91E63), Color(0xFFFF6090))),
-            ExploreGenre("Indie Senja", "Indie Indonesia", listOf(Color(0xFF7E57C2), Color(0xFFB39DDB))),
-            ExploreGenre("Dangdut Koplo", "Dangdut Koplo Viral", listOf(Color(0xFFFF9800), Color(0xFFFFB74D))),
-            ExploreGenre("Rock 2000-an", "Rock Indonesia 2000an", listOf(Color(0xFFD32F2F), Color(0xFFEF5350))),
-            ExploreGenre("Akustik Santai", "Akustik Indonesia", listOf(Color(0xFF009688), Color(0xFF4DB6AC))),
-            ExploreGenre("Lo-Fi Chill", "Lofi Hip Hop Beats", listOf(Color(0xFF3F51B5), Color(0xFF7986CB))),
-            ExploreGenre("Hip Hop & R&B", "Hip Hop Indonesia", listOf(Color(0xFF1A237E), Color(0xFF00BCD4))),
-            ExploreGenre("Nostalgia 90-an", "Lagu Nostalgia 90an", listOf(Color(0xFF5D4037), Color(0xFF8D6E63)))
+            ExploreGenre(
+                title = "Indo Pop",
+                query = "Pop Indonesia Hits",
+                gradientColors = listOf(Color(0xFFE91E63), Color(0xFFFF6090)),
+                coverUrl = "https://yt3.googleusercontent.com/PR-EXqPEf4aHFFLHknd2II-rvvVINdq7mS_eaHe4NEX11w2P6N8SztkPlouSzvGX6gtuMeeJXro=s576"
+            ),
+            ExploreGenre(
+                title = "Indie Vibe",
+                query = "Indie Indonesia",
+                gradientColors = listOf(Color(0xFF7E57C2), Color(0xFFB39DDB)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000027dea5c0e18df3727eacdc4e1"
+            ),
+            ExploreGenre(
+                title = "Dangdut & Koplo",
+                query = "Dangdut Koplo Viral",
+                gradientColors = listOf(Color(0xFFFF9800), Color(0xFFFFB74D)),
+                coverUrl = "https://yt3.googleusercontent.com/2qHUJ20mtWoAZBU80LpQkNfu7EXSKKNs8K-MFFV5vIuFKDseRNHb1cVbmuzmfHvNJKKZGJ-cJKI=s576"
+            ),
+            ExploreGenre(
+                title = "2000s Rock",
+                query = "Rock Indonesia 2000an",
+                gradientColors = listOf(Color(0xFFD32F2F), Color(0xFFEF5350)),
+                coverUrl = "https://i.scdn.co/image/ab67706f00000002694bf33281695f3b7542a09a"
+            ),
+            ExploreGenre(
+                title = "Acoustic & Chill",
+                query = "Akustik Indonesia",
+                gradientColors = listOf(Color(0xFF009688), Color(0xFF4DB6AC)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000020408713c731caaf1f800615a"
+            ),
+            ExploreGenre(
+                title = "Lo-Fi Beats",
+                query = "Lofi Hip Hop Beats",
+                gradientColors = listOf(Color(0xFF3F51B5), Color(0xFF7986CB)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000026020f2f6476db518ef747da4"
+            ),
+            ExploreGenre(
+                title = "Hip-Hop & R&B",
+                query = "Hip Hop Indonesia",
+                gradientColors = listOf(Color(0xFF1A237E), Color(0xFF00BCD4)),
+                coverUrl = "https://i.scdn.co/image/ab67706f00000002876581e4be85838f0e1ad09d"
+            ),
+            ExploreGenre(
+                title = "90s Nostalgia",
+                query = "Lagu Nostalgia 90an",
+                gradientColors = listOf(Color(0xFF5D4037), Color(0xFF8D6E63)),
+                coverUrl = "https://i.scdn.co/image/ab67706f0000000281ee550c81bbff8053a023e8"
+            )
         )
     }
 
@@ -469,7 +511,7 @@ fun SearchScreen(
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(84.dp)
+                                        .height(90.dp)
                                         .clip(SmoothCornerShape(14.dp))
                                         .background(Brush.linearGradient(genre.gradientColors))
                                         .pressBounce(pressedScale = 0.95f)
@@ -477,14 +519,31 @@ fun SearchScreen(
                                             searchInput = genre.query
                                             viewModel.search(genre.query)
                                         }
-                                        .padding(14.dp)
                                 ) {
                                     Text(
                                         text = genre.title,
                                         color = Color.White,
                                         fontSize = 15.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        modifier = Modifier.align(Alignment.TopStart)
+                                        fontWeight = FontWeight.Bold,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier
+                                            .align(Alignment.TopStart)
+                                            .padding(top = 12.dp, start = 12.dp, end = 44.dp)
+                                    )
+                                    AsyncImage(
+                                        model = genre.coverUrl,
+                                        contentDescription = genre.title,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier
+                                            .align(Alignment.BottomEnd)
+                                            .graphicsLayer {
+                                                rotationZ = 20f
+                                                translationX = 16f
+                                                translationY = 14f
+                                            }
+                                            .size(56.dp)
+                                            .clip(RoundedCornerShape(6.dp))
                                     )
                                 }
                             }

@@ -89,7 +89,8 @@ import com.rafliadipratama.musiceuy.ui.viewmodel.MusicPlayerViewModel
 private data class PopularGenre(
     val title: String,
     val query: String,
-    val gradientColors: List<Color>
+    val gradientColors: List<Color>,
+    val coverUrl: String
 )
 
 @Composable
@@ -107,12 +108,42 @@ fun LibraryScreen(
 
     val popularGenres = remember {
         listOf(
-            PopularGenre("Pop Indonesia", "Pop Indonesia Viral", listOf(Color(0xFFE91E63), Color(0xFFFF6090))),
-            PopularGenre("Indie Indo", "Indie Pop Indonesia", listOf(Color(0xFF7E57C2), Color(0xFFB39DDB))),
-            PopularGenre("Koplo & Dangdut", "Dangdut Koplo Indonesia", listOf(Color(0xFFFF9800), Color(0xFFFFB74D))),
-            PopularGenre("Rock 2000-an", "Rock Indonesia 2000an", listOf(Color(0xFFD32F2F), Color(0xFFEF5350))),
-            PopularGenre("Akustik Senja", "Akustik Indonesia Senja Santai", listOf(Color(0xFF009688), Color(0xFF4DB6AC))),
-            PopularGenre("Lo-Fi Chill", "Lofi Hip Hop Chill Beats", listOf(Color(0xFF3F51B5), Color(0xFF7986CB)))
+            PopularGenre(
+                title = "Indo Pop",
+                query = "Pop Indonesia Viral",
+                gradientColors = listOf(Color(0xFFE91E63), Color(0xFFFF6090)),
+                coverUrl = "https://yt3.googleusercontent.com/PR-EXqPEf4aHFFLHknd2II-rvvVINdq7mS_eaHe4NEX11w2P6N8SztkPlouSzvGX6gtuMeeJXro=s576"
+            ),
+            PopularGenre(
+                title = "Indie Vibe",
+                query = "Indie Pop Indonesia",
+                gradientColors = listOf(Color(0xFF7E57C2), Color(0xFFB39DDB)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000027dea5c0e18df3727eacdc4e1"
+            ),
+            PopularGenre(
+                title = "Dangdut & Koplo",
+                query = "Dangdut Koplo Indonesia",
+                gradientColors = listOf(Color(0xFFFF9800), Color(0xFFFFB74D)),
+                coverUrl = "https://yt3.googleusercontent.com/2qHUJ20mtWoAZBU80LpQkNfu7EXSKKNs8K-MFFV5vIuFKDseRNHb1cVbmuzmfHvNJKKZGJ-cJKI=s576"
+            ),
+            PopularGenre(
+                title = "2000s Rock",
+                query = "Rock Indonesia 2000an",
+                gradientColors = listOf(Color(0xFFD32F2F), Color(0xFFEF5350)),
+                coverUrl = "https://i.scdn.co/image/ab67706f00000002694bf33281695f3b7542a09a"
+            ),
+            PopularGenre(
+                title = "Acoustic & Chill",
+                query = "Akustik Indonesia Senja Santai",
+                gradientColors = listOf(Color(0xFF009688), Color(0xFF4DB6AC)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000020408713c731caaf1f800615a"
+            ),
+            PopularGenre(
+                title = "Lo-Fi Beats",
+                query = "Lofi Hip Hop Chill Beats",
+                gradientColors = listOf(Color(0xFF3F51B5), Color(0xFF7986CB)),
+                coverUrl = "https://i.scdn.co/image/ab67706f000000026020f2f6476db518ef747da4"
+            )
         )
     }
 
@@ -978,7 +1009,7 @@ fun LibraryScreen(
                                 shape = RoundedCornerShape(12.dp),
                                 modifier = Modifier
                                     .weight(1f)
-                                    .height(62.dp)
+                                    .height(64.dp)
                                     .clickable {
                                         viewModel.search(g1.query)
                                         onNavigateToHome()
@@ -988,15 +1019,33 @@ fun LibraryScreen(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .background(Brush.horizontalGradient(g1.gradientColors))
-                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                        .padding(horizontal = 12.dp, vertical = 8.dp),
                                     contentAlignment = Alignment.CenterStart
                                 ) {
-                                    Text(
-                                        text = g1.title,
-                                        color = Color.White,
-                                        fontSize = 14.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
+                                    Row(
+                                        modifier = Modifier.fillMaxSize(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = g1.title,
+                                            color = Color.White,
+                                            fontSize = 13.5.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        AsyncImage(
+                                            model = g1.coverUrl,
+                                            contentDescription = g1.title,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                        )
+                                    }
                                 }
                             }
 
@@ -1007,7 +1056,7 @@ fun LibraryScreen(
                                     shape = RoundedCornerShape(12.dp),
                                     modifier = Modifier
                                         .weight(1f)
-                                        .height(62.dp)
+                                        .height(64.dp)
                                         .clickable {
                                             viewModel.search(g2.query)
                                             onNavigateToHome()
@@ -1017,15 +1066,33 @@ fun LibraryScreen(
                                         modifier = Modifier
                                             .fillMaxSize()
                                             .background(Brush.horizontalGradient(g2.gradientColors))
-                                            .padding(horizontal = 14.dp, vertical = 10.dp),
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
                                         contentAlignment = Alignment.CenterStart
                                     ) {
-                                        Text(
-                                            text = g2.title,
-                                            color = Color.White,
-                                            fontSize = 14.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        Row(
+                                            modifier = Modifier.fillMaxSize(),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                text = g2.title,
+                                                color = Color.White,
+                                                fontSize = 13.5.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                            AsyncImage(
+                                                model = g2.coverUrl,
+                                                contentDescription = g2.title,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .size(36.dp)
+                                                    .clip(RoundedCornerShape(8.dp))
+                                            )
+                                        }
                                     }
                                 }
                             }

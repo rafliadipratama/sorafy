@@ -83,7 +83,7 @@ class PlaylistImporter(
                                     name = item.uploaderName ?: "Artis YouTube"
                                 ),
                                 audioUrl = "yt:$videoId",
-                                coverUrl = item.thumbnails?.firstOrNull()?.url ?: playlistThumbnail.ifBlank { "https://i.ytimg.com/vi/$videoId/hqdefault.jpg" },
+                                coverUrl = item.thumbnails?.firstOrNull()?.url ?: playlistThumbnail.ifBlank { "https://i.ytimg.com/vi/$videoId/hq720.jpg" },
                                 durationSec = if (item.duration > 0) item.duration.toInt() else 210,
                                 sourceLabel = "YouTube"
                             )
