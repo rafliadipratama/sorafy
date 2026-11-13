@@ -197,7 +197,7 @@ fun LibraryScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = if (isImportMode) "Pulihkan Koleksi" else "Cadangkan & Pulihkan",
+                        text = if (isImportMode) "Restore Collection" else "Backup & Restore Collection",
                         color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -208,7 +208,7 @@ fun LibraryScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (!isImportMode) {
                         Text(
-                            text = "Amankan playlist dan lagu yang kamu sukai dalam format file/teks JSON yang dapat dipulihkan kapan saja.",
+                            text = "Safeguard your favorite playlists and songs in a JSON file/text format that can be restored anytime.",
                             color = TextSecondary,
                             fontSize = 13.sp
                         )
@@ -221,14 +221,14 @@ fun LibraryScreen(
                                     putExtra(Intent.EXTRA_TEXT, jsonStr)
                                     putExtra(Intent.EXTRA_TITLE, "Backup-MusicEuy.json")
                                 }
-                                context.startActivity(Intent.createChooser(shareIntent, "Simpan / Bagikan Backup JSON"))
+                                context.startActivity(Intent.createChooser(shareIntent, "Save / Share Backup JSON"))
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Icon(imageVector = Icons.Default.Upload, contentDescription = null, tint = Color(0xFF0C0E11))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Ekspor / Cadangkan JSON", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
+                            Text("Export / Backup JSON", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
                         }
 
                         Button(
@@ -238,11 +238,11 @@ fun LibraryScreen(
                         ) {
                             Icon(imageVector = Icons.Default.Download, contentDescription = null, tint = TextPrimary)
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Impor dari Teks JSON", color = TextPrimary)
+                            Text("Import from JSON", color = TextPrimary)
                         }
                     } else {
                         Text(
-                            text = "Tempel (paste) kode JSON cadangan kamu di bawah ini:",
+                            text = "Paste your backup JSON data below:",
                             color = TextSecondary,
                             fontSize = 12.sp
                         )
@@ -250,7 +250,7 @@ fun LibraryScreen(
                         OutlinedTextField(
                             value = importText,
                             onValueChange = { importText = it },
-                            placeholder = { Text("Tempel JSON cadangan di sini...", color = TextMuted, fontSize = 12.sp) },
+                            placeholder = { Text("Paste backup JSON here...", color = TextMuted, fontSize = 12.sp) },
                             maxLines = 6,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -268,10 +268,10 @@ fun LibraryScreen(
                                 if (importText.isNotBlank()) {
                                     val success = viewModel.importBackupJson(importText.trim())
                                     if (success) {
-                                        Toast.makeText(context, "Koleksi berhasil dipulihkan!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Collection restored successfully!", Toast.LENGTH_SHORT).show()
                                         viewModel.dismissBackupRestoreDialog()
                                     } else {
-                                        Toast.makeText(context, "Format JSON tidak valid!", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Invalid JSON format!", Toast.LENGTH_SHORT).show()
                                     }
                                 }
                             },
@@ -279,7 +279,7 @@ fun LibraryScreen(
                             colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("Pulihkan Sekarang", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
+                            Text("Restore Now", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
                         }
                     }
 
@@ -296,7 +296,7 @@ fun LibraryScreen(
             confirmButton = {},
             dismissButton = {
                 TextButton(onClick = { viewModel.dismissBackupRestoreDialog() }) {
-                    Text("Tutup", color = TextSecondary)
+                    Text("Close", color = TextSecondary)
                 }
             }
         )
@@ -320,7 +320,7 @@ fun LibraryScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Impor Playlist dari Link",
+                        text = "Import Playlist from Link",
                         color = TextPrimary,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
@@ -330,14 +330,14 @@ fun LibraryScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = "Tempel tautan playlist publik Spotify atau YouTube Music:",
+                        text = "Paste public Spotify or YouTube Music playlist link:",
                         color = TextSecondary,
                         fontSize = 13.sp
                     )
                     OutlinedTextField(
                         value = playlistUrl,
                         onValueChange = { playlistUrl = it },
-                        placeholder = { Text("https://open.spotify.com/playlist/... atau YouTube", color = TextMuted, fontSize = 12.sp) },
+                        placeholder = { Text("https://open.spotify.com/playlist/... or YouTube", color = TextMuted, fontSize = 12.sp) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrandGreen,
@@ -350,7 +350,7 @@ fun LibraryScreen(
                     OutlinedTextField(
                         value = customName,
                         onValueChange = { customName = it },
-                        placeholder = { Text("Nama playlist lokal (opsional)", color = TextMuted, fontSize = 12.sp) },
+                        placeholder = { Text("Local playlist name (optional)", color = TextMuted, fontSize = 12.sp) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrandGreen,
@@ -381,9 +381,9 @@ fun LibraryScreen(
                             strokeWidth = 2.dp
                         )
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Mengimpor...", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
+                        Text("Importing...", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
                     } else {
-                        Text("Impor", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
+                        Text("Import", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
                     }
                 }
             },
@@ -392,7 +392,7 @@ fun LibraryScreen(
                     onClick = { viewModel.dismissImportPlaylistDialog() },
                     enabled = !uiState.isImportingPlaylist
                 ) {
-                    Text("Batal", color = TextSecondary)
+                    Text("Cancel", color = TextSecondary)
                 }
             }
         )
@@ -502,11 +502,11 @@ fun LibraryScreen(
                             )
                         }
 
-                        // Personalisasi Musisi Favorit (Setup Awal)
+                        // Personalize Favorite Artists (Initial Setup)
                         IconButton(onClick = { viewModel.restartOnboarding() }) {
                             Icon(
                                 imageVector = Icons.Default.Tune,
-                                contentDescription = "Personalisasi Musisi Favorit",
+                                contentDescription = "Personalize Favorite Artists",
                                 tint = Color(0xFFFFB300),
                                 modifier = Modifier.size(22.dp)
                             )
@@ -516,13 +516,13 @@ fun LibraryScreen(
                         IconButton(onClick = { viewModel.showBackupRestoreDialog() }) {
                             Icon(
                                 imageVector = Icons.Default.SettingsBackupRestore,
-                                contentDescription = "Cadangkan & Pulihkan",
+                                contentDescription = "Backup & Restore",
                                 tint = BrandGreen,
                                 modifier = Modifier.size(22.dp)
                             )
                         }
 
-                        // Pembaruan Aplikasi OTA
+                        // App OTA Updates
                         IconButton(onClick = { viewModel.checkForUpdate(isManual = true) }) {
                             if (uiState.isCheckingUpdate) {
                                 CircularProgressIndicator(
@@ -533,7 +533,7 @@ fun LibraryScreen(
                             } else {
                                 Icon(
                                     imageVector = Icons.Default.SystemUpdate,
-                                    contentDescription = "Periksa Pembaruan",
+                                    contentDescription = "Check for Updates",
                                     tint = Color(0xFF69F0AE),
                                     modifier = Modifier.size(22.dp)
                                 )
@@ -611,14 +611,14 @@ fun LibraryScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Masuk & Hubungkan Akun",
+                                text = "Sign In & Connect Account",
                                 color = TextPrimary,
                                 fontSize = 14.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
-                                text = "Sinkronkan playlist YouTube Music, Spotify & Apple Music",
+                                text = "Sync YouTube Music, Spotify & Apple Music playlists",
                                 color = TextSecondary,
                                 fontSize = 11.sp,
                                 maxLines = 1,
@@ -678,7 +678,7 @@ fun LibraryScreen(
                                 maxLines = 1
                             )
                             Text(
-                                text = "${uiState.likedTracks.size} lagu",
+                                text = "${uiState.likedTracks.size} songs",
                                 color = TextMuted,
                                 fontSize = 11.sp,
                                 maxLines = 1
@@ -770,9 +770,9 @@ fun LibraryScreen(
                             )
                             Text(
                                 text = if (uiState.mostPlayedTracks.isNotEmpty())
-                                    "${uiState.mostPlayedTracks.size} lagu"
+                                    "${uiState.mostPlayedTracks.size} songs"
                                 else
-                                    "Otomatis",
+                                    "Auto",
                                 color = TextMuted,
                                 fontSize = 11.sp,
                                 maxLines = 1
@@ -808,7 +808,7 @@ fun LibraryScreen(
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Impor Link",
+                            text = "Import Link",
                             color = Color(0xFF4FC3F7),
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Bold,
@@ -931,7 +931,7 @@ fun LibraryScreen(
                                 )
 
                                 Text(
-                                    text = "${playlist.tracks.size} lagu",
+                                    text = "${playlist.tracks.size} songs",
                                     color = TextMuted,
                                     fontSize = 11.sp
                                 )
@@ -1039,7 +1039,7 @@ fun LibraryScreen(
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Lagu Disukai Terbaru",
+                        text = "Recently Liked Songs",
                         color = TextPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
