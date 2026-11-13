@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import com.rafliadipratama.musiceuy.data.model.Track
 import com.rafliadipratama.musiceuy.lyrics.LyricRow
 import com.rafliadipratama.musiceuy.lyrics.LyricsSearchMatch
+import com.rafliadipratama.musiceuy.ui.components.AppleMusicVolumeSlider
 import com.rafliadipratama.musiceuy.ui.components.LyricsSearchBar
 import com.rafliadipratama.musiceuy.ui.theme.AccentEmerald
 import com.rafliadipratama.musiceuy.ui.theme.TextMuted
@@ -192,7 +193,7 @@ internal fun PortraitPlayerLayout(
                     .fillMaxWidth()
                     .padding(vertical = 4.dp)
             )
-        } else {
+        } else if (track.isVideo) {
             // --- 1.5. Audio / Video Switch Pill ---
             AudioVideoToggleSwitch(
                 isVideoMode = uiState.isVideoMode,
@@ -214,7 +215,9 @@ internal fun PortraitPlayerLayout(
         Spacer(Modifier.height(12.dp))
         PrimaryControlsRow(isPlaying = uiState.isPlaying, onPrevious = onPrevious,
             onTogglePlayPause = onTogglePlayPause, onNext = onNext)
-        Spacer(Modifier.height(14.dp))
+        Spacer(Modifier.height(10.dp))
+        AppleMusicVolumeSlider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
+        Spacer(Modifier.height(10.dp))
         BottomUtilityRow(uiState.isLyricsVisible, uiState.isQueueVisible, onToggleLyrics, onToggleQueue)
         Spacer(Modifier.height(6.dp))
     }

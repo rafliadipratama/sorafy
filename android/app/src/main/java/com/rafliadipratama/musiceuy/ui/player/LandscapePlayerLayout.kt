@@ -47,6 +47,7 @@ import coil.compose.AsyncImage
 import com.rafliadipratama.musiceuy.data.model.Track
 import com.rafliadipratama.musiceuy.lyrics.LyricRow
 import com.rafliadipratama.musiceuy.lyrics.LyricsSearchMatch
+import com.rafliadipratama.musiceuy.ui.components.AppleMusicVolumeSlider
 import com.rafliadipratama.musiceuy.ui.components.DoubleTapHeartOverlay
 import com.rafliadipratama.musiceuy.ui.components.LyricsSearchBar
 import com.rafliadipratama.musiceuy.ui.components.SmoothCornerShape
@@ -132,10 +133,12 @@ internal fun LandscapePlayerLayout(
                     )
                 }
 
-                AudioVideoToggleSwitch(
-                    isVideoMode = uiState.isVideoMode,
-                    onToggle = onToggleVideoMode
-                )
+                if (track.isVideo) {
+                    AudioVideoToggleSwitch(
+                        isVideoMode = uiState.isVideoMode,
+                        onToggle = onToggleVideoMode
+                    )
+                }
             }
 
             // Artwork or Video with Double-Tap to Like
@@ -373,6 +376,10 @@ internal fun LandscapePlayerLayout(
                     onTogglePlayPause = onTogglePlayPause,
                     onNext = onNext,
                 )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                AppleMusicVolumeSlider(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp))
 
                 Spacer(modifier = Modifier.height(10.dp))
 

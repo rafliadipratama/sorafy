@@ -65,14 +65,14 @@
 - Modify: `android/app/src/main/java/com/rafliadipratama/musiceuy/ui/player/PortraitPlayerLayout.kt`
 - Modify: `android/app/src/main/java/com/rafliadipratama/musiceuy/ui/player/LandscapePlayerLayout.kt`
 
-- [ ] **Step 1: Update `PortraitPlayerLayout.kt`**
+- [x] **Step 1: Update `PortraitPlayerLayout.kt`**
   - Wrap `AudioVideoToggleSwitch` in `if (track.isVideo) { ... }`.
   - Place `AppleMusicVolumeSlider` between `PrimaryControlsRow` and `BottomUtilityRow`.
-- [ ] **Step 2: Update `LandscapePlayerLayout.kt`**
+- [x] **Step 2: Update `LandscapePlayerLayout.kt`**
   - Wrap `AudioVideoToggleSwitch` in `if (track.isVideo) { ... }`.
   - Add volume slider in the player controls column.
-- [ ] **Step 3: Run `./gradlew testDebugUnitTest` to verify no regressions**
-- [ ] **Step 4: Commit**
+- [x] **Step 3: Run `./gradlew testDebugUnitTest` to verify no regressions**
+- [x] **Step 4: Commit**
 
 ---
 
