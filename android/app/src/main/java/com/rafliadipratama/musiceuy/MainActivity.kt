@@ -7,6 +7,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -40,6 +41,7 @@ import com.rafliadipratama.musiceuy.ui.components.NavigationTab
 import com.rafliadipratama.musiceuy.ui.components.QueueBottomSheet
 import com.rafliadipratama.musiceuy.ui.components.SleepTimerBottomSheet
 import com.rafliadipratama.musiceuy.ui.components.TrackContextMenuBottomSheet
+import com.rafliadipratama.musiceuy.ui.player.PlayerSheetMotion
 import com.rafliadipratama.musiceuy.ui.screens.ArtistDetailScreen
 import com.rafliadipratama.musiceuy.ui.screens.DownloadedTracksScreen
 import com.rafliadipratama.musiceuy.ui.screens.HomeScreen
@@ -288,11 +290,21 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    // Full-screen Player Overlay (100% Opaque, covers screen when expanded)
+                    // Full-screen Player Overlay with Critically Damped Spring Physics (Apple Music Sheet Motion)
                     AnimatedVisibility(
                         visible = uiState.isPlayerExpanded,
-                        enter = slideInVertically(initialOffsetY = { it }),
-                        exit = slideOutVertically(targetOffsetY = { it })
+                        enter = slideInVertically(
+                            animationSpec = PlayerSheetMotion.IntOffsetSlideSpring,
+                            initialOffsetY = { it }
+                        ) + fadeIn(
+                            animationSpec = PlayerSheetMotion.ElementFadeSpring
+                        ),
+                        exit = slideOutVertically(
+                            animationSpec = PlayerSheetMotion.IntOffsetSlideSpring,
+                            targetOffsetY = { it }
+                        ) + fadeOut(
+                            animationSpec = PlayerSheetMotion.ElementFadeSpring
+                        )
                     ) {
                         PlayerScreen(viewModel = viewModel)
                     }

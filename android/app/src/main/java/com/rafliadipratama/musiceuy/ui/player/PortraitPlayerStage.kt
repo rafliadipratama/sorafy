@@ -32,9 +32,9 @@ import coil.compose.AsyncImage
 import com.rafliadipratama.musiceuy.data.model.Track
 import com.rafliadipratama.musiceuy.lyrics.LyricRow
 import com.rafliadipratama.musiceuy.lyrics.LyricsSearchMatch
+import com.rafliadipratama.musiceuy.ui.components.ContinuousCornerShape
 import com.rafliadipratama.musiceuy.ui.components.DoubleTapHeartOverlay
 import com.rafliadipratama.musiceuy.ui.components.QueueBottomSheet
-import com.rafliadipratama.musiceuy.ui.components.SmoothCornerShape
 import com.rafliadipratama.musiceuy.ui.theme.AccentEmerald
 import com.rafliadipratama.musiceuy.ui.viewmodel.PlayerUiState
 
@@ -112,7 +112,7 @@ internal fun PortraitPlayerStage(
                         scaleX = scale
                         scaleY = scale
                         transformOrigin = TransformOrigin(0f, 0f)
-                    }.clip(SmoothCornerShape(20.dp))
+                    }.clip(ContinuousCornerShape(22.dp))
                     .pointerInput(track.id) {
                         detectTapGestures(onDoubleTap = {
                             if (!liked) onToggleLike()
