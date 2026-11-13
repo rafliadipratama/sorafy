@@ -5,22 +5,9 @@
 # WebView JavaScript bridge, none of which R8 can see being used.
 
 # ---------------------------------------------------------------
-# youtubedl-android: maps yt-dlp JSON output onto VideoInfo via Jackson
-# reflection (YtDlpPlugin.getInfo), so the mapper classes and their fields
-# must survive. The library ships no consumer rules of its own.
+# Serialization & Core Reflection: Annotations must be readable at runtime.
 # ---------------------------------------------------------------
--keep class com.yausername.youtubedl_android.** { *; }
--keep class com.yausername.youtubedl_common.** { *; }
--keepclassmembers class com.yausername.youtubedl_android.mapper.** { *; }
-
-# Jackson databind, used by the above. Annotations must be readable at runtime.
 -keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
--keep class com.fasterxml.jackson.** { *; }
--dontwarn com.fasterxml.jackson.**
--keepclassmembers class * {
-    @com.fasterxml.jackson.annotation.* <fields>;
-    @com.fasterxml.jackson.annotation.* <init>(...);
-}
 
 # ---------------------------------------------------------------
 # NewPipeExtractor + Rhino: Rhino evaluates YouTube's player JS to decipher

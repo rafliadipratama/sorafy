@@ -43,6 +43,15 @@ android {
         }
     }
 
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = true
+        }
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -122,8 +131,6 @@ dependencies {
     // Dynamic Palette from album cover
     implementation("androidx.palette:palette-ktx:1.0.0")
 
-    // yt-dlp native Android engine (youtubedl-android)
-    implementation("io.github.junkfood02.youtubedl-android:library:0.18.1")
 
     // AndroidX WebKit for safe OAuth login and token interception
     implementation("androidx.webkit:webkit:1.12.1")
