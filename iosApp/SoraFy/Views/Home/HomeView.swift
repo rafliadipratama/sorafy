@@ -12,6 +12,7 @@ private struct CategoryItem: Identifiable {
     let id = UUID()
     let title: String
     let icon: String
+    let coverUrl: String
 }
 
 public struct HomeView: View {
@@ -24,11 +25,31 @@ public struct HomeView: View {
     ]
 
     private let topCategories: [CategoryItem] = [
-        CategoryItem(title: "Chill & Relax", icon: "headphones"),
-        CategoryItem(title: "Focus & Study", icon: "cup.and.saucer.fill"),
-        CategoryItem(title: "Workout Energy", icon: "bolt.heart.fill"),
-        CategoryItem(title: "Indo Pop", icon: "music.note"),
-        CategoryItem(title: "Rock & Alternative", icon: "guitars.fill")
+        CategoryItem(
+            title: "Chill & Relax",
+            icon: "headphones",
+            coverUrl: "https://i.scdn.co/image/ab67706f000000020408713c731caaf1f800615a"
+        ),
+        CategoryItem(
+            title: "Focus & Study",
+            icon: "cup.and.saucer.fill",
+            coverUrl: "https://i.scdn.co/image/ab67706f000000026020f2f6476db518ef747da4"
+        ),
+        CategoryItem(
+            title: "Workout Energy",
+            icon: "bolt.heart.fill",
+            coverUrl: "https://i.scdn.co/image/ab67706f00000002385ff7ec006cdc4922f52557"
+        ),
+        CategoryItem(
+            title: "Indo Pop",
+            icon: "music.note",
+            coverUrl: "https://yt3.googleusercontent.com/PR-EXqPEf4aHFFLHknd2II-rvvVINdq7mS_eaHe4NEX11w2P6N8SztkPlouSzvGX6gtuMeeJXro=s576"
+        ),
+        CategoryItem(
+            title: "Rock & Alternative",
+            icon: "guitars.fill",
+            coverUrl: "https://i.scdn.co/image/ab67706f00000002694bf33281695f3b7542a09a"
+        )
     ]
 
     private let officialCharts: [OfficialChart] = [
@@ -137,16 +158,29 @@ public struct HomeView: View {
                                                 await viewModel.search(query: category.title)
                                             }
                                         } label: {
-                                            HStack(spacing: 8) {
-                                                Image(systemName: category.icon)
-                                                    .font(.system(size: 13, weight: .semibold))
-                                                    .foregroundColor(Color(red: 0.0, green: 0.898, blue: 0.60))
+                                            HStack(spacing: 10) {
+                                                AsyncImage(url: URL(string: category.coverUrl)) { phase in
+                                                    if let img = phase.image {
+                                                        img.resizable().aspectRatio(contentMode: .fill)
+                                                    } else {
+                                                        Color.white.opacity(0.08)
+                                                            .overlay(
+                                                                Image(systemName: category.icon)
+                                                                    .font(.system(size: 13, weight: .semibold))
+                                                                    .foregroundColor(Color(red: 0.0, green: 0.898, blue: 0.60))
+                                                            )
+                                                    }
+                                                }
+                                                .frame(width: 36, height: 36)
+                                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
                                                 Text(category.title)
                                                     .font(.system(size: 13, weight: .semibold))
                                                     .foregroundColor(.white)
                                             }
-                                            .padding(.horizontal, 14)
-                                            .padding(.vertical, 10)
+                                            .padding(.leading, 6)
+                                            .padding(.trailing, 14)
+                                            .padding(.vertical, 6)
                                             .background(Color.white.opacity(0.05))
                                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                             .overlay(
