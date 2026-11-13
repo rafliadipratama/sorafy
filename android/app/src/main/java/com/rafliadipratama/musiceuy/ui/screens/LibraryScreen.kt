@@ -122,7 +122,7 @@ fun LibraryScreen(
             containerColor = SurfaceContainerHigh,
             title = {
                 Text(
-                    text = "Buat Playlist Baru",
+                    text = "Create New Playlist",
                     color = TextPrimary,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
@@ -133,7 +133,7 @@ fun LibraryScreen(
                     OutlinedTextField(
                         value = newPlaylistName,
                         onValueChange = { newPlaylistName = it },
-                        placeholder = { Text("Nama playlist...", color = TextMuted) },
+                        placeholder = { Text("Playlist Name", color = TextMuted) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrandGreen,
@@ -145,7 +145,7 @@ fun LibraryScreen(
                     OutlinedTextField(
                         value = newPlaylistDesc,
                         onValueChange = { newPlaylistDesc = it },
-                        placeholder = { Text("Deskripsi (opsional)...", color = TextMuted) },
+                        placeholder = { Text("Description (Optional)", color = TextMuted) },
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = BrandGreen,
@@ -168,12 +168,12 @@ fun LibraryScreen(
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = BrandGreen)
                 ) {
-                    Text("Buat", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
+                    Text("Create", color = Color(0xFF0C0E11), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateDialog = false }) {
-                    Text("Batal", color = TextSecondary)
+                    Text("Cancel", color = TextSecondary)
                 }
             }
         )
@@ -862,14 +862,14 @@ fun LibraryScreen(
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.Add,
-                                        contentDescription = "Buat",
+                                        contentDescription = "Create",
                                         tint = BrandGreen,
                                         modifier = Modifier.size(24.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.height(8.dp))
                                 Text(
-                                    text = "Buat Playlist",
+                                    text = "Create Playlist",
                                     color = BrandGreen,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold
@@ -956,7 +956,7 @@ fun LibraryScreen(
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = "Jelajahi Genre Populer",
+                        text = "Explore Popular Genres",
                         color = TextPrimary,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold

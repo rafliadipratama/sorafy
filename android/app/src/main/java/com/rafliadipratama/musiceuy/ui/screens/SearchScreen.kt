@@ -106,7 +106,7 @@ fun SearchScreen(
     var searchInput by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    val searchCategoryPills = listOf("Semua", "Lagu", "Video", "Artis", "Album")
+    val searchCategoryPills = listOf("All", "Songs", "Videos", "Artists", "Albums")
 
     val trendingKeywords = remember {
         listOf(
@@ -219,7 +219,7 @@ fun SearchScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Close,
-                                    contentDescription = "Hapus",
+                                    contentDescription = "Clear",
                                     tint = TextMuted,
                                     modifier = Modifier.size(20.dp)
                                 )
@@ -353,14 +353,14 @@ fun SearchScreen(
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
-                                        text = "Pencarian Terakhir",
+                                        text = "Recent Searches",
                                         color = TextPrimary,
                                         fontSize = 16.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                 }
                                 Text(
-                                    text = "Hapus Semua",
+                                    text = "Clear All",
                                     color = TextMuted,
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.SemiBold,
@@ -399,7 +399,7 @@ fun SearchScreen(
                                         Spacer(modifier = Modifier.width(6.dp))
                                         Icon(
                                             imageVector = Icons.Default.Close,
-                                            contentDescription = "Hapus item",
+                                            contentDescription = "Remove item",
                                             tint = TextMuted,
                                             modifier = Modifier
                                                 .size(14.dp)
@@ -415,7 +415,7 @@ fun SearchScreen(
                     // Trending Keywords
                     item {
                         SearchSectionHeader(
-                            title = "Sedang Tren",
+                            title = "Trending Now",
                             icon = Icons.AutoMirrored.Filled.TrendingUp
                         )
                         Spacer(modifier = Modifier.height(6.dp))
@@ -450,7 +450,7 @@ fun SearchScreen(
                     // Browse Categories / Genres
                     item {
                         SearchSectionHeader(
-                            title = "Jelajahi Kategori",
+                            title = "Explore Categories",
                             icon = Icons.Default.MusicNote
                         )
                         Spacer(modifier = Modifier.height(10.dp))
@@ -497,9 +497,9 @@ fun SearchScreen(
                 // =========================================================================
                 if (isSearchActive) {
                     // TOP RESULT CARD (Apple Music / Spotify Style)
-                    if (topResultTrack != null && (uiState.searchCategory == "Semua" || uiState.searchCategory == "Lagu")) {
+                    if (topResultTrack != null && uiState.searchCategory in listOf("All", "Semua", "Songs", "Lagu")) {
                         item {
-                            SearchSectionHeader(title = "Hasil Terbaik")
+                            SearchSectionHeader(title = "Top Result")
                             Spacer(modifier = Modifier.height(8.dp))
                             TopResultCard(
                                 track = topResultTrack,
@@ -521,7 +521,7 @@ fun SearchScreen(
                     }
 
                     // ARTISTS RESULTS
-                    if (uiState.searchCategory == "Semua" || uiState.searchCategory == "Artis") {
+                    if (uiState.searchCategory in listOf("All", "Semua", "Artists", "Artis")) {
                         if (uiState.searchResultArtists.isNotEmpty()) {
                             item {
                                 SearchSectionHeader(title = "Related Artists", icon = Icons.Default.Person)
@@ -542,10 +542,10 @@ fun SearchScreen(
                     }
 
                     // ALBUMS RESULTS
-                    if (uiState.searchCategory == "Semua" || uiState.searchCategory == "Album") {
+                    if (uiState.searchCategory in listOf("All", "Semua", "Albums", "Album")) {
                         if (uiState.searchResultAlbums.isNotEmpty()) {
                             item {
-                                SearchSectionHeader(title = "Album & Single", icon = Icons.Default.Album)
+                                SearchSectionHeader(title = "Albums", icon = Icons.Default.Album)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -562,11 +562,11 @@ fun SearchScreen(
                         }
                     }
 
-                    // VIDEO RESULTS (When in "Semua")
-                    if (uiState.searchCategory == "Semua") {
+                    // VIDEO RESULTS (When in "All")
+                    if (uiState.searchCategory in listOf("All", "Semua")) {
                         if (uiState.searchResultVideos.isNotEmpty()) {
                             item {
-                                SearchSectionHeader(title = "Video", icon = Icons.Default.PlayArrow)
+                                SearchSectionHeader(title = "Videos", icon = Icons.Default.PlayArrow)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 LazyRow(
                                     horizontalArrangement = Arrangement.spacedBy(14.dp)
@@ -587,10 +587,10 @@ fun SearchScreen(
                     }
 
                     // EXCLUSIVE VIDEO TAB
-                    if (uiState.searchCategory == "Video") {
+                    if (uiState.searchCategory in listOf("Videos", "Video")) {
                         if (uiState.searchResultVideos.isNotEmpty()) {
                             item {
-                                SearchSectionHeader(title = "Video", icon = Icons.Default.PlayArrow)
+                                SearchSectionHeader(title = "Videos", icon = Icons.Default.PlayArrow)
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
 
@@ -608,9 +608,9 @@ fun SearchScreen(
                     }
 
                     // SONGS LIST
-                    if (uiState.searchCategory == "Semua" || uiState.searchCategory == "Lagu") {
-                        // Skip the first one if already shown in Top Result Card when in "Semua"
-                        val songRows = if (uiState.searchCategory == "Semua" && topResultTrack != null) {
+                    if (uiState.searchCategory in listOf("All", "Semua", "Songs", "Lagu")) {
+                        // Skip the first one if already shown in Top Result Card when in "All"
+                        val songRows = if (uiState.searchCategory in listOf("All", "Semua") && topResultTrack != null) {
                             uiState.searchResults.filter { it.id != topResultTrack.id }
                         } else {
                             uiState.searchResults
@@ -618,7 +618,7 @@ fun SearchScreen(
 
                         if (songRows.isNotEmpty()) {
                             item {
-                                SearchSectionHeader(title = "Lagu", icon = Icons.Default.MusicNote)
+                                SearchSectionHeader(title = "Songs", icon = Icons.Default.MusicNote)
                                 Spacer(modifier = Modifier.height(6.dp))
                             }
 
@@ -674,14 +674,14 @@ fun SearchScreen(
                                     )
                                     Spacer(modifier = Modifier.height(12.dp))
                                     Text(
-                                        text = "Tidak ada hasil untuk '$searchInput'",
+                                        text = "No results found for '$searchInput'",
                                         color = TextSecondary,
                                         fontSize = 15.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Spacer(modifier = Modifier.height(4.dp))
                                     Text(
-                                        text = "Periksa ejaan kata kunci atau coba artis lain",
+                                        text = "Try searching for another song, artist, or album.",
                                         color = TextMuted,
                                         fontSize = 13.sp
                                     )
@@ -796,7 +796,7 @@ private fun TopResultCard(
             ) {
                 Icon(
                     imageVector = if (isActive && isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = "Putar",
+                    contentDescription = "Play",
                     tint = Color.Black,
                     modifier = Modifier.size(26.dp)
                 )
@@ -892,7 +892,7 @@ private fun ArtistSearchItemCard(
             overflow = TextOverflow.Ellipsis
         )
         Text(
-            text = "Artis",
+            text = "Artist",
             color = TextMuted,
             fontSize = 10.sp
         )

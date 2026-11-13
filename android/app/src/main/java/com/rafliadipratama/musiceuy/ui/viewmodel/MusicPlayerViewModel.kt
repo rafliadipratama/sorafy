@@ -50,6 +50,17 @@ import com.rafliadipratama.musiceuy.ui.components.TopToaster
 
 enum class RepeatMode { OFF, ALL, ONE }
 
+typealias MusicPlayerUiState = PlayerUiState
+
+fun normalizeSearchCategory(category: String): String = when (category.lowercase().trim()) {
+    "semua", "all" -> "All"
+    "lagu", "songs", "song" -> "Songs"
+    "video", "videos" -> "Videos"
+    "artis", "artists", "artist" -> "Artists"
+    "album", "albums" -> "Albums"
+    else -> category
+}
+
 data class PlayerUiState(
     val currentTrack: Track? = null,
     val isPlaying: Boolean = false,
@@ -66,7 +77,7 @@ data class PlayerUiState(
     val searchResultArtists: List<Artist> = emptyList(),
     val searchResultAlbums: List<Album> = emptyList(),
     val searchResultVideos: List<Track> = emptyList(),
-    val searchCategory: String = "Semua",
+    val searchCategory: String = "All",
     val trendingTracks: List<Track> = emptyList(),
     val mostPlayedTracks: List<Track> = emptyList(),
     val newReleases: List<Album> = emptyList(),
@@ -380,7 +391,8 @@ class MusicPlayerViewModel(application: Application) : AndroidViewModel(applicat
     }
 
     fun setSearchCategory(category: String) {
-        _uiState.update { it.copy(searchCategory = category) }
+        val normalizedCategory = normalizeSearchCategory(category)
+        _uiState.update { it.copy(searchCategory = normalizedCategory) }
     }
 
     fun selectHomeFilter(filter: String) {
