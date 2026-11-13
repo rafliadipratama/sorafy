@@ -16,18 +16,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.DownloadDone
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Lyrics
 import androidx.compose.material.icons.filled.MusicNote
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SkipPrevious
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -38,16 +28,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rafliadipratama.musiceuy.R
 import com.rafliadipratama.musiceuy.data.model.Track
+import com.rafliadipratama.musiceuy.ui.components.ApplePlaybackSlider
 import com.rafliadipratama.musiceuy.ui.components.AudioFormatBadge
+import com.rafliadipratama.musiceuy.ui.components.ContinuousCornerShape
 import com.rafliadipratama.musiceuy.ui.components.LikeBurst
-import com.rafliadipratama.musiceuy.ui.components.SquigglySlider
 import com.rafliadipratama.musiceuy.ui.theme.AccentEmerald
 import com.rafliadipratama.musiceuy.ui.theme.DarkSurface
 import com.rafliadipratama.musiceuy.ui.theme.TextMuted
@@ -89,7 +82,7 @@ internal fun TrackInfoRow(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .clip(RoundedCornerShape(6.dp))
+                    .clip(ContinuousCornerShape(6.dp))
                     .clickable(onClick = onOpenArtist)
                     .padding(vertical = 2.dp)
             ) {
@@ -104,7 +97,7 @@ internal fun TrackInfoRow(
                 if (track.artist.isVerified || track.isVerified) {
                     Spacer(modifier = Modifier.width(6.dp))
                     Icon(
-                        imageVector = Icons.Default.Verified,
+                        painter = painterResource(id = R.drawable.ic_iconsax_tick_circle_bold),
                         contentDescription = "Terverifikasi",
                         tint = AccentEmerald,
                         modifier = Modifier.size(16.dp)
@@ -119,7 +112,7 @@ internal fun TrackInfoRow(
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
-            // Download Button
+            // Iconsax Download Button
             IconButton(
                 onClick = onDownload,
                 enabled = !isDownloading && !isDownloaded,
@@ -141,7 +134,7 @@ internal fun TrackInfoRow(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Default.Download,
+                        painter = painterResource(id = R.drawable.ic_iconsax_document_download_linear),
                         contentDescription = "Unduh Lagu",
                         tint = TextSecondary,
                         modifier = Modifier.size(22.dp)
@@ -149,14 +142,14 @@ internal fun TrackInfoRow(
                 }
             }
 
-            // Like Button with Burst Animation
+            // Iconsax Like Button with Heart
             LikeBurst(trigger = isLiked, key = track.id, modifier = Modifier.size(42.dp)) {
                 IconButton(
                     onClick = onToggleLike,
                     modifier = Modifier.size(42.dp)
                 ) {
                     Icon(
-                        imageVector = if (isLiked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        painter = painterResource(id = if (isLiked) R.drawable.ic_iconsax_heart_bold else R.drawable.ic_iconsax_heart_linear),
                         contentDescription = if (isLiked) "Hapus dari Favorit" else "Sukai",
                         tint = if (isLiked) Color(0xFFFF2D55) else TextSecondary,
                         modifier = Modifier.size(24.dp)
@@ -180,13 +173,13 @@ internal fun PlaybackSeekbar(
     val sliderValue = if (durationMs > 0) (currentMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f) else 0f
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        SquigglySlider(
+        // Clean static Apple Music slider (no wavy animation)
+        ApplePlaybackSlider(
             value = if (isUserSeeking) seekProgress else sliderValue,
             onValueChange = onSeekChange,
             onValueChangeFinished = onSeekFinished,
-            isPlaying = isPlaying,
             activeColor = AccentEmerald,
-            inactiveColor = DarkSurface,
+            inactiveColor = Color(0x33FFFFFF),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -213,7 +206,7 @@ internal fun PlaybackSeekbar(
 internal fun PrimaryControlsRow(
     isPlaying: Boolean,
     playButtonSize: androidx.compose.ui.unit.Dp = 66.dp,
-    playIconSize: androidx.compose.ui.unit.Dp = 36.dp,
+    playIconSize: androidx.compose.ui.unit.Dp = 30.dp,
     onPrevious: () -> Unit,
     onTogglePlayPause: () -> Unit,
     onNext: () -> Unit,
@@ -225,17 +218,17 @@ internal fun PrimaryControlsRow(
     ) {
         Spacer(Modifier.size(24.dp))
 
-        // Previous
+        // Iconsax Previous
         IconButton(onClick = onPrevious, modifier = Modifier.size(46.dp)) {
             Icon(
-                imageVector = Icons.Default.SkipPrevious,
+                painter = painterResource(id = R.drawable.ic_iconsax_previous_bold),
                 contentDescription = "Sebelumnya",
                 tint = TextPrimary,
-                modifier = Modifier.size(34.dp)
+                modifier = Modifier.size(28.dp)
             )
         }
 
-        // Play / Pause (Large Center Button)
+        // Iconsax Play / Pause (Large Center Button)
         Box(
             modifier = Modifier
                 .size(playButtonSize)
@@ -245,20 +238,20 @@ internal fun PrimaryControlsRow(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                painter = painterResource(id = if (isPlaying) R.drawable.ic_iconsax_pause_bold else R.drawable.ic_iconsax_play_bold),
                 contentDescription = "Play/Pause",
                 tint = Color.Black,
                 modifier = Modifier.size(playIconSize)
             )
         }
 
-        // Next
+        // Iconsax Next
         IconButton(onClick = onNext, modifier = Modifier.size(46.dp)) {
             Icon(
-                imageVector = Icons.Default.SkipNext,
+                painter = painterResource(id = R.drawable.ic_iconsax_next_bold),
                 contentDescription = "Berikutnya",
                 tint = TextPrimary,
-                modifier = Modifier.size(34.dp)
+                modifier = Modifier.size(28.dp)
             )
         }
 
@@ -278,26 +271,26 @@ internal fun BottomUtilityRow(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // 1. Lyrics Button (Clean Icon-only like Queue)
+        // Iconsax Lyrics Button
         IconButton(
             onClick = onToggleLyrics,
             modifier = Modifier.size(48.dp)
         ) {
             Icon(
-                imageVector = Icons.Default.Lyrics,
+                painter = painterResource(id = R.drawable.ic_iconsax_microphone_2_linear),
                 contentDescription = "Lirik",
                 tint = if (isLyricsVisible) AccentEmerald else TextSecondary,
                 modifier = Modifier.size(22.dp)
             )
         }
 
-        // 3. Queue Button
+        // Iconsax Queue Button
         IconButton(
             onClick = onToggleQueue,
             modifier = Modifier.size(48.dp).semantics { selected = isQueueVisible }
         ) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                painter = painterResource(id = R.drawable.ic_iconsax_music_playlist_linear),
                 contentDescription = if (isQueueVisible) "Tutup antrean" else "Buka antrean dan mode pemutaran",
                 tint = if (isQueueVisible) AccentEmerald else TextSecondary,
                 modifier = Modifier.size(22.dp)
@@ -313,7 +306,6 @@ private fun formatMs(ms: Long): String {
     return String.format("%02d:%02d", minutes, seconds)
 }
 
-
 @Composable
 internal fun AudioVideoToggleSwitch(
     isVideoMode: Boolean,
@@ -322,9 +314,9 @@ internal fun AudioVideoToggleSwitch(
 ) {
     Row(
         modifier = modifier
-            .clip(RoundedCornerShape(20.dp))
+            .clip(ContinuousCornerShape(20.dp))
             .background(Color.White.copy(alpha = 0.10f))
-            .border(1.dp, Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+            .border(0.5.dp, Color.White.copy(alpha = 0.08f), ContinuousCornerShape(20.dp))
             .padding(3.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -333,7 +325,7 @@ internal fun AudioVideoToggleSwitch(
         val audioTint = if (!isVideoMode) Color.White else TextMuted
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
+                .clip(ContinuousCornerShape(16.dp))
                 .background(audioBg)
                 .clickable { onToggle(false) }
                 .padding(horizontal = 14.dp, vertical = 6.dp),
@@ -360,7 +352,7 @@ internal fun AudioVideoToggleSwitch(
         val videoTint = if (isVideoMode) Color.White else TextMuted
         Row(
             modifier = Modifier
-                .clip(RoundedCornerShape(16.dp))
+                .clip(ContinuousCornerShape(16.dp))
                 .background(videoBg)
                 .clickable { onToggle(true) }
                 .padding(horizontal = 14.dp, vertical = 6.dp),

@@ -10,12 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.Verified
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -26,11 +20,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.rafliadipratama.musiceuy.R
 import com.rafliadipratama.musiceuy.data.model.Track
 import com.rafliadipratama.musiceuy.ui.theme.AccentEmerald
 import com.rafliadipratama.musiceuy.ui.theme.LiquidGlassSurface
@@ -122,7 +118,7 @@ fun MiniPlayer(
                             if (track.artist.isVerified || track.isVerified) {
                                 Spacer(modifier = Modifier.width(4.dp))
                                 Icon(
-                                    imageVector = Icons.Default.Verified,
+                                    painter = painterResource(id = R.drawable.ic_iconsax_tick_circle_bold),
                                     contentDescription = "Verified",
                                     tint = AccentEmerald,
                                     modifier = Modifier.size(13.dp)
@@ -132,7 +128,7 @@ fun MiniPlayer(
                     }
                 }
 
-                // Dedicated Controls with tactile spring feedback
+                // Dedicated Controls with tactile spring feedback & Iconsax icons
                 IconButton(
                     onClick = onQueueClick,
                     modifier = Modifier
@@ -140,7 +136,7 @@ fun MiniPlayer(
                         .pressBounce(pressedScale = 0.85f)
                 ) {
                     Icon(
-                        imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                        painter = painterResource(id = R.drawable.ic_iconsax_music_playlist_linear),
                         contentDescription = "Antrean Musik",
                         tint = TextSecondary,
                         modifier = Modifier.size(20.dp)
@@ -154,10 +150,10 @@ fun MiniPlayer(
                         .pressBounce(pressedScale = 0.85f)
                 ) {
                     Icon(
-                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        painter = painterResource(id = if (isPlaying) R.drawable.ic_iconsax_pause_bold else R.drawable.ic_iconsax_play_bold),
                         contentDescription = "Play/Pause",
                         tint = AccentEmerald,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(24.dp)
                     )
                 }
 
@@ -168,10 +164,10 @@ fun MiniPlayer(
                         .pressBounce(pressedScale = 0.85f)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.SkipNext,
+                        painter = painterResource(id = R.drawable.ic_iconsax_next_bold),
                         contentDescription = "Next",
                         tint = TextSecondary,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }

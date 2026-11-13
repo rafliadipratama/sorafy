@@ -91,7 +91,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import com.rafliadipratama.musiceuy.data.model.Playlist
 import com.rafliadipratama.musiceuy.data.model.Track
 import com.rafliadipratama.musiceuy.ui.components.PlayingIndicator
-import com.rafliadipratama.musiceuy.ui.components.SmoothCornerShape
+import com.rafliadipratama.musiceuy.ui.components.ContinuousCornerShape
 import com.rafliadipratama.musiceuy.ui.components.TrackItem
 import com.rafliadipratama.musiceuy.ui.components.NewReleasesBottomSheet
 import com.rafliadipratama.musiceuy.ui.components.pressBounce
@@ -117,7 +117,7 @@ private data class OfficialChart(
 private data class TopCategory(
     val title: String,
     val filterPill: String,
-    val icon: ImageVector,
+    val iconRes: Int,
     val gradient: List<Color>
 )
 
@@ -171,14 +171,12 @@ fun HomeScreen(
 
     val topCategories = remember {
         listOf(
-            TopCategory("Santai & Chill", "Santai & Chill", Icons.Default.SelfImprovement, listOf(Color(0xFF134E5E), Color(0xFF71B280))),
-            TopCategory("Fokus & Belajar", "Fokus / Belajar", Icons.Default.School, listOf(Color(0xFF1E3C72), Color(0xFF2A5298))),
-            TopCategory("Workout & Energi", "Workout", Icons.Default.FitnessCenter, listOf(Color(0xFFFF416C), Color(0xFFFF4B2B))),
-            TopCategory("Pesta & Dance", "Pesta", Icons.Default.Celebration, listOf(Color(0xFF8A2387), Color(0xFFE94057))),
-            TopCategory("Pop Indonesia", "Pop Indonesia", Icons.Default.Headphones, listOf(Color(0xFF007991), Color(0xFF78FFD6))),
-            TopCategory("Indie Vibe", "Indie", Icons.Default.Nightlife, listOf(Color(0xFF4A00E0), Color(0xFF8E2DE2))),
-            TopCategory("Rock Alternatif", "Rock", Icons.Default.Whatshot, listOf(Color(0xFFE65C00), Color(0xFFF9D423))),
-            TopCategory("Dangdut Koplo", "Dangdut", Icons.Default.Celebration, listOf(Color(0xFFD31027), Color(0xFFEA384D)))
+            TopCategory("Santai & Chill", "Santai & Chill", R.drawable.ic_iconsax_headphone_linear, listOf(Color(0xFF141A22), Color(0xFF1C2430))),
+            TopCategory("Fokus & Belajar", "Fokus / Belajar", R.drawable.ic_iconsax_coffee_linear, listOf(Color(0xFF141A22), Color(0xFF1E2632))),
+            TopCategory("Workout & Energi", "Workout", R.drawable.ic_iconsax_flash_linear, listOf(Color(0xFF141A22), Color(0xFF222834))),
+            TopCategory("Pop Indonesia", "Pop Indonesia", R.drawable.ic_iconsax_music_linear, listOf(Color(0xFF141A22), Color(0xFF1A222C))),
+            TopCategory("Indie Vibe", "Indie", R.drawable.ic_iconsax_radio_linear, listOf(Color(0xFF141A22), Color(0xFF1D232E))),
+            TopCategory("Rock & Alternatif", "Rock", R.drawable.ic_iconsax_musicnote_linear, listOf(Color(0xFF141A22), Color(0xFF212530)))
         )
     }
 
@@ -249,7 +247,7 @@ fun HomeScreen(
                         val isSelected = uiState.selectedHomeFilter == pill
                         Box(
                             modifier = Modifier
-                                .clip(SmoothCornerShape(20.dp))
+                                .clip(ContinuousCornerShape(20.dp))
                                 .background(if (isSelected) BrandGreen else SurfaceContainerHigh)
                                 .pressBounce(pressedScale = 0.92f)
                                 .clickable {
@@ -358,17 +356,17 @@ fun HomeScreen(
                                 ) {
                                     SectionHeader(
                                         title = stringResource(id = R.string.offline_downloaded_section_title),
-                                        icon = Icons.Default.DownloadDone
+                                        iconRes = R.drawable.ic_iconsax_document_download_bold
                                     )
                                     Button(
                                         onClick = { viewModel.playAllDownloadedTracks() },
                                         colors = ButtonDefaults.buttonColors(containerColor = BrandGreen),
-                                        shape = RoundedCornerShape(20.dp),
+                                        shape = ContinuousCornerShape(16.dp),
                                         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
                                         modifier = Modifier.height(32.dp)
                                     ) {
                                         Icon(
-                                            imageVector = Icons.Default.PlayArrow,
+                                            painter = painterResource(id = R.drawable.ic_iconsax_play_bold),
                                             contentDescription = null,
                                             tint = Color(0xFF0C0E11),
                                             modifier = Modifier.size(16.dp)
@@ -468,7 +466,7 @@ fun HomeScreen(
                         // ==================== ONLINE YOUTUBE MUSIC & MUSICFY STYLE LAYOUT ====================
                         // 0. Tangga Lagu & Charts Resmi
                         item {
-                            SectionHeader(title = stringResource(id = R.string.home_top_50), icon = Icons.Default.Leaderboard)
+                            SectionHeader(title = stringResource(id = R.string.home_top_50), iconRes = R.drawable.ic_iconsax_chart_2_bold)
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -480,7 +478,7 @@ fun HomeScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(width = 175.dp, height = 118.dp)
-                                            .clip(SmoothCornerShape(16.dp))
+                                            .clip(ContinuousCornerShape(16.dp))
                                             .background(Brush.linearGradient(chart.gradientColors))
                                             .pressBounce(interactionSource = chartInteractionSource, pressedScale = 0.95f)
                                             .clickable(
@@ -546,10 +544,10 @@ fun HomeScreen(
                                                 contentAlignment = Alignment.Center
                                             ) {
                                                 Icon(
-                                                    imageVector = Icons.Default.PlayArrow,
+                                                    painter = painterResource(id = R.drawable.ic_iconsax_play_bold),
                                                     contentDescription = "Putar Chart",
                                                     tint = Color.White,
-                                                    modifier = Modifier.size(18.dp)
+                                                    modifier = Modifier.size(16.dp)
                                                 )
                                             }
                                         }
@@ -562,7 +560,7 @@ fun HomeScreen(
 
                         // 1. Kategori Teratas (YouTube Music Style)
                         item {
-                            SectionHeader(title = "Kategori Teratas", icon = Icons.Default.Category)
+                            SectionHeader(title = "Kategori Teratas", iconRes = R.drawable.ic_iconsax_music_filter_bold)
                             LazyRow(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -575,12 +573,12 @@ fun HomeScreen(
                                     Box(
                                         modifier = Modifier
                                             .size(width = 145.dp, height = 70.dp)
-                                            .clip(SmoothCornerShape(16.dp))
+                                            .clip(ContinuousCornerShape(16.dp))
                                             .background(Brush.linearGradient(category.gradient))
                                             .border(
                                                 width = if (isSelected) 2.dp else 0.dp,
                                                 color = if (isSelected) BrandGreenBright else Color.Transparent,
-                                                shape = SmoothCornerShape(16.dp)
+                                                shape = ContinuousCornerShape(16.dp)
                                             )
                                             .pressBounce(interactionSource = catInteractionSource, pressedScale = 0.95f)
                                             .clickable(
@@ -607,10 +605,10 @@ fun HomeScreen(
                                             )
                                             Spacer(modifier = Modifier.width(6.dp))
                                             Icon(
-                                                imageVector = category.icon,
+                                                painter = painterResource(id = category.iconRes),
                                                 contentDescription = null,
                                                 tint = Color.White.copy(alpha = 0.9f),
-                                                modifier = Modifier.size(22.dp)
+                                                modifier = Modifier.size(20.dp)
                                             )
                                         }
                                     }
@@ -623,7 +621,7 @@ fun HomeScreen(
                     // 2. Putar Cepat Favoritmu (Swipe ke kiri 4-lagu per kolom style Musicfy & YouTube Music)
                     if (uiState.mostPlayedTracks.isNotEmpty()) {
                         item {
-                            SectionHeader(title = "Putar Cepat Favoritmu", icon = Icons.AutoMirrored.Filled.TrendingUp)
+                            SectionHeader(title = "Putar Cepat Favoritmu", iconRes = R.drawable.ic_iconsax_flash_bold)
                             Spacer(modifier = Modifier.height(6.dp))
                             HorizontalSongColumns(
                                 tracks = uiState.mostPlayedTracks.take(16),
@@ -645,7 +643,7 @@ fun HomeScreen(
                         // 3. Artis Populer Untukmu (Carousel Avatar Lingkaran Musisi Top)
                         if (uiState.popularArtists.isNotEmpty()) {
                             item {
-                                SectionHeader(title = stringResource(id = R.string.home_popular_artists), icon = Icons.Default.Person)
+                                SectionHeader(title = stringResource(id = R.string.home_popular_artists), iconRes = R.drawable.ic_iconsax_microphone_2_bold)
                                 LazyRow(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -666,7 +664,7 @@ fun HomeScreen(
                         // 4. Playlist Populer (Carousel Cover Persegi Style Musicfy & YouTube Music)
                         if (uiState.communityPlaylists.isNotEmpty()) {
                             item {
-                                SectionHeader(title = "Playlist Populer", icon = Icons.Default.Headphones)
+                                SectionHeader(title = "Playlist Populer", iconRes = R.drawable.ic_iconsax_music_playlist_bold)
                                 LazyRow(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -689,7 +687,7 @@ fun HomeScreen(
                             item {
                                 SectionHeader(
                                     title = stringResource(id = R.string.home_albums_singles),
-                                    icon = Icons.Default.Album,
+                                    iconRes = R.drawable.ic_iconsax_music_bold,
                                     actionText = "Lihat Semua",
                                     onActionClick = { viewModel.toggleNewReleasesSheet(true) }
                                 )
@@ -715,7 +713,7 @@ fun HomeScreen(
                             item {
                                 SectionHeader(
                                     title = "Video Musik Untukmu",
-                                    icon = Icons.Default.PlayArrow
+                                    iconRes = R.drawable.ic_iconsax_play_bold
                                 )
                                 LazyRow(
                                     modifier = Modifier
@@ -770,7 +768,7 @@ fun HomeScreen(
                                 } else {
                                     "Top Trending di Indonesia"
                                 }
-                                SectionHeader(title = trendingTitle, icon = Icons.Default.Whatshot)
+                                SectionHeader(title = trendingTitle, iconRes = R.drawable.ic_iconsax_chart_2_bold)
                                 Spacer(modifier = Modifier.height(6.dp))
                                 HorizontalSongColumns(
                                     tracks = uiState.trendingTracks,
@@ -915,6 +913,7 @@ private fun SectionHeader(
     title: String,
     modifier: Modifier = Modifier,
     icon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    iconRes: Int? = null,
     label: String? = null,
     avatarUrl: String? = null,
     actionText: String? = null,
@@ -942,6 +941,14 @@ private fun SectionHeader(
                         .border(1.5.dp, BrandGreen.copy(alpha = 0.6f), CircleShape)
                 )
                 Spacer(modifier = Modifier.width(10.dp))
+            } else if (iconRes != null) {
+                Icon(
+                    painter = painterResource(id = iconRes),
+                    contentDescription = null,
+                    tint = BrandGreen,
+                    modifier = Modifier.size(18.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
             } else if (icon != null) {
                 Icon(
                     imageVector = icon,
@@ -1009,7 +1016,7 @@ fun HomeVideoCard(
         modifier = modifier
             .size(width = cardWidth, height = cardHeight)
             .press3D(maxTilt = 5f, pressedScale = 0.97f)
-            .clip(SmoothCornerShape(16.dp))
+            .clip(ContinuousCornerShape(16.dp))
             .background(SurfaceContainerHigh)
             .clickable(onClick = onClick)
     ) {
@@ -1053,7 +1060,7 @@ fun HomeVideoCard(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
-                        imageVector = Icons.Default.PlayArrow,
+                        painter = painterResource(id = R.drawable.ic_iconsax_play_bold),
                         contentDescription = null,
                         tint = Color.White,
                         modifier = Modifier.size(10.dp)
@@ -1230,7 +1237,7 @@ private fun AlbumSearchCard(
         modifier = Modifier
             .width(130.dp)
             .press3D(maxTilt = 6f, pressedScale = 0.96f)
-            .clip(SmoothCornerShape(18.dp))
+            .clip(ContinuousCornerShape(18.dp))
             .background(SurfaceContainerHigh)
             .clickable { onClick() }
             .padding(8.dp)
@@ -1239,7 +1246,7 @@ private fun AlbumSearchCard(
             Box(
                 modifier = Modifier
                     .size(114.dp)
-                    .clip(SmoothCornerShape(10.dp))
+                    .clip(ContinuousCornerShape(10.dp))
                     .background(SurfaceContainer),
                 contentAlignment = Alignment.Center
             ) {
@@ -1252,10 +1259,10 @@ private fun AlbumSearchCard(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Default.Album,
+                        painter = painterResource(id = R.drawable.ic_iconsax_music_bold),
                         contentDescription = null,
                         tint = BrandGreen,
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(36.dp)
                     )
                 }
             }
@@ -1289,7 +1296,7 @@ private fun PlaylistHomeCard(
         modifier = Modifier
             .width(136.dp)
             .press3D(maxTilt = 6f, pressedScale = 0.96f)
-            .clip(SmoothCornerShape(18.dp))
+            .clip(ContinuousCornerShape(18.dp))
             .background(SurfaceContainerHigh)
             .clickable { onClick() }
             .padding(8.dp)
@@ -1298,7 +1305,7 @@ private fun PlaylistHomeCard(
             Box(
                 modifier = Modifier
                     .size(120.dp)
-                    .clip(SmoothCornerShape(10.dp))
+                    .clip(ContinuousCornerShape(10.dp))
                     .background(SurfaceContainer),
                 contentAlignment = Alignment.Center
             ) {
@@ -1311,7 +1318,7 @@ private fun PlaylistHomeCard(
                     )
                 } else {
                     Icon(
-                        imageVector = Icons.Default.Headphones,
+                        painter = painterResource(id = R.drawable.ic_iconsax_music_playlist_bold),
                         contentDescription = null,
                         tint = BrandGreen,
                         modifier = Modifier.size(36.dp)
@@ -1387,7 +1394,7 @@ fun CompactTrackItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
+            .clip(ContinuousCornerShape(12.dp))
             .background(if (isActive) SurfaceContainerHigh else SurfaceContainer.copy(alpha = 0.45f))
             .pressBounce(pressedScale = 0.98f)
             .combinedClickable(
@@ -1401,7 +1408,7 @@ fun CompactTrackItem(
         Box(
             modifier = Modifier
                 .size(48.dp)
-                .clip(RoundedCornerShape(8.dp))
+                .clip(ContinuousCornerShape(10.dp))
                 .background(SurfaceContainer)
         ) {
             AsyncImage(
@@ -1427,10 +1434,10 @@ fun CompactTrackItem(
                         )
                     } else {
                         Icon(
-                            imageVector = Icons.Default.PlayArrow,
+                            painter = painterResource(id = R.drawable.ic_iconsax_play_bold),
                             contentDescription = null,
                             tint = BrandGreen,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }

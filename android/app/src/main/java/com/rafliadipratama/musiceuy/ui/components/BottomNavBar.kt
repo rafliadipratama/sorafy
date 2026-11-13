@@ -12,15 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Extension
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.LibraryMusic
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.outlined.Extension
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.LibraryMusic
-import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,7 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -40,13 +31,29 @@ import com.rafliadipratama.musiceuy.ui.theme.TextMuted
 
 enum class NavigationTab(
     val titleResId: Int,
-    val activeIcon: ImageVector,
-    val inactiveIcon: ImageVector
+    val activeIconRes: Int,
+    val inactiveIconRes: Int
 ) {
-    HOME(R.string.nav_home, Icons.Default.Home, Icons.Outlined.Home),
-    SEARCH(R.string.nav_search, Icons.Default.Search, Icons.Outlined.Search),
-    LIBRARY(R.string.nav_library, Icons.Default.LibraryMusic, Icons.Outlined.LibraryMusic),
-    PLUGINS(R.string.nav_plugins, Icons.Default.Extension, Icons.Outlined.Extension)
+    HOME(
+        R.string.nav_home,
+        R.drawable.ic_iconsax_home_2_bold,
+        R.drawable.ic_iconsax_home_2_linear
+    ),
+    SEARCH(
+        R.string.nav_search,
+        R.drawable.ic_iconsax_search_normal_bold,
+        R.drawable.ic_iconsax_search_normal_linear
+    ),
+    LIBRARY(
+        R.string.nav_library,
+        R.drawable.ic_iconsax_music_library_2_bold,
+        R.drawable.ic_iconsax_music_library_2_linear
+    ),
+    PLUGINS(
+        R.string.nav_plugins,
+        R.drawable.ic_iconsax_setting_2_bold,
+        R.drawable.ic_iconsax_setting_2_linear
+    )
 }
 
 @Composable
@@ -113,7 +120,7 @@ fun BottomNavBar(
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     ) {
                         Icon(
-                            imageVector = if (isSelected) tab.activeIcon else tab.inactiveIcon,
+                            painter = painterResource(id = if (isSelected) tab.activeIconRes else tab.inactiveIconRes),
                             contentDescription = stringResource(id = tab.titleResId),
                             tint = if (isSelected) BrandGreen else TextMuted,
                             modifier = Modifier.size(22.dp)
