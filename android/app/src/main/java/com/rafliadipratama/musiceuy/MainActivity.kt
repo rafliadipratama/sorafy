@@ -73,7 +73,8 @@ class MainActivity : ComponentActivity() {
             }
 
             androidx.compose.runtime.CompositionLocalProvider(
-                androidx.compose.ui.platform.LocalContext provides localizedContext
+                androidx.compose.ui.platform.LocalContext provides localizedContext,
+                androidx.activity.compose.LocalActivityResultRegistryOwner provides this@MainActivity
             ) {
                 MusicEuyTheme {
                     var selectedTab by remember { mutableStateOf(NavigationTab.HOME) }
