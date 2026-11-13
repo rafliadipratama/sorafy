@@ -25,6 +25,7 @@ public final class MusicPlayerViewModel: ObservableObject {
     @Published public var isStatsPresented: Bool = false
     @Published public var isLyricsPresented: Bool = false
     @Published public var isSearching: Bool = false
+    @Published public var isFetchingAutomix: Bool = false
 
     // MARK: - Data Collections
     @Published public var likedTracks: [Track] = []
@@ -32,11 +33,13 @@ public final class MusicPlayerViewModel: ObservableObject {
     @Published public var exploreData: ExploreHomeData = ExploreHomeData()
     @Published public var searchResults: [Track] = []
 
+    public let skippedArtistCooldown = SkippedArtistCooldown.shared
     private let audioService = AudioPlayerService.shared
     private let streamSource = MusicStreamSource.shared
     private let lrcService = LrcLibService.shared
     private let cacheManager = CacheManager.shared
     private var cancellables = Set<AnyCancellable>()
+    private var automixTask: Task<Void, Never>?
 
     public init() {
         self.likedTracks = cacheManager.getLikedTracks()
@@ -74,6 +77,15 @@ public final class MusicPlayerViewModel: ObservableObject {
     }
 
     // MARK: - Playback Control
+    public func play(track: Track, newQueue: [Track]? = nil) {
+        if let newQueue = newQueue, newQueue.count > 1 {
+            playTrack(track, queue: newQueue)
+        } else {
+            playTrack(track, queue: [track])
+            fetchAutomixQueue(seedTrack: track)
+        }
+    }
+
     public func playTrack(_ track: Track, queue: [Track] = []) {
         var mutableTrack = track
         mutableTrack.isLiked = likedTracks.contains(where: { $0.id == track.id })
@@ -84,9 +96,13 @@ public final class MusicPlayerViewModel: ObservableObject {
             if let idx = queue.firstIndex(where: { $0.id == track.id }) {
                 self.currentIndex = idx
             }
-        } else if self.queue.isEmpty {
+        } else {
             self.queue = [mutableTrack]
             self.currentIndex = 0
+        }
+
+        if queue.count <= 1 {
+            fetchAutomixQueue(seedTrack: mutableTrack)
         }
 
         cacheManager.recordHistory(track: mutableTrack)
@@ -109,14 +125,57 @@ public final class MusicPlayerViewModel: ObservableObject {
         audioService.togglePlayPause()
     }
 
-    public func playNext() {
-        guard !queue.isEmpty else { return }
-        if isShuffle {
-            currentIndex = Int.random(in: 0..<queue.count)
-        } else {
-            currentIndex = (currentIndex + 1) % queue.count
+    public func nextTrack() {
+        guard let current = currentTrack else {
+            if !queue.isEmpty {
+                playTrack(queue[0], queue: queue)
+            }
+            return
         }
-        playTrack(queue[currentIndex], queue: queue)
+
+        // If playback position < 15 seconds, record skip cooldown on the artist
+        if playbackTime > 0 && playbackTime < 15.0 {
+            skippedArtistCooldown.recordSkip(artist: current.artist.name)
+        }
+
+        let idx = queue.firstIndex(where: { $0.id == current.id }) ?? currentIndex
+
+        // If approaching queue end (currentIndex >= queue.count - 2), prefetch automix
+        if idx >= queue.count - 2 {
+            fetchAutomixQueue(seedTrack: current)
+        }
+
+        if isShuffle && queue.count > 1 {
+            var nextIdx = Int.random(in: 0..<queue.count)
+            if nextIdx == idx {
+                nextIdx = (idx + 1) % queue.count
+            }
+            currentIndex = nextIdx
+            playTrack(queue[currentIndex], queue: queue)
+        } else if idx < queue.count - 1 {
+            currentIndex = idx + 1
+            playTrack(queue[currentIndex], queue: queue)
+        } else if repeatMode == 1 && !queue.isEmpty {
+            currentIndex = 0
+            playTrack(queue[currentIndex], queue: queue)
+        } else {
+            // Reached queue end with repeat OFF: wait for automix queue to complete
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                if self.isFetchingAutomix {
+                    _ = await self.automixTask?.value
+                }
+                let updatedIdx = self.queue.firstIndex(where: { $0.id == current.id }) ?? self.currentIndex
+                if updatedIdx < self.queue.count - 1 {
+                    self.currentIndex = updatedIdx + 1
+                    self.playTrack(self.queue[self.currentIndex], queue: self.queue)
+                }
+            }
+        }
+    }
+
+    public func playNext() {
+        nextTrack()
     }
 
     public func playPrevious() {
@@ -148,12 +207,89 @@ public final class MusicPlayerViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Automix & Infinite Radio Queue
+    @discardableResult
+    public func fetchAutomixQueue(seedTrack: Track, resetQueue: Bool = false) -> Task<Void, Never> {
+        automixTask?.cancel()
+        let task = Task { @MainActor [weak self] in
+            guard let self = self else { return }
+            self.isFetchingAutomix = true
+            defer { self.isFetchingAutomix = false }
+
+            let cluster = MusifyAutomixEngine.detectCulture(artist: seedTrack.artist.name, title: seedTrack.title)
+            let rawRadio = await self.streamSource.fetchSongRadio(track: seedTrack)
+
+            guard !Task.isCancelled else { return }
+
+            let currentQueue = self.queue
+            let existingIds = Set(currentQueue.map { $0.id })
+            let existingTitles = Set(currentQueue.map { $0.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() })
+
+            var validSongs: [Track] = []
+            var seenIds = existingIds
+            var seenTitles = existingTitles
+
+            for candidate in rawRadio {
+                if candidate.id == seedTrack.id { continue }
+                if seenIds.contains(candidate.id) { continue }
+                let normTitle = candidate.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                if seenTitles.contains(normTitle) { continue }
+                if self.skippedArtistCooldown.isCooldownActive(artist: candidate.artist.name) { continue }
+                if !MusifyAutomixEngine.isCompatibleTrack(candidate: candidate, seedTrack: seedTrack, seedCulture: cluster) { continue }
+
+                validSongs.append(candidate)
+                seenIds.insert(candidate.id)
+                seenTitles.insert(normTitle)
+            }
+
+            guard !Task.isCancelled, !validSongs.isEmpty else { return }
+
+            let existingInQueue = Set(self.queue.map { $0.id })
+            let newUnique = validSongs.filter { !existingInQueue.contains($0.id) }
+            guard !newUnique.isEmpty else { return }
+
+            if resetQueue {
+                self.queue = [seedTrack] + newUnique
+                self.currentIndex = 0
+            } else {
+                self.queue.append(contentsOf: newUnique)
+            }
+        }
+        self.automixTask = task
+        return task
+    }
+
     private func handleTrackEnded() {
         if repeatMode == 2 { // Repeat one
             seek(to: 0)
             audioService.togglePlayPause()
-        } else if repeatMode == 1 || currentIndex + 1 < queue.count {
-            playNext()
+        } else if repeatMode == 1 { // Repeat all
+            nextTrack()
+        } else { // Repeat off
+            guard let current = currentTrack else { return }
+            let idx = queue.firstIndex(where: { $0.id == current.id }) ?? currentIndex
+            if idx < queue.count - 1 {
+                nextTrack()
+            } else {
+                // Seamlessly transition to automix queue if available
+                Task { @MainActor [weak self] in
+                    guard let self = self else { return }
+                    if self.isFetchingAutomix {
+                        _ = await self.automixTask?.value
+                    } else {
+                        let task = self.fetchAutomixQueue(seedTrack: current)
+                        _ = await task.value
+                    }
+
+                    let updatedIdx = self.queue.firstIndex(where: { $0.id == current.id }) ?? self.currentIndex
+                    if updatedIdx < self.queue.count - 1 {
+                        self.currentIndex = updatedIdx + 1
+                        self.playTrack(self.queue[self.currentIndex], queue: self.queue)
+                    } else {
+                        self.seek(to: 0)
+                    }
+                }
+            }
         }
     }
 

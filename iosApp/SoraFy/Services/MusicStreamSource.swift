@@ -225,6 +225,44 @@ public final class MusicStreamSource {
         )
     }
 
+    // MARK: - Song Radio
+    public func fetchSongRadio(track: Track) async -> [Track] {
+        var radioTracks: [Track] = []
+
+        // Pass 1: Seed track radio mix
+        let query1 = "\(track.artist.name) \(track.cleanTitle) radio mix"
+        let results1 = await searchYouTubeMusic(query: query1)
+        for cand in results1 {
+            if cand.id != track.id && !radioTracks.contains(where: { $0.id == cand.id }) {
+                radioTracks.append(cand)
+            }
+        }
+
+        // Pass 2: Artist hits if queue needs more tracks
+        if radioTracks.count < 12 {
+            let query2 = "\(track.artist.name) hits"
+            let results2 = await searchYouTubeMusic(query: query2)
+            for cand in results2 {
+                if cand.id != track.id && !radioTracks.contains(where: { $0.id == cand.id }) {
+                    radioTracks.append(cand)
+                }
+            }
+        }
+
+        // Pass 3: Search seeds from culture cluster if still small
+        let culture = MusifyAutomixEngine.detectCulture(artist: track.artist.name, title: track.title)
+        if radioTracks.count < 10, let seedQuery = culture.searchSeeds.randomElement() {
+            let results3 = await searchYouTubeMusic(query: seedQuery)
+            for cand in results3 {
+                if cand.id != track.id && !radioTracks.contains(where: { $0.id == cand.id }) {
+                    radioTracks.append(cand)
+                }
+            }
+        }
+
+        return radioTracks
+    }
+
     private func parseDurationToSeconds(_ str: String) -> Int {
         let parts = str.split(separator: ":").compactMap { Int($0) }
         if parts.count == 2 {
