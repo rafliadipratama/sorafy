@@ -1,0 +1,24 @@
+name: SoraFy
+options:
+  bundleIdPrefix: com.rafliadipratama
+  deploymentTarget:
+    iOS: "16.0"
+targets:
+  SoraFy:
+    type: application
+    platform: iOS
+    deploymentTarget: "16.0"
+    sources:
+      - path: SoraFy
+    info:
+      path: SoraFy/Resources/Info.plist
+    settings:
+      base:
+        PRODUCT_NAME: SoraFy
+        PRODUCT_BUNDLE_IDENTIFIER: com.rafliadipratama.sorafy
+        INFOPLIST_FILE: SoraFy/Resources/Info.plist
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.9"
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: "NO"
+        CODE_SIGNING_ALLOWED: "NO"

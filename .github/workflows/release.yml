@@ -179,9 +179,51 @@ jobs:
             desktop/dist/*.dmg
             desktop/dist/*.zip
 
-  # 5. Create Unified GitHub Release with All Platforms
+  # 5. Build iOS IPA Package (XcodeGen & xcodebuild for TrollStore/Sideloading)
+  build-ios:
+    needs: tests
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode Project
+        working-directory: ./iosApp
+        run: xcodegen generate
+
+      - name: Build and Archive iOS App
+        working-directory: ./iosApp
+        run: |
+          xcodebuild archive \
+            -project SoraFy.xcodeproj \
+            -scheme SoraFy \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath build/SoraFy.xcarchive \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY=""
+
+      - name: Package IPA for Sideloading & TrollStore
+        working-directory: ./iosApp
+        run: |
+          mkdir -p Payload
+          cp -r build/SoraFy.xcarchive/Products/Applications/SoraFy.app Payload/
+          zip -r SoraFy-iOS.ipa Payload
+          ls -lh SoraFy-iOS.ipa
+
+      - name: Upload iOS Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sorafy-ios-ipa
+          path: iosApp/SoraFy-iOS.ipa
+
+  # 6. Create Unified GitHub Release with All Platforms
   publish-release:
-    needs: [tests, build-android, build-linux, build-windows, build-macos]
+    needs: [tests, build-android, build-linux, build-windows, build-macos, build-ios]
     runs-on: ubuntu-latest
     steps:
       - name: Download all built artifacts
