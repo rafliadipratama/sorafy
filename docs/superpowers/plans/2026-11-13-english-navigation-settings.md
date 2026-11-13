@@ -72,9 +72,9 @@
 - Modify: `iosApp/SoraFy/Views/MainTabView.swift`
 - Modify: `iosApp/SoraFy/Views/Home/HomeView.swift`
 
-- [ ] **Step 1: Update `MainTabView.swift` to 3 tabs: Home, Library, Settings**
-- [ ] **Step 2: Ensure English labels on iOS Home and navigation bars**
-- [ ] **Step 3: Commit**
+- [x] **Step 1: Update `MainTabView.swift` to 3 tabs: Home, Library, Settings**
+- [x] **Step 2: Ensure English labels on iOS Home and navigation bars**
+- [x] **Step 3: Commit**
 
 ---
 

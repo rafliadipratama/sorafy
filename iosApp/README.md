@@ -27,13 +27,15 @@ iosApp/
     ├── ViewModels/
     │   └── MusicPlayerViewModel.swift   # State manager utama (@MainActor ObservableObject)
     ├── Views/
-    │   ├── MainTabView.swift      # Navigasi tab (Beranda, Cari, Pustaka) + MiniPlayer melayang
+    │   ├── MainTabView.swift      # 3-tab navigation (Home, Library, Settings) + floating MiniPlayer
     │   ├── Home/
-    │   │   └── HomeView.swift     # Layar beranda (Top 50 Indonesia, Putar Lagi)
+    │   │   └── HomeView.swift     # Home screen (Top 50 Hits, Quick Picks, Top Categories, Top Search)
     │   ├── Search/
-    │   │   └── SearchView.swift   # Pencarian instan lagu, artis, dan album
+    │   │   └── SearchView.swift   # Search songs, artists, and albums
     │   ├── Library/
-    │   │   └── LibraryView.swift  # Layar lagu disukai & riwayat pemutaran
+    │   │   └── LibraryView.swift  # Liked songs & listening history
+    │   ├── Settings/
+    │   │   └── SettingsView.swift # Audio engine, extensions & preferences
     │   └── Player/
     │       ├── MiniPlayerView.swift     # Mini player kapsul kaca melayang di atas tab bar
     │       ├── NowPlayingView.swift     # Layar pemutar penuh bergaya Apple Music

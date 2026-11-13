@@ -53,4 +53,19 @@ public final class CacheManager {
             userDefaults.set(data, forKey: historyKey)
         }
     }
+
+    public func clearAudioCache() {
+        let tempDir = FileManager.default.temporaryDirectory
+        if let files = try? FileManager.default.contentsOfDirectory(at: tempDir, includingPropertiesForKeys: nil) {
+            for file in files {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+        if let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first,
+           let files = try? FileManager.default.contentsOfDirectory(at: cacheDir, includingPropertiesForKeys: nil) {
+            for file in files {
+                try? FileManager.default.removeItem(at: file)
+            }
+        }
+    }
 }

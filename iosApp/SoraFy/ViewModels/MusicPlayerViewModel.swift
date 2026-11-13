@@ -336,4 +336,9 @@ public final class MusicPlayerViewModel: ObservableObject {
         let home = await streamSource.fetchExploreHome()
         self.exploreData = home
     }
+
+    // MARK: - Cache
+    public func clearAudioCache() {
+        cacheManager.clearAudioCache()
+    }
 }

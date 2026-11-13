@@ -8,31 +8,51 @@ private struct OfficialChart: Identifiable {
     let gradientColors: [Color]
 }
 
+private struct CategoryItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let icon: String
+}
+
 public struct HomeView: View {
     @ObservedObject var viewModel: MusicPlayerViewModel
+    @State private var isSearchPresented: Bool = false
+    @State private var selectedFilter: String = "All"
+
+    private let filterPills: [String] = [
+        "All", "Chill & Relax", "Focus & Study", "Workout Energy", "Indo Pop", "Rock & Alternative"
+    ]
+
+    private let topCategories: [CategoryItem] = [
+        CategoryItem(title: "Chill & Relax", icon: "headphones"),
+        CategoryItem(title: "Focus & Study", icon: "cup.and.saucer.fill"),
+        CategoryItem(title: "Workout Energy", icon: "bolt.heart.fill"),
+        CategoryItem(title: "Indo Pop", icon: "music.note"),
+        CategoryItem(title: "Rock & Alternative", icon: "guitars.fill")
+    ]
 
     private let officialCharts: [OfficialChart] = [
         OfficialChart(
             title: "Top 50 Indonesia",
-            subtitle: "Charts Resmi Indonesia",
+            subtitle: "Official Indonesian Charts",
             coverUrl: "https://yt3.googleusercontent.com/wHZJ1dYK2lbb3ocVJMe1fE_FWf_pZI2ydIOwgSV9YeZcJpYSc8vAHHjt6_o4bRU9InAGeomx0v4n=s576",
             gradientColors: [Color(red: 0.0, green: 0.47, blue: 0.57), Color(red: 0.47, green: 1.0, blue: 0.84)]
         ),
         OfficialChart(
             title: "Top 50 Global",
-            subtitle: "Charts Global Terpopuler",
+            subtitle: "Most Popular Global Charts",
             coverUrl: "https://yt3.googleusercontent.com/t4PqTAJLy66M235aV912vM8pEKnAC0QM_zfhSomgdnQYYmBDJxoOzh1l0gWA7CRf9r_XyyEn0Go=s576",
             gradientColors: [Color(red: 0.54, green: 0.14, blue: 0.53), Color(red: 0.91, green: 0.25, blue: 0.34)]
         ),
         OfficialChart(
             title: "Viral Hits Indonesia",
-            subtitle: "Trending Viral Indonesia",
+            subtitle: "Trending Viral Hits",
             coverUrl: "https://yt3.googleusercontent.com/2qHUJ20mtWoAZBU80LpQkNfu7EXSKKNs8K-MFFV5vIuFKDseRNHb1cVbmuzmfHvNJKKZGJ-cJKI=s576",
             gradientColors: [Color(red: 0.07, green: 0.60, blue: 0.56), Color(red: 0.22, green: 0.94, blue: 0.49)]
         ),
         OfficialChart(
-            title: "Rilisan Baru 2026",
-            subtitle: "Rilisan Musik Terbaru",
+            title: "New Releases 2026",
+            subtitle: "Fresh Music Drops",
             coverUrl: "https://yt3.googleusercontent.com/DF1qlviHbfG6kvfw1FBVtGGP-QHA-vpDs4-JZ-h51QCmPbW6XEzRIzcAkanyTzw9k4hopm62hJk=s576",
             gradientColors: [Color(red: 1.0, green: 0.25, blue: 0.42), Color(red: 1.0, green: 0.29, blue: 0.17)]
         )
@@ -50,7 +70,7 @@ public struct HomeView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 24) {
-                        // Brand Header
+                        // Brand Header & Top Search Action
                         HStack {
                             HStack(spacing: 8) {
                                 Circle()
@@ -61,13 +81,89 @@ public struct HomeView: View {
                                     .foregroundColor(.white)
                             }
                             Spacer()
+
+                            Button {
+                                isSearchPresented = true
+                            } label: {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 16, weight: .bold))
+                                    .foregroundColor(.white)
+                                    .frame(width: 38, height: 38)
+                                    .background(Color.white.opacity(0.08))
+                                    .clipShape(Circle())
+                            }
+                            .buttonStyle(.plain)
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 10)
 
+                        // Category Filter Pills
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(filterPills, id: \.self) { pill in
+                                    let isSelected = selectedFilter == pill
+                                    Button {
+                                        selectedFilter = pill
+                                        if pill != "All" {
+                                            Task {
+                                                await viewModel.search(query: pill)
+                                            }
+                                        }
+                                    } label: {
+                                        Text(pill)
+                                            .font(.system(size: 12.5, weight: isSelected ? .bold : .medium))
+                                            .foregroundColor(isSelected ? Color(red: 0.05, green: 0.05, blue: 0.07) : .white.opacity(0.85))
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 7)
+                                            .background(isSelected ? Color(red: 0.0, green: 0.898, blue: 0.60) : Color.white.opacity(0.06))
+                                            .clipShape(Capsule())
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+
+                        // Top Categories
+                        VStack(alignment: .leading, spacing: 12) {
+                            SectionTitle(title: "Top Categories", icon: "square.grid.2x2.fill")
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                LazyHStack(spacing: 12) {
+                                    ForEach(topCategories) { category in
+                                        Button {
+                                            selectedFilter = category.title
+                                            Task {
+                                                await viewModel.search(query: category.title)
+                                            }
+                                        } label: {
+                                            HStack(spacing: 8) {
+                                                Image(systemName: category.icon)
+                                                    .font(.system(size: 13, weight: .semibold))
+                                                    .foregroundColor(Color(red: 0.0, green: 0.898, blue: 0.60))
+                                                Text(category.title)
+                                                    .font(.system(size: 13, weight: .semibold))
+                                                    .foregroundColor(.white)
+                                            }
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 10)
+                                            .background(Color.white.opacity(0.05))
+                                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                            )
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+                                .padding(.horizontal, 20)
+                            }
+                        }
+
                         // 1. Official Charts Hero Carousel (BitChord TopPicks Style)
                         VStack(alignment: .leading, spacing: 12) {
-                            SectionTitle(title: "Tangga Lagu & Charts", icon: "chart.bar.fill")
+                            SectionTitle(title: "Top 50 Hits", icon: "chart.bar.fill")
 
                             ScrollView(.horizontal, showsIndicators: false) {
                                 LazyHStack(spacing: 14) {
@@ -106,7 +202,7 @@ public struct HomeView: View {
                                                     HStack(alignment: .bottom) {
                                                         VStack(alignment: .leading, spacing: 2) {
                                                             Text(chart.title)
-                                                                .font(.system(size: 14, weight: .bold))
+                                                                 .font(.system(size: 14, weight: .bold))
                                                                 .foregroundColor(.white)
                                                                 .lineLimit(1)
                                                             Text(chart.subtitle)
@@ -139,7 +235,7 @@ public struct HomeView: View {
                         // 2. Quick Picks (BitChord 4-row-per-column horizontal pager)
                         if !viewModel.exploreData.trendingTracks.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
-                                SectionTitle(title: "Putar Cepat Favoritmu", icon: "bolt.fill")
+                                SectionTitle(title: "Quick Picks", icon: "bolt.fill")
 
                                 let chunkedTracks = chunked(Array(viewModel.exploreData.trendingTracks.prefix(16)), size: 4)
                                 ScrollView(.horizontal, showsIndicators: false) {
@@ -165,10 +261,10 @@ public struct HomeView: View {
                             }
                         }
 
-                        // 3. Putar Lagi (Recently Played / History)
+                        // 3. Recently Played (History)
                         if !viewModel.historyTracks.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
-                                SectionTitle(title: "Putar Lagi", icon: "clock.arrow.circlepath")
+                                SectionTitle(title: "Recently Played", icon: "clock.arrow.circlepath")
 
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     LazyHStack(spacing: 14) {
@@ -212,10 +308,10 @@ public struct HomeView: View {
                             }
                         }
 
-                        // 4. Playlist Populer
+                        // 4. Popular Playlists
                         if !viewModel.exploreData.communityPlaylists.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
-                                SectionTitle(title: "Playlist Populer", icon: "music.note.list")
+                                SectionTitle(title: "Popular Playlists", icon: "music.note.list")
 
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     LazyHStack(spacing: 14) {
@@ -241,7 +337,7 @@ public struct HomeView: View {
                                                     .lineLimit(1)
                                                     .frame(width: 136, alignment: .leading)
 
-                                                Text(playlist.description.isEmpty ? "Playlist Pilihan" : playlist.description)
+                                                Text(playlist.description.isEmpty ? "Curated Playlist" : playlist.description)
                                                     .font(.system(size: 11, weight: .regular))
                                                     .foregroundColor(.white.opacity(0.65))
                                                     .lineLimit(1)
@@ -254,10 +350,10 @@ public struct HomeView: View {
                             }
                         }
 
-                        // 5. Artis Populer Untukmu
+                        // 5. Popular Artists For You
                         if !viewModel.exploreData.popularArtists.isEmpty {
                             VStack(alignment: .leading, spacing: 12) {
-                                SectionTitle(title: "Artis Populer Untukmu", icon: "mic.fill")
+                                SectionTitle(title: "Popular Artists For You", icon: "mic.fill")
 
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     LazyHStack(spacing: 16) {
@@ -293,6 +389,9 @@ public struct HomeView: View {
                 }
             }
             .navigationBarHidden(true)
+            .sheet(isPresented: $isSearchPresented) {
+                SearchView(viewModel: viewModel)
+            }
         }
     }
 

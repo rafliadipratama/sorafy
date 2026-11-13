@@ -19,7 +19,7 @@ public struct SearchView: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.secondary)
 
-                        TextField("Cari lagu, artis, atau album...", text: $searchText)
+                        TextField("Search songs, artists, or albums...", text: $searchText)
                             .foregroundColor(.white)
                             .autocorrectionDisabled()
                             .onSubmit {
@@ -48,7 +48,7 @@ public struct SearchView: View {
                     // Results List
                     if viewModel.isSearching {
                         Spacer()
-                        ProgressView("Mencari lagu...")
+                        ProgressView("Searching songs...")
                             .tint(.white)
                             .foregroundColor(.secondary)
                         Spacer()
@@ -78,7 +78,7 @@ public struct SearchView: View {
                             Image(systemName: "music.note.magnifyingglass")
                                 .font(.system(size: 48))
                                 .foregroundColor(.secondary.opacity(0.4))
-                            Text("Cari jutaan lagu dari berbagai sumber")
+                            Text("Search millions of songs from multiple sources")
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                             Spacer()
@@ -86,7 +86,7 @@ public struct SearchView: View {
                     }
                 }
             }
-            .navigationTitle("Cari")
+            .navigationTitle("Search")
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }

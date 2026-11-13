@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct LibraryView: View {
     @ObservedObject var viewModel: MusicPlayerViewModel
-    @State private var selectedTab: Int = 0 // 0: Disukai, 1: Riwayat
+    @State private var selectedTab: Int = 0 // 0: Liked, 1: History
 
     public init(viewModel: MusicPlayerViewModel) {
         self.viewModel = viewModel
@@ -15,9 +15,9 @@ public struct LibraryView: View {
 
                 VStack(spacing: 0) {
                     // Segmented Control
-                    Picker("Pustaka", selection: $selectedTab) {
-                        Text("Disukai (\(viewModel.likedTracks.count))").tag(0)
-                        Text("Riwayat (\(viewModel.historyTracks.count))").tag(1)
+                    Picker("Library", selection: $selectedTab) {
+                        Text("Liked (\(viewModel.likedTracks.count))").tag(0)
+                        Text("History (\(viewModel.historyTracks.count))").tag(1)
                     }
                     .pickerStyle(.segmented)
                     .padding(.horizontal, 20)
@@ -32,7 +32,7 @@ public struct LibraryView: View {
                             Image(systemName: selectedTab == 0 ? "heart.slash" : "clock")
                                 .font(.system(size: 44))
                                 .foregroundColor(.secondary.opacity(0.4))
-                            Text(selectedTab == 0 ? "Belum ada lagu yang disukai" : "Belum ada riwayat putar")
+                            Text(selectedTab == 0 ? "No liked songs yet" : "No listening history yet")
                                 .font(.system(size: 14))
                                 .foregroundColor(.secondary)
                             Spacer()
@@ -60,7 +60,7 @@ public struct LibraryView: View {
                     }
                 }
             }
-            .navigationTitle("Pustaka")
+            .navigationTitle("Library")
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }

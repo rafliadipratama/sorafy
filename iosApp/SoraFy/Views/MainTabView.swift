@@ -10,17 +10,17 @@ public struct MainTabView: View {
             TabView {
                 HomeView(viewModel: viewModel)
                     .tabItem {
-                        Label("Beranda", systemImage: "music.house.fill")
-                    }
-
-                SearchView(viewModel: viewModel)
-                    .tabItem {
-                        Label("Cari", systemImage: "magnifyingglass")
+                        Label("Home", systemImage: "music.house.fill")
                     }
 
                 LibraryView(viewModel: viewModel)
                     .tabItem {
-                        Label("Pustaka", systemImage: "square.stack.fill")
+                        Label("Library", systemImage: "square.stack.fill")
+                    }
+
+                SettingsView(viewModel: viewModel)
+                    .tabItem {
+                        Label("Settings", systemImage: "gearshape.fill")
                     }
             }
             .tint(.white)
