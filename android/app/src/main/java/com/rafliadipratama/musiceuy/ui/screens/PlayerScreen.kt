@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import com.rafliadipratama.musiceuy.ui.components.EqualizerBottomSheet
 import com.rafliadipratama.musiceuy.ui.components.LyricsOffsetBottomSheet
 import com.rafliadipratama.musiceuy.ui.components.PlayerOptionsBottomSheet
+import com.rafliadipratama.musiceuy.ui.player.AmbientMeshBackdrop
 import com.rafliadipratama.musiceuy.ui.player.LandscapePlayerLayout
 import com.rafliadipratama.musiceuy.ui.player.PortraitPlayerLayout
 import com.rafliadipratama.musiceuy.ui.player.QueuePlayerActions
@@ -86,33 +87,15 @@ fun PlayerScreen(
         val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val isTablet = configuration.screenWidthDp >= 600
 
-        // Root Container - Apple Music Inspired Fluid Ambient Glow Backdrop
+        // Root Container - Apple Music Inspired Ambient Mesh Backdrop
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(DarkBackground)
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            dominantColor.copy(alpha = 0.55f),
-                            dominantColor.copy(alpha = 0.20f),
-                            DarkBackground
-                        ),
-                        radius = 1600f
-                    )
-                )
-                .background(
-                    Brush.verticalGradient(
-                        colors = listOf(
-                            Color.Transparent,
-                            DarkBackground.copy(alpha = 0.65f),
-                            DarkBackground
-                        )
-                    )
-                )
                 .navigationBarsPadding(),
             contentAlignment = Alignment.Center
         ) {
+            AmbientMeshBackdrop(dominantColor = dominantColor)
+
             AnimatedContent(
                 targetState = uiState.isQueueVisible && isLandscape,
                 transitionSpec = { fadeIn(tween(220, delayMillis = 60)) togetherWith fadeOut(tween(160)) },
