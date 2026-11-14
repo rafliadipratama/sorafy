@@ -5394,9 +5394,9 @@ class SoraFyDesktopApp {
       if (pickedCharts.length >= 3) {
         shelves.push({
           id: "ytm_top_charts",
-          label: "OFFICIAL CHARTS",
+          label: "SPOTIFY CHARTS",
           title: this.currentLanguage === 'id' ? "Tangga Lagu & Trending" : "Top Charts & Trending",
-          tracks: pickedCharts
+          tracks: pickedCharts.map(t => ({ ...t, is_video: false }))
         });
       }
     }
@@ -6413,18 +6413,21 @@ class SoraFyDesktopApp {
     const chartsData = [
       {
         id: "chart_top50_id",
+        chartType: "top50_id",
         title: "Top 50 - Indonesia",
         sub: this.currentLanguage === "id"
           ? "Lagu teratas di Indonesia yang paling banyak diputar setiap hari & minggu ini."
           : "Daily update of the most played tracks in Indonesia right now.",
         cover: "https://charts-images.scdn.co/assets/locale_en/regional/daily/region_id_default.jpg",
-        type: "yt_chart",
+        type: "spotify_chart",
+        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt",
         playlistId: "VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4",
         fallbackPlaylistId: "VLRDCLAK5uy_khVZocvQocnmtzkOUZlAapWuIJss51XEk",
         fallbackQuery: "Top Hits Indonesia 2026"
       },
       {
         id: "chart_top50_global",
+        chartType: "top50_global",
         title: "Top 50 - Global",
         sub: this.currentLanguage === "id"
           ? "Update harian trek musik paling populer & didengarkan di seluruh dunia."
@@ -6437,18 +6440,21 @@ class SoraFyDesktopApp {
       },
       {
         id: "chart_viral50_id",
+        chartType: "viral50_id",
         title: "Viral 50 - Indonesia",
         sub: this.currentLanguage === "id"
           ? "Trek paling viral dan banyak dibagikan di media sosial minggu ini."
           : "The most viral tracks in Indonesia updated weekly.",
         cover: "https://charts-images.scdn.co/assets/locale_en/viral/daily/region_id_default.jpg",
-        type: "yt_chart",
+        type: "spotify_chart",
+        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt",
         playlistId: "VLRDCLAK5uy_nOVpLE7yC1hOzKOA9SqiVIeLqmoUDWBkE",
         fallbackPlaylistId: "VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4",
         fallbackQuery: "Viral Hits Indonesia 2026"
       },
       {
         id: "chart_todays_top_hits",
+        chartType: "todays_top_hits",
         title: "Today's Top Hits",
         sub: this.currentLanguage === "id"
           ? "Koleksi lagu hits internasional terbesar dan terpopuler pilihan kurator."
@@ -6481,7 +6487,14 @@ class SoraFyDesktopApp {
         if (cachedTracks && cachedTracks.length > 0) return cachedTracks;
         let loadedTracks = [];
         try {
-          if (chart.type === "spotify_chart" && chart.spotifyUrl && window.electronAPI && typeof window.electronAPI.importExternalPlaylist === "function") {
+          if (chart.chartType && window.electronAPI && typeof window.electronAPI.fetchSpotifyChart === "function") {
+            const res = await window.electronAPI.fetchSpotifyChart(chart.chartType, this.currentLanguage);
+            if (Array.isArray(res) && res.length > 0) {
+              loadedTracks = res;
+            }
+          }
+
+          if (!loadedTracks.length && chart.type === "spotify_chart" && chart.spotifyUrl && window.electronAPI && typeof window.electronAPI.importExternalPlaylist === "function") {
             const res = await window.electronAPI.importExternalPlaylist(chart.spotifyUrl);
             if (res && res.success && Array.isArray(res.tracks) && res.tracks.length > 0) {
               loadedTracks = res.tracks;
@@ -6537,6 +6550,7 @@ class SoraFyDesktopApp {
 
         cachedTracks = loadedTracks.map(t => ({
           ...t,
+          is_video: false,
           is_liked: this.likedTrackIds.has(t.id)
         }));
         return cachedTracks;

@@ -542,6 +542,20 @@ test('PlatformBridge fetchNewAlbumReleases forwards in electron and falls back s
   assert.ok(Array.isArray(webAlbums));
 });
 
+test('PlatformBridge fetchSpotifyChart forwards in electron, tauri, and web', async () => {
+  const electronApi = {
+    fetchSpotifyChart: async (type, lang) => [{ id: 'spot_1', title: 'Song 1', is_video: false }]
+  };
+  const bridge = new PlatformBridge({ runtime: 'electron', electronAPI: electronApi });
+  const tracks = await bridge.fetchSpotifyChart('top50_id', 'id');
+  assert.strictEqual(tracks.length, 1);
+  assert.strictEqual(tracks[0].is_video, false);
+
+  const webBridge = new PlatformBridge({ runtime: 'web' });
+  const webTracks = await webBridge.fetchSpotifyChart('top50_id', 'id');
+  assert.deepStrictEqual(webTracks, []);
+});
+
 // 5. Global Aliasing: window.electronAPI = window.sorafyBridge
 test('initGlobalBridge sets window.sorafyBridge and aliases window.electronAPI when missing', () => {
   const mockWindow = {};

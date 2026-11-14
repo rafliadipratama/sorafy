@@ -221,6 +221,24 @@ class PlatformBridge {
     return (home && Array.isArray(home.charts)) ? home.charts : [];
   }
 
+  async fetchSpotifyChart(chartType, lang = 'id') {
+    if (this.isElectron && this._electronAPI?.fetchSpotifyChart) {
+      return await this._electronAPI.fetchSpotifyChart(chartType, lang);
+    }
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('fetch_spotify_chart', { chart_type: chartType, lang });
+        const unwrapped = this._unwrap(res);
+        if (Array.isArray(unwrapped)) {
+          return unwrapped;
+        }
+      } catch (err) {
+        console.warn('Tauri fetch_spotify_chart failed:', err);
+      }
+    }
+    return [];
+  }
+
   async fetchNewAlbumReleases(lang = 'en') {
     if (this.isElectron && this._electronAPI?.fetchNewAlbumReleases) {
       return await this._electronAPI.fetchNewAlbumReleases(lang);

@@ -2882,8 +2882,207 @@ async function fetchCuratedNewAlbumReleases(lang = 'en') {
 let cachedCuratedTopCharts = null;
 let cachedCuratedTopChartsTime = 0;
 const CURATED_CHARTS_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+const SPOTIFY_CHARTS_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+const cachedSpotifyCharts = new Map();
+
+async function fetchKworbSpotifyDaily(country = 'id') {
+  return new Promise((resolve) => {
+    https.get(`https://kworb.net/spotify/country/${country}_daily.html`, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+      },
+      timeout: 5000
+    }, res => {
+      let html = '';
+      res.on('data', c => html += c);
+      res.on('end', async () => {
+        try {
+          const rows = html.match(/<tr[\s\S]*?<\/tr>/g) || [];
+          const rawTracks = [];
+          for (const r of rows) {
+            const match = r.match(/<a href="([^"]+)">([^<]+)<\/a>\s*-\s*<a href="[^"]+">([^<]+)<\/a>/);
+            if (match) {
+              const isUp = r.includes('pos') || /\+\d+/.test(r) || /NEW/.test(r);
+              if (isUp) {
+                rawTracks.push({
+                  artist: match[2].trim(),
+                  title: match[3].trim()
+                });
+              }
+            }
+          }
+
+          const topTracks = rawTracks.slice(0, 50);
+          if (!topTracks.length) return resolve([]);
+
+          const defaultViralCover = 'https://charts-images.scdn.co/assets/locale_en/viral/daily/region_id_default.jpg';
+          const chunkSize = 15;
+          const individualCovers = [];
+          for (let i = 0; i < topTracks.length; i += chunkSize) {
+            const chunk = topTracks.slice(i, i + chunkSize);
+            const covers = await Promise.all(chunk.map(t => fetchTrackArtwork(t.title, t.artist)));
+            individualCovers.push(...covers);
+          }
+
+          const tracks = topTracks.map((t, idx) => ({
+            id: `spot_viral50_id_${idx}_${Date.now()}`,
+            title: t.title,
+            artist: t.artist,
+            album: 'Viral 50 Indonesia',
+            duration_secs: 180,
+            artwork_url: individualCovers[idx] || defaultViralCover,
+            is_video: false,
+            is_explicit: false,
+            source: 'spotify',
+            source_label: 'Spotify Viral'
+          }));
+
+          resolve(tracks);
+        } catch (_) {
+          resolve([]);
+        }
+      });
+    }).on('error', () => resolve([])).on('timeout', () => resolve([]));
+  });
+}
+
+async function fetchSpotifyChart(chartType, lang = 'id') {
+  const cacheKey = `${chartType}_${lang}`;
+  const cached = cachedSpotifyCharts.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < SPOTIFY_CHARTS_TTL_MS)) {
+    return cached.tracks;
+  }
+
+  let tracks = [];
+  try {
+    if (chartType === 'top50_id' || chartType === '37i9dQZEVXbObFQZ3JLcXt') {
+      const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbObFQZ3JLcXt');
+      if (res && Array.isArray(res.tracks)) {
+        tracks = res.tracks.map(t => ({
+          ...t,
+          is_video: false,
+          source: 'spotify',
+          source_label: 'Spotify Top 50'
+        }));
+      }
+    } else if (chartType === 'top50_global' || chartType === '37i9dQZEVXbMDoHDwVN2tF') {
+      const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbMDoHDwVN2tF');
+      if (res && Array.isArray(res.tracks)) {
+        tracks = res.tracks.map(t => ({
+          ...t,
+          is_video: false,
+          source: 'spotify',
+          source_label: 'Spotify Global 50'
+        }));
+      }
+    } else if (chartType === 'todays_top_hits' || chartType === '37i9dQZF1DXcBWIGoYBM5M') {
+      const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZF1DXcBWIGoYBM5M');
+      if (res && Array.isArray(res.tracks)) {
+        tracks = res.tracks.map(t => ({
+          ...t,
+          is_video: false,
+          source: 'spotify',
+          source_label: 'Spotify Hits'
+        }));
+      }
+    } else if (chartType === 'viral50_id') {
+      const viralTracks = await fetchKworbSpotifyDaily('id');
+      if (viralTracks && viralTracks.length > 0) {
+        tracks = viralTracks;
+      } else {
+        const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbObFQZ3JLcXt');
+        if (res && Array.isArray(res.tracks)) {
+          tracks = res.tracks.map(t => ({
+            ...t,
+            is_video: false,
+            source: 'spotify',
+            source_label: 'Spotify Viral'
+          }));
+        }
+      }
+    }
+
+    if (tracks.length > 0) {
+      cachedSpotifyCharts.set(cacheKey, {
+        timestamp: Date.now(),
+        tracks
+      });
+      return tracks;
+    }
+  } catch (err) {
+    console.warn(`fetchSpotifyChart (${chartType}) error:`, err.message);
+  }
+
+  return cached ? cached.tracks : [];
+}
 
 async function fetchCuratedTopCharts(lang = 'en') {
+  const isId = (lang === 'id');
+  const cacheKey = `curated_${isId ? 'id' : 'en'}`;
+  const cached = cachedSpotifyCharts.get(cacheKey);
+  if (cached && (Date.now() - cached.timestamp < SPOTIFY_CHARTS_TTL_MS)) {
+    return cached.tracks;
+  }
+
+  try {
+    // 1. Live synchronized Spotify Top Charts: Top 50 Indonesia + Top 50 Global + Today's Top Hits
+    const [indoSpotify, globalSpotify, hitsSpotify] = await Promise.all([
+      fetchSpotifyChart('top50_id', lang).catch(() => []),
+      fetchSpotifyChart('top50_global', lang).catch(() => []),
+      fetchSpotifyChart('todays_top_hits', lang).catch(() => [])
+    ]);
+
+    const combinedIndo = indoSpotify || [];
+    const combinedWestern = [];
+    const seenWesternKeys = new Set();
+    for (const t of [...(globalSpotify || []), ...(hitsSpotify || [])]) {
+      const key = `${(t.title || '').toLowerCase()}_${(t.artist || '').toLowerCase()}`;
+      if (!seenWesternKeys.has(key)) {
+        seenWesternKeys.add(key);
+        combinedWestern.push(t);
+      }
+    }
+
+    if (combinedIndo.length > 0 || combinedWestern.length > 0) {
+      const combined = [];
+      const seenFinal = new Set();
+      const primary = isId ? combinedIndo : combinedWestern;
+      const secondary = isId ? combinedWestern : combinedIndo;
+      const maxLen = Math.max(primary.length, secondary.length);
+
+      for (let i = 0; i < maxLen; i++) {
+        if (i < primary.length) {
+          const t = primary[i];
+          const k = `${(t.title || '').toLowerCase()}_${(t.artist || '').toLowerCase()}`;
+          if (!seenFinal.has(k)) {
+            seenFinal.add(k);
+            combined.push({ ...t, is_video: false });
+          }
+        }
+        if (i < secondary.length) {
+          const t = secondary[i];
+          const k = `${(t.title || '').toLowerCase()}_${(t.artist || '').toLowerCase()}`;
+          if (!seenFinal.has(k)) {
+            seenFinal.add(k);
+            combined.push({ ...t, is_video: false });
+          }
+        }
+      }
+
+      if (combined.length > 0) {
+        cachedSpotifyCharts.set(cacheKey, {
+          timestamp: Date.now(),
+          tracks: combined
+        });
+        cachedCuratedTopCharts = combined;
+        cachedCuratedTopChartsTime = Date.now();
+        return combined;
+      }
+    }
+  } catch (err) {
+    console.warn('fetchCuratedTopCharts Spotify fetch notice:', err);
+  }
+
   if (cachedCuratedTopCharts && (Date.now() - cachedCuratedTopChartsTime < CURATED_CHARTS_TTL_MS)) {
     return cachedCuratedTopCharts;
   }
@@ -3126,6 +3325,10 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
 
 ipcMain.handle('fetch-top-charts', async (event, lang = 'en') => {
   return await fetchCuratedTopCharts(lang);
+});
+
+ipcMain.handle('fetch-spotify-chart', async (event, chartType, lang = 'id') => {
+  return await fetchSpotifyChart(chartType, lang);
 });
 
 ipcMain.handle('fetch-new-album-releases', async (event, lang = 'en') => {

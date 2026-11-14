@@ -486,6 +486,58 @@ test('fetchMusicfyRecommendations creates official top charts shelf with curated
   assert.ok(chartShelf, 'ytm_top_charts shelf should be present');
   assert.strictEqual(chartShelf.title, 'Tangga Lagu & Trending');
   assert.ok(chartShelf.tracks.length >= 3);
+  assert.ok(chartShelf.tracks.every(t => t.is_video === false), 'Every chart shelf track must be audio format (is_video: false)');
   const artists = chartShelf.tracks.map(t => t.artist);
   assert.ok(artists.some(a => ['Bernadya', 'Taylor Swift', 'Mahalini', 'Bruno Mars', 'Denny Caknan'].includes(a)));
+});
+
+test('renderOldFavoritesMixes configures Spotify chart cards and enforces audio-only format (is_video: false)', async () => {
+  const cards = [];
+  const mockGrid = {
+    innerHTML: '',
+    appendChild(card) {
+      cards.push(card);
+    }
+  };
+
+  const origDoc = global.document;
+  global.document = {
+    createElement(tag) {
+      const el = {
+        className: '',
+        innerHTML: '',
+        addEventListener() {},
+        querySelector(selector) {
+          if (selector === '.ytm-mix-card-title') {
+            const m = el.innerHTML.match(/<div class="ytm-mix-card-title">([^<]+)<\/div>/);
+            return { textContent: m ? m[1] : '' };
+          }
+          return null;
+        }
+      };
+      return el;
+    }
+  };
+
+  try {
+    const app = {
+      ytmMixCardsGrid: mockGrid,
+      currentLanguage: 'id',
+      likedTrackIds: new Set(),
+      safeImg: (url) => url,
+      escapeHtml: SoraFyDesktopApp.prototype.escapeHtml,
+      renderOldFavoritesMixes: SoraFyDesktopApp.prototype.renderOldFavoritesMixes
+    };
+
+    app.renderOldFavoritesMixes();
+
+    assert.strictEqual(cards.length, 4);
+    const titles = cards.map(c => c.querySelector('.ytm-mix-card-title').textContent);
+    assert.ok(titles.includes('Top 50 - Indonesia'));
+    assert.ok(titles.includes('Top 50 - Global'));
+    assert.ok(titles.includes('Viral 50 - Indonesia'));
+    assert.ok(titles.some(t => t.includes('Top Hits')));
+  } finally {
+    global.document = origDoc;
+  }
 });
