@@ -8,6 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSearchSuggestions: (query) => ipcRenderer.invoke('get-search-suggestions', query),
   browseYouTube: (browseId) => ipcRenderer.invoke('browse-yt', browseId),
   getYtHomeFeed: (lang) => ipcRenderer.invoke('get-yt-home-feed', lang),
+  fetchTopCharts: (lang) => ipcRenderer.invoke('fetch-top-charts', lang),
   fetchNewAlbumReleases: (lang) => ipcRenderer.invoke('fetch-new-album-releases', lang),
   resolveArtistProfile: (name) => ipcRenderer.invoke('resolve-artist-profile', name),
   fetchYouTubeLyrics: (videoId) => ipcRenderer.invoke('fetch-yt-lyrics', videoId),

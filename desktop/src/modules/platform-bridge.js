@@ -202,6 +202,25 @@ class PlatformBridge {
     return { success: true, quickPicks: [] };
   }
 
+  async fetchTopCharts(lang = 'en') {
+    if (this.isElectron && this._electronAPI?.fetchTopCharts) {
+      return await this._electronAPI.fetchTopCharts(lang);
+    }
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('fetch_top_charts', { lang });
+        const unwrapped = this._unwrap(res);
+        if (Array.isArray(unwrapped)) {
+          return unwrapped;
+        }
+      } catch (err) {
+        console.warn('Tauri fetch_top_charts failed:', err);
+      }
+    }
+    const home = await this.getYtHomeFeed(lang);
+    return (home && Array.isArray(home.charts)) ? home.charts : [];
+  }
+
   async fetchNewAlbumReleases(lang = 'en') {
     if (this.isElectron && this._electronAPI?.fetchNewAlbumReleases) {
       return await this._electronAPI.fetchNewAlbumReleases(lang);

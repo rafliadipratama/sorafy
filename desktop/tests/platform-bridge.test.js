@@ -472,6 +472,41 @@ test('other unmapped methods provide safe non-crashing fallbacks', async () => {
   assert.doesNotThrow(() => bridge.onDownloadPlaylistProgress(() => {}));
 });
 
+test('PlatformBridge fetchTopCharts forwards in electron and falls back safely in web', async () => {
+  // Electron mode
+  const mockElectron = {
+    fetchTopCharts: async (lang) => [
+      { id: 'yt_1', title: 'Untungnya, Hidup Harus Tetap Berjalan', artist: 'Bernadya' }
+    ]
+  };
+  const electronBridge = createBridge({
+    runtime: 'electron',
+    electronAPI: mockElectron
+  });
+  const electronCharts = await electronBridge.fetchTopCharts('id');
+  assert.strictEqual(electronCharts.length, 1);
+  assert.strictEqual(electronCharts[0].artist, 'Bernadya');
+
+  // Tauri mode
+  const tauriBridge = createBridge({
+    runtime: 'tauri',
+    tauriInvoke: async (cmd, args) => {
+      if (cmd === 'fetch_top_charts') {
+        return [{ id: 'yt_2', title: 'Cruel Summer', artist: 'Taylor Swift' }];
+      }
+      throw new Error(`Unknown command ${cmd}`);
+    }
+  });
+  const tauriCharts = await tauriBridge.fetchTopCharts('en');
+  assert.strictEqual(tauriCharts.length, 1);
+  assert.strictEqual(tauriCharts[0].artist, 'Taylor Swift');
+
+  // Web fallback mode
+  const webBridge = createBridge({ runtime: 'web' });
+  const webCharts = await webBridge.fetchTopCharts('en');
+  assert.ok(Array.isArray(webCharts));
+});
+
 test('PlatformBridge fetchNewAlbumReleases forwards in electron and falls back safely in web', async () => {
   // Electron mode
   const mockElectron = {

@@ -5247,7 +5247,7 @@ class SoraFyDesktopApp {
 
     const history = this.historyTracks || [];
     const liked = Array.from(this.likedTrackIds);
-    const likedTracks = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
+    const likedTracks = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]") : [];
     const heardIds = new Set([...history.map(t => t.id), ...liked]);
     const avoidSongs = new Set();
     const avoidArtists = new Set();
@@ -5255,7 +5255,7 @@ class SoraFyDesktopApp {
     // Read stored user taste profile
     let tasteProfile = {};
     try {
-      tasteProfile = JSON.parse(localStorage.getItem("sorafy_taste_profile") || "{}");
+      tasteProfile = (typeof localStorage !== 'undefined') ? JSON.parse(localStorage.getItem("sorafy_taste_profile") || "{}") : {};
     } catch (_) {}
 
     // Calculate aggregated weighted artist affinity (history + liked + followed + likedAlbums + tasteProfile)
@@ -5374,10 +5374,20 @@ class SoraFyDesktopApp {
 
     const shelves = [];
 
-    // 1. Official YouTube Music Charts Shelf
-    const officialChartsList = (feed && Array.isArray(feed.charts) && feed.charts.length > 0)
+    // 1. Official YouTube Music Charts Shelf (Top Western & Indo Artists)
+    let officialChartsList = (feed && Array.isArray(feed.charts) && feed.charts.length > 0)
       ? feed.charts
       : (this.officialCharts && this.officialCharts.length > 0 ? this.officialCharts : []);
+
+    if (!officialChartsList.length && typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.fetchTopCharts === 'function') {
+      try {
+        const topCharts = await window.electronAPI.fetchTopCharts(this.currentLanguage);
+        if (Array.isArray(topCharts) && topCharts.length > 0) {
+          officialChartsList = topCharts;
+          this.officialCharts = topCharts;
+        }
+      } catch (_) {}
+    }
 
     if (officialChartsList.length >= 4) {
       const pickedCharts = this.pickDiverseTracks(officialChartsList, heardIds, avoidSongs, avoidArtists, 8, 2);
@@ -5393,7 +5403,7 @@ class SoraFyDesktopApp {
 
     const queryInnerTube = async (q) => {
       const fetchPromise = (async () => {
-        if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
+        if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
           try {
             const res = await window.electronAPI.searchYouTubeMusic(q);
             if (res && res.length) {
@@ -6217,8 +6227,13 @@ class SoraFyDesktopApp {
       let tracks = [];
       if (this.officialCharts && this.officialCharts.length > 0) {
         tracks = this.officialCharts;
+      } else if (window.electronAPI && typeof window.electronAPI.fetchTopCharts === 'function') {
+        try {
+          const res = await window.electronAPI.fetchTopCharts(this.currentLanguage);
+          if (Array.isArray(res) && res.length) tracks = res;
+        } catch (_) {}
       } else if (window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
-        const res = await window.electronAPI.browseYouTube("VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G");
+        const res = await window.electronAPI.browseYouTube("VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4");
         if (res && res.tracks && res.tracks.length) tracks = res.tracks;
       }
       if (!tracks.length && window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
@@ -6392,7 +6407,7 @@ class SoraFyDesktopApp {
   }
 
   renderOldFavoritesMixes() {
-    if (!this.ytmMixCardsGrid) return;
+    if (typeof document === 'undefined' || !this.ytmMixCardsGrid) return;
     this.ytmMixCardsGrid.innerHTML = "";
 
     const chartsData = [
@@ -6404,8 +6419,9 @@ class SoraFyDesktopApp {
           : "Daily update of the most played tracks in Indonesia right now.",
         cover: "https://charts-images.scdn.co/assets/locale_en/regional/daily/region_id_default.jpg",
         type: "yt_chart",
-        playlistId: "VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G",
-        fallbackQuery: "Top 50 Indonesia 2026 hits"
+        playlistId: "VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4",
+        fallbackPlaylistId: "VLRDCLAK5uy_khVZocvQocnmtzkOUZlAapWuIJss51XEk",
+        fallbackQuery: "Top Hits Indonesia 2026"
       },
       {
         id: "chart_top50_global",
@@ -6416,7 +6432,7 @@ class SoraFyDesktopApp {
         cover: "https://charts-images.scdn.co/assets/locale_en/regional/daily/region_global_default.jpg",
         type: "spotify_chart",
         spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF",
-        fallbackPlaylistId: "VLPL4fGSI1pDJn6O1EdETRLet88vhkIxCQjI",
+        fallbackPlaylistId: "VLRDCLAK5uy_nmS3YoxSwVVQk9lEQJ0UX4ZCjXsW_psU8",
         fallbackQuery: "Top 50 Global hits 2026"
       },
       {
@@ -6426,8 +6442,9 @@ class SoraFyDesktopApp {
           ? "Trek paling viral dan banyak dibagikan di media sosial minggu ini."
           : "The most viral tracks in Indonesia updated weekly.",
         cover: "https://charts-images.scdn.co/assets/locale_en/viral/daily/region_id_default.jpg",
-        type: "search",
-        query: "Lagi Viral Indonesia 2026",
+        type: "yt_chart",
+        playlistId: "VLRDCLAK5uy_nOVpLE7yC1hOzKOA9SqiVIeLqmoUDWBkE",
+        fallbackPlaylistId: "VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4",
         fallbackQuery: "Viral Hits Indonesia 2026"
       },
       {
@@ -6439,6 +6456,7 @@ class SoraFyDesktopApp {
         cover: "https://i.scdn.co/image/ab67706f00000002960019ea66cba66a44fdd4c2",
         type: "spotify_chart",
         spotifyUrl: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
+        fallbackPlaylistId: "VLRDCLAK5uy_nmS3YoxSwVVQk9lEQJ0UX4ZCjXsW_psU8",
         fallbackQuery: "Today's Top Hits pop 2026"
       }
     ];
@@ -6484,6 +6502,20 @@ class SoraFyDesktopApp {
             }
           }
 
+          if (!loadedTracks.length && chart.id === "chart_top50_id" && window.electronAPI && typeof window.electronAPI.fetchTopCharts === "function") {
+            const res = await window.electronAPI.fetchTopCharts("id");
+            if (Array.isArray(res) && res.length > 0) {
+              loadedTracks = res;
+            }
+          }
+
+          if (!loadedTracks.length && chart.id === "chart_top50_global" && window.electronAPI && typeof window.electronAPI.fetchTopCharts === "function") {
+            const res = await window.electronAPI.fetchTopCharts("en");
+            if (Array.isArray(res) && res.length > 0) {
+              loadedTracks = res;
+            }
+          }
+
           if (!loadedTracks.length && (chart.query || chart.fallbackQuery)) {
             const q = chart.query || chart.fallbackQuery;
             if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === "function") {
@@ -6496,6 +6528,12 @@ class SoraFyDesktopApp {
         } catch (err) {
           console.warn("Chart load error:", err);
         }
+
+        loadedTracks = loadedTracks.filter(t => {
+          if (!t || !t.title) return false;
+          const isJunk = /\b(tribute|karaoke|originally performed|instrumental|in the style of|remix|slowed|reverb|speed up|dj version|live dangdut|dangdut jamming)\b/i.test(t.title);
+          return !isJunk;
+        });
 
         cachedTracks = loadedTracks.map(t => ({
           ...t,

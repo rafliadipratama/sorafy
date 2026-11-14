@@ -400,3 +400,92 @@ test('screen player hides audio/video toggle button for mp3 or audio-only tracks
   app.setScreenPlayerMode('video');
   assert.strictEqual(app.currentScreenMode, 'video');
 });
+
+test('renderOldFavoritesMixes configures official YouTube Music hit playlists for Top 50 & Viral', () => {
+  const cards = [];
+  const mockGrid = {
+    innerHTML: '',
+    appendChild(card) {
+      cards.push(card);
+    }
+  };
+
+  const origDoc = global.document;
+  global.document = {
+    createElement(tag) {
+      const el = {
+        className: '',
+        innerHTML: '',
+        addEventListener() {},
+        querySelector(selector) {
+          if (selector === '.ytm-mix-card-title') {
+            const m = el.innerHTML.match(/<div class="ytm-mix-card-title">([^<]+)<\/div>/);
+            return { textContent: m ? m[1] : '' };
+          }
+          return null;
+        }
+      };
+      return el;
+    }
+  };
+
+  try {
+    const app = {
+      ytmMixCardsGrid: mockGrid,
+      currentLanguage: 'id',
+      likedTrackIds: new Set(),
+      safeImg: (url) => url,
+      escapeHtml: SoraFyDesktopApp.prototype.escapeHtml,
+      renderOldFavoritesMixes: SoraFyDesktopApp.prototype.renderOldFavoritesMixes
+    };
+
+    app.renderOldFavoritesMixes();
+
+    assert.strictEqual(cards.length, 4);
+    const titles = cards.map(c => c.querySelector('.ytm-mix-card-title').textContent);
+    assert.ok(titles.includes('Top 50 - Indonesia'));
+    assert.ok(titles.includes('Top 50 - Global'));
+    assert.ok(titles.includes('Viral 50 - Indonesia'));
+    assert.ok(titles.some(t => t.includes('Top Hits')));
+  } finally {
+    global.document = origDoc;
+  }
+});
+
+test('fetchMusicfyRecommendations creates official top charts shelf with curated top artists', async () => {
+  const curatedCharts = [
+    { id: 'yt_1', video_id: '1', title: 'Untungnya, Hidup Harus Tetap Berjalan', artist: 'Bernadya' },
+    { id: 'yt_2', video_id: '2', title: 'Cruel Summer', artist: 'Taylor Swift' },
+    { id: 'yt_3', video_id: '3', title: 'Sisa Rasa', artist: 'Mahalini' },
+    { id: 'yt_4', video_id: '4', title: 'Risk It All', artist: 'Bruno Mars' },
+    { id: 'yt_5', video_id: '5', title: 'Negoro Angin', artist: 'Denny Caknan' }
+  ];
+
+  let renderedShelves = null;
+
+  const app = {
+    currentLanguage: 'id',
+    likedTrackIds: new Set(),
+    historyTracks: [],
+    officialCharts: curatedCharts,
+    pickDiverseTracks: SoraFyDesktopApp.prototype.pickDiverseTracks,
+    renderShelves(shelves) {
+      renderedShelves = shelves;
+    },
+    fetchTrendingChart: async () => {},
+    fetchExternalMusic: async () => []
+  };
+
+  await SoraFyDesktopApp.prototype.fetchMusicfyRecommendations.call(app, {
+    success: true,
+    charts: curatedCharts
+  });
+
+  assert.ok(Array.isArray(renderedShelves));
+  const chartShelf = renderedShelves.find(s => s.id === 'ytm_top_charts');
+  assert.ok(chartShelf, 'ytm_top_charts shelf should be present');
+  assert.strictEqual(chartShelf.title, 'Tangga Lagu & Trending');
+  assert.ok(chartShelf.tracks.length >= 3);
+  const artists = chartShelf.tracks.map(t => t.artist);
+  assert.ok(artists.some(a => ['Bernadya', 'Taylor Swift', 'Mahalini', 'Bruno Mars', 'Denny Caknan'].includes(a)));
+});

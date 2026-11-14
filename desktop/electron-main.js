@@ -2879,28 +2879,224 @@ async function fetchCuratedNewAlbumReleases(lang = 'en') {
   return cachedCuratedNewReleases || [];
 }
 
+let cachedCuratedTopCharts = null;
+let cachedCuratedTopChartsTime = 0;
+const CURATED_CHARTS_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+async function fetchCuratedTopCharts(lang = 'en') {
+  if (cachedCuratedTopCharts && (Date.now() - cachedCuratedTopChartsTime < CURATED_CHARTS_TTL_MS)) {
+    return cachedCuratedTopCharts;
+  }
+
+  const isId = (lang === 'id');
+  const hl = isId ? 'id' : 'en';
+  const gl = isId ? 'ID' : 'US';
+
+  const fetchPlaylistTracks = async (browseId, playlistHl, playlistGl) => {
+    try {
+      const payloadObj = {
+        browseId,
+        context: {
+          client: {
+            clientName: 'WEB_REMIX',
+            clientVersion: '1.20240318.01.00',
+            hl: playlistHl,
+            gl: playlistGl
+          }
+        }
+      };
+      const json = await postInnerTube('browse', payloadObj);
+      if (!json) return [];
+      const twoCol = json.contents?.twoColumnBrowseResultsRenderer;
+      const sec = twoCol?.secondaryContents?.sectionListRenderer?.contents
+        || json.contents?.singleColumnBrowseResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents;
+      const shelf = sec?.[0]?.musicPlaylistShelfRenderer || sec?.[0]?.musicShelfRenderer;
+      if (!shelf || !Array.isArray(shelf.contents)) return [];
+
+      const tracks = [];
+      for (const it of shelf.contents) {
+        const r = it.musicResponsiveListItemRenderer;
+        if (!r || !r.flexColumns) continue;
+        const title = r.flexColumns[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
+        const subRuns = r.flexColumns[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+        const artist = subRuns.find(x => x.navigationEndpoint?.browseEndpoint?.browseId?.startsWith('UC'))?.text
+          || subRuns[0]?.text || 'Artist';
+        const album = subRuns.find(x => x.navigationEndpoint?.browseEndpoint?.browseId?.startsWith('MPRE'))?.text
+          || (subRuns.length > 2 ? subRuns[2]?.text : '') || '';
+        const videoId = r.playlistItemData?.videoId
+          || r.overlay?.musicItemThumbnailOverlayRenderer?.content?.musicPlayButtonRenderer?.playNavigationEndpoint?.watchEndpoint?.videoId
+          || r.navigationEndpoint?.watchEndpoint?.videoId || '';
+        const thumbs = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails
+          || r.thumbnail?.croppedSquareThumbnailRenderer?.thumbnail?.thumbnails || [];
+        let artwork = thumbs.length ? thumbs[thumbs.length - 1].url : '';
+        if (artwork) artwork = artwork.replace(/=(?:w\d+-h\d+|s\d+).*$/, '=w544-h544-p-l90-rj');
+
+        const durText = subRuns.length > 0 ? subRuns[subRuns.length - 1]?.text : '';
+        const duration_secs = parseDurationSecs(durText) || 0;
+
+        const isJunk = /\b(tribute|karaoke|originally performed|instrumental|in the style of|remix|slowed|reverb|speed up|dj version|live dangdut|dangdut jamming)\b/i.test(title);
+
+        if (title && videoId && !isJunk) {
+          tracks.push({
+            id: `yt_${videoId}`,
+            video_id: videoId,
+            title,
+            artist,
+            album,
+            artwork,
+            artwork_url: artwork,
+            duration_secs,
+            source: 'ytmusic'
+          });
+        }
+      }
+      return tracks;
+    } catch (_) {
+      return [];
+    }
+  };
+
+  const fetchTopSongForArtist = async (artistObj) => {
+    try {
+      const payload = {
+        query: artistObj.name,
+        params: 'EgWKAQIIAWoKEAkQBRAKEAMQBw%3D%3D',
+        context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240318.01.00', hl, gl } }
+      };
+      const json = await postInnerTube('search', payload);
+      const shelf = json?.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicShelfRenderer?.contents;
+      if (!shelf || !shelf.length) return null;
+
+      for (const it of shelf.slice(0, 3)) {
+        const r = it.musicResponsiveListItemRenderer;
+        if (!r) continue;
+        const title = r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
+        const subRuns = r.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+        const artist = subRuns.find(x => x.navigationEndpoint?.browseEndpoint?.browseId?.startsWith('UC'))?.text
+          || subRuns[0]?.text || artistObj.name;
+        const album = subRuns.find(x => x.navigationEndpoint?.browseEndpoint?.browseId?.startsWith('MPRE'))?.text
+          || (subRuns.length > 2 ? subRuns[2]?.text : '') || '';
+        const videoId = r.playlistItemData?.videoId || r.navigationEndpoint?.watchEndpoint?.videoId || '';
+        const thumbs = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails
+          || r.thumbnail?.croppedSquareThumbnailRenderer?.thumbnail?.thumbnails || [];
+        let artwork = thumbs.length ? thumbs[thumbs.length - 1].url : '';
+        if (artwork) artwork = artwork.replace(/=(?:w\d+-h\d+|s\d+).*$/, '=w544-h544-p-l90-rj');
+
+        const durText = subRuns.length > 0 ? subRuns[subRuns.length - 1]?.text : '';
+        const duration_secs = parseDurationSecs(durText) || 0;
+
+        const isJunk = /\b(tribute|karaoke|originally performed|instrumental|in the style of|remix|slowed|reverb|speed up|dj version)\b/i.test(title);
+
+        if (title && videoId && !isJunk) {
+          return {
+            id: `yt_${videoId}`,
+            video_id: videoId,
+            title,
+            artist,
+            album,
+            artwork,
+            artwork_url: artwork,
+            duration_secs,
+            source: 'ytmusic',
+            origin: artistObj.origin
+          };
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  };
+
+  try {
+    const [indoPlaylistTracks, globalPlaylistTracks, topArtistHits] = await Promise.all([
+      fetchPlaylistTracks('VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4', 'id', 'ID'),
+      fetchPlaylistTracks('VLRDCLAK5uy_nmS3YoxSwVVQk9lEQJ0UX4ZCjXsW_psU8', 'en', 'US'),
+      Promise.allSettled([
+        ...CURATED_TOP_ARTISTS.filter(a => a.origin === 'id').slice(0, 8).map(fetchTopSongForArtist),
+        ...CURATED_TOP_ARTISTS.filter(a => a.origin === 'western').slice(0, 8).map(fetchTopSongForArtist)
+      ])
+    ]);
+
+    const artistTracks = topArtistHits
+      .map(r => r.status === 'fulfilled' ? r.value : null)
+      .filter(Boolean);
+
+    const indoArtistTracks = artistTracks.filter(t => t.origin === 'id');
+    const westernArtistTracks = artistTracks.filter(t => t.origin === 'western');
+
+    const combinedIndo = [];
+    const seenIndo = new Set();
+    for (const t of [...indoArtistTracks, ...indoPlaylistTracks]) {
+      const key = `${t.title.toLowerCase()}_${t.artist.toLowerCase()}`;
+      if (!seenIndo.has(t.video_id) && !seenIndo.has(key)) {
+        seenIndo.add(t.video_id);
+        seenIndo.add(key);
+        combinedIndo.push(t);
+      }
+    }
+
+    const combinedWestern = [];
+    const seenWestern = new Set();
+    for (const t of [...westernArtistTracks, ...globalPlaylistTracks]) {
+      const key = `${t.title.toLowerCase()}_${t.artist.toLowerCase()}`;
+      if (!seenWestern.has(t.video_id) && !seenWestern.has(key)) {
+        seenWestern.add(t.video_id);
+        seenWestern.add(key);
+        combinedWestern.push(t);
+      }
+    }
+
+    const combined = [];
+    const seenFinal = new Set();
+    const maxLen = Math.max(combinedIndo.length, combinedWestern.length);
+    const primary = isId ? combinedIndo : combinedWestern;
+    const secondary = isId ? combinedWestern : combinedIndo;
+
+    for (let i = 0; i < maxLen; i++) {
+      if (i < primary.length && !seenFinal.has(primary[i].video_id)) {
+        seenFinal.add(primary[i].video_id);
+        combined.push(primary[i]);
+      }
+      if (i < secondary.length && !seenFinal.has(secondary[i].video_id)) {
+        seenFinal.add(secondary[i].video_id);
+        combined.push(secondary[i]);
+      }
+    }
+
+    if (combined.length > 0) {
+      cachedCuratedTopCharts = combined;
+      cachedCuratedTopChartsTime = Date.now();
+      return combined;
+    }
+  } catch (err) {
+    console.warn('fetchCuratedTopCharts error:', err);
+  }
+
+  return cachedCuratedTopCharts || [];
+}
+
 // IPC Handler: Official Home Feed (Quick Picks, Charts, Curated Playlists, New Releases)
 ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
   const hl = (lang === 'id') ? 'id' : 'en';
   const gl = (lang === 'id') ? 'ID' : 'US';
   try {
-    const [homeData, chartData, exploreData, officialPlaylists, curatedNewReleases] = await Promise.all([
+    const [homeData, chartTracks, exploreData, officialPlaylists, curatedNewReleases] = await Promise.all([
       browseYouTubeInnerTube('FEmusic_home', hl, gl).catch(() => null),
-      browseYouTubeInnerTube('VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G', hl, gl).catch(() => null),
+      fetchCuratedTopCharts(lang).catch(() => []),
       browseYouTubeInnerTube('FEmusic_explore', hl, gl).catch(() => null),
       fetchOfficialCuratedPlaylists(hl, gl).catch(() => []),
       fetchCuratedNewAlbumReleases(lang).catch(() => [])
     ]);
 
-    const quickPicksRaw = (homeData && homeData.tracks && homeData.tracks.length > 0)
-      ? homeData.tracks
-      : (chartData && chartData.tracks ? chartData.tracks.slice(0, 20) : []);
+    const quickPicksRaw = (chartTracks && chartTracks.length > 0)
+      ? chartTracks.slice(0, 32)
+      : ((homeData && homeData.tracks && homeData.tracks.length > 0) ? homeData.tracks : []);
     const quickPicks = quickPicksRaw;
 
-    const chartsRaw = (chartData && chartData.tracks && chartData.tracks.length > 0)
-      ? chartData.tracks
+    const charts = (chartTracks && chartTracks.length > 0)
+      ? chartTracks
       : [];
-    const charts = chartsRaw;
 
     const curatedPlaylists = (officialPlaylists && officialPlaylists.length > 0)
       ? officialPlaylists
@@ -2926,6 +3122,10 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
     console.error('get-yt-home-feed error:', err);
     return { success: false, quickPicks: [], charts: [], communityPlaylists: [], featuredPlaylists: [], newReleases: [] };
   }
+});
+
+ipcMain.handle('fetch-top-charts', async (event, lang = 'en') => {
+  return await fetchCuratedTopCharts(lang);
 });
 
 ipcMain.handle('fetch-new-album-releases', async (event, lang = 'en') => {
