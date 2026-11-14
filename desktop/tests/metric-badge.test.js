@@ -241,3 +241,52 @@ test('screen player artist display excludes play and view count badges', () => {
   assert.ok(!app.videoOverlayArtist.innerHTML.includes('views'));
   assert.ok(app.videoOverlayArtist.innerHTML.includes('Radiohead'));
 });
+
+test('renderCommunityPlaylistsDirect does not include avatar badge or orange letter O', () => {
+  const originalDoc = global.document;
+  try {
+    function createMockElement(tag = 'div') {
+      return {
+        tag,
+        className: '',
+        innerHTML: '',
+        children: [],
+        addEventListener() {},
+        appendChild(child) {
+          this.children.push(child);
+        }
+      };
+    }
+
+    global.document = {
+      createElement: (tag) => createMockElement(tag)
+    };
+
+    const container = createMockElement('div');
+    const app = {
+      ytmCommunityPlaylistsRow: container,
+      currentLanguage: 'en',
+      escapeHtml: SoraFyDesktopApp.prototype.escapeHtml,
+      safeImg: SoraFyDesktopApp.prototype.safeImg,
+      renderCommunityPlaylistsDirect: SoraFyDesktopApp.prototype.renderCommunityPlaylistsDirect,
+      openPlaylistDetail() {}
+    };
+
+    const samplePlaylists = [
+      {
+        title: "Today's Top Hits Pop",
+        author: "Official Selection",
+        artwork_url: "https://i.ytimg.com/vi/P5ZBISo2CaE/hqdefault.jpg"
+      }
+    ];
+
+    app.renderCommunityPlaylistsDirect(samplePlaylists);
+    assert.strictEqual(container.children.length, 1);
+    const cardHtml = container.children[0].innerHTML;
+    assert.ok(!cardHtml.includes('ytm-comm-avatar'));
+    assert.ok(cardHtml.includes('ytm-comm-art-box'));
+    assert.ok(cardHtml.includes('ytm-comm-play-overlay'));
+  } finally {
+    global.document = originalDoc;
+  }
+});

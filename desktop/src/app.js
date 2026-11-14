@@ -6671,7 +6671,6 @@ class SoraFyDesktopApp {
     playlists.slice(0, 16).forEach(pl => {
       const card = document.createElement("div");
       card.className = "ytm-comm-card";
-      const authorInitial = (pl.avatar_letter || pl.author?.charAt(0) || 'S').toUpperCase();
 
       let cleanAuthor = pl.author || '';
       cleanAuthor = cleanAuthor.replace(/YouTube Music/gi, 'Official Selection')
@@ -6690,7 +6689,6 @@ class SoraFyDesktopApp {
       card.innerHTML = `
         <div class="ytm-comm-art-box">
           <img src="${this.safeImg(pl.artwork_url)}" alt="${this.escapeHtml(pl.title)}" data-fallback="track">
-          <div class="ytm-comm-avatar">${this.escapeHtml(authorInitial)}</div>
           <div class="ytm-comm-play-overlay">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
           </div>

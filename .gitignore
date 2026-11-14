@@ -43,3 +43,5 @@ keystore.properties
 **/keystore.properties
 *.jks
 *.keystore
+
+graphify-out/
