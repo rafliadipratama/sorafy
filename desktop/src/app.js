@@ -1945,6 +1945,7 @@ class SoraFyDesktopApp {
     // Dedicated Screen Player Elements
     this.screenPlayerViewContainer = document.getElementById("screenPlayerViewContainer");
     this.screenPlayerBackBtn = document.getElementById("screenPlayerBackBtn");
+    this.screenPlayerModePill = document.getElementById("screenPlayerModePill");
     this.modeAudioBtn = document.getElementById("modeAudioBtn");
     this.modeVideoBtn = document.getElementById("modeVideoBtn");
     this.screenPlayerBadge = document.getElementById("screenPlayerBadge");
@@ -11552,15 +11553,19 @@ class SoraFyDesktopApp {
   // Dedicated Screen Player Methods
   // =========================================================
   async setScreenPlayerMode(mode) {
+    const track = this.tracks[this.currentTrackIndex];
+    const isVideoTrack = track && !!(track.is_video || track.isVideo);
+    if (mode === "video" && !isVideoTrack) {
+      mode = "audio";
+    }
     this.currentScreenMode = mode;
     if (this.modeAudioBtn) this.modeAudioBtn.classList.toggle("active", mode === "audio");
     if (this.modeVideoBtn) this.modeVideoBtn.classList.toggle("active", mode === "video");
 
-    const screenPlayerBody = document.querySelector(".screen-player-body");
-    const track = this.tracks[this.currentTrackIndex];
+    const screenPlayerBody = typeof document !== 'undefined' && typeof document.querySelector === 'function' ? document.querySelector(".screen-player-body") : null;
     let vid = track ? (track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : (track.id && track.id.length === 11 ? track.id : ""))) : "";
-    const nativeVideo = this.screenPlayerNativeVideo || document.getElementById("screenPlayerNativeVideo");
-    const videoLoading = this.screenPlayerVideoLoading || document.getElementById("screenPlayerVideoLoading");
+    const nativeVideo = this.screenPlayerNativeVideo || (typeof document !== 'undefined' && typeof document.getElementById === 'function' ? document.getElementById("screenPlayerNativeVideo") : null);
+    const videoLoading = this.screenPlayerVideoLoading || (typeof document !== 'undefined' && typeof document.getElementById === 'function' ? document.getElementById("screenPlayerVideoLoading") : null);
 
     if (mode === "video") {
       if (screenPlayerBody) screenPlayerBody.classList.add("video-mode");
@@ -11576,7 +11581,7 @@ class SoraFyDesktopApp {
       }
 
       // Dynamically resolve YouTube video ID if missing from track
-      if (!vid && track && window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
+      if (!vid && track && typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
         try {
           const results = await window.electronAPI.searchYouTubeMusic(`${track.artist} ${track.title}`, 'song');
           if (results && results.length > 0 && results[0].video_id) {
@@ -11610,7 +11615,7 @@ class SoraFyDesktopApp {
         }
 
         // 1. Direct unthrottled MP4 playback via yt-dlp: Completely bypasses YouTube Error 153 & Error 152
-        if (window.electronAPI && typeof window.electronAPI.resolveDirectVideo === 'function') {
+        if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.resolveDirectVideo === 'function') {
           try {
             const videoData = await window.electronAPI.resolveDirectVideo(vid);
             if (videoData && videoData.url && nativeVideo) {
@@ -11641,7 +11646,7 @@ class SoraFyDesktopApp {
           this.screenPlayerVideoFrame.style.display = "block";
           const currentSrc = this.screenPlayerVideoFrame.src || "";
           if (!currentSrc.includes(vid)) {
-            if (window.electronAPI && typeof window.electronAPI.getVideoEmbedUrl === 'function') {
+            if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.getVideoEmbedUrl === 'function') {
               window.electronAPI.getVideoEmbedUrl({ videoId: vid, start: Math.floor(curSec) }).then(url => {
                 this.screenPlayerVideoFrame.src = url;
               }).catch(() => {
@@ -11751,12 +11756,21 @@ class SoraFyDesktopApp {
       this.renderStatsForNerds();
     }
 
-    // Auto-detect if track is a video or has video_id
-    if (track.is_video) {
-      this.setScreenPlayerMode("video");
-    } else if (this.currentScreenMode === "video" && !isInitialOpen) {
-      this.setScreenPlayerMode("video");
+    // Show audio/video toggle switch only if the track is a video (matching mobile behavior)
+    const isVideoTrack = !!(track.is_video || track.isVideo);
+    const pill = this.screenPlayerModePill || (typeof document !== 'undefined' && typeof document.getElementById === 'function' ? (document.getElementById("screenPlayerModePill") || document.querySelector?.(".screen-player-mode-pill")) : null);
+    if (pill && pill.style) {
+      pill.style.display = isVideoTrack ? "inline-flex" : "none";
+    }
+
+    if (isVideoTrack) {
+      if (this.currentScreenMode === "video" || track.is_video) {
+        this.setScreenPlayerMode("video");
+      } else {
+        this.setScreenPlayerMode("audio");
+      }
     } else {
+      // Audio or MP3 only: force audio mode and keep video controls hidden
       this.setScreenPlayerMode("audio");
     }
   }

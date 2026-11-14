@@ -346,3 +346,57 @@ test('exploreNewReleasesRow populates top Western and Indonesian artist albums w
     global.window = originalWindow;
   }
 });
+
+test('screen player hides audio/video toggle button for mp3 or audio-only tracks', () => {
+  const modePill = { style: { display: '' } };
+  const modeAudioBtn = { classList: { toggle() {} } };
+  const modeVideoBtn = { classList: { toggle() {} } };
+
+  const audioTrack = {
+    title: 'Audio Song',
+    artist: 'Singer',
+    is_video: false
+  };
+
+  const videoTrack = {
+    id: 'yt_dQw4w9WgXcQ',
+    video_id: 'dQw4w9WgXcQ',
+    title: 'Music Video',
+    artist: 'Singer',
+    is_video: true
+  };
+
+  const app = {
+    tracks: [audioTrack],
+    currentTrackIndex: 0,
+    currentScreenMode: 'audio',
+    screenPlayerModePill: modePill,
+    modeAudioBtn,
+    modeVideoBtn,
+    showToast() {},
+    updatePlayPauseIcon() {},
+    escapeHtml: SoraFyDesktopApp.prototype.escapeHtml,
+    setScreenPlayerMode: SoraFyDesktopApp.prototype.setScreenPlayerMode,
+    updateScreenPlayer: SoraFyDesktopApp.prototype.updateScreenPlayer
+  };
+
+  // 1. Audio track: mode pill must be hidden ('none') and mode forced to audio
+  app.updateScreenPlayer();
+  assert.strictEqual(modePill.style.display, 'none');
+  assert.strictEqual(app.currentScreenMode, 'audio');
+
+  // Attempting to set video mode on audio track must force audio
+  app.setScreenPlayerMode('video');
+  assert.strictEqual(app.currentScreenMode, 'audio');
+
+  // 2. Video track: mode pill must be displayed ('inline-flex') and video mode permitted
+  app.tracks = [videoTrack];
+  app.updateScreenPlayer();
+  assert.strictEqual(modePill.style.display, 'inline-flex');
+  assert.strictEqual(app.currentScreenMode, 'video');
+
+  app.setScreenPlayerMode('audio');
+  assert.strictEqual(app.currentScreenMode, 'audio');
+  app.setScreenPlayerMode('video');
+  assert.strictEqual(app.currentScreenMode, 'video');
+});
