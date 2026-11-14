@@ -146,3 +146,98 @@ test('candidate matching prioritizes official track with 122M plays over cover w
   assert.strictEqual(matched[0].id, 'sal_1');
   assert.strictEqual(matched[1].artist, 'Eva Pradila');
 });
+
+test('renderBottomPlayerArtist renders only artist name and excludes play/view count badges', () => {
+  const originalDoc = global.document;
+  try {
+    function createMockElement(tag = 'div') {
+      return {
+        tag,
+        className: '',
+        textContent: '',
+        innerHTML: '',
+        title: '',
+        children: [],
+        addEventListener() {},
+        appendChild(child) {
+          this.children.push(child);
+        }
+      };
+    }
+
+    global.document = {
+      createElement: (tag) => createMockElement(tag)
+    };
+
+    const playerArtistEl = createMockElement('div');
+    const app = {
+      playerArtist: playerArtistEl,
+      parseTrackArtists: SoraFyDesktopApp.prototype.parseTrackArtists,
+      renderBottomPlayerArtist: SoraFyDesktopApp.prototype.renderBottomPlayerArtist,
+      openArtistDetail() {}
+    };
+
+    // 1. Audio track with play count
+    const songTrack = {
+      title: 'Creep',
+      artist: 'Radiohead',
+      play_count_text: '2.3B plays',
+      is_video: false
+    };
+    app.renderBottomPlayerArtist(songTrack);
+    assert.strictEqual(playerArtistEl.children.length, 1);
+    assert.strictEqual(playerArtistEl.children[0].className, 'player-artist-link');
+    assert.strictEqual(playerArtistEl.children[0].textContent, 'Radiohead');
+    assert.ok(!playerArtistEl.children.some(c => c.className?.includes('player-metric-badge')));
+
+    // 2. Video track with view count
+    playerArtistEl.children = [];
+    const videoTrack = {
+      title: 'Creep (Official Music Video)',
+      artist: 'Radiohead',
+      view_count_text: '1.6B views',
+      is_video: true
+    };
+    app.renderBottomPlayerArtist(videoTrack);
+    assert.strictEqual(playerArtistEl.children.length, 1);
+    assert.strictEqual(playerArtistEl.children[0].className, 'player-artist-link');
+    assert.strictEqual(playerArtistEl.children[0].textContent, 'Radiohead');
+    assert.ok(!playerArtistEl.children.some(c => c.className?.includes('player-metric-badge')));
+  } finally {
+    global.document = originalDoc;
+  }
+});
+
+test('screen player artist display excludes play and view count badges', () => {
+  const track = {
+    title: 'Creep',
+    artist: 'Radiohead',
+    play_count_text: '2.3B plays',
+    view_count_text: '1.6B views',
+    is_video: false
+  };
+
+  const app = {
+    tracks: [track],
+    currentTrackIndex: 0,
+    screenPlayerArtist: { innerHTML: '' },
+    videoOverlayArtist: { innerHTML: '' },
+    videoOverlayTitle: { textContent: '' },
+    screenPlayerTitle: { innerHTML: '' },
+    likedTrackIds: new Set(),
+    escapeHtml: SoraFyDesktopApp.prototype.escapeHtml,
+    setScreenPlayerMode() {},
+    updateScreenPlayer: SoraFyDesktopApp.prototype.updateScreenPlayer
+  };
+
+  app.updateScreenPlayer();
+  assert.ok(!app.screenPlayerArtist.innerHTML.includes('screen-metric-badge'));
+  assert.ok(!app.screenPlayerArtist.innerHTML.includes('plays'));
+  assert.ok(!app.screenPlayerArtist.innerHTML.includes('views'));
+  assert.ok(app.screenPlayerArtist.innerHTML.includes('Radiohead'));
+
+  assert.ok(!app.videoOverlayArtist.innerHTML.includes('screen-metric-badge'));
+  assert.ok(!app.videoOverlayArtist.innerHTML.includes('plays'));
+  assert.ok(!app.videoOverlayArtist.innerHTML.includes('views'));
+  assert.ok(app.videoOverlayArtist.innerHTML.includes('Radiohead'));
+});

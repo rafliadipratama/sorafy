@@ -9301,25 +9301,10 @@ class SoraFyDesktopApp {
 
   renderBottomPlayerArtist(track) {
     if (!this.playerArtist) return;
-    const metricLabel = this.getTrackMetricLabel(track);
-    const appendMetric = () => {
-      if (metricLabel) {
-        const sep = document.createElement("span");
-        sep.className = "player-artist-sep";
-        sep.textContent = " • ";
-        this.playerArtist.appendChild(sep);
-
-        const badge = document.createElement("span");
-        badge.className = `player-metric-badge ${track?.is_video ? 'is-video' : 'is-song'}`;
-        badge.textContent = metricLabel;
-        this.playerArtist.appendChild(badge);
-      }
-    };
 
     const artists = this.parseTrackArtists(track);
     if (!artists || artists.length === 0) {
       this.playerArtist.textContent = track ? (track.artist || "Artist") : "Select a track to play";
-      if (track) appendMetric();
       return;
     }
 
@@ -9342,8 +9327,6 @@ class SoraFyDesktopApp {
         this.playerArtist.appendChild(sep);
       }
     });
-
-    appendMetric();
   }
 
   savePlaybackSession(isSync = false) {
@@ -11580,12 +11563,10 @@ class SoraFyDesktopApp {
       if (this.screenPlayerAudioView) this.screenPlayerAudioView.style.display = "none";
       if (this.screenPlayerVideoView) this.screenPlayerVideoView.style.display = "block";
       if (track) {
-        const metricLabel = this.getTrackMetricLabel(track);
         if (this.videoOverlayTitle) this.videoOverlayTitle.textContent = track.title || 'Video Title';
         if (this.videoOverlayArtist) {
           this.videoOverlayArtist.innerHTML = `
-            <span class="overlay-artist-name">${this.escapeHtml(track.artist || '')}</span>
-            ${metricLabel ? `<span class="screen-metric-sep">•</span><span class="screen-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>` : ''}
+            <span class="overlay-artist-name">${this.escapeHtml(track.artist || 'Artist')}</span>
           `;
         }
       }
@@ -11705,11 +11686,9 @@ class SoraFyDesktopApp {
         ${track.is_explicit ? '<span class="explicit-badge" title="Explicit">E</span>' : ''}
       `;
     }
-    const metricLabel = this.getTrackMetricLabel(track);
     if (this.screenPlayerArtist) {
       this.screenPlayerArtist.innerHTML = `
-        <span class="screen-artist-name">${this.escapeHtml(track.artist || 'Artis')}</span>
-        ${metricLabel ? `<span class="screen-metric-sep">•</span><span class="screen-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>` : ''}
+        <span class="screen-artist-name">${this.escapeHtml(track.artist || 'Artist')}</span>
       `;
     }
     if (this.videoOverlayTitle) {
@@ -11717,8 +11696,7 @@ class SoraFyDesktopApp {
     }
     if (this.videoOverlayArtist) {
       this.videoOverlayArtist.innerHTML = `
-        <span class="overlay-artist-name">${this.escapeHtml(track.artist || 'Artis')}</span>
-        ${metricLabel ? `<span class="screen-metric-sep">•</span><span class="screen-metric-badge ${track.is_video ? 'is-video' : 'is-song'}">${this.escapeHtml(metricLabel)}</span>` : ''}
+        <span class="overlay-artist-name">${this.escapeHtml(track.artist || 'Artist')}</span>
       `;
     }
     if (this.screenPlayerArtwork) {
