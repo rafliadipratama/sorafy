@@ -452,13 +452,11 @@ test('renderOldFavoritesMixes configures official YouTube Music hit playlists fo
   }
 });
 
-test('fetchMusicfyRecommendations creates official top charts shelf with curated top artists', async () => {
+test('fetchMusicfyRecommendations omits duplicate top charts shelf below mix cards', async () => {
   const curatedCharts = [
     { id: 'yt_1', video_id: '1', title: 'Untungnya, Hidup Harus Tetap Berjalan', artist: 'Bernadya' },
     { id: 'yt_2', video_id: '2', title: 'Cruel Summer', artist: 'Taylor Swift' },
-    { id: 'yt_3', video_id: '3', title: 'Sisa Rasa', artist: 'Mahalini' },
-    { id: 'yt_4', video_id: '4', title: 'Risk It All', artist: 'Bruno Mars' },
-    { id: 'yt_5', video_id: '5', title: 'Negoro Angin', artist: 'Denny Caknan' }
+    { id: 'yt_3', video_id: '3', title: 'Sisa Rasa', artist: 'Mahalini' }
   ];
 
   let renderedShelves = null;
@@ -473,7 +471,11 @@ test('fetchMusicfyRecommendations creates official top charts shelf with curated
       renderedShelves = shelves;
     },
     fetchTrendingChart: async () => {},
-    fetchExternalMusic: async () => []
+    fetchExternalMusic: async () => [
+      { id: 'ext_1', title: 'Song A', artist: 'Artist A' },
+      { id: 'ext_2', title: 'Song B', artist: 'Artist B' },
+      { id: 'ext_3', title: 'Song C', artist: 'Artist C' }
+    ]
   };
 
   await SoraFyDesktopApp.prototype.fetchMusicfyRecommendations.call(app, {
@@ -483,12 +485,7 @@ test('fetchMusicfyRecommendations creates official top charts shelf with curated
 
   assert.ok(Array.isArray(renderedShelves));
   const chartShelf = renderedShelves.find(s => s.id === 'ytm_top_charts');
-  assert.ok(chartShelf, 'ytm_top_charts shelf should be present');
-  assert.strictEqual(chartShelf.title, 'Tangga Lagu & Trending');
-  assert.ok(chartShelf.tracks.length >= 3);
-  assert.ok(chartShelf.tracks.every(t => t.is_video === false), 'Every chart shelf track must be audio format (is_video: false)');
-  const artists = chartShelf.tracks.map(t => t.artist);
-  assert.ok(artists.some(a => ['Bernadya', 'Taylor Swift', 'Mahalini', 'Bruno Mars', 'Denny Caknan'].includes(a)));
+  assert.strictEqual(chartShelf, undefined, 'ytm_top_charts duplicate shelf should not be present below mix cards');
 });
 
 test('renderOldFavoritesMixes configures Spotify chart cards and enforces audio-only format (is_video: false)', async () => {

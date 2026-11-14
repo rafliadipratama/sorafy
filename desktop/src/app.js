@@ -5374,32 +5374,8 @@ class SoraFyDesktopApp {
 
     const shelves = [];
 
-    // 1. Official YouTube Music Charts Shelf (Top Western & Indo Artists)
-    let officialChartsList = (feed && Array.isArray(feed.charts) && feed.charts.length > 0)
-      ? feed.charts
-      : (this.officialCharts && this.officialCharts.length > 0 ? this.officialCharts : []);
-
-    if (!officialChartsList.length && typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.fetchTopCharts === 'function') {
-      try {
-        const topCharts = await window.electronAPI.fetchTopCharts(this.currentLanguage);
-        if (Array.isArray(topCharts) && topCharts.length > 0) {
-          officialChartsList = topCharts;
-          this.officialCharts = topCharts;
-        }
-      } catch (_) {}
-    }
-
-    if (officialChartsList.length >= 4) {
-      const pickedCharts = this.pickDiverseTracks(officialChartsList, heardIds, avoidSongs, avoidArtists, 8, 2);
-      if (pickedCharts.length >= 3) {
-        shelves.push({
-          id: "ytm_top_charts",
-          label: "SPOTIFY CHARTS",
-          title: this.currentLanguage === 'id' ? "Tangga Lagu & Trending" : "Top Charts & Trending",
-          tracks: pickedCharts.map(t => ({ ...t, is_video: false }))
-        });
-      }
-    }
+    // Note: Top charts & trending are already prominently featured above in ytmMixCardsGrid,
+    // so duplicate chart shelves below are omitted to keep recommendations focused and personalized.
 
     const queryInnerTube = async (q) => {
       const fetchPromise = (async () => {
