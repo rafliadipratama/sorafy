@@ -6023,25 +6023,31 @@ class SoraFyDesktopApp {
       }
     }
 
-    // 3. Fetch New Releases Albums & Singles directly from YouTube Music Explore
+    // 3. Fetch New Releases Albums & Singles (Western & Indonesian Top Artists with High Monthly Listeners)
     if (this.exploreNewReleasesRow) {
-      this.exploreNewReleasesRow.innerHTML = `<div style="grid-column: 1/-1; padding: 24px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">Loading latest releases and singles...</div>`;
+      this.exploreNewReleasesRow.innerHTML = `<div style="grid-column: 1/-1; padding: 24px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">${this.currentLanguage === 'id' ? 'Memuat album & single terbaru dari artis populer...' : 'Loading latest releases from top artists...'}</div>`;
       try {
         let albums = [];
-        if (window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
+        if (window.electronAPI && typeof window.electronAPI.fetchNewAlbumReleases === 'function') {
+          albums = await window.electronAPI.fetchNewAlbumReleases(this.currentLanguage).catch(() => []);
+        }
+        if ((!albums || !albums.length) && Array.isArray(this.officialNewReleases) && this.officialNewReleases.length > 0) {
+          albums = this.officialNewReleases;
+        }
+        if ((!albums || !albums.length) && window.electronAPI && typeof window.electronAPI.getYtHomeFeed === 'function') {
+          const feed = await window.electronAPI.getYtHomeFeed(this.currentLanguage).catch(() => null);
+          if (feed && feed.newReleases && feed.newReleases.length) {
+            albums = feed.newReleases;
+          }
+        }
+        if ((!albums || !albums.length) && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
           const exploreData = await window.electronAPI.browseYouTube('FEmusic_explore').catch(() => null);
           if (exploreData && exploreData.albums && exploreData.albums.length) {
             albums = exploreData.albums;
           }
         }
-        if ((!albums || !albums.length) && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
-          const newRelData = await window.electronAPI.browseYouTube('FEmusic_new_releases').catch(() => null);
-          if (newRelData && newRelData.albums && newRelData.albums.length) {
-            albums = newRelData.albums;
-          }
-        }
         if ((!albums || !albums.length) && window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
-          albums = await window.electronAPI.searchYouTubeMusic("album baru indonesia rilis", 'album').catch(() => []);
+          albums = await window.electronAPI.searchYouTubeMusic(this.currentLanguage === 'id' ? "top hits album indonesia" : "top hits album", 'album').catch(() => []);
         }
 
         if (albums && albums.length) {
@@ -6062,7 +6068,7 @@ class SoraFyDesktopApp {
             this.exploreNewReleasesRow.appendChild(card);
           });
         } else {
-          this.exploreNewReleasesRow.innerHTML = `<div style="grid-column: 1/-1; padding: 24px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">Unable to load new releases at this time.</div>`;
+          this.exploreNewReleasesRow.innerHTML = `<div style="grid-column: 1/-1; padding: 24px; text-align: center; color: var(--color-text-secondary); font-size: 13px;">${this.currentLanguage === 'id' ? 'Tidak dapat memuat rilisan baru saat ini.' : 'Unable to load new releases at this time.'}</div>`;
         }
       } catch (e) {
         console.warn("New releases error:", e);

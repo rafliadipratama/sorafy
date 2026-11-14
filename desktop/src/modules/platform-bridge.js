@@ -202,6 +202,25 @@ class PlatformBridge {
     return { success: true, quickPicks: [] };
   }
 
+  async fetchNewAlbumReleases(lang = 'en') {
+    if (this.isElectron && this._electronAPI?.fetchNewAlbumReleases) {
+      return await this._electronAPI.fetchNewAlbumReleases(lang);
+    }
+    if (this.isTauri) {
+      try {
+        const res = await this._invoke('fetch_new_album_releases', { lang });
+        const unwrapped = this._unwrap(res);
+        if (Array.isArray(unwrapped)) {
+          return unwrapped;
+        }
+      } catch (err) {
+        console.warn('Tauri fetch_new_album_releases failed:', err);
+      }
+    }
+    const home = await this.getYtHomeFeed(lang);
+    return (home && Array.isArray(home.newReleases)) ? home.newReleases : [];
+  }
+
   async resolveArtistProfile(name) {
     if (this.isElectron && this._electronAPI?.resolveArtistProfile) {
       return await this._electronAPI.resolveArtistProfile(name);

@@ -472,6 +472,41 @@ test('other unmapped methods provide safe non-crashing fallbacks', async () => {
   assert.doesNotThrow(() => bridge.onDownloadPlaylistProgress(() => {}));
 });
 
+test('PlatformBridge fetchNewAlbumReleases forwards in electron and falls back safely in web', async () => {
+  // Electron mode
+  const mockElectron = {
+    fetchNewAlbumReleases: async (lang) => [
+      { id: 'alb_1', title: 'Semoga Hanya di Mimpi', artist: 'Bernadya', year: 'Album • 2026' }
+    ]
+  };
+  const electronBridge = createBridge({
+    runtime: 'electron',
+    electronAPI: mockElectron
+  });
+  const electronAlbums = await electronBridge.fetchNewAlbumReleases('id');
+  assert.strictEqual(electronAlbums.length, 1);
+  assert.strictEqual(electronAlbums[0].artist, 'Bernadya');
+
+  // Tauri mode
+  const tauriBridge = createBridge({
+    runtime: 'tauri',
+    tauriInvoke: async (cmd, args) => {
+      if (cmd === 'fetch_new_album_releases') {
+        return [{ id: 'alb_2', title: 'MAYHEM', artist: 'Lady Gaga', year: 'Album • 2025' }];
+      }
+      throw new Error(`Unknown command ${cmd}`);
+    }
+  });
+  const tauriAlbums = await tauriBridge.fetchNewAlbumReleases('en');
+  assert.strictEqual(tauriAlbums.length, 1);
+  assert.strictEqual(tauriAlbums[0].artist, 'Lady Gaga');
+
+  // Web fallback mode
+  const webBridge = createBridge({ runtime: 'web' });
+  const webAlbums = await webBridge.fetchNewAlbumReleases('en');
+  assert.ok(Array.isArray(webAlbums));
+});
+
 // 5. Global Aliasing: window.electronAPI = window.sorafyBridge
 test('initGlobalBridge sets window.sorafyBridge and aliases window.electronAPI when missing', () => {
   const mockWindow = {};

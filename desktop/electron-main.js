@@ -2704,16 +2704,192 @@ async function fetchOfficialCuratedPlaylists(hl = 'en', gl = 'US') {
   }
 }
 
+// Curated Top Popular Artists with large monthly listener / subscriber base (Western & Indonesian)
+const CURATED_TOP_ARTISTS = [
+  // Indonesian Top Popular Artists
+  { name: "Bernadya", origin: "id" },
+  { name: "Mahalini", origin: "id" },
+  { name: "Denny Caknan", origin: "id" },
+  { name: "Sal Priadi", origin: "id" },
+  { name: "Hindia", origin: "id" },
+  { name: "Juicy Luicy", origin: "id" },
+  { name: "Tiara Andini", origin: "id" },
+  { name: "Tulus", origin: "id" },
+  { name: "Nadin Amizah", origin: "id" },
+  { name: "NOAH", origin: "id" },
+  { name: "Sheila on 7", origin: "id" },
+  { name: "Lyodra", origin: "id" },
+  { name: "Rizky Febian", origin: "id" },
+  { name: "Dewa 19", origin: "id" },
+  { name: "Yura Yunita", origin: "id" },
+  { name: "Pamungkas", origin: "id" },
+  { name: "For Revenge", origin: "id" },
+  { name: "Raisa", origin: "id" },
+
+  // Western Top Popular Artists
+  { name: "Taylor Swift", origin: "western" },
+  { name: "Bruno Mars", origin: "western" },
+  { name: "Billie Eilish", origin: "western" },
+  { name: "Sabrina Carpenter", origin: "western" },
+  { name: "Lady Gaga", origin: "western" },
+  { name: "The Weeknd", origin: "western" },
+  { name: "Coldplay", origin: "western" },
+  { name: "Ed Sheeran", origin: "western" },
+  { name: "Ariana Grande", origin: "western" },
+  { name: "Dua Lipa", origin: "western" },
+  { name: "Kendrick Lamar", origin: "western" },
+  { name: "Olivia Rodrigo", origin: "western" },
+  { name: "Post Malone", origin: "western" },
+  { name: "SZA", origin: "western" },
+  { name: "Eminem", origin: "western" },
+  { name: "Justin Bieber", origin: "western" },
+  { name: "Benson Boone", origin: "western" },
+  { name: "Teddy Swims", origin: "western" }
+];
+
+function isArtistTokenMatch(artistName, subRuns = [], subText = '') {
+  const nameLower = (artistName || '').trim().toLowerCase();
+  if (!nameLower) return false;
+
+  for (const r of subRuns) {
+    const txt = (r.text || '').trim().toLowerCase();
+    if (!txt || txt === '•' || txt === '·') continue;
+    if (txt === nameLower) return true;
+    const tokens = txt.split(/[,&/]/).map(t => t.trim());
+    if (tokens.includes(nameLower)) return true;
+  }
+
+  const sections = (subText || '').split(/[•·]/).map(s => s.trim().toLowerCase());
+  for (const sec of sections) {
+    if (sec === nameLower) return true;
+    const tokens = sec.split(/[,&/]/).map(t => t.trim());
+    if (tokens.includes(nameLower)) return true;
+  }
+
+  return false;
+}
+
+async function fetchLatestAlbumForArtist(artistObj) {
+  try {
+    const payload = {
+      query: artistObj.name,
+      params: 'EgWKAQIYAWoMEAMQBBAJEA4QChAF', // Album filter
+      context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240318.01.00', hl: 'id', gl: 'ID' } }
+    };
+    const json = await postInnerTube('search', payload);
+    const shelf = json?.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicShelfRenderer?.contents;
+    if (!shelf || !shelf.length) return null;
+
+    const candidates = [];
+    for (const it of shelf) {
+      const r = it.musicResponsiveListItemRenderer;
+      if (!r) continue;
+      const title = r.flexColumns?.[0]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.[0]?.text || '';
+      const subRuns = r.flexColumns?.[1]?.musicResponsiveListItemFlexColumnRenderer?.text?.runs || [];
+      const subText = subRuns.map(x => x.text).join('');
+      const browseId = r.navigationEndpoint?.browseEndpoint?.browseId;
+      const thumbs = r.thumbnail?.musicThumbnailRenderer?.thumbnail?.thumbnails || [];
+      let artwork = thumbs.length ? thumbs[thumbs.length - 1].url : '';
+      if (artwork) artwork = artwork.replace(/=(?:w\d+-h\d+|s\d+).*$/, '=w544-h544-p-l90-rj');
+
+      const isMatch = isArtistTokenMatch(artistObj.name, subRuns, subText);
+      const isJunk = /\b(tribute|karaoke|originally performed|instrumental|in the style of|cover by|remix|slowed|reverb|speed up|dj version)\b/i.test(title);
+
+      if (isMatch && !isJunk && browseId) {
+        let yearNum = 2020;
+        const yearMatch = subText.match(/\b(202[0-9]|201[0-9])\b/);
+        if (yearMatch) yearNum = parseInt(yearMatch[1], 10);
+
+        let albumType = 'Album';
+        if (/\bsingle\b/i.test(subText)) albumType = 'Single';
+        else if (/\bep\b/i.test(subText)) albumType = 'EP';
+
+        candidates.push({
+          id: browseId,
+          title,
+          artist: artistObj.name,
+          year: subText || `${albumType} • ${artistObj.name}`,
+          yearNum,
+          album_type: albumType,
+          artwork_url: artwork,
+          browse_id: browseId,
+          origin: artistObj.origin,
+          source_label: 'Official New Release'
+        });
+      }
+    }
+
+    if (!candidates.length) return null;
+    candidates.sort((a, b) => b.yearNum - a.yearNum);
+    return candidates[0];
+  } catch (_) {
+    return null;
+  }
+}
+
+let cachedCuratedNewReleases = null;
+let cachedCuratedNewReleasesTime = 0;
+const CURATED_RELEASES_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+async function fetchCuratedNewAlbumReleases(lang = 'en') {
+  if (cachedCuratedNewReleases && (Date.now() - cachedCuratedNewReleasesTime < CURATED_RELEASES_TTL_MS)) {
+    return cachedCuratedNewReleases;
+  }
+
+  const isId = lang === 'id';
+  const indoArtists = CURATED_TOP_ARTISTS.filter(a => a.origin === 'id').slice(0, 14);
+  const westernArtists = CURATED_TOP_ARTISTS.filter(a => a.origin === 'western').slice(0, 14);
+
+  try {
+    const [indoResults, westernResults] = await Promise.all([
+      Promise.allSettled(indoArtists.map(fetchLatestAlbumForArtist)),
+      Promise.allSettled(westernArtists.map(fetchLatestAlbumForArtist))
+    ]);
+
+    const indoAlbums = indoResults.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+    const westernAlbums = westernResults.map(r => r.status === 'fulfilled' ? r.value : null).filter(Boolean);
+
+    const combined = [];
+    const seen = new Set();
+    const maxLen = Math.max(indoAlbums.length, westernAlbums.length);
+
+    const primary = isId ? indoAlbums : westernAlbums;
+    const secondary = isId ? westernAlbums : indoAlbums;
+
+    for (let i = 0; i < maxLen; i++) {
+      if (i < primary.length && !seen.has(primary[i].browse_id)) {
+        seen.add(primary[i].browse_id);
+        combined.push(primary[i]);
+      }
+      if (i < secondary.length && !seen.has(secondary[i].browse_id)) {
+        seen.add(secondary[i].browse_id);
+        combined.push(secondary[i]);
+      }
+    }
+
+    if (combined.length > 0) {
+      cachedCuratedNewReleases = combined;
+      cachedCuratedNewReleasesTime = Date.now();
+      return combined;
+    }
+  } catch (err) {
+    console.warn('fetchCuratedNewAlbumReleases error:', err);
+  }
+
+  return cachedCuratedNewReleases || [];
+}
+
 // IPC Handler: Official Home Feed (Quick Picks, Charts, Curated Playlists, New Releases)
 ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
   const hl = (lang === 'id') ? 'id' : 'en';
   const gl = (lang === 'id') ? 'ID' : 'US';
   try {
-    const [homeData, chartData, exploreData, officialPlaylists] = await Promise.all([
+    const [homeData, chartData, exploreData, officialPlaylists, curatedNewReleases] = await Promise.all([
       browseYouTubeInnerTube('FEmusic_home', hl, gl).catch(() => null),
       browseYouTubeInnerTube('VLPL4fGSI1pDJn5QPpj0R4vVgRWk8sSq549G', hl, gl).catch(() => null),
       browseYouTubeInnerTube('FEmusic_explore', hl, gl).catch(() => null),
-      fetchOfficialCuratedPlaylists(hl, gl).catch(() => [])
+      fetchOfficialCuratedPlaylists(hl, gl).catch(() => []),
+      fetchCuratedNewAlbumReleases(lang).catch(() => [])
     ]);
 
     const quickPicksRaw = (homeData && homeData.tracks && homeData.tracks.length > 0)
@@ -2732,9 +2908,11 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
           ? homeData.playlists
           : []);
 
-    const newReleases = (exploreData && exploreData.albums && exploreData.albums.length > 0)
-      ? exploreData.albums
-      : [];
+    const newReleases = (curatedNewReleases && curatedNewReleases.length > 0)
+      ? curatedNewReleases
+      : ((exploreData && exploreData.albums && exploreData.albums.length > 0)
+          ? exploreData.albums
+          : []);
 
     return {
       success: true,
@@ -2748,6 +2926,10 @@ ipcMain.handle('get-yt-home-feed', async (event, lang = 'en') => {
     console.error('get-yt-home-feed error:', err);
     return { success: false, quickPicks: [], charts: [], communityPlaylists: [], featuredPlaylists: [], newReleases: [] };
   }
+});
+
+ipcMain.handle('fetch-new-album-releases', async (event, lang = 'en') => {
+  return await fetchCuratedNewAlbumReleases(lang);
 });
 
 ipcMain.handle('resolve-artist-profile', async (event, name) => {

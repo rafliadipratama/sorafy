@@ -290,3 +290,59 @@ test('renderCommunityPlaylistsDirect does not include avatar badge or orange let
     global.document = originalDoc;
   }
 });
+
+test('exploreNewReleasesRow populates top Western and Indonesian artist albums with proper cards', async () => {
+  const originalDoc = global.document;
+  const originalWindow = global.window;
+  try {
+    function createMockElement(tag = 'div') {
+      return {
+        tag,
+        className: '',
+        innerHTML: '',
+        children: [],
+        addEventListener() {},
+        appendChild(child) {
+          this.children.push(child);
+        }
+      };
+    }
+
+    global.document = {
+      createElement: (tag) => createMockElement(tag),
+      getElementById: () => null,
+      querySelectorAll: () => []
+    };
+
+    const curatedMockAlbums = [
+      { id: 'alb_1', title: 'Semoga Hanya di Mimpi', artist: 'Bernadya', year: 'Album • Bernadya • 2026', artwork_url: 'https://example.com/b.jpg' },
+      { id: 'alb_2', title: 'Patient Zero', artist: 'Taylor Swift', year: 'Single • Taylor Swift • 2026', artwork_url: 'https://example.com/ts.jpg' }
+    ];
+
+    global.window = {
+      electronAPI: {
+        fetchNewAlbumReleases: async () => curatedMockAlbums
+      }
+    };
+
+    const row = createMockElement('div');
+    const app = {
+      exploreNewReleasesRow: row,
+      currentLanguage: 'id',
+      exploreLoaded: false,
+      escapeHtml: SoraFyDesktopApp.prototype.escapeHtml,
+      safeImg: SoraFyDesktopApp.prototype.safeImg,
+      loadExploreView: SoraFyDesktopApp.prototype.loadExploreView,
+      openAlbumDetail() {}
+    };
+
+    await app.loadExploreView();
+    assert.strictEqual(row.children.length, 2);
+    assert.ok(row.children[0].innerHTML.includes('Bernadya'));
+    assert.ok(row.children[1].innerHTML.includes('Taylor Swift'));
+    assert.ok(row.children[0].className.includes('album-card'));
+  } finally {
+    global.document = originalDoc;
+    global.window = originalWindow;
+  }
+});
