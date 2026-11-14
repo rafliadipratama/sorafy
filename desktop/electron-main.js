@@ -2947,7 +2947,7 @@ async function fetchKworbSpotifyDaily(country = 'id') {
 }
 
 async function fetchSpotifyChart(chartType, lang = 'id') {
-  const cacheKey = `${chartType}_${lang}`;
+  const cacheKey = chartType;
   const cached = cachedSpotifyCharts.get(cacheKey);
   if (cached && (Date.now() - cached.timestamp < SPOTIFY_CHARTS_TTL_MS)) {
     return cached.tracks;
@@ -2956,7 +2956,10 @@ async function fetchSpotifyChart(chartType, lang = 'id') {
   let tracks = [];
   try {
     if (chartType === 'top50_id' || chartType === '37i9dQZEVXbObFQZ3JLcXt') {
-      const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbObFQZ3JLcXt');
+      let res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbObFQZ3JLcXt').catch(() => null);
+      if (!res || !Array.isArray(res.tracks) || res.tracks.length === 0) {
+        res = await fetchSpotifyPlaylistOrAlbum('https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt').catch(() => null);
+      }
       if (res && Array.isArray(res.tracks)) {
         tracks = res.tracks.map(t => ({
           ...t,
@@ -2966,7 +2969,10 @@ async function fetchSpotifyChart(chartType, lang = 'id') {
         }));
       }
     } else if (chartType === 'top50_global' || chartType === '37i9dQZEVXbMDoHDwVN2tF') {
-      const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbMDoHDwVN2tF');
+      let res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbMDoHDwVN2tF').catch(() => null);
+      if (!res || !Array.isArray(res.tracks) || res.tracks.length === 0) {
+        res = await fetchSpotifyPlaylistOrAlbum('https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF').catch(() => null);
+      }
       if (res && Array.isArray(res.tracks)) {
         tracks = res.tracks.map(t => ({
           ...t,
@@ -2976,7 +2982,10 @@ async function fetchSpotifyChart(chartType, lang = 'id') {
         }));
       }
     } else if (chartType === 'todays_top_hits' || chartType === '37i9dQZF1DXcBWIGoYBM5M') {
-      const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZF1DXcBWIGoYBM5M');
+      let res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZF1DXcBWIGoYBM5M').catch(() => null);
+      if (!res || !Array.isArray(res.tracks) || res.tracks.length === 0) {
+        res = await fetchSpotifyPlaylistOrAlbum('https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M').catch(() => null);
+      }
       if (res && Array.isArray(res.tracks)) {
         tracks = res.tracks.map(t => ({
           ...t,
@@ -2990,7 +2999,10 @@ async function fetchSpotifyChart(chartType, lang = 'id') {
       if (viralTracks && viralTracks.length > 0) {
         tracks = viralTracks;
       } else {
-        const res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbObFQZ3JLcXt');
+        let res = await fetchSpotifyEmbedFallback('playlist', '37i9dQZEVXbObFQZ3JLcXt').catch(() => null);
+        if (!res || !Array.isArray(res.tracks) || res.tracks.length === 0) {
+          res = await fetchSpotifyPlaylistOrAlbum('https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt').catch(() => null);
+        }
         if (res && Array.isArray(res.tracks)) {
           tracks = res.tracks.map(t => ({
             ...t,
@@ -3025,11 +3037,12 @@ async function fetchCuratedTopCharts(lang = 'en') {
   }
 
   try {
-    // 1. Live synchronized Spotify Top Charts: Top 50 Indonesia + Top 50 Global + Today's Top Hits
+    // 1. Live synchronized Spotify Top Charts: Top 50 Indonesia + Top 50 Global + Today's Top Hits + Viral 50
     const [indoSpotify, globalSpotify, hitsSpotify] = await Promise.all([
       fetchSpotifyChart('top50_id', lang).catch(() => []),
       fetchSpotifyChart('top50_global', lang).catch(() => []),
-      fetchSpotifyChart('todays_top_hits', lang).catch(() => [])
+      fetchSpotifyChart('todays_top_hits', lang).catch(() => []),
+      fetchSpotifyChart('viral50_id', lang).catch(() => [])
     ]);
 
     const combinedIndo = indoSpotify || [];
@@ -3650,10 +3663,11 @@ function fetchSpotifyOembedMeta(url) {
 function fetchSpotifyEmbedFallback(type, id, oembedMeta = null) {
   return new Promise((resolve, reject) => {
     const embedUrl = `https://open.spotify.com/embed/${type}/${id}`;
-    https.get(embedUrl, {
+    const req = https.get(embedUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
-      }
+      },
+      timeout: 8000
     }, res => {
       let data = '';
       res.on('data', chunk => data += chunk);
@@ -3733,7 +3747,12 @@ function fetchSpotifyEmbedFallback(type, id, oembedMeta = null) {
           reject(e);
         }
       });
-    }).on('error', reject);
+    });
+    req.on('error', reject);
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error('Spotify embed request timed out'));
+    });
   });
 }
 

@@ -6396,10 +6396,7 @@ class SoraFyDesktopApp {
           : "Daily update of the most played tracks in Indonesia right now.",
         cover: "https://charts-images.scdn.co/assets/locale_en/regional/daily/region_id_default.jpg",
         type: "spotify_chart",
-        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt",
-        playlistId: "VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4",
-        fallbackPlaylistId: "VLRDCLAK5uy_khVZocvQocnmtzkOUZlAapWuIJss51XEk",
-        fallbackQuery: "Top Hits Indonesia 2026"
+        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt"
       },
       {
         id: "chart_top50_global",
@@ -6410,9 +6407,7 @@ class SoraFyDesktopApp {
           : "Daily update of the most played tracks right now - Global.",
         cover: "https://charts-images.scdn.co/assets/locale_en/regional/daily/region_global_default.jpg",
         type: "spotify_chart",
-        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF",
-        fallbackPlaylistId: "VLRDCLAK5uy_nmS3YoxSwVVQk9lEQJ0UX4ZCjXsW_psU8",
-        fallbackQuery: "Top 50 Global hits 2026"
+        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbMDoHDwVN2tF"
       },
       {
         id: "chart_viral50_id",
@@ -6423,10 +6418,7 @@ class SoraFyDesktopApp {
           : "The most viral tracks in Indonesia updated weekly.",
         cover: "https://charts-images.scdn.co/assets/locale_en/viral/daily/region_id_default.jpg",
         type: "spotify_chart",
-        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt",
-        playlistId: "VLRDCLAK5uy_nOVpLE7yC1hOzKOA9SqiVIeLqmoUDWBkE",
-        fallbackPlaylistId: "VLRDCLAK5uy_lrTZ_d6oQwyngZyhe2Xz1o8jbbSS24tu4",
-        fallbackQuery: "Viral Hits Indonesia 2026"
+        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZEVXbObFQZ3JLcXt"
       },
       {
         id: "chart_todays_top_hits",
@@ -6437,9 +6429,7 @@ class SoraFyDesktopApp {
           : "The biggest hits on the planet curated today.",
         cover: "https://i.scdn.co/image/ab67706f00000002960019ea66cba66a44fdd4c2",
         type: "spotify_chart",
-        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M",
-        fallbackPlaylistId: "VLRDCLAK5uy_nmS3YoxSwVVQk9lEQJ0UX4ZCjXsW_psU8",
-        fallbackQuery: "Today's Top Hits pop 2026"
+        spotifyUrl: "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M"
       }
     ];
 
@@ -6470,48 +6460,10 @@ class SoraFyDesktopApp {
             }
           }
 
-          if (!loadedTracks.length && chart.type === "spotify_chart" && chart.spotifyUrl && window.electronAPI && typeof window.electronAPI.importExternalPlaylist === "function") {
+          if (!loadedTracks.length && chart.spotifyUrl && window.electronAPI && typeof window.electronAPI.importExternalPlaylist === "function") {
             const res = await window.electronAPI.importExternalPlaylist(chart.spotifyUrl);
             if (res && res.success && Array.isArray(res.tracks) && res.tracks.length > 0) {
               loadedTracks = res.tracks;
-            }
-          }
-
-          if (!loadedTracks.length && chart.playlistId && window.electronAPI && typeof window.electronAPI.browseYouTube === "function") {
-            const res = await window.electronAPI.browseYouTube(chart.playlistId);
-            if (res && Array.isArray(res.tracks) && res.tracks.length > 0) {
-              loadedTracks = res.tracks;
-            }
-          }
-
-          if (!loadedTracks.length && chart.fallbackPlaylistId && window.electronAPI && typeof window.electronAPI.browseYouTube === "function") {
-            const res = await window.electronAPI.browseYouTube(chart.fallbackPlaylistId);
-            if (res && Array.isArray(res.tracks) && res.tracks.length > 0) {
-              loadedTracks = res.tracks;
-            }
-          }
-
-          if (!loadedTracks.length && chart.id === "chart_top50_id" && window.electronAPI && typeof window.electronAPI.fetchTopCharts === "function") {
-            const res = await window.electronAPI.fetchTopCharts("id");
-            if (Array.isArray(res) && res.length > 0) {
-              loadedTracks = res;
-            }
-          }
-
-          if (!loadedTracks.length && chart.id === "chart_top50_global" && window.electronAPI && typeof window.electronAPI.fetchTopCharts === "function") {
-            const res = await window.electronAPI.fetchTopCharts("en");
-            if (Array.isArray(res) && res.length > 0) {
-              loadedTracks = res;
-            }
-          }
-
-          if (!loadedTracks.length && (chart.query || chart.fallbackQuery)) {
-            const q = chart.query || chart.fallbackQuery;
-            if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === "function") {
-              const res = await window.electronAPI.searchYouTubeMusic(q);
-              if (Array.isArray(res) && res.length > 0) {
-                loadedTracks = res;
-              }
             }
           }
         } catch (err) {
@@ -6540,7 +6492,7 @@ class SoraFyDesktopApp {
           const loadingMsg = this.currentLanguage === "id" ? `Memuat & memutar ${chart.title}...` : `Loading & playing ${chart.title}...`;
           this.showToast(loadingMsg);
           const tracks = await loadChartTracks();
-          if (tracks.length > 0) {
+          if (tracks && tracks.length > 0) {
             this.tracks = tracks;
             this.currentTrackIndex = 0;
             this.loadTrack(0, true);
@@ -6548,7 +6500,9 @@ class SoraFyDesktopApp {
               ? `Memutar ${chart.title} (${tracks.length} lagu)`
               : `Playing ${chart.title} (${tracks.length} tracks)`);
           } else {
-            this.searchOnlineMusic(chart.fallbackQuery || chart.title, "song");
+            this.showToast(this.currentLanguage === "id"
+              ? `Gagal memuat tangga lagu ${chart.title}. Silakan coba beberapa saat lagi.`
+              : `Unable to load ${chart.title} chart. Please try again later.`);
           }
         });
       }
@@ -6560,27 +6514,30 @@ class SoraFyDesktopApp {
           title: chart.title,
           description: chart.sub,
           artwork_url: chart.cover,
-          tracks: []
+          is_chart: true,
+          tracks: cachedTracks || []
         };
-        this.openPlaylistDetail(playlistObj);
-        this.playlistTrackList.innerHTML = `
-          <div style="text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px;">
-            ${this.currentLanguage === "id" ? "Memuat daftar lagu tangga lagu..." : "Loading chart tracks..."}
-          </div>
-        `;
-
-        const tracks = await loadChartTracks();
-        if (tracks.length > 0) {
-          playlistObj.tracks = tracks;
-          this.currentPlaylist = playlistObj;
-          this.playlistStatsText.textContent = `${tracks.length} ${this.currentLanguage === "id" ? "Lagu" : "Songs"}`;
-          this.renderPlaylistTracks(tracks);
-        } else {
+        await this.openPlaylistDetail(playlistObj);
+        if (!cachedTracks || cachedTracks.length === 0) {
           this.playlistTrackList.innerHTML = `
             <div style="text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px;">
-              ${this.currentLanguage === "id" ? "Tidak dapat memuat daftar lagu saat ini. Silakan coba kembali." : "Unable to load chart tracks. Please try again."}
+              ${this.currentLanguage === "id" ? "Memuat daftar lagu Spotify..." : "Loading Spotify tracks..."}
             </div>
           `;
+
+          const tracks = await loadChartTracks();
+          if (tracks && tracks.length > 0) {
+            playlistObj.tracks = tracks;
+            this.currentPlaylist = playlistObj;
+            this.playlistStatsText.textContent = `${tracks.length} ${this.currentLanguage === "id" ? "Lagu" : "Songs"}`;
+            this.renderPlaylistTracks(tracks);
+          } else {
+            this.playlistTrackList.innerHTML = `
+              <div style="text-align: center; padding: 48px 0; color: var(--color-text-secondary); font-size: 13px;">
+                ${this.currentLanguage === "id" ? "Tidak dapat memuat daftar lagu saat ini. Silakan coba kembali." : "Unable to load chart tracks. Please try again."}
+              </div>
+            `;
+          }
         }
       });
 
@@ -7946,7 +7903,7 @@ class SoraFyDesktopApp {
       } catch (_) {}
     }
 
-    if (!isUserPl && !playlist.is_special && !tracks.length && playlist.title) {
+    if (!isUserPl && !playlist.is_special && !playlist.is_chart && !tracks.length && playlist.title) {
       try {
         const searchTracks = await this.queryInnerTubeSongs(`${playlist.title} hits`);
         if (searchTracks && searchTracks.length) tracks = searchTracks;

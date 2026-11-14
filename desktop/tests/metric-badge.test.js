@@ -539,6 +539,62 @@ test('renderOldFavoritesMixes configures Spotify chart cards and enforces audio-
   }
 });
 
+test('openPlaylistDetail with is_chart: true prevents queryInnerTubeSongs fallback from polluting chart tracks', async () => {
+  let queryCalled = false;
+  let renderedTracks = null;
+
+  const origDoc = global.document;
+  global.document = {
+    getElementById(id) {
+      return null;
+    },
+    createElement() {
+      return { innerHTML: '', appendChild() {} };
+    }
+  };
+
+  try {
+    const app = {
+      currentLanguage: 'id',
+      customPlaylists: [],
+      userPlaylists: [],
+      likedTrackIds: new Set(),
+      switchView() {},
+      playlistTitleHeading: { textContent: '' },
+      playlistDescText: { textContent: '' },
+      playlistCoverImg: { src: '' },
+      playlistStatsText: { textContent: '' },
+      playlistTrackList: { innerHTML: '' },
+      async queryInnerTubeSongs() {
+        queryCalled = true;
+        return [
+          { id: 'yt_fallback_1', title: 'Shape of You', artist: 'Ed Sheeran' }
+        ];
+      },
+      renderPlaylistTracks(tracks) {
+        renderedTracks = tracks;
+      },
+      openPlaylistDetail: SoraFyDesktopApp.prototype.openPlaylistDetail
+    };
+
+    const chartPlaylist = {
+      id: 'chart_todays_top_hits',
+      title: "Today's Top Hits",
+      description: "Koleksi lagu hits internasional",
+      artwork_url: "https://i.scdn.co/image/test.jpg",
+      is_chart: true,
+      tracks: []
+    };
+
+    await app.openPlaylistDetail(chartPlaylist);
+
+    assert.strictEqual(queryCalled, false, 'queryInnerTubeSongs fallback should NOT be called for is_chart playlists');
+    assert.deepStrictEqual(renderedTracks, [], 'Initial chart tracks should remain empty until loaded from Spotify');
+  } finally {
+    global.document = origDoc;
+  }
+});
+
 test('electron-main.js, preload.js, and app.js have zero syntax errors', () => {
   const { execSync } = require('child_process');
   const path = require('path');
