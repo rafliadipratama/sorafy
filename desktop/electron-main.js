@@ -3087,7 +3087,6 @@ async function fetchCuratedTopCharts(lang = 'en') {
     return cachedCuratedTopCharts;
   }
 
-  const isId = (lang === 'id');
   const hl = isId ? 'id' : 'en';
   const gl = isId ? 'ID' : 'US';
 

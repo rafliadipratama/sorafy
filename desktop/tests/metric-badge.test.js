@@ -541,3 +541,19 @@ test('renderOldFavoritesMixes configures Spotify chart cards and enforces audio-
     global.document = origDoc;
   }
 });
+
+test('electron-main.js, preload.js, and app.js have zero syntax errors', () => {
+  const { execSync } = require('child_process');
+  const path = require('path');
+  const files = [
+    path.join(__dirname, '..', 'electron-main.js'),
+    path.join(__dirname, '..', 'preload.js'),
+    path.join(__dirname, '..', 'src', 'app.js'),
+    path.join(__dirname, '..', 'src', 'modules', 'platform-bridge.js')
+  ];
+  for (const f of files) {
+    assert.doesNotThrow(() => {
+      execSync(`node -c "${f}"`);
+    }, `Syntax error in ${f}`);
+  }
+});
