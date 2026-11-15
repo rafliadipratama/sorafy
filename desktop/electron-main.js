@@ -3365,7 +3365,7 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
   // 0. Check if user verified a stream for this track (Nuclear Stream Verification)
   const verified = getVerifiedStream(title, artist);
   let isVerified = false;
-  let vid = videoId;
+  let vid = (videoId && typeof videoId === 'string' && /^[a-zA-Z0-9_-]{11}$/.test(videoId.trim())) ? videoId.trim() : null;
   if (verified && verified.verifiedId) {
     vid = verified.verifiedId;
     isVerified = true;
@@ -3403,6 +3403,7 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
     if (dlpStream && dlpStream.url) {
       dlpStream.isVerified = isVerified;
       if (verified) dlpStream.verifiedData = verified;
+      dlpStream.videoId = vid;
       streamCache.set(cacheKey, { data: dlpStream, expireAt: Date.now() + 45 * 60 * 1000 });
       saveStreamCache();
       return dlpStream;
@@ -3412,6 +3413,7 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
     if (innerStream && innerStream.url) {
       innerStream.isVerified = isVerified;
       if (verified) innerStream.verifiedData = verified;
+      innerStream.videoId = vid;
       streamCache.set(cacheKey, { data: innerStream, expireAt: Date.now() + 45 * 60 * 1000 });
       saveStreamCache();
       return innerStream;
@@ -3419,7 +3421,7 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
   }
 
   // 3. Fallback to JioSaavn ONLY if no videoId was specified AND candidate strictly matches official artist
-  if (!videoId && !isVideo && title && artist && !isVerified) {
+  if (!vid && !isVideo && title && artist && !isVerified) {
     try {
       const saavnStream = await resolveJioSaavnStream(title, artist);
       if (saavnStream && saavnStream.url) {

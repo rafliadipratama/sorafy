@@ -8037,6 +8037,10 @@ class SoraFyDesktopApp {
       }
     }
 
+    if (tracks && tracks.length > 0) {
+      this.preloadTopTracks(tracks);
+    }
+
     const tracksToHeal = tracks.filter(t => t.artwork_url && (t.artwork_url.includes('mosaic.scdn.co') || t.artwork_url.includes('unsplash.com')));
     if (tracksToHeal.length === 0) return;
 
@@ -9520,7 +9524,7 @@ class SoraFyDesktopApp {
     // Spotify/Apple Music Instant Stream: Skip network resolver if already preloaded or cached
     if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!track.is_full_stream || !track.stream_url)) {
       try {
-        const vid = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : track.id);
+        const vid = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : null);
         const full = await window.electronAPI.resolveFullStream({
           title: track.title,
           artist: track.artist,

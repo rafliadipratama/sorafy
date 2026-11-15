@@ -595,6 +595,88 @@ test('openPlaylistDetail with is_chart: true prevents queryInnerTubeSongs fallba
   }
 });
 
+test('loadTrack with Spotify track (spot_ id) passes null videoId to resolveFullStream to allow title/artist resolution', async () => {
+  let resolvedParams = null;
+  const mockTrack = {
+    id: 'spot_37i9dQZF1DXcBWIGoYBM5M_0_1763164472',
+    title: 'BbY WOW',
+    artist: 'KAROL G, Judeline, rusowsky',
+    artwork_url: 'https://example.com/art.jpg',
+    duration_secs: 225,
+    is_video: false
+  };
+
+  const origWindow = global.window;
+  global.window = {
+    electronAPI: {
+      checkLocalAudioExists: async () => ({ exists: false }),
+      resolveFullStream: async (params) => {
+        resolvedParams = params;
+        return {
+          url: 'http://127.0.0.1:18492/stream?url=https://googlevideo.com/test',
+          videoId: 'ljAH6jNaApU',
+          duration: 226,
+          provider: 'Opus HD'
+        };
+      }
+    }
+  };
+
+  try {
+    const app = {
+      _currentLoadId: 0,
+      tracks: [mockTrack],
+      currentTrackIndex: 0,
+      isPlaying: false,
+      isSeekingBottom: false,
+      isSeekingScreen: false,
+      likedTrackIds: new Set(),
+      resetDeckGains() {},
+      resetCrossfade() {},
+      updatePlayPauseIcon() {},
+      showPlayerBuffering() {},
+      recordTasteAffinity() {},
+      updateScreenPlayer() {},
+      highlightActiveSongItems() {},
+      renderBottomPlayerArtist() {},
+      updateVerificationBadge() {},
+      formatTime: SoraFyDesktopApp.prototype.formatTime,
+      escapeHtml: SoraFyDesktopApp.prototype.escapeHtml,
+      currentTimeLabel: { textContent: '' },
+      durationLabel: { textContent: '' },
+      playerTitle: { innerHTML: '' },
+      playerArtwork: { src: '' },
+      playerBadge: { textContent: '' },
+      audio: {
+        src: '',
+        load() {},
+        addEventListener() {}
+      },
+      updateLikeButton() {},
+      updateLyricsOffsetUI() {},
+      recordPlayHistory() {},
+      fetchTrackLyrics() {},
+      updateMediaSession() {},
+      updateDiscordPresence() {},
+      renderQueue() {},
+      ensureUpcomingQueue() {},
+      ensureAudioContextActive() {},
+      loadTrack: SoraFyDesktopApp.prototype.loadTrack
+    };
+
+    await app.loadTrack(0, true);
+
+    assert.ok(resolvedParams, 'resolveFullStream should be called');
+    assert.strictEqual(resolvedParams.videoId, null, 'Spotify ID should not be passed as videoId');
+    assert.strictEqual(resolvedParams.title, 'BbY WOW');
+    assert.strictEqual(resolvedParams.artist, 'KAROL G, Judeline, rusowsky');
+    assert.strictEqual(mockTrack.stream_url, 'http://127.0.0.1:18492/stream?url=https://googlevideo.com/test');
+    assert.strictEqual(mockTrack.video_id, 'ljAH6jNaApU');
+  } finally {
+    global.window = origWindow;
+  }
+});
+
 test('electron-main.js, preload.js, and app.js have zero syntax errors', () => {
   const { execSync } = require('child_process');
   const path = require('path');
