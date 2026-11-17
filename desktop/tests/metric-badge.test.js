@@ -677,6 +677,52 @@ test('loadTrack with Spotify track (spot_ id) passes null videoId to resolveFull
   }
 });
 
+test('formatArtistSubLabel and formatTrackSubtitle localize artist and track labels bidirectionally', () => {
+  const appEn = {
+    currentLanguage: 'en',
+    formatArtistSubLabel: SoraFyDesktopApp.prototype.formatArtistSubLabel,
+    formatTrackSubtitle: SoraFyDesktopApp.prototype.formatTrackSubtitle
+  };
+
+  const appId = {
+    currentLanguage: 'id',
+    formatArtistSubLabel: SoraFyDesktopApp.prototype.formatArtistSubLabel,
+    formatTrackSubtitle: SoraFyDesktopApp.prototype.formatTrackSubtitle
+  };
+
+  // 1. English mode conversions
+  assert.strictEqual(
+    appEn.formatArtistSubLabel('Artis • 179 jt audiens bulanan'),
+    'Artist • 179M monthly listeners'
+  );
+  assert.strictEqual(
+    appEn.formatArtistSubLabel('179 jt pendengar bulanan'),
+    '179M monthly listeners'
+  );
+  assert.strictEqual(
+    appEn.formatArtistSubLabel('16,9 jt pelanggan'),
+    '16.9M subscribers'
+  );
+  assert.strictEqual(
+    appEn.formatTrackSubtitle('Lagu • 2.58'),
+    'Song • 2:58'
+  );
+
+  // 2. Indonesian mode conversions
+  assert.strictEqual(
+    appId.formatArtistSubLabel('Artist • 179M monthly audience'),
+    'Artis • 179 jt audiens bulanan'
+  );
+  assert.strictEqual(
+    appId.formatArtistSubLabel('16.9M subscribers'),
+    '16,9 jt pelanggan'
+  );
+  assert.strictEqual(
+    appId.formatTrackSubtitle('Song • 2:58'),
+    'Lagu • 2:58'
+  );
+});
+
 test('electron-main.js, preload.js, and app.js have zero syntax errors', () => {
   const { execSync } = require('child_process');
   const path = require('path');

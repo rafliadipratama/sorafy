@@ -245,7 +245,24 @@ function resolveYtDlpVideoStream(videoId) {
   });
 }
 
-function postInnerTube(endpoint, payload, ua = null) {
+function getActiveLanguage(hl = null) {
+  if (typeof hl === 'string' && hl.trim()) {
+    const clean = hl.trim().toLowerCase();
+    if (clean === 'id' || clean === 'id-id' || clean === 'indonesia') return 'id';
+    return 'en';
+  }
+  try {
+    if (typeof loadAppSettings === 'function') {
+      const s = loadAppSettings();
+      if (s && s.language) {
+        return s.language.toLowerCase() === 'id' ? 'id' : 'en';
+      }
+    }
+  } catch (_) {}
+  return 'en';
+}
+
+function postInnerTube(endpoint, payload, ua = null, hl = null) {
   return new Promise((resolve) => {
     let settled = false;
     const finish = (data) => {
@@ -261,12 +278,16 @@ function postInnerTube(endpoint, payload, ua = null) {
       const url = endpoint.startsWith('http') ? endpoint : `https://music.youtube.com/youtubei/v1/${endpoint}`;
       const defaultUa = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
 
+      const appLang = getActiveLanguage(hl);
+      const acceptLang = (appLang === 'id') ? 'id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7' : 'en-US,en;q=0.9,id;q=0.8';
+
       let req;
       if (electronNet && typeof electronNet.request === 'function' && app.isReady()) {
         try {
           req = electronNet.request({ method: 'POST', url });
           req.setHeader('Content-Type', 'application/json');
           req.setHeader('User-Agent', ua || defaultUa);
+          req.setHeader('Accept-Language', acceptLang);
         } catch (_) {
           req = null;
         }
@@ -277,7 +298,8 @@ function postInnerTube(endpoint, payload, ua = null) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'User-Agent': ua || defaultUa
+            'User-Agent': ua || defaultUa,
+            'Accept-Language': acceptLang
           }
         });
       }
@@ -875,7 +897,7 @@ function resolveJioSaavnStream(title, artist) {
   });
 }
 
-async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
+async function searchYouTubeMusicInnerTube(query, filterType = 'song', lang = null) {
   let effectiveQuery = (query || '').trim();
   let params = 'EgWKAQIIAWoKEAkQBRAKEAMQBw%3D%3D'; // Songs
   if (filterType === 'video') {
@@ -888,14 +910,18 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
     params = 'EgWKAQIYAWoKEAkQBRAKEAMQBw%3D%3D'; // Albums
   }
 
+  const appLang = getActiveLanguage(lang);
+  const hl = (appLang === 'id') ? 'id' : 'en';
+  const gl = (appLang === 'id') ? 'ID' : 'US';
+
   const payloadObj = {
     query: effectiveQuery,
     context: {
       client: {
         clientName: 'WEB_REMIX',
         clientVersion: '1.20240318.01.00',
-        hl: 'id',
-        gl: 'ID'
+        hl,
+        gl
       }
     }
   };
@@ -903,7 +929,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
     payloadObj.params = params;
   }
 
-  const json = await postInnerTube('search', payloadObj);
+  const json = await postInnerTube('search', payloadObj, null, hl);
   if (!json) return [];
 
   try {
@@ -1354,21 +1380,25 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song') {
         }
 }
 
-async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
+async function browseYouTubeInnerTube(browseId, hl = null, gl = null) {
   if (!browseId) return null;
+  const appLang = getActiveLanguage(hl);
+  const effectiveHl = (appLang === 'id') ? 'id' : 'en';
+  const effectiveGl = (gl && gl !== 'ID') ? gl : ((appLang === 'id') ? 'ID' : 'US');
+
   const payloadObj = {
     browseId,
     context: {
       client: {
         clientName: 'WEB_REMIX',
         clientVersion: '1.20240318.01.00',
-        hl,
-        gl
+        hl: effectiveHl,
+        gl: effectiveGl
       }
     }
   };
 
-  const json = await postInnerTube('browse', payloadObj);
+  const json = await postInnerTube('browse', payloadObj, null, effectiveHl);
   if (!json) return null;
 
   try {
@@ -1376,7 +1406,7 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
           const respHeader = twoCol?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicResponsiveHeaderRenderer;
           const header = json.header?.musicImmersiveHeaderRenderer || json.header?.musicVisualHeaderRenderer || json.header?.musicDetailHeaderRenderer || respHeader;
           const name = header?.title?.runs?.[0]?.text || json.microformat?.microformatDataRenderer?.title || '';
-          const desc = header?.description?.runs?.[0]?.text || header?.description?.musicDescriptionShelfRenderer?.description?.runs?.map(x => x.text).join('') || '';
+          let desc = header?.description?.runs?.[0]?.text || header?.description?.musicDescriptionShelfRenderer?.description?.runs?.map(x => x.text).join('') || '';
           const albumArtist = header?.straplineTextOne?.runs?.[0]?.text
             || header?.subtitle?.runs?.find(r => r.navigationEndpoint?.browseEndpoint?.browseId?.startsWith('UC'))?.text
             || '';
@@ -1402,6 +1432,10 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
             || twoCol?.secondaryContents?.sectionListRenderer?.contents || [];
 
           for (const sec of contents) {
+            if (!desc && sec.musicDescriptionShelfRenderer) {
+              desc = sec.musicDescriptionShelfRenderer.description?.runs?.map(x => x.text).join('') || '';
+            }
+
             // Top Songs or Album Tracklist or Carousel list items (like FEmusic_home Quick Picks)
             const listItems = [];
             const shelf = sec.musicShelfRenderer || sec.musicPlaylistShelfRenderer;
@@ -1579,6 +1613,9 @@ async function browseYouTubeInnerTube(browseId, hl = 'id', gl = 'ID') {
 }
 
 async function searchYouTubeMusicStrict(title, artist) {
+  const appLang = getActiveLanguage();
+  const hl = (appLang === 'id') ? 'id' : 'en';
+  const gl = (appLang === 'id') ? 'ID' : 'US';
   const payloadObj = {
     query: `${artist} ${title}`.trim(),
     params: 'EgWKAQIIAWoKEAkQBRAKEAMQBw%3D%3D', // Filter Songs only
@@ -1586,13 +1623,13 @@ async function searchYouTubeMusicStrict(title, artist) {
       client: {
         clientName: 'WEB_REMIX',
         clientVersion: '1.20240318.01.00',
-        hl: 'id',
-        gl: 'ID'
+        hl,
+        gl
       }
     }
   };
 
-  const json = await postInnerTube('search', payloadObj);
+  const json = await postInnerTube('search', payloadObj, null, hl);
   if (!json) return null;
 
   try {
@@ -1631,6 +1668,9 @@ async function searchYouTubeMusicStrict(title, artist) {
 }
 
 async function searchYouTubeId(query) {
+  const appLang = getActiveLanguage();
+  const hl = (appLang === 'id') ? 'id' : 'en';
+  const gl = (appLang === 'id') ? 'ID' : 'US';
   const payloadObj = {
     query: query.trim(),
     params: "EgWKAQIIAWoKEAkQBRAKEAMQBw%3D%3D", // Filter Songs only
@@ -1638,13 +1678,13 @@ async function searchYouTubeId(query) {
       client: {
         clientName: "WEB_REMIX",
         clientVersion: "1.20240318.01.00",
-        hl: "id",
-        gl: "ID"
+        hl,
+        gl
       }
     }
   };
 
-  const json = await postInnerTube('search', payloadObj);
+  const json = await postInnerTube('search', payloadObj, null, hl);
   if (!json) return null;
 
   try {
@@ -2323,17 +2363,20 @@ function createWindow() {
   });
 }
 
-async function resolveArtistProfile(name) {
+async function resolveArtistProfile(name, lang = null) {
   if (!name || !name.trim()) return null;
   const trimmed = name.trim();
+  const appLang = getActiveLanguage(lang);
+  const effectiveHl = (appLang === 'id') ? 'id' : 'en';
+  const effectiveGl = (appLang === 'id') ? 'ID' : 'US';
   try {
-    const artists = await searchYouTubeMusicInnerTube(trimmed, 'artist');
+    const artists = await searchYouTubeMusicInnerTube(trimmed, 'artist', effectiveHl);
     if (!artists || !artists.length) return null;
     const match = artists.find(a => a.name.toLowerCase() === trimmed.toLowerCase());
     if (!match) return null;
     let bio = null;
     if (match.browse_id) {
-      bio = await browseYouTubeInnerTube(match.browse_id);
+      bio = await browseYouTubeInnerTube(match.browse_id, effectiveHl, effectiveGl);
     }
     const tracks = (match.top_songs && match.top_songs.length) ? match.top_songs : (bio?.tracks || []);
     const albums = bio?.albums || [];
@@ -2367,19 +2410,23 @@ async function fetchYouTubeMusicLyrics(videoId) {
   const cleanVid = videoId.replace(/^yt_/, '').trim();
   if (!cleanVid) return null;
 
+  const appLang = getActiveLanguage();
+  const hl = (appLang === 'id') ? 'id' : 'en';
+  const gl = (appLang === 'id') ? 'ID' : 'US';
+
   const payloadObj = {
     videoId: cleanVid,
     context: {
       client: {
         clientName: 'WEB_REMIX',
         clientVersion: '1.20240318.01.00',
-        hl: 'id',
-        gl: 'ID'
+        hl,
+        gl
       }
     }
   };
 
-  const json = await postInnerTube('next', payloadObj);
+  const json = await postInnerTube('next', payloadObj, null, hl);
   if (!json) return null;
 
   try {
@@ -2398,13 +2445,13 @@ async function fetchYouTubeMusicLyrics(videoId) {
         client: {
           clientName: 'WEB_REMIX',
           clientVersion: '1.20240318.01.00',
-          hl: 'id',
-          gl: 'ID'
+          hl,
+          gl
         }
       }
     };
 
-    const bJson = await postInnerTube('browse', bPayloadObj);
+    const bJson = await postInnerTube('browse', bPayloadObj, null, hl);
     if (!bJson) return null;
 
     const desc = bJson.contents?.sectionListRenderer?.contents?.[0]?.musicDescriptionShelfRenderer?.description?.runs;
@@ -2423,14 +2470,17 @@ async function fetchYouTubeMusicLyrics(videoId) {
 }
 
 // IPC Handlers for YouTube Music InnerTube Search & Audio Streaming
-ipcMain.handle('search-yt-music', async (event, query, filterType = 'song') => {
+ipcMain.handle('search-yt-music', async (event, query, filterType = 'song', lang = null) => {
   if (!query || !query.trim()) return [];
-  return await searchYouTubeMusicInnerTube(query, filterType);
+  return await searchYouTubeMusicInnerTube(query, filterType, lang);
 });
 
-ipcMain.handle('get-search-suggestions', async (event, query) => {
+ipcMain.handle('get-search-suggestions', async (event, query, lang = null) => {
   if (!query || !query.trim()) return [];
   const trimmed = query.trim();
+  const appLang = getActiveLanguage(lang);
+  const hl = (appLang === 'id') ? 'id' : 'en';
+  const gl = (appLang === 'id') ? 'ID' : 'US';
   try {
     const payload = {
       input: trimmed,
@@ -2438,12 +2488,12 @@ ipcMain.handle('get-search-suggestions', async (event, query) => {
         client: {
           clientName: 'WEB_REMIX',
           clientVersion: '1.20240318.01.00',
-          hl: 'id',
-          gl: 'ID'
+          hl,
+          gl
         }
       }
     };
-    const json = await postInnerTube('music/get_search_suggestions', payload);
+    const json = await postInnerTube('music/get_search_suggestions', payload, null, hl);
     const contents = json?.contents?.[0]?.searchSuggestionsSectionRenderer?.contents || [];
     const results = [];
     for (const item of contents) {
@@ -2598,12 +2648,15 @@ ipcMain.handle('fetch-yt-radio-queue', async (event, videoId, continuationToken,
   return await fetchYouTubeMusicRadioQueue(videoId, continuationToken, hl, gl);
 });
 
-ipcMain.handle('browse-yt', async (event, browseId) => {
+ipcMain.handle('browse-yt', async (event, browseId, lang = null) => {
   if (!browseId) return null;
-  return await browseYouTubeInnerTube(browseId);
+  return await browseYouTubeInnerTube(browseId, lang);
 });
 
-async function searchInnerTubePlaylists(query, hl = 'id', gl = 'ID') {
+async function searchInnerTubePlaylists(query, hl = null, gl = null) {
+  const appLang = getActiveLanguage(hl);
+  const effectiveHl = (appLang === 'id') ? 'id' : 'en';
+  const effectiveGl = (gl && gl !== 'ID') ? gl : ((appLang === 'id') ? 'ID' : 'US');
   const payloadObj = {
     query,
     params: 'EgWKAQI4AWoKEAkQBRAKEAMQBw%3D%3D', // Playlists filter
@@ -2611,13 +2664,13 @@ async function searchInnerTubePlaylists(query, hl = 'id', gl = 'ID') {
       client: {
         clientName: 'WEB_REMIX',
         clientVersion: '1.20240318.01.00',
-        hl,
-        gl
+        hl: effectiveHl,
+        gl: effectiveGl
       }
     }
   };
 
-  const json = await postInnerTube('search', payloadObj);
+  const json = await postInnerTube('search', payloadObj, null, effectiveHl);
   if (!json) return [];
 
   try {
@@ -2769,14 +2822,17 @@ function isArtistTokenMatch(artistName, subRuns = [], subText = '') {
   return false;
 }
 
-async function fetchLatestAlbumForArtist(artistObj) {
+async function fetchLatestAlbumForArtist(artistObj, lang = null) {
   try {
+    const appLang = getActiveLanguage(lang);
+    const hl = (appLang === 'id') ? 'id' : 'en';
+    const gl = (appLang === 'id') ? 'ID' : 'US';
     const payload = {
       query: artistObj.name,
       params: 'EgWKAQIYAWoMEAMQBBAJEA4QChAF', // Album filter
-      context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240318.01.00', hl: 'id', gl: 'ID' } }
+      context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240318.01.00', hl, gl } }
     };
-    const json = await postInnerTube('search', payload);
+    const json = await postInnerTube('search', payload, null, hl);
     const shelf = json?.contents?.tabbedSearchResultsRenderer?.tabs?.[0]?.tabRenderer?.content?.sectionListRenderer?.contents?.[0]?.musicShelfRenderer?.contents;
     if (!shelf || !shelf.length) return null;
 
@@ -3347,9 +3403,9 @@ ipcMain.handle('fetch-new-album-releases', async (event, lang = 'en') => {
   return await fetchCuratedNewAlbumReleases(lang);
 });
 
-ipcMain.handle('resolve-artist-profile', async (event, name) => {
+ipcMain.handle('resolve-artist-profile', async (event, name, lang = null) => {
   if (!name || !name.trim()) return null;
-  return await resolveArtistProfile(name);
+  return await resolveArtistProfile(name, lang);
 });
 
 ipcMain.handle('get-video-embed-url', async (event, { videoId, start = 0 }) => {

@@ -126,13 +126,15 @@ class PlatformBridge {
     return null;
   }
 
-  async searchYouTubeMusic(query, filterType = 'song') {
+  async searchYouTubeMusic(query, filterType = 'song', lang = null) {
     if (this.isElectron && this._electronAPI?.searchYouTubeMusic) {
-      return await this._electronAPI.searchYouTubeMusic(query, filterType);
+      return await this._electronAPI.searchYouTubeMusic(query, filterType, lang);
     }
     if (this.isTauri) {
       try {
-        const res = await this._invoke('search_tracks', { query, filterType });
+        const payload = { query, filterType };
+        if (lang) payload.lang = lang;
+        const res = await this._invoke('search_tracks', payload);
         const unwrapped = this._unwrap(res);
         return Array.isArray(unwrapped)
           ? unwrapped.map((t) => ({
@@ -148,13 +150,15 @@ class PlatformBridge {
     return [];
   }
 
-  async getSearchSuggestions(query) {
+  async getSearchSuggestions(query, lang = null) {
     if (this.isElectron && this._electronAPI?.getSearchSuggestions) {
-      return await this._electronAPI.getSearchSuggestions(query);
+      return await this._electronAPI.getSearchSuggestions(query, lang);
     }
     if (this.isTauri) {
       try {
-        const res = await this._invoke('get_search_suggestions', { query });
+        const payload = { query };
+        if (lang) payload.lang = lang;
+        const res = await this._invoke('get_search_suggestions', payload);
         const unwrapped = this._unwrap(res);
         if (Array.isArray(unwrapped)) {
           return unwrapped;
@@ -166,13 +170,15 @@ class PlatformBridge {
     return [];
   }
 
-  async browseYouTube(browseId) {
+  async browseYouTube(browseId, lang = null) {
     if (this.isElectron && this._electronAPI?.browseYouTube) {
-      return await this._electronAPI.browseYouTube(browseId);
+      return await this._electronAPI.browseYouTube(browseId, lang);
     }
     if (this.isTauri) {
       try {
-        const res = await this._invoke('browse_yt', { browseId });
+        const payload = { browseId };
+        if (lang) payload.lang = lang;
+        const res = await this._invoke('browse_yt', payload);
         const unwrapped = this._unwrap(res);
         if (unwrapped && typeof unwrapped === 'object') {
           return unwrapped;
@@ -258,9 +264,9 @@ class PlatformBridge {
     return (home && Array.isArray(home.newReleases)) ? home.newReleases : [];
   }
 
-  async resolveArtistProfile(name) {
+  async resolveArtistProfile(name, lang = 'en') {
     if (this.isElectron && this._electronAPI?.resolveArtistProfile) {
-      return await this._electronAPI.resolveArtistProfile(name);
+      return await this._electronAPI.resolveArtistProfile(name, lang);
     }
     return null;
   }

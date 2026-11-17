@@ -974,6 +974,11 @@ const I18N_DICTIONARY = {
     tooltip_repeat: "Repeat",
     tooltip_sleep_timer: "Sleep Timer",
     tooltip_mute: "Mute / Unmute",
+    tooltip_output_device: "Select Audio Output Device",
+    audio_device_title: "Audio Output",
+    audio_device_subtitle: "Select where audio plays",
+    audio_device_empty: "No output devices found",
+    audio_device_switched: "Audio output: ",
     tooltip_refresh_automix: "Refresh Automix Radio Queue",
 
     // Settings Modal
@@ -983,6 +988,8 @@ const I18N_DICTIONARY = {
     settings_cat_app: "APP SETTINGS",
     settings_cat_storage: "STORAGE & ABOUT",
     settings_desc_audio: "Configure streaming quality, volume normalization, and track transitions.",
+    setting_audio_output: "Audio Output Device",
+    setting_audio_output_desc: "Select speaker, headphones, or Bluetooth output.",
     settings_desc_sources: "Manage track metadata sources, artwork quality, and streaming backends.",
     settings_desc_appearance: "Customize interface theme and custom accent colors.",
     settings_desc_system: "Window options, Discord Rich Presence, and developer APIs.",
@@ -1107,7 +1114,7 @@ const I18N_DICTIONARY = {
     shortcut_close: "Close Fullscreen Player / Modal",
 
     // About
-    about_version: "Version 2.0.0 • GPL-3.0 License",
+    about_version: "Version 2.1.0 • GPL-3.0 License",
     about_desc: "High-resolution streaming music player with real-time synchronized lyrics, DSP equalizer, and multi-platform playlist import.",
     btn_check_update: "Check for Updates",
 
@@ -1291,6 +1298,11 @@ const I18N_DICTIONARY = {
     tooltip_repeat: "Ulangi",
     tooltip_sleep_timer: "Pengatur Waktu Tidur",
     tooltip_mute: "Bisu / Nyalakan Suara",
+    tooltip_output_device: "Pilih Perangkat Output Audio",
+    audio_device_title: "Output Audio",
+    audio_device_subtitle: "Pilih speaker, headphone, atau Bluetooth",
+    audio_device_empty: "Tidak ada perangkat ditemukan",
+    audio_device_switched: "Output suara: ",
     tooltip_refresh_automix: "Segarkan Antrean Radio Automix",
 
     // Settings Modal
@@ -1300,6 +1312,8 @@ const I18N_DICTIONARY = {
     settings_cat_app: "PENGATURAN APLIKASI",
     settings_cat_storage: "PENYIMPANAN & TENTANG",
     settings_desc_audio: "Atur kualitas streaming audio, perataan volume, dan transisi crossfade.",
+    setting_audio_output: "Perangkat Output Audio",
+    setting_audio_output_desc: "Pilih speaker laptop, headphone, atau Bluetooth.",
     settings_desc_sources: "Kelola sumber metadata lagu, resolusi artwork, dan backend streaming.",
     settings_desc_appearance: "Sesuaikan tema tampilan antarmuka dan palet warna aksen.",
     settings_desc_system: "Opsi jendela, Discord Rich Presence, dan protokol integrasi lokal.",
@@ -1424,7 +1438,7 @@ const I18N_DICTIONARY = {
     shortcut_close: "Tutup Layar Penuh / Dialog",
 
     // About
-    about_version: "Versi 2.0.0 • Lisensi GPL-3.0",
+    about_version: "Versi 2.1.0 • Lisensi GPL-3.0",
     about_desc: "Pemutar musik streaming resolusi tinggi dengan lirik tersinkronisasi, DSP equalizer, dan pengimpor playlist lintas platform.",
     btn_check_update: "Periksa Pembaruan",
 
@@ -1547,6 +1561,7 @@ class SoraFyDesktopApp {
     this.initEvents();
     this.initPlugins();
     this.initAudioEqualizer();
+    this.initAudioOutputDevices();
     this.initUserPlaylists();
     this.initYtmHomeLayout();
     this.loadCuratedPlaylists();
@@ -1991,6 +2006,11 @@ class SoraFyDesktopApp {
     this.playerSeekbar = document.getElementById("playerSeekbar");
     this.bottomPlayerTrackInfo = document.getElementById("bottomPlayerTrackInfo");
     this.expandPlayerBtn = document.getElementById("expandPlayerBtn");
+    this.audioOutputDeviceBtn = document.getElementById("audioOutputDeviceBtn");
+    this.audioDevicePopover = document.getElementById("audioDevicePopover");
+    this.audioDeviceList = document.getElementById("audioDeviceList");
+    this.settingAudioOutputDevice = document.getElementById("settingAudioOutputDevice");
+    this.currentAudioDeviceId = (typeof localStorage !== "undefined" && localStorage.getItem("sorafy_audio_output_device")) || "default";
 
     // Sleep Timer Elements & State
     this.sleepTimerMinutes = 0;
@@ -2061,6 +2081,74 @@ class SoraFyDesktopApp {
     return fallback || key;
   }
 
+  formatArtistSubLabel(subLabel, lang = null) {
+    if (!subLabel || typeof subLabel !== "string") return "";
+    const currentL = lang || this.currentLanguage || "en";
+    const isId = (currentL === "id");
+    let text = subLabel.trim();
+    if (!text) return "";
+
+    if (!isId) {
+      text = text
+        .replace(/(\d+),(\d+)/g, "$1.$2")
+        .replace(/\bArtis\b/gi, "Artist")
+        .replace(/(\d+(?:\.\d+)?)\s*jt\s+(?:audiens|pendengar)\s+bulanan\b/gi, "$1M monthly listeners")
+        .replace(/(\d+(?:\.\d+)?)\s*jt\s+pelanggan\b/gi, "$1M subscribers")
+        .replace(/(\d+(?:\.\d+)?)\s*jt\b/gi, "$1M")
+        .replace(/(\d+(?:\.\d+)?)\s*rb\s+pelanggan\b/gi, "$1K subscribers")
+        .replace(/(\d+(?:\.\d+)?)\s*rb\b/gi, "$1K")
+        .replace(/\baudiens\s+bulanan\b/gi, "monthly listeners")
+        .replace(/\bpendengar\s+bulanan\b/gi, "monthly listeners")
+        .replace(/\bpelanggan\b/gi, "subscribers")
+        .replace(/\bLagu\b/gi, "Song")
+        .replace(/\bAlbum\b/gi, "Album");
+    } else {
+      text = text
+        .replace(/(\d+)\.(\d+)/g, "$1,$2")
+        .replace(/\bArtist\b/gi, "Artis")
+        .replace(/(\d+(?:,\d+)?)\s*M\s+monthly\s+(?:listeners|audience)\b/gi, "$1 jt audiens bulanan")
+        .replace(/(\d+(?:,\d+)?)\s*M\s+subscribers?\b/gi, "$1 jt pelanggan")
+        .replace(/(\d+(?:,\d+)?)\s*M\b/gi, "$1 jt")
+        .replace(/(\d+(?:,\d+)?)\s*K\s+subscribers?\b/gi, "$1 rb pelanggan")
+        .replace(/(\d+(?:,\d+)?)\s*K\b/gi, "$1 rb")
+        .replace(/\bmonthly\s+(?:listeners|audience)\b/gi, "audiens bulanan")
+        .replace(/\bsubscribers?\b/gi, "pelanggan")
+        .replace(/\bSong\b/gi, "Lagu")
+        .replace(/\bTrack\b/gi, "Lagu");
+    }
+    return text.replace(/\s+/g, " ").trim();
+  }
+
+  formatTrackSubtitle(sub, lang = null) {
+    if (!sub || typeof sub !== "string") return "";
+    const currentL = lang || this.currentLanguage || "en";
+    const isId = (currentL === "id");
+    let text = sub.trim();
+    if (!text) return "";
+
+    if (!isId) {
+      text = text
+        .replace(/\bLagu\b/gi, "Song")
+        .replace(/\bArtis\b/gi, "Artist")
+        .replace(/(\d+),(\d+)/g, "$1.$2")
+        .replace(/(\d+(?:\.\d+)?)\s*jt\b/gi, "$1M")
+        .replace(/(\d+(?:\.\d+)?)\s*rb\b/gi, "$1K")
+        .replace(/\bditonton\b/gi, "views")
+        .replace(/\bpenayangan\b/gi, "views")
+        .replace(/\b(\d{1,2})\.(\d{2})\b/g, "$1:$2");
+    } else {
+      text = text
+        .replace(/\bSong\b/gi, "Lagu")
+        .replace(/\bTrack\b/gi, "Lagu")
+        .replace(/\bArtist\b/gi, "Artis")
+        .replace(/(\d+)\.(\d+)/g, "$1,$2")
+        .replace(/(\d+(?:,\d+)?)\s*M\b/gi, "$1 jt")
+        .replace(/(\d+(?:,\d+)?)\s*K\b/gi, "$1 rb")
+        .replace(/\bviews\b/gi, "ditonton");
+    }
+    return text.replace(/\s+/g, " ").trim();
+  }
+
   applyLanguage(lang) {
     this.currentLanguage = lang === "id" ? "id" : "en";
     localStorage.setItem("sorafy_language", this.currentLanguage);
@@ -2111,6 +2199,8 @@ class SoraFyDesktopApp {
       this.renderStatsView();
     } else if (this.currentView === "library" && typeof this.updateLibraryView === "function") {
       this.updateLibraryView();
+    } else if (this.currentView === "artist" && this.currentArtist && this.currentArtist.name) {
+      this.openArtistDetail(this.currentArtist.name, this.currentArtist.browseId);
     }
   }
 
@@ -4967,9 +5057,9 @@ class SoraFyDesktopApp {
     }
 
     // Format real monthly listeners / sub label
-    let subLabel = topArt.sub_label || "";
+    let subLabel = this.formatArtistSubLabel(topArt.sub_label, this.currentLanguage);
     if (!subLabel || subLabel === "Artis Terverifikasi" || subLabel === "Verified Artist") {
-      subLabel = "Artist • Official Profile";
+      subLabel = this.currentLanguage === "id" ? "Artis • Profil Resmi" : "Artist • Official Profile";
     }
 
     // Top 3 songs (only matching this artist)
@@ -5045,7 +5135,8 @@ class SoraFyDesktopApp {
         row.className = "search-hero-track-row";
         
         const dur = track.duration_secs ? this.formatTime(track.duration_secs) : '';
-        const sub = track.subtitle || (dur ? `Track • ${dur}` : (track.artist || 'Track'));
+        const formattedSub = track.subtitle ? this.formatTrackSubtitle(track.subtitle, this.currentLanguage) : '';
+        const sub = formattedSub || (dur ? `${this.currentLanguage === 'id' ? 'Lagu' : 'Song'} • ${dur}` : (track.artist || (this.currentLanguage === 'id' ? 'Lagu' : 'Song')));
 
         row.innerHTML = `
           <img src="${this.safeImg(track.artwork_url)}" class="search-hero-track-art" alt="${this.escapeHtml(track.title)}" data-fallback="track">
@@ -5087,12 +5178,13 @@ class SoraFyDesktopApp {
     }
     const card = document.createElement("div");
     card.className = "artist-card";
+    const roleText = this.formatArtistSubLabel(art.sub_label, this.currentLanguage) || (this.currentLanguage === 'id' ? 'Artis' : 'Artist');
     card.innerHTML = `
       <div class="artist-card-art-box">
         <img src="${this.safeImg(artAvatar)}" class="artist-card-art" alt="${this.escapeHtml(artName)}" data-fallback-src="${this.safeImg(getArtistAvatar(artName), DEFAULT_ARTIST_ART)}">
       </div>
       <div class="artist-card-name" title="${this.escapeHtml(artName)}">${this.escapeHtml(artName)}</div>
-      <div class="artist-card-role">${this.escapeHtml(art.sub_label || 'Artist')}</div>
+      <div class="artist-card-role">${this.escapeHtml(roleText)}</div>
     `;
     card.addEventListener("click", () => {
       this.openArtistDetail(artName, art.browse_id || art.id || '');
@@ -8081,31 +8173,32 @@ class SoraFyDesktopApp {
     this.currentArtist = { name: artistName, browseId };
     this.switchView("artist");
 
+    const isId = this.currentLanguage === "id";
     this.artistNameHeading.textContent = artistName;
     const initialVerified = this.isArtistVerified(artistName, browseId);
     if (this.artistVerifiedBadge) {
       this.artistVerifiedBadge.style.display = initialVerified ? "inline-flex" : "none";
     }
-    this.artistBioText.textContent = `Loading official profile for ${artistName}...`;
+    this.artistBioText.textContent = isId ? `Memuat profil resmi ${artistName}...` : `Loading official profile for ${artistName}...`;
     let avatar = prefetchedBio?.avatar_url || getArtistAvatar(artistName);
     this.artistAvatarImg.src = avatar;
     this.artistHeroBanner.style.backgroundImage = `url("${this.safeCssImg(avatar, DEFAULT_ARTIST_ART)}")`;
 
     const isFollowed = this.followedArtists.has(artistName.toLowerCase().trim());
-    this.artistFollowBtn.textContent = isFollowed ? "Following" : "+ Follow";
+    this.artistFollowBtn.textContent = isFollowed ? (isId ? "Mengikuti" : "Following") : (isId ? "+ Ikuti" : "+ Follow");
     this.artistFollowBtn.classList.toggle("active", isFollowed);
 
-    this.artistTopTracksList.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Loading popular songs for ${artistName}...</div>`;
-    this.artistVideosGrid.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Loading music videos...</div>`;
-    this.artistAlbumsRow.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Loading album discography...</div>`;
-    this.artistPeerRow.innerHTML = `<div style="color: var(--color-text-secondary); font-size: 12px; padding: 8px;">Loading similar artists...</div>`;
+    this.artistTopTracksList.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${isId ? `Memuat lagu populer untuk ${this.escapeHtml(artistName)}...` : `Loading popular songs for ${this.escapeHtml(artistName)}...`}</div>`;
+    this.artistVideosGrid.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${isId ? 'Memuat video musik...' : 'Loading music videos...'}</div>`;
+    this.artistAlbumsRow.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${isId ? 'Memuat diskografi album...' : 'Loading album discography...'}</div>`;
+    this.artistPeerRow.innerHTML = `<div style="color: var(--color-text-secondary); font-size: 12px; padding: 8px;">${isId ? 'Memuat artis serupa...' : 'Loading similar artists...'}</div>`;
 
     try {
       let bioData = prefetchedBio;
 
       // 1. Resolve artist official profile & browseId if missing
       if (!bioData && !browseId && window.electronAPI && typeof window.electronAPI.resolveArtistProfile === 'function') {
-        bioData = await window.electronAPI.resolveArtistProfile(artistName).catch(() => null);
+        bioData = await window.electronAPI.resolveArtistProfile(artistName, this.currentLanguage).catch(() => null);
         if (bioData && bioData.browse_id) {
           browseId = bioData.browse_id;
           this.currentArtist.browseId = browseId;
@@ -8114,7 +8207,7 @@ class SoraFyDesktopApp {
 
       // 2. If browseId is available and bioData doesn't have albums/videos carousels yet, fetch from browse
       if (browseId && (!bioData || !bioData.albums || !bioData.albums.length) && window.electronAPI && typeof window.electronAPI.browseYouTube === 'function') {
-        const fullBrowse = await window.electronAPI.browseYouTube(browseId).catch(() => null);
+        const fullBrowse = await window.electronAPI.browseYouTube(browseId, this.currentLanguage).catch(() => null);
         if (fullBrowse) {
           bioData = { ...(bioData || {}), ...fullBrowse };
         }
@@ -8137,18 +8230,23 @@ class SoraFyDesktopApp {
         if (this.artistVerifiedBadge) {
           this.artistVerifiedBadge.style.display = isVer ? "inline-flex" : "none";
         }
-        if (effectiveBio.sub_label && this.artistRoleBadge) {
-          this.artistRoleBadge.textContent = effectiveBio.sub_label;
+        const formattedSub = this.formatArtistSubLabel(effectiveBio.sub_label, this.currentLanguage);
+        if (formattedSub && this.artistRoleBadge) {
+          this.artistRoleBadge.textContent = formattedSub;
         } else if (this.artistRoleBadge) {
-          this.artistRoleBadge.textContent = isVer ? "Verified Artist" : "Artist";
+          this.artistRoleBadge.textContent = isVer ? (isId ? "Artis Terverifikasi" : "Verified Artist") : (isId ? "Artis" : "Artist");
         }
         if (effectiveBio.description) {
           this.artistBioText.textContent = effectiveBio.description;
         } else {
-          this.artistBioText.textContent = `Official artist profile for ${effectiveBio.name || artistName}. Listen to their discography, music videos, and top tracks on SoraFy.`;
+          this.artistBioText.textContent = isId
+            ? `Profil resmi artis ${effectiveBio.name || artistName}. Dengarkan diskografi, video musik, dan lagu populer mereka di SoraFy.`
+            : `Official artist profile for ${effectiveBio.name || artistName}. Listen to their discography, music videos, and top tracks on SoraFy.`;
         }
       } else {
-        this.artistBioText.textContent = `Official artist profile for ${artistName}. Listen to their discography, music videos, and top tracks on SoraFy.`;
+        this.artistBioText.textContent = isId
+          ? `Profil resmi artis ${artistName}. Dengarkan diskografi, video musik, dan lagu populer mereka di SoraFy.`
+          : `Official artist profile for ${artistName}. Listen to their discography, music videos, and top tracks on SoraFy.`;
       }
 
       // 3. Fallbacks for tracks, videos, albums, peers if channel didn't have all carousels
@@ -8159,13 +8257,13 @@ class SoraFyDesktopApp {
       let videos = (effectiveBio && effectiveBio.videos && effectiveBio.videos.length)
         ? effectiveBio.videos
         : (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-            ? await window.electronAPI.searchYouTubeMusic(`${artistName} official music video live`, 'video').catch(() => [])
+            ? await window.electronAPI.searchYouTubeMusic(`${artistName} official music video live`, 'video', this.currentLanguage).catch(() => [])
             : []);
 
       let albums = (effectiveBio && effectiveBio.albums) ? [...effectiveBio.albums] : [];
       if (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
         try {
-          const searchedAlbums = await window.electronAPI.searchYouTubeMusic(artistName, 'album').catch(() => []);
+          const searchedAlbums = await window.electronAPI.searchYouTubeMusic(artistName, 'album', this.currentLanguage).catch(() => []);
           if (searchedAlbums && searchedAlbums.length) {
             const normArtist = artistName.toLowerCase().trim();
             for (const sa of searchedAlbums) {
@@ -8181,7 +8279,7 @@ class SoraFyDesktopApp {
       let peers = (effectiveBio && effectiveBio.peers && effectiveBio.peers.length)
         ? effectiveBio.peers
         : (window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-            ? await window.electronAPI.searchYouTubeMusic(`${artistName} radio mix`, 'artist').catch(() => [])
+            ? await window.electronAPI.searchYouTubeMusic(`${artistName} radio mix`, 'artist', this.currentLanguage).catch(() => [])
             : []);
 
       // Filter popular tracks: ensure authentic recordings
@@ -8209,12 +8307,13 @@ class SoraFyDesktopApp {
   renderArtistTopTracks(tracks) {
     if (!this.artistTopTracksList) return;
     this.artistTopTracksList.innerHTML = "";
+    const isId = (this.currentLanguage === "id");
     if (!tracks || tracks.length === 0) {
-      this.artistTopTracksList.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">No songs found.</div>`;
+      this.artistTopTracksList.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${isId ? 'Tidak ada lagu ditemukan.' : 'No songs found.'}</div>`;
       return;
     }
     const displayTracks = tracks.slice(0, 8);
-    if (this.artistPopularCount) this.artistPopularCount.textContent = `${displayTracks.length} Top Songs`;
+    if (this.artistPopularCount) this.artistPopularCount.textContent = isId ? `${displayTracks.length} Lagu Teratas` : `${displayTracks.length} Top Songs`;
 
     displayTracks.forEach((track, idx) => {
       const isActive = this.tracks[this.currentTrackIndex]?.id === track.id;
@@ -8232,20 +8331,21 @@ class SoraFyDesktopApp {
   renderArtistVideos(videos) {
     if (!this.artistVideosGrid) return;
     this.artistVideosGrid.innerHTML = "";
+    const isId = (this.currentLanguage === "id");
     if (!videos || videos.length === 0) {
-      this.artistVideosGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">No music videos found.</div>`;
-      if (this.artistVideoCountLabel) this.artistVideoCountLabel.textContent = "0 Videos";
+      this.artistVideosGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${isId ? 'Tidak ada video musik ditemukan.' : 'No music videos found.'}</div>`;
+      if (this.artistVideoCountLabel) this.artistVideoCountLabel.textContent = isId ? "0 Video" : "0 Videos";
       return;
     }
     const displayVideos = videos.slice(0, 6);
-    if (this.artistVideoCountLabel) this.artistVideoCountLabel.textContent = `${displayVideos.length} Videos`;
+    if (this.artistVideoCountLabel) this.artistVideoCountLabel.textContent = isId ? `${displayVideos.length} Video` : `${displayVideos.length} Videos`;
 
     displayVideos.forEach(vid => {
       const card = document.createElement("div");
       card.className = "video-card";
       const isOfficial = vid.is_official || vid.video_badge === 'Official' || /\b(official\s*(?:music\s*)?video|video\s*musik|music\s*video|mv)\b/i.test(vid.title);
       const badgeClass = isOfficial ? "badge-official" : "badge-unofficial";
-      const badgeText = isOfficial ? "Official" : (vid.video_badge || "Live / Session");
+      const badgeText = isOfficial ? (isId ? 'Resmi' : 'Official') : (vid.video_badge || (isId ? 'Live / Sesi' : 'Live / Session'));
 
       card.innerHTML = `
         <div class="video-thumb-wrapper">
@@ -8282,13 +8382,14 @@ class SoraFyDesktopApp {
   renderArtistAlbums(albums, artistName) {
     if (!this.artistAlbumsRow) return;
     this.artistAlbumsRow.innerHTML = "";
+    const isId = (this.currentLanguage === "id");
     if (!albums || albums.length === 0) {
-      this.artistAlbumsRow.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">Album discography is being synchronized.</div>`;
-      if (this.artistAlbumCountLabel) this.artistAlbumCountLabel.textContent = "0 Albums";
+      this.artistAlbumsRow.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${isId ? 'Diskografi album sedang disinkronkan.' : 'Album discography is being synchronized.'}</div>`;
+      if (this.artistAlbumCountLabel) this.artistAlbumCountLabel.textContent = isId ? "0 Album" : "0 Albums";
       return;
     }
     const displayAlbums = albums.slice(0, 36);
-    if (this.artistAlbumCountLabel) this.artistAlbumCountLabel.textContent = `${displayAlbums.length} Albums & EPs`;
+    if (this.artistAlbumCountLabel) this.artistAlbumCountLabel.textContent = isId ? `${displayAlbums.length} Album & EP` : `${displayAlbums.length} Albums & EPs`;
 
     displayAlbums.forEach(album => {
       const card = document.createElement("div");
@@ -8346,7 +8447,7 @@ class SoraFyDesktopApp {
     let tracks = [];
     if (this.isPluginEnabled("ytmusic") && window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function') {
       try {
-        const ytTracks = await window.electronAPI.searchYouTubeMusic(query, 'song');
+        const ytTracks = await window.electronAPI.searchYouTubeMusic(query, 'song', this.currentLanguage);
         if (ytTracks && ytTracks.length) {
           tracks.push(...ytTracks.map(item => ({
             ...item,
@@ -8387,7 +8488,8 @@ class SoraFyDesktopApp {
       return;
     }
 
-    let badgeText = "Song";
+    const isId = this.currentLanguage === "id";
+    let badgeText = isId ? "Lagu" : "Song";
     let badgeClass = "top-result-badge";
     let badgeStyle = "";
     let title = "";
@@ -8401,16 +8503,20 @@ class SoraFyDesktopApp {
     if (type === "artist") {
       isArtist = true;
       title = item.name || item.title || "";
-      artistName = "Verified Artist";
-      badgeText = "Artist";
+      artistName = isId ? "Artis Terverifikasi" : "Verified Artist";
+      badgeText = isId ? "Artis" : "Artist";
       badgeStyle = "background: rgba(139, 92, 246, 0.16); color: #A78BFA;";
       artworkUrl = item.avatar_url || item.artwork_url || getArtistAvatar(title);
-      extraMeta = item.sub_label || "Artist Profile";
+      let rawSub = this.formatArtistSubLabel(item.sub_label, this.currentLanguage);
+      if (rawSub) {
+        rawSub = rawSub.replace(/^(?:artist|artis)\s*[•·]\s*/i, "").trim();
+      }
+      extraMeta = rawSub || (isId ? "Profil Resmi" : "Official Profile");
     } else if (type === "video") {
       isVideo = true;
       title = item.title || "";
-      artistName = item.artist || "Artist";
-      badgeText = "Music Video";
+      artistName = item.artist || (isId ? "Artis" : "Artist");
+      badgeText = isId ? "Video Musik" : "Music Video";
       badgeStyle = "background: rgba(239, 68, 68, 0.16); color: #F87171;";
       artworkUrl = item.artwork_url || (item.video_id ? `https://i.ytimg.com/vi/${item.video_id}/hqdefault.jpg` : "");
       extraMeta = item.duration_secs ? this.formatTime(item.duration_secs) : '';
@@ -8419,16 +8525,16 @@ class SoraFyDesktopApp {
     } else if (type === "album") {
       isAlbum = true;
       title = item.title || "";
-      artistName = item.artist || "Artist";
-      badgeText = "Official Album";
+      artistName = item.artist || (isId ? "Artis" : "Artist");
+      badgeText = isId ? "Album Resmi" : "Official Album";
       badgeStyle = "background: rgba(59, 130, 246, 0.16); color: #60A5FA;";
       artworkUrl = item.artwork_url || this.DEFAULT_TRACK_ART;
-      extraMeta = item.year || item.album_type || "Official Album";
+      extraMeta = item.year || item.album_type || (isId ? "Album Resmi" : "Official Album");
     } else {
       // Default: song
       title = item.title || "";
-      artistName = item.artist || "Artist";
-      badgeText = "Song";
+      artistName = item.artist || (isId ? "Artis" : "Artist");
+      badgeText = isId ? "Lagu" : "Song";
       badgeStyle = "background: rgba(0, 229, 153, 0.14); color: #00E599;";
       artworkUrl = item.artwork_url || this.DEFAULT_TRACK_ART;
       extraMeta = item.duration_secs ? this.formatTime(item.duration_secs) : '';
@@ -8458,7 +8564,7 @@ class SoraFyDesktopApp {
           </div>
         </div>
         <div class="top-result-actions">
-          <button class="top-result-play-btn" id="topResultPlayBtn" title="${isArtist ? 'View Artist' : (isAlbum ? 'Open Album' : 'Play Now')}">
+          <button class="top-result-play-btn" id="topResultPlayBtn" title="${isArtist ? (isId ? 'Lihat Artis' : 'View Artist') : (isAlbum ? (isId ? 'Buka Album' : 'Open Album') : (isId ? 'Putar Sekarang' : 'Play Now'))}">
             ${isArtist ? '<iconsax-icon name="arrow-right" type="linear" size="24" color="#000000"></iconsax-icon>' : '<iconsax-icon name="play" type="bold" size="24" color="#000000"></iconsax-icon>'}
           </button>
         </div>
@@ -8737,7 +8843,7 @@ class SoraFyDesktopApp {
     const cleanQ = query.trim();
     if (window.electronAPI && typeof window.electronAPI.getSearchSuggestions === "function") {
       try {
-        const results = await window.electronAPI.getSearchSuggestions(cleanQ);
+        const results = await window.electronAPI.getSearchSuggestions(cleanQ, this.currentLanguage);
         if (this.searchInput && this.searchInput.value.trim() === cleanQ) {
           this.renderOnlineSuggestions(cleanQ, results);
         }
@@ -8799,8 +8905,9 @@ class SoraFyDesktopApp {
   // =========================================================
   async searchOnlineMusic(query, filterType = 'all') {
     this.switchView("search_results");
-    this.searchResultsTitle.textContent = `Search Results for "${query}"`;
-    this.searchResultsCount.textContent = "Searching...";
+    const isId = (this.currentLanguage === "id");
+    this.searchResultsTitle.textContent = isId ? `Hasil Pencarian untuk "${query}"` : `Search Results for "${query}"`;
+    this.searchResultsCount.textContent = isId ? "Mencari..." : "Searching...";
 
     if (this.searchTopResultSection) this.searchTopResultSection.style.display = "none";
     if (this.searchArtistHeroSlot) this.searchArtistHeroSlot.innerHTML = "";
@@ -8817,13 +8924,13 @@ class SoraFyDesktopApp {
         const [songs, rawArtists, videos, rawAlbums] = await Promise.all([
           this.queryInnerTubeSongs(query),
           window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-            ? window.electronAPI.searchYouTubeMusic(query, 'artist').catch(() => [])
+            ? window.electronAPI.searchYouTubeMusic(query, 'artist', this.currentLanguage).catch(() => [])
             : Promise.resolve([]),
           window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-            ? window.electronAPI.searchYouTubeMusic(query, 'video').catch(() => [])
+            ? window.electronAPI.searchYouTubeMusic(query, 'video', this.currentLanguage).catch(() => [])
             : Promise.resolve([]),
           window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-            ? window.electronAPI.searchYouTubeMusic(query, 'album').catch(() => [])
+            ? window.electronAPI.searchYouTubeMusic(query, 'album', this.currentLanguage).catch(() => [])
             : Promise.resolve([])
         ]);
 
@@ -9001,10 +9108,10 @@ class SoraFyDesktopApp {
           });
         }
 
-        this.searchResultsCount.textContent = `Found ${total} results`;
+        this.searchResultsCount.textContent = isId ? `Ditemukan ${total} hasil` : `Found ${total} results`;
       } else if (filterType === 'song') {
         let songs = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-          ? await window.electronAPI.searchYouTubeMusic(query, 'song').catch(() => [])
+          ? await window.electronAPI.searchYouTubeMusic(query, 'song', this.currentLanguage).catch(() => [])
           : [];
         if (!songs || songs.length === 0) {
           songs = await this.queryInnerTubeSongs(query);
@@ -9051,20 +9158,20 @@ class SoraFyDesktopApp {
           });
           this.searchSongsList.appendChild(row);
         });
-        this.searchResultsCount.textContent = `Found ${songs.length} songs`;
+        this.searchResultsCount.textContent = this.currentLanguage === "id" ? `Ditemukan ${songs.length} lagu` : `Found ${songs.length} songs`;
       } else if (filterType === 'artist') {
         let artists = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-          ? await window.electronAPI.searchYouTubeMusic(query, 'artist').catch(() => [])
+          ? await window.electronAPI.searchYouTubeMusic(query, 'artist', this.currentLanguage).catch(() => [])
           : [];
         if ((!artists || artists.length === 0) && window.electronAPI && typeof window.electronAPI.resolveArtistProfile === 'function') {
-          const resolved = await window.electronAPI.resolveArtistProfile(query).catch(() => null);
+          const resolved = await window.electronAPI.resolveArtistProfile(query, this.currentLanguage).catch(() => null);
           if (resolved && resolved.name && resolved.avatar_url) {
             artists = [{
               id: resolved.browse_id || ('art_' + resolved.name.toLowerCase().replace(/[^a-z0-9]/g, '_')),
               name: resolved.name,
               avatar_url: resolved.avatar_url,
               browse_id: resolved.browse_id,
-              sub_label: 'Verified Artist'
+              sub_label: this.currentLanguage === 'id' ? 'Artis Terverifikasi' : 'Verified Artist'
             }];
           }
         }
@@ -9107,10 +9214,10 @@ class SoraFyDesktopApp {
             });
           }
         }
-        this.searchResultsCount.textContent = `Found ${artists.length} artists`;
+        this.searchResultsCount.textContent = this.currentLanguage === "id" ? `Ditemukan ${artists.length} artis` : `Found ${artists.length} artists`;
       } else if (filterType === 'video') {
         const videos = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-          ? await window.electronAPI.searchYouTubeMusic(query, 'video')
+          ? await window.electronAPI.searchYouTubeMusic(query, 'video', this.currentLanguage)
           : [];
         if (videos && videos.length > 0) {
           this.renderTopResultCard(videos[0], 'video', [], videos);
@@ -9153,10 +9260,10 @@ class SoraFyDesktopApp {
           });
           this.searchVideosGrid.appendChild(card);
         });
-        this.searchResultsCount.textContent = `Found ${videos.length} videos`;
+        this.searchResultsCount.textContent = this.currentLanguage === "id" ? `Ditemukan ${videos.length} video` : `Found ${videos.length} videos`;
       } else if (filterType === 'album') {
         const albums = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-          ? await window.electronAPI.searchYouTubeMusic(query, 'album').catch(() => [])
+          ? await window.electronAPI.searchYouTubeMusic(query, 'album', this.currentLanguage).catch(() => [])
           : [];
         if (albums && albums.length > 0) {
           this.renderTopResultCard(albums[0], 'album', [], []);
@@ -9175,11 +9282,11 @@ class SoraFyDesktopApp {
             });
           }
         }
-        this.searchResultsCount.textContent = `Found ${albums.length} albums`;
+        this.searchResultsCount.textContent = this.currentLanguage === "id" ? `Ditemukan ${albums.length} album` : `Found ${albums.length} albums`;
       } else if (filterType === 'playlist') {
         if (this.searchTopResultSection) this.searchTopResultSection.style.display = "none";
         const rawPlaylists = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
-          ? await window.electronAPI.searchYouTubeMusic(query, 'playlist')
+          ? await window.electronAPI.searchYouTubeMusic(query, 'playlist', this.currentLanguage)
           : [];
         const playlists = rawPlaylists.map(p => ({
           ...p,
@@ -12456,6 +12563,200 @@ class SoraFyDesktopApp {
     }
 
     ctx.restore();
+  }
+
+  // =========================================================
+  // Audio Output Device Selector (Spotify-Style Clean Dark)
+  // =========================================================
+  initAudioOutputDevices() {
+    if (this.audioOutputDeviceBtn && this.audioDevicePopover) {
+      this.audioOutputDeviceBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.toggleAudioDevicePopover();
+      });
+
+      document.addEventListener("click", (e) => {
+        if (this.audioDevicePopover && this.audioDevicePopover.style.display !== "none") {
+          if (!this.audioDevicePopover.contains(e.target) && !this.audioOutputDeviceBtn.contains(e.target)) {
+            this.closeAudioDevicePopover();
+          }
+        }
+      });
+    }
+
+    if (this.settingAudioOutputDevice) {
+      this.settingAudioOutputDevice.addEventListener("change", (e) => {
+        const selectedOpt = e.target.options[e.target.selectedIndex];
+        const label = selectedOpt ? selectedOpt.text : "";
+        this.selectAudioOutputDevice(e.target.value, label);
+      });
+    }
+
+    if (typeof navigator !== "undefined" && navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === "function") {
+      navigator.mediaDevices.addEventListener("devicechange", () => {
+        this.refreshAudioOutputDevices().catch(() => {});
+      });
+    }
+
+    // Populate initial device list into settings & restore preferred sink
+    this.refreshAudioOutputDevices().catch(() => {});
+    if (this.currentAudioDeviceId && this.currentAudioDeviceId !== "default") {
+      this.applyOutputDeviceToAudioDecks(this.currentAudioDeviceId).catch(() => {});
+    }
+  }
+
+  async toggleAudioDevicePopover() {
+    if (!this.audioDevicePopover) return;
+    const isClosed = (this.audioDevicePopover.style.display === "none" || !this.audioDevicePopover.style.display);
+    if (isClosed) {
+      this.audioDevicePopover.style.display = "flex";
+      if (this.audioOutputDeviceBtn) this.audioOutputDeviceBtn.classList.add("active");
+      await this.refreshAudioOutputDevices();
+    } else {
+      this.closeAudioDevicePopover();
+    }
+  }
+
+  closeAudioDevicePopover() {
+    if (!this.audioDevicePopover) return;
+    this.audioDevicePopover.style.display = "none";
+    if (this.audioOutputDeviceBtn) this.audioOutputDeviceBtn.classList.remove("active");
+  }
+
+  async refreshAudioOutputDevices() {
+    const isId = (this.currentLanguage === "id");
+
+    if (typeof navigator === "undefined" || !navigator.mediaDevices || typeof navigator.mediaDevices.enumerateDevices !== "function") {
+      if (this.audioDeviceList) {
+        this.audioDeviceList.innerHTML = `<div class="audio-device-empty">${isId ? "Pengalihan perangkat audio tidak didukung di sistem ini" : "Audio device switching not supported in this environment"}</div>`;
+      }
+      return;
+    }
+
+    try {
+      const raw = await navigator.mediaDevices.enumerateDevices();
+      const helper = (typeof AudioDeviceHelper !== "undefined")
+        ? AudioDeviceHelper
+        : (typeof require !== "undefined" ? require("./modules/audio-device-helper.js") : null);
+
+      const devices = (helper && typeof helper.filterAudioOutputDevices === "function")
+        ? helper.filterAudioOutputDevices(raw)
+        : raw.filter(d => d && d.kind === "audiooutput").map((d, idx) => ({
+            deviceId: d.deviceId || "default",
+            label: d.label || (idx === 0 ? (isId ? "Default - Speaker / Headphone" : "Default - Speakers / Headphones") : (isId ? "Perangkat Audio" : "Audio Device")),
+            type: "speaker",
+            icon: "monitor"
+          }));
+
+      // 1. Sync to Settings Modal Dropdown
+      if (this.settingAudioOutputDevice && devices.length > 0) {
+        this.settingAudioOutputDevice.innerHTML = devices.map(d => `
+          <option value="${this.escapeHtml(d.deviceId)}" ${(d.deviceId === this.currentAudioDeviceId || (!this.currentAudioDeviceId && d.deviceId === "default")) ? "selected" : ""}>
+            ${this.escapeHtml(d.label)}
+          </option>
+        `).join("");
+      }
+
+      // 2. Sync to Floating Popover List
+      if (this.audioDeviceList) {
+        if (!devices || devices.length === 0) {
+          this.audioDeviceList.innerHTML = `<div class="audio-device-empty">${isId ? "Tidak ada perangkat output audio ditemukan" : "No audio output devices found"}</div>`;
+          return;
+        }
+
+        this.audioDeviceList.innerHTML = "";
+        devices.forEach(dev => {
+          const isActive = (dev.deviceId === this.currentAudioDeviceId) || (!this.currentAudioDeviceId && dev.deviceId === "default");
+          const btn = document.createElement("button");
+          btn.className = `audio-device-item ${isActive ? "active" : ""}`;
+          btn.type = "button";
+
+          let iconSvg = '';
+          if (dev.type === 'bluetooth') {
+            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6.5 6.5 17.5 17.5 12 23 12 1 17.5 6.5 6.5 17.5"></polyline></svg>`;
+          } else if (dev.type === 'headphone') {
+            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"></path><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"></path></svg>`;
+          } else {
+            iconSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="12" rx="2"></rect><line x1="2" y1="20" x2="22" y2="20"></line></svg>`;
+          }
+
+          const typeLabel = dev.type === "bluetooth"
+            ? "Bluetooth"
+            : dev.type === "headphone"
+              ? (isId ? "Headset / Headphone" : "Headphones")
+              : (isId ? "Speaker / Internal" : "Speaker / Internal");
+
+          btn.innerHTML = `
+            <div class="audio-device-icon">${iconSvg}</div>
+            <div class="audio-device-info">
+              <span class="audio-device-name" title="${this.escapeHtml(dev.label)}">${this.escapeHtml(dev.label)}</span>
+              <span class="audio-device-type">${this.escapeHtml(typeLabel)}</span>
+            </div>
+            <div class="audio-device-check">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00E599" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          `;
+
+          btn.addEventListener("click", () => {
+            this.selectAudioOutputDevice(dev.deviceId, dev.label);
+          });
+
+          this.audioDeviceList.appendChild(btn);
+        });
+      }
+    } catch (err) {
+      console.warn("Device enumeration notice:", err);
+      if (this.audioDeviceList) {
+        this.audioDeviceList.innerHTML = `<div class="audio-device-empty">${isId ? "Gagal memindai perangkat audio" : "Unable to scan audio devices"}</div>`;
+      }
+    }
+  }
+
+  async selectAudioOutputDevice(deviceId, label = "") {
+    this.currentAudioDeviceId = deviceId || "default";
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem("sorafy_audio_output_device", this.currentAudioDeviceId);
+    }
+
+    if (this.settingAudioOutputDevice) {
+      this.settingAudioOutputDevice.value = this.currentAudioDeviceId;
+    }
+
+    const isId = (this.currentLanguage === "id");
+    await this.applyOutputDeviceToAudioDecks(this.currentAudioDeviceId);
+
+    const cleanLabel = label || (isId ? "Speaker / Headphone" : "Speakers / Headphones");
+    const msg = isId ? `Output suara: ${cleanLabel}` : `Audio output: ${cleanLabel}`;
+    this.showToast(msg);
+
+    this.closeAudioDevicePopover();
+    if (this.audioDevicePopover && this.audioDevicePopover.style.display !== "none") {
+      this.refreshAudioOutputDevices().catch(() => {});
+    }
+  }
+
+  async applyOutputDeviceToAudioDecks(deviceId) {
+    if (!deviceId) return;
+    const helper = (typeof AudioDeviceHelper !== "undefined")
+      ? AudioDeviceHelper
+      : (typeof require !== "undefined" ? require("./modules/audio-device-helper.js") : null);
+
+    const decks = [this.deckA || this.audio, this.deckB || this.preloadAudio].filter(Boolean);
+
+    if (helper && typeof helper.applyAudioOutputSink === "function") {
+      await helper.applyAudioOutputSink(decks, this.audioCtx, deviceId);
+    } else {
+      for (const d of decks) {
+        if (d && typeof d.setSinkId === "function") {
+          try { await d.setSinkId(deviceId); } catch (_) {}
+        }
+      }
+      if (this.audioCtx && typeof this.audioCtx.setSinkId === "function") {
+        try { await this.audioCtx.setSinkId(deviceId); } catch (_) {}
+      }
+    }
   }
 
   isPluginEnabled(id) {
