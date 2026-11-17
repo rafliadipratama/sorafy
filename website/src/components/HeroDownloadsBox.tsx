@@ -39,7 +39,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
   ];
 
   const macCmd = 'sudo xattr -r -d com.apple.quarantine /Applications/SoraFy.app';
-  const linuxCmd = 'chmod +x SoraFy-2.0.0.AppImage && ./SoraFy-2.0.0.AppImage';
+  const linuxCmd = 'chmod +x SoraFy-2.1.0.AppImage && ./SoraFy-2.1.0.AppImage';
 
   const copyToClipboard = (text: string, id: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {

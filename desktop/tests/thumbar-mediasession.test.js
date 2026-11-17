@@ -162,6 +162,9 @@ function setupRendererMocks() {
     }
   };
 
+  if (!globalThis.navigator) {
+    globalThis.navigator = {};
+  }
   globalThis.navigator.mediaSession = {
     set metadata(val) { metadataState = val; },
     get metadata() { return metadataState; },
