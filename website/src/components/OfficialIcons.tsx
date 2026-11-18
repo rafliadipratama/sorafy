@@ -5,7 +5,7 @@ interface IconProps extends React.SVGProps<SVGSVGElement> {
   size?: number;
 }
 
-// 1. Official Microsoft Windows Logo
+// 1. Official Microsoft Windows (Windows 11) Logo
 export const OfficialWindowsIcon = ({ className = "w-4 h-4", size, ...props }: IconProps) => (
   <svg
     viewBox="0 0 24 24"
@@ -16,7 +16,7 @@ export const OfficialWindowsIcon = ({ className = "w-4 h-4", size, ...props }: I
     aria-hidden="true"
     {...props}
   >
-    <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801" />
+    <path d="M0 0h11.375v11.375H0zm12.625 0H24v11.375H12.625zM0 12.625h11.375V24H0zm12.625 0H24V24H12.625z" />
   </svg>
 );
 
