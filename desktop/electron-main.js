@@ -1949,6 +1949,8 @@ class DiscordRpcClient {
     const env = process.env;
     const prefixes = [
       env.XDG_RUNTIME_DIR,
+      env.XDG_RUNTIME_DIR ? path.join(env.XDG_RUNTIME_DIR, '.flatpak/dev.vencord.Vesktop/xdg-run') : null,
+      env.XDG_RUNTIME_DIR ? path.join(env.XDG_RUNTIME_DIR, 'app/dev.vencord.Vesktop') : null,
       env.XDG_RUNTIME_DIR ? path.join(env.XDG_RUNTIME_DIR, 'app/com.discordapp.Discord') : null,
       env.XDG_RUNTIME_DIR ? path.join(env.XDG_RUNTIME_DIR, 'snap.discord') : null,
       env.TMPDIR,

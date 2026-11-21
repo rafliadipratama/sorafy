@@ -2523,7 +2523,7 @@ class SoraFyDesktopApp {
       ? this.appSettings.crossfadeDuration
       : 0;
 
-    if (crossfadeDuration <= 0 || duration <= 0) {
+    if (this.repeatMode === 2 || crossfadeDuration <= 0 || duration <= 0) {
       if (this.isCrossfading) {
         this.resetDeckGains();
       }
@@ -2587,6 +2587,22 @@ class SoraFyDesktopApp {
   }
 
   swapDecks() {
+    if (this.repeatMode === 2) {
+      this.isCrossfading = false;
+      this.resetDeckGains();
+      const activeAudio = this.activeDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+      if (activeAudio) {
+        activeAudio.currentTime = 0;
+        try {
+          const playPromise = activeAudio.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(() => {});
+          }
+        } catch (_) {}
+      }
+      return;
+    }
+
     const oldActiveDeck = this.activeDeck;
     const newActiveDeck = oldActiveDeck === 'A' ? 'B' : 'A';
     this.activeDeck = newActiveDeck;
@@ -2609,7 +2625,9 @@ class SoraFyDesktopApp {
     this.isCrossfading = false;
     this.isNextTrackPreloaded = false;
 
-    if (typeof this.preloadedTrackIndex === 'number' && this.preloadedTrackIndex !== -1 && this.tracks && this.tracks[this.preloadedTrackIndex]) {
+    if (this.repeatMode === 2) {
+      this.preloadedTrackIndex = -1;
+    } else if (typeof this.preloadedTrackIndex === 'number' && this.preloadedTrackIndex !== -1 && this.tracks && this.tracks[this.preloadedTrackIndex]) {
       this.currentTrackIndex = this.preloadedTrackIndex;
       this.preloadedTrackIndex = -1;
     } else if (this.tracks && this.tracks.length > 0) {
@@ -3476,6 +3494,19 @@ class SoraFyDesktopApp {
 
     this.repeatBtn.addEventListener("click", () => {
       this.repeatMode = (this.repeatMode + 1) % 3;
+      if (this.repeatMode === 2) {
+        if (this.isCrossfading) {
+          this.resetDeckGains();
+        }
+        if (this.preloadAudio) {
+          try {
+            this.preloadAudio.pause();
+            this.preloadAudio.currentTime = 0;
+          } catch (_) {}
+        }
+        this.preloadedTrackIndex = -1;
+        this.isNextTrackPreloaded = false;
+      }
       this.repeatBtn.classList.toggle("active", this.repeatMode > 0);
       const repIcon = this.repeatBtn.querySelector("iconsax-icon");
       if (repIcon) {
@@ -3718,6 +3749,19 @@ class SoraFyDesktopApp {
     if (this.screenPlayerRepeatBtn) {
       this.screenPlayerRepeatBtn.addEventListener("click", () => {
         this.repeatMode = (this.repeatMode + 1) % 3;
+        if (this.repeatMode === 2) {
+          if (this.isCrossfading) {
+            this.resetDeckGains();
+          }
+          if (this.preloadAudio) {
+            try {
+              this.preloadAudio.pause();
+              this.preloadAudio.currentTime = 0;
+            } catch (_) {}
+          }
+          this.preloadedTrackIndex = -1;
+          this.isNextTrackPreloaded = false;
+        }
         this.repeatBtn.classList.toggle("active", this.repeatMode > 0);
         this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
         const repIcon = this.repeatBtn.querySelector("iconsax-icon");
@@ -9845,6 +9889,7 @@ class SoraFyDesktopApp {
   // Spotify / Apple Music Instant Playback Preload Engine
   // =========================================================
   preloadNextTrack() {
+    if (this.repeatMode === 2) return;
     if (!this.tracks || this.tracks.length <= 1) return;
     let nextIdx;
     if (this.isShuffled) {
@@ -10323,9 +10368,41 @@ class SoraFyDesktopApp {
       return;
     }
     if (this.repeatMode === 2) {
+      this.isCrossfading = false;
       this.resetDeckGains();
-      this.audio.currentTime = 0;
-      this.audio.play();
+      const activeAudio = this.activeDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+      if (activeAudio) {
+        activeAudio.currentTime = 0;
+        try {
+          const playPromise = activeAudio.play();
+          if (playPromise && typeof playPromise.catch === 'function') {
+            playPromise.catch(e => {
+              console.warn("Repeat track replay notice:", e);
+            });
+          }
+        } catch (e) {
+          console.warn("Repeat track replay error:", e);
+        }
+      } else if (this.audio) {
+        this.audio.currentTime = 0;
+        this.audio.play().catch(() => {});
+      }
+      this.isPlaying = true;
+      this.isUpcomingQueueTriggeredForCurrent = false;
+      this._currentListenRecorded = false;
+      if (typeof this.updatePlayPauseIcon === "function") this.updatePlayPauseIcon();
+      if (this.playerSeekbar) {
+        this.playerSeekbar.value = 0;
+        this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) 0%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.16) 100%)`;
+      }
+      if (this.screenPlayerSeekbar) {
+        this.screenPlayerSeekbar.value = 0;
+        this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) 0%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.16) 100%)`;
+      }
+      if (this.currentTimeLabel) this.currentTimeLabel.textContent = "0:00";
+      if (this.screenPlayerCurrentTime) this.screenPlayerCurrentTime.textContent = "0:00";
+      if (typeof this.syncLyrics === 'function') this.syncLyrics(0);
+      return;
     } else {
       if (this.isCrossfading) {
         this.swapDecks();
@@ -10410,13 +10487,15 @@ class SoraFyDesktopApp {
       ? helper.shouldTriggerPrefetch(current, total, this.isNextTrackPreloaded)
       : ((total > 0 && total - current <= 15) && !this.isNextTrackPreloaded);
 
-    if (shouldPrefetch) {
+    if (shouldPrefetch && this.repeatMode !== 2) {
       this.isNextTrackPreloaded = true;
       this.preloadNextTrack();
     }
 
     // Dual-Deck Gapless & True Crossfade Engine Tick
-    this.handleCrossfadeTick();
+    if (this.repeatMode !== 2) {
+      this.handleCrossfadeTick();
+    }
   }
 
   formatTime(secs) {

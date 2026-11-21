@@ -399,3 +399,131 @@ test('manual loadTrack / skip resets crossfade state to prevent audio ghosting',
   expect(deckB.paused).toBe(true);
   expect(deckB.currentTime).toBe(0);
 });
+
+// -------------------------------------------------------------
+// 7. Repeat This Track (repeatMode === 2) Integration
+// -------------------------------------------------------------
+test('handleCrossfadeTick does not initiate crossfade when repeatMode === 2 (Repeat This Track)', () => {
+  const deckA = createMockAudioElement();
+  const deckB = createMockAudioElement();
+  deckA.currentTime = 98;
+  deckA.duration = 100;
+  deckB.src = 'https://example.com/song2.mp3';
+
+  let swapped = false;
+  const mockApp = {
+    activeDeck: 'A',
+    preloadDeck: 'B',
+    deckA,
+    deckB,
+    repeatMode: 2,
+    appSettings: { crossfadeDuration: 6 },
+    tracks: [{ title: 'Song 1', duration_secs: 100 }],
+    currentTrackIndex: 0,
+    isCrossfading: false,
+    applyDeckGains: SoraFyDesktopApp.prototype.applyDeckGains,
+    resetDeckGains: SoraFyDesktopApp.prototype.resetDeckGains,
+    handleCrossfadeTick: SoraFyDesktopApp.prototype.handleCrossfadeTick,
+    swapDecks() { swapped = true; }
+  };
+
+  const tick = mockApp.handleCrossfadeTick();
+  expect(tick.isCrossfading).toBe(false);
+  expect(tick.currentGain).toBe(1.0);
+  expect(tick.nextGain).toBe(0.0);
+  expect(swapped).toBe(false);
+  expect(deckB.paused).toBe(true);
+});
+
+test('swapDecks preserves currentTrackIndex and restarts active audio when repeatMode === 2', () => {
+  const deckA = createMockAudioElement();
+  const deckB = createMockAudioElement();
+  deckA.currentTime = 100;
+  deckA.paused = true;
+
+  const deckAGainNode = { gain: createMockAudioParam(0.0) };
+  const deckBGainNode = { gain: createMockAudioParam(1.0) };
+
+  const mockApp = {
+    activeDeck: 'A',
+    preloadDeck: 'B',
+    deckA,
+    deckB,
+    audio: deckA,
+    preloadAudio: deckB,
+    deckAGainNode,
+    deckBGainNode,
+    audioCtx: { currentTime: 0 },
+    currentVolume: 1.0,
+    repeatMode: 2,
+    tracks: [
+      { id: '1', title: 'Track 1' },
+      { id: '2', title: 'Track 2' }
+    ],
+    currentTrackIndex: 0,
+    preloadedTrackIndex: 1,
+    isCrossfading: true,
+    applyDeckGains: SoraFyDesktopApp.prototype.applyDeckGains,
+    resetDeckGains: SoraFyDesktopApp.prototype.resetDeckGains,
+    swapDecks: SoraFyDesktopApp.prototype.swapDecks
+  };
+
+  mockApp.swapDecks();
+
+  // Active deck remains A, track index remains 0, audio replayed from 0
+  expect(mockApp.activeDeck).toBe('A');
+  expect(mockApp.currentTrackIndex).toBe(0);
+  expect(deckA.currentTime).toBe(0);
+  expect(deckA.paused).toBe(false);
+  expect(mockApp.isCrossfading).toBe(false);
+});
+
+test('onTrackEnded replays active track and keeps currentTrackIndex intact when repeatMode === 2', () => {
+  const deckA = createMockAudioElement();
+  const deckB = createMockAudioElement();
+  deckA.currentTime = 180;
+  deckA.paused = true;
+
+  const mockApp = {
+    activeDeck: 'A',
+    preloadDeck: 'B',
+    deckA,
+    deckB,
+    audio: deckA,
+    preloadAudio: deckB,
+    repeatMode: 2,
+    tracks: [
+      { id: '1', title: 'Track 1' },
+      { id: '2', title: 'Track 2' }
+    ],
+    currentTrackIndex: 0,
+    isCrossfading: false,
+    isPlaying: false,
+    applyDeckGains: SoraFyDesktopApp.prototype.applyDeckGains,
+    resetDeckGains: SoraFyDesktopApp.prototype.resetDeckGains,
+    onTrackEnded: SoraFyDesktopApp.prototype.onTrackEnded
+  };
+
+  mockApp.onTrackEnded();
+
+  expect(mockApp.currentTrackIndex).toBe(0);
+  expect(deckA.currentTime).toBe(0);
+  expect(deckA.paused).toBe(false);
+  expect(mockApp.isPlaying).toBe(true);
+});
+
+test('preloadNextTrack does nothing when repeatMode === 2', () => {
+  const mockApp = {
+    repeatMode: 2,
+    tracks: [
+      { id: '1', title: 'Track 1' },
+      { id: '2', title: 'Track 2' }
+    ],
+    currentTrackIndex: 0,
+    preloadedTrackIndex: -1,
+    preloadNextTrack: SoraFyDesktopApp.prototype.preloadNextTrack
+  };
+
+  mockApp.preloadNextTrack();
+  expect(mockApp.preloadedTrackIndex).toBe(-1);
+});
