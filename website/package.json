@@ -1,6 +1,6 @@
 {
   "name": "sorafy-website",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Official landing page for SoraFy Music Player, built with Astro and Tailwind CSS",
   "type": "module",
   "private": true,

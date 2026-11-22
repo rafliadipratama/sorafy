@@ -57,13 +57,17 @@ jobs:
 
       - name: Verify the APK is signed
         run: |
-          if [ ! -f android/app/build/outputs/apk/release/app-release.apk ]; then
-            echo "::error::No signed app-release.apk was produced."
+          APK_FILE=$(find android/app/build/outputs/apk/release -name "*.apk" | sort | head -n 1)
+          if [ -z "$APK_FILE" ] || [ ! -f "$APK_FILE" ]; then
+            echo "::error::No signed release APK was produced."
             ls -R android/app/build/outputs/apk || true
             exit 1
           fi
+          echo "Found release APK: $APK_FILE"
           APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort | tail -n 1)
-          "$APKSIGNER" verify --print-certs android/app/build/outputs/apk/release/app-release.apk
+          "$APKSIGNER" verify --print-certs "$APK_FILE"
+          cp "$APK_FILE" android/app/build/outputs/apk/release/app-release.apk
+          cp "$APK_FILE" android/app/build/outputs/apk/release/SoraFy-Android.apk
 
       - name: Remove the keystore from the runner
         if: always()
@@ -73,7 +77,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: sorafy-android-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: |
+            android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
   # 2. Build Linux AppImage & Deb (Electron Builder)
@@ -238,6 +243,11 @@ jobs:
           mkdir -p final-release
           find release-assets/ -type f -exec cp {} final-release/ \;
           cd final-release
+          # If filenames contain spaces (e.g. 'SoraFy Setup 2.1.2.exe'), create dot copies as well
+          for f in *\ *; do
+            [ -f "$f" ] || continue
+            cp -n "$f" "${f// /.}" || true
+          done
           sha256sum * > sha256sums.txt
           cat sha256sums.txt
           ls -lh .

@@ -365,13 +365,13 @@ public struct HomeView: View {
                                                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                                                 )
 
-                                                Text(playlist.name)
+                                                Text(playlist.title)
                                                     .font(.system(size: 13, weight: .semibold))
                                                     .foregroundColor(.white)
                                                     .lineLimit(1)
                                                     .frame(width: 136, alignment: .leading)
 
-                                                Text(playlist.description.isEmpty ? "Curated Playlist" : playlist.description)
+                                                Text(playlist.descriptionText.isEmpty ? "Curated Playlist" : playlist.descriptionText)
                                                     .font(.system(size: 11, weight: .regular))
                                                     .foregroundColor(.white.opacity(0.65))
                                                     .lineLimit(1)

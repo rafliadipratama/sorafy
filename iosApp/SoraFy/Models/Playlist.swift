@@ -8,6 +8,16 @@ public struct Playlist: Identifiable, Codable, Hashable {
     public var trackCount: Int
     public var tracks: [Track]
 
+    public var name: String {
+        get { title }
+        set { title = value }
+    }
+
+    public var description: String {
+        get { descriptionText }
+        set { descriptionText = value }
+    }
+
     public init(
         id: String,
         title: String,

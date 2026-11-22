@@ -1114,7 +1114,7 @@ const I18N_DICTIONARY = {
     shortcut_close: "Close Fullscreen Player / Modal",
 
     // About
-    about_version: "Version 2.1.0 • GPL-3.0 License",
+    about_version: "Version 2.1.2 • GPL-3.0 License",
     about_desc: "High-resolution streaming music player with real-time synchronized lyrics, DSP equalizer, and multi-platform playlist import.",
     btn_check_update: "Check for Updates",
 
@@ -1438,7 +1438,7 @@ const I18N_DICTIONARY = {
     shortcut_close: "Tutup Layar Penuh / Dialog",
 
     // About
-    about_version: "Versi 2.1.0 • Lisensi GPL-3.0",
+    about_version: "Versi 2.1.2 • Lisensi GPL-3.0",
     about_desc: "Pemutar musik streaming resolusi tinggi dengan lirik tersinkronisasi, DSP equalizer, dan pengimpor playlist lintas platform.",
     btn_check_update: "Periksa Pembaruan",
 
@@ -1571,6 +1571,9 @@ class SoraFyDesktopApp {
     const savedVol = localStorage.getItem("sorafy_volume");
     const initialVol = savedVol !== null ? parseFloat(savedVol) : 0.85;
     this.setVolume(isNaN(initialVol) ? 0.85 : initialVol);
+
+    // Restore persisted repeat mode and shuffle states
+    this.initPersistedPlaybackModes();
 
     // Restore last played track and timestamp on launch
     setTimeout(() => {
@@ -2980,6 +2983,8 @@ class SoraFyDesktopApp {
       audioQuality: 'high',
       volumeNormalization: false,
       crossfadeDuration: 0,
+      repeatMode: 0,
+      isShuffled: false,
       cacheQuotaMb: 2048,
       theme: 'emerald',
       customAccent: ''
@@ -2998,6 +3003,14 @@ class SoraFyDesktopApp {
     }
 
     this.appSettings = currentSettings;
+
+    // Restore persisted repeat mode and shuffle states if present in settings
+    if (typeof this.appSettings.repeatMode === "number" && this.appSettings.repeatMode >= 0 && this.appSettings.repeatMode <= 2) {
+      this.setRepeatMode(this.appSettings.repeatMode, false);
+    }
+    if (typeof this.appSettings.isShuffled === "boolean") {
+      this.setShuffle(this.appSettings.isShuffled, false);
+    }
 
     // Apply configured language
     const initialLang = this.appSettings.language || localStorage.getItem("sorafy_language") || "en";
@@ -3486,42 +3499,8 @@ class SoraFyDesktopApp {
     this.prevBtn.addEventListener("click", () => this.playPrevious());
     this.nextBtn.addEventListener("click", () => this.playNext());
 
-    this.shuffleBtn.addEventListener("click", () => {
-      this.isShuffled = !this.isShuffled;
-      this.shuffleBtn.classList.toggle("active", this.isShuffled);
-      this.showToast(this.isShuffled ? "Shuffle Enabled" : "Shuffle Disabled");
-    });
-
-    this.repeatBtn.addEventListener("click", () => {
-      this.repeatMode = (this.repeatMode + 1) % 3;
-      if (this.repeatMode === 2) {
-        if (this.isCrossfading) {
-          this.resetDeckGains();
-        }
-        if (this.preloadAudio) {
-          try {
-            this.preloadAudio.pause();
-            this.preloadAudio.currentTime = 0;
-          } catch (_) {}
-        }
-        this.preloadedTrackIndex = -1;
-        this.isNextTrackPreloaded = false;
-      }
-      this.repeatBtn.classList.toggle("active", this.repeatMode > 0);
-      const repIcon = this.repeatBtn.querySelector("iconsax-icon");
-      if (repIcon) {
-        repIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
-      }
-      if (this.screenPlayerRepeatBtn) {
-        this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
-        const scRepIcon = this.screenPlayerRepeatBtn.querySelector("iconsax-icon");
-        if (scRepIcon) {
-          scRepIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
-        }
-      }
-      const labels = ["Repeat Off", "Repeat All", "Repeat This Track"];
-      this.showToast(labels[this.repeatMode]);
-    });
+    this.shuffleBtn.addEventListener("click", () => this.toggleShuffle());
+    this.repeatBtn.addEventListener("click", () => this.toggleRepeatMode());
 
     this.likeBtn.addEventListener("click", () => {
       const current = this.tracks[this.currentTrackIndex];
@@ -3739,42 +3718,10 @@ class SoraFyDesktopApp {
       this.screenPlayerNextBtn.addEventListener("click", () => this.playNext());
     }
     if (this.screenPlayerShuffleBtn) {
-      this.screenPlayerShuffleBtn.addEventListener("click", () => {
-        this.isShuffled = !this.isShuffled;
-        this.shuffleBtn.classList.toggle("active", this.isShuffled);
-        this.screenPlayerShuffleBtn.classList.toggle("active", this.isShuffled);
-        this.showToast(this.isShuffled ? "Shuffle Diaktifkan" : "Shuffle Dimatikan");
-      });
+      this.screenPlayerShuffleBtn.addEventListener("click", () => this.toggleShuffle());
     }
     if (this.screenPlayerRepeatBtn) {
-      this.screenPlayerRepeatBtn.addEventListener("click", () => {
-        this.repeatMode = (this.repeatMode + 1) % 3;
-        if (this.repeatMode === 2) {
-          if (this.isCrossfading) {
-            this.resetDeckGains();
-          }
-          if (this.preloadAudio) {
-            try {
-              this.preloadAudio.pause();
-              this.preloadAudio.currentTime = 0;
-            } catch (_) {}
-          }
-          this.preloadedTrackIndex = -1;
-          this.isNextTrackPreloaded = false;
-        }
-        this.repeatBtn.classList.toggle("active", this.repeatMode > 0);
-        this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
-        const repIcon = this.repeatBtn.querySelector("iconsax-icon");
-        if (repIcon) {
-          repIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
-        }
-        const scRepIcon = this.screenPlayerRepeatBtn.querySelector("iconsax-icon");
-        if (scRepIcon) {
-          scRepIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
-        }
-        const labels = ["Repeat Off", "Repeat All", "Repeat This Track"];
-        this.showToast(labels[this.repeatMode]);
-      });
+      this.screenPlayerRepeatBtn.addEventListener("click", () => this.toggleRepeatMode());
     }
     if (this.screenPlayerLikeBtn) {
       this.screenPlayerLikeBtn.addEventListener("click", () => {
@@ -4805,8 +4752,7 @@ class SoraFyDesktopApp {
         const liked = JSON.parse(localStorage.getItem("sorafy_liked_tracks") || "[]");
         if (liked.length > 0) {
           this.tracks = [...liked];
-          this.isShuffled = true;
-          if (this.shuffleBtn) this.shuffleBtn.classList.add("active");
+          this.setShuffle(true, false);
           const r = Math.floor(Math.random() * this.tracks.length);
           this.loadTrack(r, true);
         } else {
@@ -4840,8 +4786,7 @@ class SoraFyDesktopApp {
       this.downloadsShuffleBtn.addEventListener("click", () => {
         if (this.downloadedTracks && this.downloadedTracks.length > 0) {
           this.tracks = [...this.downloadedTracks];
-          this.isShuffled = true;
-          if (this.shuffleBtn) this.shuffleBtn.classList.add("active");
+          this.setShuffle(true, false);
           const randIdx = Math.floor(Math.random() * this.tracks.length);
           this.loadTrack(randIdx, true);
         } else {
@@ -9493,6 +9438,8 @@ class SoraFyDesktopApp {
       currentTime: currentTime,
       duration: duration,
       queue: this.tracks.slice(0, 50),
+      repeatMode: this.repeatMode,
+      isShuffled: this.isShuffled,
       savedAt: Date.now()
     };
 
@@ -9500,7 +9447,7 @@ class SoraFyDesktopApp {
       localStorage.setItem("sorafy_last_playback_session", JSON.stringify(session));
     } catch (_) {}
 
-    if (window.electronAPI) {
+    if (typeof window !== 'undefined' && window.electronAPI) {
       if (isSync && typeof window.electronAPI.savePlaybackSessionSync === "function") {
         window.electronAPI.savePlaybackSessionSync(session);
       } else if (typeof window.electronAPI.savePlaybackSession === "function") {
@@ -9513,7 +9460,7 @@ class SoraFyDesktopApp {
     let session = null;
 
     // 1. Try reading from Electron disk persistence
-    if (window.electronAPI && typeof window.electronAPI.loadPlaybackSession === "function") {
+    if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.loadPlaybackSession === "function") {
       try {
         session = await window.electronAPI.loadPlaybackSession();
       } catch (e) {
@@ -9554,6 +9501,14 @@ class SoraFyDesktopApp {
     } else {
       this.tracks = [session.track];
       this.currentTrackIndex = 0;
+    }
+
+    // Restore persisted repeatMode and isShuffled from session
+    if (typeof session.repeatMode === "number" && session.repeatMode >= 0 && session.repeatMode <= 2) {
+      this.setRepeatMode(session.repeatMode, false);
+    }
+    if (typeof session.isShuffled === "boolean") {
+      this.setShuffle(session.isShuffled, false);
     }
 
     const startPos = (typeof session.currentTime === "number" && session.currentTime > 0)
@@ -10306,6 +10261,107 @@ class SoraFyDesktopApp {
     } else if (typeof window !== 'undefined' && window.electronAPI && typeof window.electronAPI.setThumbarState === 'function') {
       window.electronAPI.setThumbarState({ isPlaying: this.isPlaying });
     }
+  }
+
+  setShuffle(isShuffled, showToastNotice = false) {
+    this.isShuffled = !!isShuffled;
+    try {
+      localStorage.setItem("sorafy_is_shuffled", String(this.isShuffled));
+    } catch (_) {}
+    if (this.appSettings) {
+      this.appSettings.isShuffled = this.isShuffled;
+    }
+    if (this.shuffleBtn) {
+      this.shuffleBtn.classList.toggle("active", this.isShuffled);
+    }
+    if (this.screenPlayerShuffleBtn) {
+      this.screenPlayerShuffleBtn.classList.toggle("active", this.isShuffled);
+    }
+    if (showToastNotice && typeof this.showToast === "function") {
+      const isId = this.currentLanguage === "id";
+      this.showToast(this.isShuffled 
+        ? (isId ? "Shuffle Diaktifkan" : "Shuffle Enabled") 
+        : (isId ? "Shuffle Dimatikan" : "Shuffle Disabled"));
+    }
+    if (typeof this.savePlaybackSession === "function") {
+      this.savePlaybackSession();
+    }
+  }
+
+  toggleShuffle() {
+    this.setShuffle(!this.isShuffled, true);
+  }
+
+  setRepeatMode(mode, showToastNotice = false) {
+    this.repeatMode = typeof mode === "number" ? Math.max(0, Math.min(2, Math.floor(mode))) : 0;
+    try {
+      localStorage.setItem("sorafy_repeat_mode", String(this.repeatMode));
+    } catch (_) {}
+    if (this.appSettings) {
+      this.appSettings.repeatMode = this.repeatMode;
+    }
+
+    if (this.repeatMode === 2) {
+      if (this.isCrossfading && typeof this.resetDeckGains === "function") {
+        this.resetDeckGains();
+      }
+      if (this.preloadAudio) {
+        try {
+          this.preloadAudio.pause();
+          this.preloadAudio.currentTime = 0;
+        } catch (_) {}
+      }
+      this.preloadedTrackIndex = -1;
+      this.isNextTrackPreloaded = false;
+    }
+
+    if (this.repeatBtn) {
+      this.repeatBtn.classList.toggle("active", this.repeatMode > 0);
+      const repIcon = this.repeatBtn.querySelector("iconsax-icon");
+      if (repIcon) {
+        repIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
+      }
+    }
+    if (this.screenPlayerRepeatBtn) {
+      this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
+      const scRepIcon = this.screenPlayerRepeatBtn.querySelector("iconsax-icon");
+      if (scRepIcon) {
+        scRepIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
+      }
+    }
+
+    if (showToastNotice && typeof this.showToast === "function") {
+      const labels = this.currentLanguage === "id"
+        ? ["Repeat Dimatikan", "Ulangi Semua Lagu", "Ulangi Lagu Ini"]
+        : ["Repeat Off", "Repeat All", "Repeat This Track"];
+      this.showToast(labels[this.repeatMode]);
+    }
+
+    if (typeof this.savePlaybackSession === "function") {
+      this.savePlaybackSession();
+    }
+  }
+
+  toggleRepeatMode() {
+    const nextMode = (this.repeatMode + 1) % 3;
+    this.setRepeatMode(nextMode, true);
+  }
+
+  initPersistedPlaybackModes() {
+    try {
+      const savedRepeat = localStorage.getItem("sorafy_repeat_mode");
+      if (savedRepeat !== null) {
+        const parsedRepeat = parseInt(savedRepeat, 10);
+        if (!isNaN(parsedRepeat) && parsedRepeat >= 0 && parsedRepeat <= 2) {
+          this.setRepeatMode(parsedRepeat, false);
+        }
+      }
+
+      const savedShuffle = localStorage.getItem("sorafy_is_shuffled");
+      if (savedShuffle !== null) {
+        this.setShuffle(savedShuffle === "true", false);
+      }
+    } catch (_) {}
   }
 
   async playNext() {
@@ -11915,6 +11971,10 @@ class SoraFyDesktopApp {
     }
     if (this.screenPlayerRepeatBtn) {
       this.screenPlayerRepeatBtn.classList.toggle("active", this.repeatMode > 0);
+      const scRepIcon = this.screenPlayerRepeatBtn.querySelector("iconsax-icon");
+      if (scRepIcon) {
+        scRepIcon.setAttribute("name", this.repeatMode === 2 ? "repeate-one" : "repeate-music");
+      }
     }
 
     if (this.screenPlayerMeshBackdrop) {
