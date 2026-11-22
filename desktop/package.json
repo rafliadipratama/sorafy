@@ -1,7 +1,7 @@
 {
   "name": "sorafy",
   "desktopName": "sorafy",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "SoraFy - High-fidelity cross-platform music streaming (macOS, Linux & Windows)",
   "homepage": "https://github.com/rafliadipratama/sorafy",
   "main": "electron-main.js",
@@ -11,8 +11,7 @@
     "build:mac": "electron-builder --mac",
     "build:dmg": "electron-builder --mac dmg",
     "build:linux": "electron-builder --linux AppImage",
-    "build:linux:all": "electron-builder --linux AppImage deb rpm snap",
-    "build:snap": "electron-builder --linux snap",
+    "build:linux:all": "electron-builder --linux AppImage deb rpm",
     "build:win": "electron-builder --win nsis",
     "dist": "electron-builder"
   },

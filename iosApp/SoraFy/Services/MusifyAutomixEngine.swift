@@ -319,7 +319,7 @@ public enum MusifyAutomixEngine {
             }
 
             // If seed is non-dangdut Indo, strictly reject dangdut
-            if indoDangdutKoploKeywords.contains({ k in candArt.contains(k) }) {
+            if indoDangdutKoploKeywords.contains(where: { k in candArt.contains(k) }) {
                 return false
             }
             if matchesRegex(dangdutRemixRegex, in: candTit) {

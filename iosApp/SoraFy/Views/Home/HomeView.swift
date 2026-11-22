@@ -351,7 +351,7 @@ public struct HomeView: View {
                                     LazyHStack(spacing: 14) {
                                         ForEach(viewModel.exploreData.communityPlaylists) { playlist in
                                             VStack(alignment: .leading, spacing: 6) {
-                                                AsyncImage(url: URL(string: playlist.coverUrl ?? "")) { phase in
+                                                AsyncImage(url: URL(string: playlist.coverUrl)) { phase in
                                                     if let img = phase.image {
                                                         img.resizable().aspectRatio(contentMode: .fill)
                                                     } else {

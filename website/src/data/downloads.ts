@@ -30,7 +30,7 @@ export interface PlatformConfig {
   packages: DownloadPackage[];
 }
 
-export const CURRENT_VERSION = '2.1.0';
+export const CURRENT_VERSION = '2.1.1';
 export const RELEASE_BASE_URL = 'https://github.com/rafliadipratama/sorafy/releases/latest';
 
 export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
@@ -39,16 +39,16 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'Windows',
     primaryPackageId: 'win-setup',
     ctaSubtext: {
-      en: 'v2.1.0 • Windows 10 / 11 (64-bit) • Direct Download',
-      id: 'v2.1.0 • Windows 10 / 11 (64-bit) • Unduh Langsung'
+      en: 'v2.1.1 • Windows 10 / 11 (64-bit) • Direct Download',
+      id: 'v2.1.1 • Windows 10 / 11 (64-bit) • Unduh Langsung'
     },
     packages: [
       {
         id: 'win-setup',
         name: 'SoraFy for Windows (.exe)',
-        filename: 'SoraFy.Setup.2.1.0.exe',
+        filename: 'SoraFy.Setup.2.1.1.exe',
         format: '.exe',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy.Setup.2.1.0.exe',
+        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy.Setup.2.1.1.exe',
         size: '~85 MB',
         arch: 'Windows 10 / 11 (64-bit)',
         badge: {
@@ -64,9 +64,9 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
       {
         id: 'win-portable',
         name: 'Windows Portable (.zip)',
-        filename: 'SoraFy-2.1.0-win.zip',
+        filename: 'SoraFy-2.1.1-win.zip',
         format: '.zip',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.0-win.zip',
+        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.1-win.zip',
         size: '~92 MB',
         arch: 'Standalone Portable (x64)',
         badge: {
@@ -86,16 +86,16 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'Linux',
     primaryPackageId: 'linux-appimage',
     ctaSubtext: {
-      en: 'v2.1.0 • Universal Linux (x86_64) • Direct Download',
-      id: 'v2.1.0 • Universal Linux (x86_64) • Unduh Langsung'
+      en: 'v2.1.1 • Universal Linux (x86_64) • Direct Download',
+      id: 'v2.1.1 • Universal Linux (x86_64) • Unduh Langsung'
     },
     packages: [
       {
         id: 'linux-appimage',
         name: 'Universal AppImage Package',
-        filename: 'SoraFy-2.1.0.AppImage',
+        filename: 'SoraFy-2.1.1.AppImage',
         format: '.AppImage',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.0.AppImage',
+        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.1.AppImage',
         size: '~88 MB',
         arch: 'glibc 2.31+ (x86_64)',
         badge: {
@@ -111,9 +111,9 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
       {
         id: 'linux-deb',
         name: 'Debian / Ubuntu Package (.deb)',
-        filename: 'sorafy_2.1.0_amd64.deb',
+        filename: 'sorafy_2.1.1_amd64.deb',
         format: '.deb',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/sorafy_2.1.0_amd64.deb',
+        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/sorafy_2.1.1_amd64.deb',
         size: '~78 MB',
         arch: 'APT / dpkg compatible',
         badge: {
@@ -133,16 +133,16 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'macOS',
     primaryPackageId: 'mac-arm',
     ctaSubtext: {
-      en: 'v2.1.0 • Apple Silicon M1-M4 & Intel • Direct Download',
-      id: 'v2.1.0 • Apple Silicon M1-M4 & Intel • Unduh Langsung'
+      en: 'v2.1.1 • Apple Silicon M1-M4 & Intel • Direct Download',
+      id: 'v2.1.1 • Apple Silicon M1-M4 & Intel • Unduh Langsung'
     },
     packages: [
       {
         id: 'mac-arm',
         name: 'macOS (Apple Silicon M1-M4)',
-        filename: 'SoraFy-2.1.0-arm64.dmg',
+        filename: 'SoraFy-2.1.1-arm64.dmg',
         format: '.dmg',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.0-arm64.dmg',
+        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.1-arm64.dmg',
         size: '~90 MB',
         arch: 'Native Apple Silicon ARM64',
         badge: {
@@ -158,9 +158,9 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
       {
         id: 'mac-intel',
         name: 'macOS Intel (.dmg)',
-        filename: 'SoraFy-2.1.0.dmg',
+        filename: 'SoraFy-2.1.1.dmg',
         format: '.dmg',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.0.dmg',
+        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.1.dmg',
         size: '~92 MB',
         arch: 'Intel x86_64 (macOS 11.0+)',
         badge: {
@@ -180,8 +180,8 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'Android',
     primaryPackageId: 'android-apk',
     ctaSubtext: {
-      en: 'v2.1.0 • Android 8.0+ (ARM64) • Direct APK',
-      id: 'v2.1.0 • Android 8.0+ (ARM64) • APK Langsung'
+      en: 'v2.1.1 • Android 8.0+ (ARM64) • Direct APK',
+      id: 'v2.1.1 • Android 8.0+ (ARM64) • APK Langsung'
     },
     packages: [
       {
@@ -209,8 +209,8 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'iOS',
     primaryPackageId: 'ios-ipa',
     ctaSubtext: {
-      en: 'v2.1.0 • iOS 16.0+ (ARM64) • SideStore & TrollStore IPA',
-      id: 'v2.1.0 • iOS 16.0+ (ARM64) • IPA untuk SideStore & TrollStore'
+      en: 'v2.1.1 • iOS 16.0+ (ARM64) • SideStore & TrollStore IPA',
+      id: 'v2.1.1 • iOS 16.0+ (ARM64) • IPA untuk SideStore & TrollStore'
     },
     packages: [
       {
