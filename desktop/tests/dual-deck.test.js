@@ -643,6 +643,100 @@ test('checkPlaybackProgress catches stalled playback at near-end and triggers on
   expect(onTrackEndedCalled).toBe(true);
 });
 
+test('checkPlaybackProgress triggers auto-advance when stream is within 1.2s of duration (e.g. 2:23 / 2:24)', () => {
+  let onTrackEndedCalled = false;
+  const mockAudio = {
+    currentTime: 143.0,
+    duration: 144.0, // 2:23 / 2:24
+    ended: false,
+    paused: false
+  };
+
+  const mockApp = {
+    audio: mockAudio,
+    activeDeck: 'A',
+    deckA: mockAudio,
+    tracks: [{ id: 'yt_mcr_track', title: 'It\'s Not a Fashion Statement', duration_secs: 144 }],
+    currentTrackIndex: 0,
+    isPlaying: true,
+    isSeekingBottom: false,
+    isSeekingScreen: false,
+    _isUserPaused: false,
+    _endOfTrackHandled: false,
+    onTrackEnded() {
+      onTrackEndedCalled = true;
+    },
+    checkPlaybackProgress: SoraFyDesktopApp.prototype.checkPlaybackProgress
+  };
+
+  mockApp.checkPlaybackProgress();
+  expect(onTrackEndedCalled).toBe(true);
+  expect(mockApp._endOfTrackHandled).toBe(true);
+});
+
+test('checkPlaybackProgress recovers stuck playback after stall timeout by calling playNext', () => {
+  let playNextCalled = false;
+  const mockAudio = {
+    currentTime: 143.2,
+    duration: 144.0,
+    ended: false,
+    paused: false
+  };
+
+  const mockApp = {
+    audio: mockAudio,
+    activeDeck: 'A',
+    deckA: mockAudio,
+    tracks: [{ id: 'yt_mcr_track', title: 'It\'s Not a Fashion Statement', duration_secs: 144 }],
+    currentTrackIndex: 0,
+    isPlaying: true,
+    isSeekingBottom: false,
+    isSeekingScreen: false,
+    _isUserPaused: false,
+    _endOfTrackHandled: true,
+    _endOfTrackTriggerTime: Date.now() - 2000, // triggered 2s ago but still stuck
+    playNext() {
+      playNextCalled = true;
+    },
+    checkPlaybackProgress: SoraFyDesktopApp.prototype.checkPlaybackProgress
+  };
+
+  mockApp.checkPlaybackProgress();
+  expect(playNextCalled).toBe(true);
+});
+
+test('renderArtistTopTracks slices display to 5 songs and displays accurate Top Songs count', () => {
+  const mockList = { innerHTML: '', appendChild() {} };
+  const mockCount = { textContent: '' };
+  const sampleTracks = [
+    { id: '1', title: 'Song 1' },
+    { id: '2', title: 'Song 2' },
+    { id: '3', title: 'Song 3' },
+    { id: '4', title: 'Song 4' },
+    { id: '5', title: 'Song 5' },
+    { id: '6', title: 'Song 6' },
+    { id: '7', title: 'Song 7' }
+  ];
+
+  const mockApp = {
+    artistTopTracksList: mockList,
+    artistPopularCount: mockCount,
+    currentLanguage: 'en',
+    tracks: [],
+    currentTrackIndex: 0,
+    likedTrackIds: new Set(),
+    createTrackRow: () => ({}),
+    renderArtistTopTracks: SoraFyDesktopApp.prototype.renderArtistTopTracks
+  };
+
+  mockApp.renderArtistTopTracks(sampleTracks);
+  expect(mockCount.textContent).toBe('5 Top Songs');
+
+  mockApp.currentLanguage = 'id';
+  mockApp.renderArtistTopTracks(sampleTracks);
+  expect(mockCount.textContent).toBe('5 Lagu Teratas');
+});
+
 test('highlightActiveSongItems toggles track-row active class and animates equalizer bars', () => {
   const origDoc = global.document;
 

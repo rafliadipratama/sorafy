@@ -2675,9 +2675,18 @@ class SoraFyDesktopApp {
       if (this.playerArtwork && currentTrack.artwork_url) this.playerArtwork.src = currentTrack.artwork_url;
       if (typeof this.fetchTrackLyrics === 'function') this.fetchTrackLyrics(currentTrack);
       if (typeof this.recordPlayHistory === 'function') this.recordPlayHistory(currentTrack);
-      if (newActiveAudio && newActiveAudio.paused && newActiveAudio.src) {
-        newActiveAudio.play().catch(() => {});
-      } else if (newActiveAudio && !newActiveAudio.src && typeof this.loadTrack === 'function') {
+      if (newActiveAudio && newActiveAudio.src) {
+        if (newActiveAudio.paused) {
+          const p = newActiveAudio.play();
+          if (p && typeof p.catch === 'function') {
+            p.catch(() => {
+              if (typeof this.loadTrack === 'function') {
+                this.loadTrack(this.currentTrackIndex, true);
+              }
+            });
+          }
+        }
+      } else if (typeof this.loadTrack === 'function') {
         this.loadTrack(this.currentTrackIndex, true);
       }
     }
@@ -8326,8 +8335,24 @@ class SoraFyDesktopApp {
 
       // 3. Fallbacks for tracks, videos, albums, peers if channel didn't have all carousels
       let topSongs = (effectiveBio && effectiveBio.tracks && effectiveBio.tracks.length)
-        ? effectiveBio.tracks
-        : await this.queryInnerTubeSongs(`${artistName} top hits songs`);
+        ? [...effectiveBio.tracks]
+        : [];
+
+      // Guarantee at least 5 top songs for every artist screen
+      if (topSongs.length < 5) {
+        const extraSongs = await this.queryInnerTubeSongs(`${artistName} popular songs`);
+        if (extraSongs && extraSongs.length) {
+          const seen = new Set(topSongs.map(t => (t.video_id || t.id || t.title).toLowerCase()));
+          for (const s of extraSongs) {
+            const key = (s.video_id || s.id || s.title).toLowerCase();
+            if (!seen.has(key)) {
+              seen.add(key);
+              topSongs.push(s);
+              if (topSongs.length >= 10) break;
+            }
+          }
+        }
+      }
 
       let videos = (effectiveBio && effectiveBio.videos && effectiveBio.videos.length)
         ? effectiveBio.videos
@@ -8363,7 +8388,7 @@ class SoraFyDesktopApp {
         const aName = artistName.toLowerCase();
         return tArtist.includes(aName) || aName.includes(tArtist) || t.title.toLowerCase().includes(aName);
       });
-      this.currentArtistTracks = legitimate.length ? legitimate : topSongs;
+      this.currentArtistTracks = (legitimate.length >= 5) ? legitimate : topSongs;
       this.renderArtistTopTracks(this.currentArtistTracks);
 
       // Render 16:9 Music Videos & Live Sessions
@@ -8387,7 +8412,7 @@ class SoraFyDesktopApp {
       this.artistTopTracksList.innerHTML = `<div style="text-align: center; padding: 24px; color: var(--color-text-secondary); font-size: 13px;">${isId ? 'Tidak ada lagu ditemukan.' : 'No songs found.'}</div>`;
       return;
     }
-    const displayTracks = tracks.slice(0, 8);
+    const displayTracks = tracks.slice(0, 5);
     if (this.artistPopularCount) this.artistPopularCount.textContent = isId ? `${displayTracks.length} Lagu Teratas` : `${displayTracks.length} Top Songs`;
 
     displayTracks.forEach((track, idx) => {
@@ -10624,7 +10649,8 @@ class SoraFyDesktopApp {
       if (typeof this.syncLyrics === 'function') this.syncLyrics(0);
       return;
     } else {
-      if (this.isCrossfading) {
+      const nextAudio = this.activeDeck === 'A' ? (this.deckB || this.preloadAudio) : (this.deckA || this.audio);
+      if (this.isCrossfading && nextAudio && nextAudio.src && !nextAudio.paused) {
         this.swapDecks();
       } else {
         this.playNext();
@@ -10664,30 +10690,37 @@ class SoraFyDesktopApp {
 
     // Detect if track reached the end:
     // 1. Audio element marked ended
-    // 2. Current playback position within 0.4s of total duration
-    // 3. Audio paused at the end (within 2.0s of duration) without explicit user pause
-    // 4. Stalled near end (within 1.5s of duration) where currentTime does not advance for > 1000ms
-    const isAtEnd = activeAudio.ended ||
-      (current >= total - 0.4) ||
-      (activeAudio.paused && !this._isUserPaused && current >= total - 2.0);
+    // 2. Current playback position within 1.2s of total duration (e.g. 2:23 / 2:24)
+    // 3. Audio paused at the end (within 3.0s of duration) without explicit user pause
+    // 4. Stalled near end (within 4.0s of duration or >= 97%) where currentTime does not advance for > 700ms
+    const isAtEnd = Boolean(activeAudio.ended) ||
+      (current >= total - 1.2) ||
+      (activeAudio.paused && !this._isUserPaused && current >= total - 3.0);
 
     const nearEndStalled = !this._isUserPaused &&
-      current >= total - 1.5 &&
-      Math.abs(current - (this._lastWatchdogPos || 0)) < 0.05 &&
-      (Date.now() - (this._lastWatchdogPosTime || Date.now())) > 1000;
+      (current >= total - 4.0 || (total > 10 && current >= total * 0.97)) &&
+      Math.abs(current - (this._lastWatchdogPos || 0)) < 0.1 &&
+      (Date.now() - (this._lastWatchdogPosTime || Date.now())) > 700;
 
-    if (Math.abs(current - (this._lastWatchdogPos || 0)) >= 0.05) {
+    if (Math.abs(current - (this._lastWatchdogPos || 0)) >= 0.1) {
       this._lastWatchdogPos = current;
       this._lastWatchdogPosTime = Date.now();
     }
 
     if (isAtEnd || nearEndStalled) {
+      const now = Date.now();
       if (!this._endOfTrackHandled) {
         this._endOfTrackHandled = true;
+        this._endOfTrackTriggerTime = now;
         this.onTrackEnded();
+      } else if (now - (this._endOfTrackTriggerTime || now) > 1500) {
+        // Fallback recovery: onTrackEnded was triggered > 1.5s ago but track is still stuck at EOF
+        this._endOfTrackTriggerTime = now;
+        this.playNext();
       }
-    } else if (current < total - 2) {
+    } else if (current < total - 4.0) {
       this._endOfTrackHandled = false;
+      this._endOfTrackTriggerTime = 0;
     }
   }
 
@@ -10700,16 +10733,18 @@ class SoraFyDesktopApp {
     const pct = total > 0 ? (current / total) * 100 : 0;
 
     // Robust End-of-Track Watchdog:
-    // If audio reached the end (within 0.35s of duration or audio.ended is true), auto-advance
-    const isAtEnd = total > 2 && (Boolean(activeAudio && activeAudio.ended) || (current >= total - 0.35));
+    // If audio reached the end (within 1.0s of duration or audio.ended is true), auto-advance
+    const isAtEnd = total > 2 && (Boolean(activeAudio && activeAudio.ended) || (current >= total - 1.0));
     if (this.isPlaying && isAtEnd && !this.isSeekingBottom && !this.isSeekingScreen) {
       if (!this._endOfTrackHandled) {
         this._endOfTrackHandled = true;
+        this._endOfTrackTriggerTime = Date.now();
         this.onTrackEnded();
       }
       return;
-    } else if (current < total - 1.5) {
+    } else if (current < total - 4.0) {
       this._endOfTrackHandled = false;
+      this._endOfTrackTriggerTime = 0;
     }
 
     // Reset restored seek once user has legitimately progressed into playback
@@ -11824,6 +11859,8 @@ class SoraFyDesktopApp {
           if (newTracks && newTracks.length > 0) {
             this.tracks.push(...newTracks);
             this.renderQueue();
+            this.preloadedTrackIndex = -1;
+            this.isNextTrackPreloaded = false;
             setTimeout(() => this.preloadNextTrack(), 500);
           }
         }

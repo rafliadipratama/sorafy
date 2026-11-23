@@ -2381,13 +2381,47 @@ async function resolveArtistProfile(name, lang = null) {
   try {
     const artists = await searchYouTubeMusicInnerTube(trimmed, 'artist', effectiveHl);
     if (!artists || !artists.length) return null;
-    const match = artists.find(a => a.name.toLowerCase() === trimmed.toLowerCase());
+    const match = artists.find(a => a.name.toLowerCase() === trimmed.toLowerCase()) || artists[0];
     if (!match) return null;
     let bio = null;
     if (match.browse_id) {
       bio = await browseYouTubeInnerTube(match.browse_id, effectiveHl, effectiveGl);
     }
-    const tracks = (match.top_songs && match.top_songs.length) ? match.top_songs : (bio?.tracks || []);
+    // Guarantee at least 5 popular tracks:
+    // If bio has >= 5 tracks, prefer bio.
+    // Otherwise combine bio.tracks and match.top_songs without duplicates.
+    let tracks = [];
+    if (bio?.tracks && bio.tracks.length >= 5) {
+      tracks = [...bio.tracks];
+    } else {
+      const combined = [...(bio?.tracks || []), ...(match.top_songs || [])];
+      const seen = new Set();
+      tracks = combined.filter(t => {
+        const key = (t.video_id || t.id || t.title).toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    // If still under 5 tracks, query the artist's songs to ensure at least 5 top tracks
+    if (tracks.length < 5) {
+      try {
+        const extraSongs = await searchYouTubeMusicInnerTube(`${trimmed} songs`, 'song', effectiveHl);
+        if (extraSongs && extraSongs.length) {
+          const seen = new Set(tracks.map(t => (t.video_id || t.id || t.title).toLowerCase()));
+          for (const s of extraSongs) {
+            const key = (s.video_id || s.id || s.title).toLowerCase();
+            if (!seen.has(key)) {
+              seen.add(key);
+              tracks.push(s);
+              if (tracks.length >= 10) break;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
     const albums = bio?.albums || [];
     if (tracks.length === 0 && albums.length === 0) {
       return null;
