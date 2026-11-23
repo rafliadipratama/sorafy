@@ -1557,6 +1557,13 @@ class SoraFyDesktopApp {
     this.hasRestoredSession = false;
     this._lastSessionSave = 0;
 
+    // Playback Watchdog & End-of-Track Recovery states
+    this._playbackWatchdogInterval = null;
+    this._isUserPaused = false;
+    this._endOfTrackHandled = false;
+    this._lastWatchdogPos = 0;
+    this._lastWatchdogPosTime = 0;
+
     this.initElements();
     this.initEvents();
     this.initPlugins();
@@ -2431,6 +2438,13 @@ class SoraFyDesktopApp {
 
     element.addEventListener("pause", () => {
       if (this.activeDeck === deckName) {
+        if (!this._isUserPaused && element.duration > 2 && element.currentTime >= element.duration - 2.0) {
+          if (!this._endOfTrackHandled) {
+            this._endOfTrackHandled = true;
+            this.onTrackEnded();
+            return;
+          }
+        }
         if (typeof this.onPause === "function") this.onPause();
         if (this.tracks && this.tracks[this.currentTrackIndex] && typeof this.updateDiscordPresence === "function") {
           this.updateDiscordPresence(this.tracks[this.currentTrackIndex]);
@@ -2790,6 +2804,8 @@ class SoraFyDesktopApp {
 
   onPlay() {
     this.isPlaying = true;
+    this._isUserPaused = false;
+    if (typeof this.startPlaybackWatchdog === 'function') this.startPlaybackWatchdog();
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       try {
         navigator.mediaSession.playbackState = 'playing';
@@ -2797,16 +2813,19 @@ class SoraFyDesktopApp {
       this.updateMediaSessionPosition();
     }
     this.syncThumbarState();
+    if (typeof this.highlightActiveSongItems === 'function') this.highlightActiveSongItems();
   }
 
   onPause() {
     this.isPlaying = false;
+    if (typeof this.stopPlaybackWatchdog === 'function') this.stopPlaybackWatchdog();
     if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) {
       try {
         navigator.mediaSession.playbackState = 'paused';
       } catch (_) {}
     }
     this.syncThumbarState();
+    if (typeof this.highlightActiveSongItems === 'function') this.highlightActiveSongItems();
   }
 
   // =========================================================================
@@ -3485,6 +3504,7 @@ class SoraFyDesktopApp {
     this.initStatsEvents();
 
     window.addEventListener('beforeunload', () => {
+      if (typeof this.stopPlaybackWatchdog === 'function') this.stopPlaybackWatchdog();
       if (this.audio) {
         this.audio.pause();
         this.audio.src = '';
@@ -5596,6 +5616,10 @@ class SoraFyDesktopApp {
     const row = document.createElement("div");
     row.className = `track-row ${isActive ? 'active' : ''}`;
     row.id = `track_row_${track.id}`;
+    row.setAttribute("data-track-id", track.id || '');
+    if (track.video_id) row.setAttribute("data-video-id", track.video_id);
+    if (track.title) row.setAttribute("data-title", track.title);
+    if (track.artist) row.setAttribute("data-artist", track.artist);
 
     const artists = this.parseTrackArtists(track);
     let artistsHtml = '';
@@ -5922,10 +5946,56 @@ class SoraFyDesktopApp {
   }
 
   highlightActiveSongItems() {
-    const curTrack = this.tracks[this.currentTrackIndex];
+    if (typeof document === 'undefined') return;
+    const curTrack = (this.tracks && this.currentTrackIndex >= 0) ? this.tracks[this.currentTrackIndex] : null;
     if (!curTrack) return;
+    const curId = curTrack.id || (curTrack.video_id ? `yt_${curTrack.video_id}` : null);
+    const curVid = curTrack.video_id || (curTrack.id ? curTrack.id.replace(/^yt_/, '') : '');
+
+    // 1. YouTube Music grid/list song items
     document.querySelectorAll(".ytm-song-item").forEach(el => {
-      el.classList.toggle("active", el.id === `ytm_item_${curTrack.id}`);
+      const elId = el.getAttribute("data-track-id") || el.id.replace(/^ytm_item_/, '');
+      const isCur = Boolean(
+        (curId && (el.id === `ytm_item_${curId}` || elId === curId)) ||
+        (curVid && (elId === curVid || elId === `yt_${curVid}`))
+      );
+      el.classList.toggle("active", isCur);
+    });
+
+    // 2. Track rows (Search results, Albums, Artist Top Tracks, Shelves, Playlists)
+    document.querySelectorAll(".track-row").forEach(el => {
+      const elId = el.getAttribute("data-track-id") || el.id.replace(/^track_row_/, '');
+      const elVid = el.getAttribute("data-video-id") || '';
+      const isCur = Boolean(
+        (curId && (el.id === `track_row_${curId}` || elId === curId)) ||
+        (curVid && (elVid === curVid || elId === curVid || elId === `yt_${curVid}`)) ||
+        (curTrack.title && el.getAttribute("data-title") === curTrack.title && el.getAttribute("data-artist") === curTrack.artist)
+      );
+      el.classList.toggle("active", isCur);
+      const numContainer = el.querySelector(".track-row-num");
+      if (numContainer) {
+        let bars = numContainer.querySelector(".playing-bars");
+        if (isCur && this.isPlaying) {
+          if (!bars) {
+            bars = document.createElement("div");
+            bars.className = "playing-bars";
+            bars.innerHTML = "<span></span><span></span><span></span>";
+            numContainer.appendChild(bars);
+          }
+        } else if (bars) {
+          bars.remove();
+        }
+      }
+    });
+
+    // 3. Queue items
+    document.querySelectorAll(".queue-item").forEach(el => {
+      const elId = el.getAttribute("data-track-id") || el.id.replace(/^queue_item_/, '');
+      const isCur = Boolean(
+        (curId && (el.id === `queue_item_${curId}` || elId === curId)) ||
+        (curVid && (elId === curVid || elId === `yt_${curVid}`))
+      );
+      el.classList.toggle("active", isCur);
     });
   }
 
@@ -9521,6 +9591,7 @@ class SoraFyDesktopApp {
     if (!track) return;
 
     this._endOfTrackHandled = false;
+    this._isUserPaused = false;
     this.isNextTrackPreloaded = false;
 
     // Immediately stop previous audio and assign unique load token to avoid race conditions
@@ -9543,6 +9614,7 @@ class SoraFyDesktopApp {
 
     if (autoPlay) {
       this.isPlaying = true;
+      if (typeof this.startPlaybackWatchdog === 'function') this.startPlaybackWatchdog();
       this.updatePlayPauseIcon();
       this.showPlayerBuffering(true);
     }
@@ -9841,6 +9913,7 @@ class SoraFyDesktopApp {
                   if (loadId !== this._currentLoadId) return;
                   playbackDone = true;
                   this.isPlaying = true;
+                  if (typeof this.startPlaybackWatchdog === 'function') this.startPlaybackWatchdog();
                   this.showPlayerBuffering(false);
                   this.updatePlayPauseIcon();
                   if (this.currentView === "player" && (track.is_video || this.currentScreenMode === "video")) {
@@ -10247,17 +10320,20 @@ class SoraFyDesktopApp {
   togglePlayPause() {
     this.ensureAudioContextActive();
     if (this.isPlaying) {
+      this._isUserPaused = true;
       this.audio.pause();
       if (this.screenPlayerNativeVideo && !this.screenPlayerNativeVideo.paused) {
         this.screenPlayerNativeVideo.pause();
       }
       this.isPlaying = false;
+      if (typeof this.stopPlaybackWatchdog === 'function') this.stopPlaybackWatchdog();
       this.updatePlayPauseIcon();
       if (typeof this.onPause === 'function') this.onPause();
       if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
       const cur = this.tracks[this.currentTrackIndex];
       if (cur) this.updateDiscordPresence(cur);
     } else {
+      this._isUserPaused = false;
       const resumePos = Math.max(0, (this.audio && this.audio.currentTime > 0) ? this.audio.currentTime : (this._restoredSeekPosition || 0));
       if (!this.audio.src || this.audio.error) {
         this.loadTrack(this.currentTrackIndex, true, resumePos);
@@ -10265,6 +10341,7 @@ class SoraFyDesktopApp {
       }
       this.audio.play().then(() => {
         this.isPlaying = true;
+        if (typeof this.startPlaybackWatchdog === 'function') this.startPlaybackWatchdog();
         this.updatePlayPauseIcon();
         if (typeof this.onPlay === 'function') this.onPlay();
         if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'playing';
@@ -10281,6 +10358,7 @@ class SoraFyDesktopApp {
           await this.loadTrack(this.currentTrackIndex, true, resumePos);
         } catch (e2) {
           this.isPlaying = false;
+          if (typeof this.stopPlaybackWatchdog === 'function') this.stopPlaybackWatchdog();
           this.updatePlayPauseIcon();
           if (typeof this.onPause === 'function') this.onPause();
           if (typeof navigator !== 'undefined' && 'mediaSession' in navigator) navigator.mediaSession.playbackState = 'paused';
@@ -10520,14 +10598,76 @@ class SoraFyDesktopApp {
     }
   }
 
+  startPlaybackWatchdog() {
+    if (this._playbackWatchdogInterval) return;
+    this._playbackWatchdogInterval = setInterval(() => {
+      this.checkPlaybackProgress();
+    }, 350);
+    if (this._playbackWatchdogInterval && typeof this._playbackWatchdogInterval.unref === 'function') {
+      this._playbackWatchdogInterval.unref();
+    }
+  }
+
+  stopPlaybackWatchdog() {
+    if (this._playbackWatchdogInterval) {
+      clearInterval(this._playbackWatchdogInterval);
+      this._playbackWatchdogInterval = null;
+    }
+  }
+
+  checkPlaybackProgress() {
+    if (!this.isPlaying) return;
+    const activeAudio = this.activeDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+    if (!activeAudio) return;
+
+    const current = (typeof activeAudio.currentTime === 'number') ? activeAudio.currentTime : (this.audio ? this.audio.currentTime : 0);
+    const total = (activeAudio.duration && !isNaN(activeAudio.duration) && activeAudio.duration > 0)
+      ? activeAudio.duration
+      : ((this.tracks && this.tracks[this.currentTrackIndex]?.duration_secs) || (this.audio && this.audio.duration) || 0);
+
+    if (total <= 2) return;
+    if (this.isSeekingBottom || this.isSeekingScreen) return;
+
+    // Detect if track reached the end:
+    // 1. Audio element marked ended
+    // 2. Current playback position within 0.4s of total duration
+    // 3. Audio paused at the end (within 2.0s of duration) without explicit user pause
+    // 4. Stalled near end (within 1.5s of duration) where currentTime does not advance for > 1000ms
+    const isAtEnd = activeAudio.ended ||
+      (current >= total - 0.4) ||
+      (activeAudio.paused && !this._isUserPaused && current >= total - 2.0);
+
+    const nearEndStalled = !this._isUserPaused &&
+      current >= total - 1.5 &&
+      Math.abs(current - (this._lastWatchdogPos || 0)) < 0.05 &&
+      (Date.now() - (this._lastWatchdogPosTime || Date.now())) > 1000;
+
+    if (Math.abs(current - (this._lastWatchdogPos || 0)) >= 0.05) {
+      this._lastWatchdogPos = current;
+      this._lastWatchdogPosTime = Date.now();
+    }
+
+    if (isAtEnd || nearEndStalled) {
+      if (!this._endOfTrackHandled) {
+        this._endOfTrackHandled = true;
+        this.onTrackEnded();
+      }
+    } else if (current < total - 2) {
+      this._endOfTrackHandled = false;
+    }
+  }
+
   onTimeUpdate() {
-    const current = this.audio.currentTime || 0;
-    const total = this.audio.duration || this.tracks[this.currentTrackIndex]?.duration_secs || 1;
+    const activeAudio = this.activeDeck === 'A' ? (this.deckA || this.audio) : (this.deckB || this.preloadAudio);
+    const current = (activeAudio && typeof activeAudio.currentTime === 'number') ? activeAudio.currentTime : (this.audio ? this.audio.currentTime : 0);
+    const total = (activeAudio && activeAudio.duration && !isNaN(activeAudio.duration) && activeAudio.duration > 0)
+      ? activeAudio.duration
+      : ((this.tracks && this.tracks[this.currentTrackIndex]?.duration_secs) || (this.audio && this.audio.duration) || 1);
     const pct = total > 0 ? (current / total) * 100 : 0;
 
     // Robust End-of-Track Watchdog:
     // If audio reached the end (within 0.35s of duration or audio.ended is true), auto-advance
-    const isAtEnd = total > 2 && (this.audio.ended || (current >= total - 0.35));
+    const isAtEnd = total > 2 && (Boolean(activeAudio && activeAudio.ended) || (current >= total - 0.35));
     if (this.isPlaying && isAtEnd && !this.isSeekingBottom && !this.isSeekingScreen) {
       if (!this._endOfTrackHandled) {
         this._endOfTrackHandled = true;

@@ -579,3 +579,148 @@ test('playNext advances to next track immediately when upcoming tracks exist in 
   mockApp.playNext();
   expect(loadedTrackIndex).toBe(1);
 });
+
+test('checkPlaybackProgress auto-advances playback even when timeupdate stops firing at end of stream', () => {
+  let onTrackEndedCalled = false;
+  const mockAudio = {
+    currentTime: 218,
+    duration: 218,
+    ended: false,
+    paused: false
+  };
+
+  const mockApp = {
+    audio: mockAudio,
+    activeDeck: 'A',
+    deckA: mockAudio,
+    tracks: [{ id: 'yt_december', title: 'December (again)', duration_secs: 218 }],
+    currentTrackIndex: 0,
+    isPlaying: true,
+    isSeekingBottom: false,
+    isSeekingScreen: false,
+    _isUserPaused: false,
+    _endOfTrackHandled: false,
+    onTrackEnded() {
+      onTrackEndedCalled = true;
+    },
+    checkPlaybackProgress: SoraFyDesktopApp.prototype.checkPlaybackProgress
+  };
+
+  mockApp.checkPlaybackProgress();
+  expect(onTrackEndedCalled).toBe(true);
+  expect(mockApp._endOfTrackHandled).toBe(true);
+});
+
+test('checkPlaybackProgress catches stalled playback at near-end and triggers onTrackEnded', () => {
+  let onTrackEndedCalled = false;
+  const mockAudio = {
+    currentTime: 217.2,
+    duration: 218,
+    ended: false,
+    paused: false
+  };
+
+  const mockApp = {
+    audio: mockAudio,
+    activeDeck: 'A',
+    deckA: mockAudio,
+    tracks: [{ id: 'yt_december', title: 'December (again)', duration_secs: 218 }],
+    currentTrackIndex: 0,
+    isPlaying: true,
+    isSeekingBottom: false,
+    isSeekingScreen: false,
+    _isUserPaused: false,
+    _endOfTrackHandled: false,
+    _lastWatchdogPos: 217.2,
+    _lastWatchdogPosTime: Date.now() - 1500, // stalled for 1.5s
+    onTrackEnded() {
+      onTrackEndedCalled = true;
+    },
+    checkPlaybackProgress: SoraFyDesktopApp.prototype.checkPlaybackProgress
+  };
+
+  mockApp.checkPlaybackProgress();
+  expect(onTrackEndedCalled).toBe(true);
+});
+
+test('highlightActiveSongItems toggles track-row active class and animates equalizer bars', () => {
+  const origDoc = global.document;
+
+  function createMockElement(id, classes, trackId) {
+    const classSet = new Set(classes);
+    let children = [];
+    return {
+      id,
+      getAttribute(attr) {
+        if (attr === 'data-track-id') return trackId;
+        return null;
+      },
+      classList: {
+        contains(c) { return classSet.has(c); },
+        add(c) { classSet.add(c); },
+        remove(c) { classSet.delete(c); },
+        toggle(c, force) {
+          if (force !== undefined) {
+            if (force) classSet.add(c); else classSet.delete(c);
+            return force;
+          }
+          if (classSet.has(c)) { classSet.delete(c); return false; }
+          classSet.add(c);
+          return true;
+        }
+      },
+      querySelector(sel) {
+        if (sel === '.track-row-num') {
+          return {
+            querySelector(s) {
+              return children.find(ch => ch.className === s.replace('.', '')) || null;
+            },
+            appendChild(child) {
+              children.push(child);
+            }
+          };
+        }
+        return children.find(ch => ch.className === sel.replace('.', '')) || null;
+      }
+    };
+  }
+
+  const row1 = createMockElement('track_row_yt_song1', ['track-row'], 'yt_song1');
+  const row2 = createMockElement('track_row_yt_song2', ['track-row', 'active'], 'yt_song2');
+
+  const rows = [row1, row2];
+
+  global.document = {
+    querySelectorAll(sel) {
+      if (sel === '.track-row') return rows;
+      if (sel === '.ytm-song-item' || sel === '.queue-item') return [];
+      return [];
+    },
+    createElement(tag) {
+      return {
+        className: '',
+        innerHTML: '',
+        remove() {}
+      };
+    }
+  };
+
+  try {
+    const mockApp = {
+      tracks: [
+        { id: 'yt_song1', title: 'Song 1' },
+        { id: 'yt_song2', title: 'Song 2' }
+      ],
+      currentTrackIndex: 0, // Song 1 is now active!
+      isPlaying: true,
+      highlightActiveSongItems: SoraFyDesktopApp.prototype.highlightActiveSongItems
+    };
+
+    mockApp.highlightActiveSongItems();
+
+    expect(row1.classList.contains('active')).toBe(true);
+    expect(row2.classList.contains('active')).toBe(false);
+  } finally {
+    global.document = origDoc;
+  }
+});
