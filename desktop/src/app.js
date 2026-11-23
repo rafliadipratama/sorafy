@@ -2391,6 +2391,7 @@ class SoraFyDesktopApp {
 
     element.addEventListener("ended", () => {
       if (this.activeDeck === deckName) {
+        this._endOfTrackHandled = true;
         this.onTrackEnded();
       }
     });
@@ -2660,6 +2661,11 @@ class SoraFyDesktopApp {
       if (this.playerArtwork && currentTrack.artwork_url) this.playerArtwork.src = currentTrack.artwork_url;
       if (typeof this.fetchTrackLyrics === 'function') this.fetchTrackLyrics(currentTrack);
       if (typeof this.recordPlayHistory === 'function') this.recordPlayHistory(currentTrack);
+      if (newActiveAudio && newActiveAudio.paused && newActiveAudio.src) {
+        newActiveAudio.play().catch(() => {});
+      } else if (newActiveAudio && !newActiveAudio.src && typeof this.loadTrack === 'function') {
+        this.loadTrack(this.currentTrackIndex, true);
+      }
     }
   }
 
@@ -9507,10 +9513,14 @@ class SoraFyDesktopApp {
   }
 
   async loadTrack(index, autoPlay = true, startPosition = 0) {
+    if (!this.tracks || this.tracks.length === 0) return;
+    if (index < 0 || index >= this.tracks.length) index = 0;
+
     this.currentTrackIndex = index;
     const track = this.tracks[index];
     if (!track) return;
 
+    this._endOfTrackHandled = false;
     this.isNextTrackPreloaded = false;
 
     // Immediately stop previous audio and assign unique load token to avoid race conditions
@@ -9572,16 +9582,16 @@ class SoraFyDesktopApp {
     if (this.screenPlayerCurrentTime) this.screenPlayerCurrentTime.textContent = this.formatTime(initialPos);
     if (this.screenPlayerDuration) this.screenPlayerDuration.textContent = track.duration_secs ? this.formatTime(track.duration_secs) : "--:--";
 
-    if (startPosition > 0 && track.duration_secs && track.duration_secs > 0) {
-      const initialPct = Math.min(100, (startPosition / track.duration_secs) * 100);
-      if (this.playerSeekbar) {
-        this.playerSeekbar.value = initialPct;
-        this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
-      }
-      if (this.screenPlayerSeekbar) {
-        this.screenPlayerSeekbar.value = initialPct;
-        this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
-      }
+    const initialPct = (startPosition > 0 && track.duration_secs && track.duration_secs > 0)
+      ? Math.min(100, (startPosition / track.duration_secs) * 100)
+      : 0;
+    if (this.playerSeekbar) {
+      this.playerSeekbar.value = initialPct;
+      this.playerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
+    }
+    if (this.screenPlayerSeekbar) {
+      this.screenPlayerSeekbar.value = initialPct;
+      this.screenPlayerSeekbar.style.background = `linear-gradient(to right, var(--color-brand-primary) 0%, var(--color-brand-primary) ${initialPct}%, rgba(255, 255, 255, 0.16) ${initialPct}%, rgba(255, 255, 255, 0.16) 100%)`;
     }
 
     // Synchronize Screen Player immediately
@@ -9847,9 +9857,13 @@ class SoraFyDesktopApp {
               }
             };
 
-            this.audio.addEventListener("canplay", onCanPlayHandler, { once: true });
-            this.audio.addEventListener("loadeddata", onCanPlayHandler, { once: true });
-            this.audio.addEventListener("playing", onCanPlayHandler, { once: true });
+            if (this.audio && this.audio.readyState >= 2) {
+              setTimeout(onCanPlayHandler, 50);
+            } else {
+              this.audio.addEventListener("canplay", onCanPlayHandler, { once: true });
+              this.audio.addEventListener("loadeddata", onCanPlayHandler, { once: true });
+              this.audio.addEventListener("playing", onCanPlayHandler, { once: true });
+            }
 
             // Generous fallback timeout (10 seconds) for slow networks before giving up
             bufferTimeoutId = setTimeout(() => {
@@ -10382,6 +10396,8 @@ class SoraFyDesktopApp {
   async playNext() {
     if (!this.tracks || this.tracks.length === 0) return;
 
+    this._endOfTrackHandled = false;
+
     // Track rapid skips (< 20 seconds) for real-time recommendation session tuning
     const curTrack = this.tracks[this.currentTrackIndex];
     if (this.audio && !this.audio.paused && this.audio.currentTime > 0 && this.audio.currentTime < 20) {
@@ -10394,13 +10410,14 @@ class SoraFyDesktopApp {
       await this.fadeOutAudio(Math.min(1.2, this.appSettings.crossfadeDuration));
     }
 
-    // YouTube Music Automix: proactively fetch more tracks if at or near the end of the queue
-    const upcomingCount = Math.max(0, this.tracks.length - 1 - this.currentTrackIndex);
-    if (upcomingCount <= 1) {
-      await this.ensureUpcomingQueue();
-    }
-
+    // Fast-path: If there are upcoming tracks in queue, advance immediately!
     if (this.currentTrackIndex < this.tracks.length - 1) {
+      const upcomingCount = this.tracks.length - 1 - this.currentTrackIndex;
+      if (upcomingCount <= 2) {
+        // Replenish Automix queue asynchronously in background without delaying track switch
+        this.ensureUpcomingQueue().catch(() => {});
+      }
+
       if (this.isShuffled) {
         // Smart Shuffle: pick from remaining upcoming tracks rather than repeating past tracks
         const remaining = this.tracks.length - 1 - this.currentTrackIndex;
@@ -10410,12 +10427,32 @@ class SoraFyDesktopApp {
           const targetTrack = this.tracks.splice(nextIdx, 1)[0];
           this.tracks.splice(this.currentTrackIndex + 1, 0, targetTrack);
         }
-        this.loadTrack(this.currentTrackIndex + 1, true);
-      } else {
-        this.loadTrack(this.currentTrackIndex + 1, true);
       }
-    } else {
+      this.loadTrack(this.currentTrackIndex + 1, true);
+      return;
+    }
+
+    // End of queue reached: check Automix recommendations with max 2s timeout
+    if (this.appSettings && this.appSettings.autoMixQueue !== false) {
+      try {
+        await Promise.race([
+          this.ensureUpcomingQueue(true),
+          new Promise(resolve => setTimeout(resolve, 2000))
+        ]);
+      } catch (_) {}
+
+      if (this.currentTrackIndex < this.tracks.length - 1) {
+        this.loadTrack(this.currentTrackIndex + 1, true);
+        return;
+      }
+    }
+
+    // No further upcoming tracks:
+    if (this.repeatMode === 1) {
       this.loadTrack(0, true);
+    } else {
+      this.loadTrack(0, false);
+      this.showToast(this.currentLanguage === "id" ? "Antrean selesai diputar" : "Queue finished playing");
     }
   }
 
@@ -10487,6 +10524,19 @@ class SoraFyDesktopApp {
     const current = this.audio.currentTime || 0;
     const total = this.audio.duration || this.tracks[this.currentTrackIndex]?.duration_secs || 1;
     const pct = total > 0 ? (current / total) * 100 : 0;
+
+    // Robust End-of-Track Watchdog:
+    // If audio reached the end (within 0.35s of duration or audio.ended is true), auto-advance
+    const isAtEnd = total > 2 && (this.audio.ended || (current >= total - 0.35));
+    if (this.isPlaying && isAtEnd && !this.isSeekingBottom && !this.isSeekingScreen) {
+      if (!this._endOfTrackHandled) {
+        this._endOfTrackHandled = true;
+        this.onTrackEnded();
+      }
+      return;
+    } else if (current < total - 1.5) {
+      this._endOfTrackHandled = false;
+    }
 
     // Reset restored seek once user has legitimately progressed into playback
     if (current > 1 && this._restoredSeekPosition > 0) {

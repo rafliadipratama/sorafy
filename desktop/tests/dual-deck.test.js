@@ -527,3 +527,55 @@ test('preloadNextTrack does nothing when repeatMode === 2', () => {
   mockApp.preloadNextTrack();
   expect(mockApp.preloadedTrackIndex).toBe(-1);
 });
+
+test('onTimeUpdate auto-advances via onTrackEnded when stream reaches end within 0.35s', () => {
+  let onTrackEndedCalled = false;
+  const mockAudio = {
+    currentTime: 207.8,
+    duration: 208,
+    ended: false
+  };
+
+  const mockApp = {
+    audio: mockAudio,
+    tracks: [{ id: '1', title: 'Track 1', duration_secs: 208 }],
+    currentTrackIndex: 0,
+    isPlaying: true,
+    isSeekingBottom: false,
+    isSeekingScreen: false,
+    currentTimeLabel: { textContent: '' },
+    durationLabel: { textContent: '' },
+    formatTime: SoraFyDesktopApp.prototype.formatTime,
+    onTrackEnded() {
+      onTrackEndedCalled = true;
+    },
+    onTimeUpdate: SoraFyDesktopApp.prototype.onTimeUpdate
+  };
+
+  mockApp.onTimeUpdate();
+  expect(onTrackEndedCalled).toBe(true);
+});
+
+test('playNext advances to next track immediately when upcoming tracks exist in queue', () => {
+  let loadedTrackIndex = -1;
+  const mockApp = {
+    tracks: [
+      { id: '1', title: 'Song 1' },
+      { id: '2', title: 'Song 2' },
+      { id: '3', title: 'Song 3' }
+    ],
+    currentTrackIndex: 0,
+    isPlaying: true,
+    isShuffled: false,
+    repeatMode: 0,
+    appSettings: { crossfadeDuration: 0 },
+    loadTrack(idx) {
+      loadedTrackIndex = idx;
+    },
+    ensureUpcomingQueue: async () => {},
+    playNext: SoraFyDesktopApp.prototype.playNext
+  };
+
+  mockApp.playNext();
+  expect(loadedTrackIndex).toBe(1);
+});
