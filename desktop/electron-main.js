@@ -1720,18 +1720,25 @@ async function resolveInnerTubeStream(videoId) {
   try {
     const formats = json.streamingData?.adaptiveFormats?.filter(f => f.mimeType?.includes("audio"));
     if (formats && formats.length > 0) {
-      const chosen = formats.find(f => f.itag === 140) || formats.find(f => f.mimeType?.includes("mp4")) || formats[0];
+      // Prioritize highest quality audio format: Opus HD 160k (itag 251) -> AAC 130k (itag 140) -> highest bitrate format
+      const chosen = formats.find(f => f.itag === 251 && f.url) ||
+                     formats.find(f => f.itag === 140 && f.url) ||
+                     formats.filter(f => f.url).sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0] ||
+                     formats[0];
       const rawUrl = chosen.url;
+      if (!rawUrl) return null;
+
       const streamUrl = (localProxyPort > 0 && rawUrl)
         ? `http://127.0.0.1:${localProxyPort}/stream?url=${encodeURIComponent(rawUrl)}`
         : rawUrl;
+      const isOpus = chosen.mimeType?.includes("opus");
       return {
         url: streamUrl,
         rawUrl: rawUrl,
         videoId: videoId,
-        bitrate: chosen.bitrate || 160000,
-        mimeType: chosen.mimeType || 'audio/mp4',
-        provider: 'SoraFy HD Stream',
+        bitrate: chosen.bitrate || (isOpus ? 160000 : 130000),
+        mimeType: chosen.mimeType || (isOpus ? 'audio/webm' : 'audio/mp4'),
+        provider: isOpus ? 'Opus HD' : 'AAC 320k',
         duration: parseInt(json.videoDetails?.lengthSeconds, 10) || 0,
         viewCount: json.videoDetails?.viewCount || '0',
         isFull: true
@@ -3455,18 +3462,8 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
     }
   }
 
-  // 2. High-speed direct stream from official videoId (yt-dlp or InnerTube) - 100% authentic artist recording!
+  // 2. High-speed direct stream from official videoId (InnerTube direct ~200-400ms, yt-dlp fallback)
   if (vid) {
-    const dlpStream = await resolveYtDlpStream(vid);
-    if (dlpStream && dlpStream.url) {
-      dlpStream.isVerified = isVerified;
-      if (verified) dlpStream.verifiedData = verified;
-      dlpStream.videoId = vid;
-      streamCache.set(cacheKey, { data: dlpStream, expireAt: Date.now() + 45 * 60 * 1000 });
-      saveStreamCache();
-      return dlpStream;
-    }
-
     const innerStream = await resolveInnerTubeStream(vid);
     if (innerStream && innerStream.url) {
       innerStream.isVerified = isVerified;
@@ -3475,6 +3472,16 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
       streamCache.set(cacheKey, { data: innerStream, expireAt: Date.now() + 45 * 60 * 1000 });
       saveStreamCache();
       return innerStream;
+    }
+
+    const dlpStream = await resolveYtDlpStream(vid);
+    if (dlpStream && dlpStream.url) {
+      dlpStream.isVerified = isVerified;
+      if (verified) dlpStream.verifiedData = verified;
+      dlpStream.videoId = vid;
+      streamCache.set(cacheKey, { data: dlpStream, expireAt: Date.now() + 45 * 60 * 1000 });
+      saveStreamCache();
+      return dlpStream;
     }
   }
 

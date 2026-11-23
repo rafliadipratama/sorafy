@@ -5155,6 +5155,12 @@ class SoraFyDesktopApp {
           </div>
         `;
 
+        row.addEventListener("mouseenter", () => {
+          if (typeof this.preloadTrackStream === 'function') {
+            this.preloadTrackStream(track);
+          }
+        }, { once: true });
+
         row.addEventListener("click", () => {
           this.tracks = [track, ...heroTracks.filter(t => t.id !== track.id), ...fallbackSongs.filter(t => t.id !== track.id)];
           this.loadTrack(0, true);
@@ -5168,6 +5174,10 @@ class SoraFyDesktopApp {
 
         tracksCard.appendChild(row);
       });
+
+      if (typeof this.preloadTopTracks === 'function') {
+        this.preloadTopTracks(heroTracks);
+      }
 
       container.appendChild(tracksCard);
     } else {
@@ -5666,6 +5676,12 @@ class SoraFyDesktopApp {
       </div>
       <div class="track-row-duration">${track.duration_secs ? this.formatTime(track.duration_secs) : ''}</div>
     `;
+
+    row.addEventListener("mouseenter", () => {
+      if (typeof this.preloadTrackStream === 'function') {
+        this.preloadTrackStream(track);
+      }
+    }, { once: true });
 
     row.addEventListener("click", (e) => {
       if (e.target.closest('.track-row-actions') || e.target.closest('.player-artist-link') || e.target.closest('.clickable')) return;
@@ -9165,6 +9181,7 @@ class SoraFyDesktopApp {
             });
             this.searchSongsList.appendChild(row);
           });
+          this.preloadTopTracks(songs);
         }
 
         this.searchResultsCount.textContent = isId ? `Ditemukan ${total} hasil` : `Found ${total} results`;
@@ -9217,6 +9234,7 @@ class SoraFyDesktopApp {
           });
           this.searchSongsList.appendChild(row);
         });
+        this.preloadTopTracks(songs);
         this.searchResultsCount.textContent = this.currentLanguage === "id" ? `Ditemukan ${songs.length} lagu` : `Found ${songs.length} songs`;
       } else if (filterType === 'artist') {
         let artists = window.electronAPI && typeof window.electronAPI.searchYouTubeMusic === 'function'
@@ -9594,10 +9612,12 @@ class SoraFyDesktopApp {
     this._isUserPaused = false;
     this.isNextTrackPreloaded = false;
 
-    // Immediately stop previous audio and assign unique load token to avoid race conditions
+    // Immediately stop previous audio and abort its stream buffer to avoid race conditions or sound bleeding
     if (this.audio) {
       try {
         this.audio.pause();
+        this.audio.removeAttribute('src');
+        this.audio.load();
       } catch (_) {}
     }
 
@@ -9606,7 +9626,8 @@ class SoraFyDesktopApp {
     if (this.preloadAudio) {
       try {
         this.preloadAudio.pause();
-        this.preloadAudio.currentTime = 0;
+        this.preloadAudio.removeAttribute('src');
+        this.preloadAudio.load();
       } catch (_) {}
     }
     this._currentLoadId = (this._currentLoadId || 0) + 1;
@@ -9698,13 +9719,19 @@ class SoraFyDesktopApp {
     // Spotify/Apple Music Instant Stream: Skip network resolver if already preloaded or cached
     if (window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function' && (!track.is_full_stream || !track.stream_url)) {
       try {
-        const vid = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : null);
-        const full = await window.electronAPI.resolveFullStream({
-          title: track.title,
-          artist: track.artist,
-          videoId: vid,
-          isVideo: !!track.is_video
-        });
+        let full = null;
+        if (track._resolvingPromise) {
+          full = await track._resolvingPromise;
+        }
+        if (!full || !full.url) {
+          const vid = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : null);
+          full = await window.electronAPI.resolveFullStream({
+            title: track.title,
+            artist: track.artist,
+            videoId: vid,
+            isVideo: !!track.is_video
+          });
+        }
         if (loadId !== this._currentLoadId) return;
         if (full && full.url) {
           track.fallback_url = track.stream_url;
@@ -10035,31 +10062,38 @@ class SoraFyDesktopApp {
 
   preloadTopTracks(tracksList) {
     if (!tracksList || !Array.isArray(tracksList)) return;
-    const targets = tracksList.slice(0, 2);
+    const targets = tracksList.slice(0, 4);
     targets.forEach(t => {
-      if (t && !t.is_full_stream && !t._isResolvingStream && window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function') {
-        t._isResolvingStream = true;
-        if (!t.video_id && t.id && t.id.startsWith("yt_")) {
-          t.video_id = t.id.replace(/^yt_/, "");
-        }
-        window.electronAPI.resolveFullStream({
-          title: t.title,
-          artist: t.artist,
-          videoId: t.video_id,
-          isVideo: !!t.is_video
-        }).then(full => {
-          t._isResolvingStream = false;
-          if (full && full.url) {
-            t.fallback_url = t.stream_url;
-            t.stream_url = full.url;
-            t.is_full_stream = true;
-            if (full.videoId) t.video_id = full.videoId;
-            if (full.duration) t.duration_secs = full.duration;
-          }
-        }).catch(() => {
-          t._isResolvingStream = false;
-        });
+      this.preloadTrackStream(t);
+    });
+  }
+
+  preloadTrackStream(track) {
+    if (!track || track.is_full_stream || track._isResolvingStream) return;
+    if (!window.electronAPI || typeof window.electronAPI.resolveFullStream !== 'function') return;
+    track._isResolvingStream = true;
+    if (!track.video_id && track.id && track.id.startsWith("yt_")) {
+      track.video_id = track.id.replace(/^yt_/, "");
+    }
+    const vid = track.video_id || (track.id && track.id.startsWith("yt_") ? track.id.replace(/^yt_/, "") : null);
+    track._resolvingPromise = window.electronAPI.resolveFullStream({
+      title: track.title,
+      artist: track.artist,
+      videoId: vid,
+      isVideo: !!track.is_video
+    }).then(full => {
+      track._isResolvingStream = false;
+      if (full && full.url) {
+        track.fallback_url = track.stream_url;
+        track.stream_url = full.url;
+        track.is_full_stream = true;
+        if (full.videoId) track.video_id = full.videoId;
+        if (full.duration) track.duration_secs = full.duration;
       }
+      return full;
+    }).catch(() => {
+      track._isResolvingStream = false;
+      return null;
     });
   }
 
