@@ -1572,7 +1572,9 @@ class SoraFyDesktopApp {
     const initialVol = savedVol !== null ? parseFloat(savedVol) : 0.85;
     this.setVolume(isNaN(initialVol) ? 0.85 : initialVol);
 
-    // Restore persisted repeat mode and shuffle states
+    // Playback modes start at default (Repeat Off, Shuffle Off)
+    this.repeatMode = 0;
+    this.isShuffled = false;
     this.initPersistedPlaybackModes();
 
     // Restore last played track and timestamp on launch
@@ -3003,14 +3005,6 @@ class SoraFyDesktopApp {
     }
 
     this.appSettings = currentSettings;
-
-    // Restore persisted repeat mode and shuffle states if present in settings
-    if (typeof this.appSettings.repeatMode === "number" && this.appSettings.repeatMode >= 0 && this.appSettings.repeatMode <= 2) {
-      this.setRepeatMode(this.appSettings.repeatMode, false);
-    }
-    if (typeof this.appSettings.isShuffled === "boolean") {
-      this.setShuffle(this.appSettings.isShuffled, false);
-    }
 
     // Apply configured language
     const initialLang = this.appSettings.language || localStorage.getItem("sorafy_language") || "en";
@@ -9503,14 +9497,6 @@ class SoraFyDesktopApp {
       this.currentTrackIndex = 0;
     }
 
-    // Restore persisted repeatMode and isShuffled from session
-    if (typeof session.repeatMode === "number" && session.repeatMode >= 0 && session.repeatMode <= 2) {
-      this.setRepeatMode(session.repeatMode, false);
-    }
-    if (typeof session.isShuffled === "boolean") {
-      this.setShuffle(session.isShuffled, false);
-    }
-
     const startPos = (typeof session.currentTime === "number" && session.currentTime > 0)
       ? session.currentTime
       : 0;
@@ -9765,8 +9751,27 @@ class SoraFyDesktopApp {
     setTimeout(() => this.ensureUpcomingQueue(), 1200);
 
     if (autoPlay) {
-      const attemptPlayback = async (retryCount = 0) => {
-        if (loadId !== this._currentLoadId) return;
+      let playbackDone = false;
+      let onCanPlayHandler = null;
+      let bufferTimeoutId = null;
+
+      const cleanupPlaybackListeners = () => {
+        if (onCanPlayHandler && this.audio) {
+          try {
+            this.audio.removeEventListener("canplay", onCanPlayHandler);
+            this.audio.removeEventListener("loadeddata", onCanPlayHandler);
+            this.audio.removeEventListener("playing", onCanPlayHandler);
+          } catch (_) {}
+          onCanPlayHandler = null;
+        }
+        if (bufferTimeoutId) {
+          clearTimeout(bufferTimeoutId);
+          bufferTimeoutId = null;
+        }
+      };
+
+      const startPlaying = async () => {
+        if (loadId !== this._currentLoadId || playbackDone) return;
         try {
           this.ensureAudioContextActive();
           if (this.appSettings && this.appSettings.crossfadeDuration > 0) {
@@ -9774,6 +9779,8 @@ class SoraFyDesktopApp {
           }
           await this.audio.play();
           if (loadId !== this._currentLoadId) return;
+          playbackDone = true;
+          cleanupPlaybackListeners();
           this.isPlaying = true;
           this.showPlayerBuffering(false);
           this.updatePlayPauseIcon();
@@ -9783,53 +9790,82 @@ class SoraFyDesktopApp {
           // Spotify Preload Hook: resolve and buffer next track in background after 1s
           setTimeout(() => this.preloadNextTrack(), 1000);
         } catch (err) {
-          if (loadId !== this._currentLoadId) return;
-          console.warn("Audio autoplay attempt rejected:", err);
+          if (loadId !== this._currentLoadId || playbackDone) return;
+          console.warn("Audio autoplay initial play() notice:", err);
 
-          // Retry on canplay or quick buffer delay if interrupted / buffering
-          if (retryCount === 0) {
-            const onCanPlay = () => {
-              this.audio.removeEventListener("canplay", onCanPlay);
-              if (loadId === this._currentLoadId) {
-                attemptPlayback(1);
-              }
-            };
-            this.audio.addEventListener("canplay", onCanPlay, { once: true });
-
-            setTimeout(() => {
-              if (loadId === this._currentLoadId && this.audio.paused) {
-                attemptPlayback(1);
-              }
-            }, 300);
+          // If the audio element has a hard error, try fallback stream URL if available
+          if (this.audio && this.audio.error) {
+            cleanupPlaybackListeners();
+            if (track.fallback_url && track.fallback_url !== track.stream_url) {
+              try {
+                this.audio.src = track.fallback_url;
+                this.audio.load();
+                if (startPosition > 0) {
+                  this.audio.currentTime = startPosition;
+                }
+                await this.audio.play();
+                if (loadId !== this._currentLoadId) return;
+                playbackDone = true;
+                this.isPlaying = true;
+                this.showPlayerBuffering(false);
+                this.updatePlayPauseIcon();
+                setTimeout(() => this.preloadNextTrack(), 1000);
+                return;
+              } catch (_) {}
+            }
+            this.isPlaying = false;
+            this.showPlayerBuffering(false);
+            this.updatePlayPauseIcon();
+            this.showToast(this.currentLanguage === "id" ? "Gagal memutar audio" : "Unable to play audio");
             return;
           }
 
-          // Try fallback stream URL if available
-          if (track.fallback_url && track.fallback_url !== track.stream_url) {
-            try {
-              this.audio.src = track.fallback_url;
-              this.audio.load();
-              if (startPosition > 0) {
-                this.audio.currentTime = startPosition;
+          // Audio is still buffering over network/proxy: wait for readyState or canplay/loadeddata
+          if (!onCanPlayHandler && !playbackDone) {
+            onCanPlayHandler = async () => {
+              if (loadId === this._currentLoadId && !playbackDone) {
+                cleanupPlaybackListeners();
+                try {
+                  this.ensureAudioContextActive();
+                  await this.audio.play();
+                  if (loadId !== this._currentLoadId) return;
+                  playbackDone = true;
+                  this.isPlaying = true;
+                  this.showPlayerBuffering(false);
+                  this.updatePlayPauseIcon();
+                  if (this.currentView === "player" && (track.is_video || this.currentScreenMode === "video")) {
+                    this.setScreenPlayerMode("video");
+                  }
+                  setTimeout(() => this.preloadNextTrack(), 1000);
+                } catch (e2) {
+                  if (loadId !== this._currentLoadId) return;
+                  this.isPlaying = false;
+                  this.showPlayerBuffering(false);
+                  this.updatePlayPauseIcon();
+                  this.showToast(this.currentLanguage === "id" ? "Gagal memutar audio" : "Unable to play audio");
+                }
               }
-              await this.audio.play();
-              if (loadId !== this._currentLoadId) return;
-              this.isPlaying = true;
-              this.showPlayerBuffering(false);
-              this.updatePlayPauseIcon();
-              setTimeout(() => this.preloadNextTrack(), 1000);
-              return;
-            } catch (e2) {}
-          }
+            };
 
-          this.isPlaying = false;
-          this.showPlayerBuffering(false);
-          this.updatePlayPauseIcon();
-          this.showToast("Unable to play audio");
+            this.audio.addEventListener("canplay", onCanPlayHandler, { once: true });
+            this.audio.addEventListener("loadeddata", onCanPlayHandler, { once: true });
+            this.audio.addEventListener("playing", onCanPlayHandler, { once: true });
+
+            // Generous fallback timeout (10 seconds) for slow networks before giving up
+            bufferTimeoutId = setTimeout(() => {
+              cleanupPlaybackListeners();
+              if (loadId === this._currentLoadId && this.audio && this.audio.paused && !playbackDone) {
+                this.isPlaying = false;
+                this.showPlayerBuffering(false);
+                this.updatePlayPauseIcon();
+                this.showToast(this.currentLanguage === "id" ? "Gagal memutar audio" : "Unable to play audio");
+              }
+            }, 10000);
+          }
         }
       };
 
-      attemptPlayback();
+      startPlaying();
     } else {
       this.isPlaying = false;
       this.showPlayerBuffering(false);
@@ -10265,9 +10301,6 @@ class SoraFyDesktopApp {
 
   setShuffle(isShuffled, showToastNotice = false) {
     this.isShuffled = !!isShuffled;
-    try {
-      localStorage.setItem("sorafy_is_shuffled", String(this.isShuffled));
-    } catch (_) {}
     if (this.appSettings) {
       this.appSettings.isShuffled = this.isShuffled;
     }
@@ -10283,9 +10316,6 @@ class SoraFyDesktopApp {
         ? (isId ? "Shuffle Diaktifkan" : "Shuffle Enabled") 
         : (isId ? "Shuffle Dimatikan" : "Shuffle Disabled"));
     }
-    if (typeof this.savePlaybackSession === "function") {
-      this.savePlaybackSession();
-    }
   }
 
   toggleShuffle() {
@@ -10294,9 +10324,6 @@ class SoraFyDesktopApp {
 
   setRepeatMode(mode, showToastNotice = false) {
     this.repeatMode = typeof mode === "number" ? Math.max(0, Math.min(2, Math.floor(mode))) : 0;
-    try {
-      localStorage.setItem("sorafy_repeat_mode", String(this.repeatMode));
-    } catch (_) {}
     if (this.appSettings) {
       this.appSettings.repeatMode = this.repeatMode;
     }
@@ -10336,10 +10363,6 @@ class SoraFyDesktopApp {
         : ["Repeat Off", "Repeat All", "Repeat This Track"];
       this.showToast(labels[this.repeatMode]);
     }
-
-    if (typeof this.savePlaybackSession === "function") {
-      this.savePlaybackSession();
-    }
   }
 
   toggleRepeatMode() {
@@ -10348,19 +10371,11 @@ class SoraFyDesktopApp {
   }
 
   initPersistedPlaybackModes() {
+    this.repeatMode = 0;
+    this.isShuffled = false;
     try {
-      const savedRepeat = localStorage.getItem("sorafy_repeat_mode");
-      if (savedRepeat !== null) {
-        const parsedRepeat = parseInt(savedRepeat, 10);
-        if (!isNaN(parsedRepeat) && parsedRepeat >= 0 && parsedRepeat <= 2) {
-          this.setRepeatMode(parsedRepeat, false);
-        }
-      }
-
-      const savedShuffle = localStorage.getItem("sorafy_is_shuffled");
-      if (savedShuffle !== null) {
-        this.setShuffle(savedShuffle === "true", false);
-      }
+      localStorage.removeItem("sorafy_repeat_mode");
+      localStorage.removeItem("sorafy_is_shuffled");
     } catch (_) {}
   }
 
