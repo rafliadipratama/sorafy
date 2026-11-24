@@ -15,6 +15,8 @@ const {
   isPathInsideDir,
   SUPPORTED_EXTENSIONS
 } = require('./src/modules/local-interceptor');
+const { isAllowedStreamTarget } = require('./src/modules/audio-proxy');
+const { installVerifiedBinary } = require('./src/modules/yt-dlp-installer');
 try {
   const candidateEnvPaths = [
     path.join(__dirname, '.env'),
@@ -65,14 +67,13 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch('disable-quic');
 app.commandLine.appendSwitch('disable-http2-grease');
 
-// Ignore certificate errors for enterprise corporate WiFi / proxies performing SSL MITM inspection
-app.commandLine.appendSwitch('ignore-certificate-errors');
-
-app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
-  // Gracefully allow connections through corporate WiFi firewalls and enterprise proxies
-  event.preventDefault();
-  callback(true);
-});
+// Corporate TLS-inspecting proxies install their root CA in the OS store; Chromium already trusts it, Node's https does not.
+try {
+  const tls = require('tls');
+  tls.setDefaultCACertificates([...tls.getCACertificates('default'), ...tls.getCACertificates('system')]);
+} catch (err) {
+  console.warn('System CA store unavailable:', err.message);
+}
 
 // Catch unhandled exceptions and promise rejections gracefully so they never spawn modal error dialogs
 process.on('uncaughtException', (err) => {
@@ -167,7 +168,7 @@ function resolveYtDlpStream(videoId) {
       const cookieArgs = getCookieArgs();
       execFile(
         getYtDlpBin(),
-        [...cookieArgs, '--no-check-certificate', '--prefer-insecure', '--print', '%(duration)s', '--print', '%(view_count)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
+        [...cookieArgs, '--print', '%(duration)s', '--print', '%(view_count)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
         { timeout: 9000 },
         (error, stdout) => {
           if (error || !stdout) {
@@ -305,7 +306,6 @@ function postInnerTube(endpoint, payload, ua = null, hl = null) {
       if (!req) {
         req = https.request(url, {
           method: 'POST',
-          rejectUnauthorized: false,
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': ua || defaultUa,
@@ -481,6 +481,10 @@ const localAudioProxy = http.createServer((req, res) => {
   if (!target) {
     res.writeHead(400);
     return res.end('Missing url');
+  }
+  if (!isAllowedStreamTarget(target)) {
+    res.writeHead(403);
+    return res.end('Target not allowed');
   }
 
   try {
@@ -873,7 +877,6 @@ function resolveJioSaavnStream(title, artist) {
     const url = `https://www.jiosaavn.com/api.php?__call=search.getResults&_format=json&n=5&p=1&q=${encoded}&_marker=0&ctx=android`;
 
     const req = https.get(url, {
-      rejectUnauthorized: false,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       }
@@ -2381,6 +2384,17 @@ function createWindow() {
   });
 
   mainWindow = win;
+
+  // The renderer has preload access to IPC, so it must never navigate away from the bundled app.
+  const appEntryUrl = require('url').pathToFileURL(path.join(__dirname, 'src/index.html')).href;
+  win.webContents.on('will-navigate', (event, url) => {
+    if (url.split('#')[0] !== appEntryUrl) event.preventDefault();
+  });
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(url)) shell.openExternal(url);
+    return { action: 'deny' };
+  });
+
   win.loadFile(path.join(__dirname, 'src/index.html'));
   win.setMenuBarVisibility(false);
 
@@ -4577,43 +4591,15 @@ ipcMain.handle('check-yt-dlp-status', async () => {
 
 ipcMain.handle('download-yt-dlp-binary', async () => {
   const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : (process.platform === 'darwin' ? 'yt-dlp_macos' : 'yt-dlp');
-  const targetDir = path.join(os.homedir(), '.config', 'sorafy', 'bin');
-  if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+  const destFile = path.join(os.homedir(), '.config', 'sorafy', 'bin', process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
 
-  const destFile = path.join(targetDir, process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp');
-  const downloadUrl = `https://github.com/yt-dlp/yt-dlp/releases/latest/download/${binaryName}`;
-
-  return new Promise((resolve) => {
-    function fetchWithRedirect(url, redirectCount = 0) {
-      if (redirectCount > 5) return resolve({ success: false, error: 'Too many redirects' });
-      https.get(url, { headers: { 'User-Agent': 'SoraFy-Desktop-Installer' } }, (res) => {
-        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-          return fetchWithRedirect(res.headers.location, redirectCount + 1);
-        }
-        if (res.statusCode !== 200) {
-          return resolve({ success: false, error: `HTTP ${res.statusCode}` });
-        }
-        const fileStream = fs.createWriteStream(destFile);
-        res.pipe(fileStream);
-        fileStream.on('finish', () => {
-          fileStream.close(() => {
-            try {
-              if (process.platform !== 'win32') {
-                fs.chmodSync(destFile, 0o755);
-              }
-              YT_DLP_BIN = destFile;
-              resolve({ success: true, path: destFile });
-            } catch (e) {
-              resolve({ success: false, error: e.message });
-            }
-          });
-        });
-      }).on('error', (err) => {
-        resolve({ success: false, error: err.message });
-      });
-    }
-    fetchWithRedirect(downloadUrl);
-  });
+  try {
+    YT_DLP_BIN = await installVerifiedBinary({ binaryName, destFile });
+    return { success: true, path: YT_DLP_BIN };
+  } catch (err) {
+    console.warn('yt-dlp install failed:', err.message);
+    return { success: false, error: err.message };
+  }
 });
 
 // IPC Handlers: Data Backup & Restore

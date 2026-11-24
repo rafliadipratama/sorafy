@@ -34,23 +34,20 @@ jobs:
         env:
           KEYSTORE_BASE64: ${{ secrets.SORAFY_KEYSTORE_BASE64 }}
         run: |
-          if [ -n "$KEYSTORE_BASE64" ]; then
-            printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/release.jks
-            echo "SORAFY_KEYSTORE_FILE=release.jks" >> $GITHUB_ENV
-            echo "SORAFY_KEYSTORE_PASSWORD=${{ secrets.SORAFY_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-            echo "SORAFY_KEY_ALIAS=${{ secrets.SORAFY_KEY_ALIAS }}" >> $GITHUB_ENV
-            echo "SORAFY_KEY_PASSWORD=${{ secrets.SORAFY_KEY_PASSWORD }}" >> $GITHUB_ENV
-          else
-            echo "Secret SORAFY_KEYSTORE_BASE64 is not set; generating self-signed release keystore for packaging."
-            keytool -genkeypair -v -keystore android/release.jks -alias sorafy -keyalg RSA -keysize 2048 -validity 10000 -storepass sorafy123 -keypass sorafy123 -dname "CN=SoraFy, OU=Mobile, O=SoraFy, L=Jakarta, ST=Jakarta, C=ID"
-            echo "SORAFY_KEYSTORE_FILE=release.jks" >> $GITHUB_ENV
-            echo "SORAFY_KEYSTORE_PASSWORD=sorafy123" >> $GITHUB_ENV
-            echo "SORAFY_KEY_ALIAS=sorafy" >> $GITHUB_ENV
-            echo "SORAFY_KEY_PASSWORD=sorafy123" >> $GITHUB_ENV
+          # A throwaway key would change the signature every release and break updates for existing installs.
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Secret SORAFY_KEYSTORE_BASE64 is not set; refusing to sign the release with a temporary key."
+            exit 1
           fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > android/release.jks
 
       - name: Build Android APK
         working-directory: ./android
+        env:
+          SORAFY_KEYSTORE_FILE: release.jks
+          SORAFY_KEYSTORE_PASSWORD: ${{ secrets.SORAFY_KEYSTORE_PASSWORD }}
+          SORAFY_KEY_ALIAS: ${{ secrets.SORAFY_KEY_ALIAS }}
+          SORAFY_KEY_PASSWORD: ${{ secrets.SORAFY_KEY_PASSWORD }}
         run: |
           chmod +x ./gradlew
           ./gradlew assembleRelease

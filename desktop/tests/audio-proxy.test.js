@@ -4,9 +4,26 @@ const http = require('node:http');
 const {
   buildProxiedAudioUrl,
   extractTargetStreamUrl,
+  isAllowedStreamTarget,
   AUDIO_PROXY_CORS_HEADERS,
   createAudioProxyServer
 } = require('../src/modules/audio-proxy');
+
+test('isAllowedStreamTarget accepts only HTTPS googlevideo.com stream hosts', () => {
+  assert.equal(isAllowedStreamTarget('https://rr1---sn-xxx.googlevideo.com/videoplayback?id=abc'), true);
+  assert.equal(isAllowedStreamTarget('https://googlevideo.com/videoplayback'), true);
+
+  assert.equal(isAllowedStreamTarget('http://rr1---sn-xxx.googlevideo.com/videoplayback'), false);
+  assert.equal(isAllowedStreamTarget('https://evilgooglevideo.com/videoplayback'), false);
+  assert.equal(isAllowedStreamTarget('https://googlevideo.com.evil.test/videoplayback'), false);
+  assert.equal(isAllowedStreamTarget('https://user@127.0.0.1/?googlevideo.com'), false);
+  assert.equal(isAllowedStreamTarget('http://127.0.0.1:8080/admin'), false);
+  assert.equal(isAllowedStreamTarget('http://169.254.169.254/latest/meta-data/'), false);
+  assert.equal(isAllowedStreamTarget('file:///etc/passwd'), false);
+  assert.equal(isAllowedStreamTarget('not a url'), false);
+  assert.equal(isAllowedStreamTarget(''), false);
+  assert.equal(isAllowedStreamTarget(null), false);
+});
 
 // 1. Audio Proxy URL Generation Contract
 test('buildProxiedAudioUrl formats stream URL targeting local loopback with port and encoded target', () => {

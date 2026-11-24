@@ -3481,7 +3481,8 @@ class SoraFyDesktopApp {
           if (res && res.success) {
             if (res.hasUpdate) {
               if (this.updateStatusText) {
-                this.updateStatusText.innerHTML = `<span style="color: #00E599; font-weight: 600;">New version ${res.latestVersion} available!</span> <a href="${res.htmlUrl}" target="_blank" style="color: #38BDF8; margin-left: 6px; text-decoration: underline;">Download on GitHub</a>`;
+                const releaseUrl = /^https:\/\/github\.com\//.test(res.htmlUrl || '') ? res.htmlUrl : 'https://github.com/rafliadipratama/sorafy/releases';
+                this.updateStatusText.innerHTML = `<span style="color: #00E599; font-weight: 600;">New version ${escapeHtml(res.latestVersion)} available!</span> <a href="${escapeHtml(releaseUrl)}" target="_blank" style="color: #38BDF8; margin-left: 6px; text-decoration: underline;">Download on GitHub</a>`;
               }
             } else {
               if (this.updateStatusText) {
@@ -13747,7 +13748,7 @@ class SoraFyDesktopApp {
     try {
       const res = await window.electronAPI.checkYtDlpStatus();
       if (res && res.installed) {
-        this.settingYtDlpStatus.innerHTML = `<span style="color: #00E599; font-weight: 600;">✓ Installed (${res.version})</span>`;
+        this.settingYtDlpStatus.innerHTML = `<span style="color: #00E599; font-weight: 600;">✓ Installed (${escapeHtml(res.version)})</span>`;
         if (this.settingInstallYtDlpBtn) {
           this.settingInstallYtDlpBtn.textContent = this.currentLanguage === 'id' ? "Perbarui Mesin" : "Update Engine";
         }

@@ -40,6 +40,24 @@ function extractTargetStreamUrl(proxyUrl) {
 }
 
 /**
+ * Decide whether a /stream target may be fetched upstream.
+ * The proxy is reachable by any page that guesses its loopback port, so an
+ * unrestricted target would let it reach localhost and link-local services.
+ * @param {string} target - Upstream URL taken from the url query parameter
+ * @returns {boolean}
+ */
+function isAllowedStreamTarget(target) {
+  if (!target || typeof target !== 'string') return false;
+  try {
+    const { protocol, hostname, username, password } = new URL(target);
+    if (protocol !== 'https:' || username || password) return false;
+    return hostname === 'googlevideo.com' || hostname.endsWith('.googlevideo.com');
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Create a lightweight reference / test HTTP server following audio proxy contracts
  * @returns {http.Server}
  */
@@ -79,5 +97,6 @@ module.exports = {
   AUDIO_PROXY_CORS_HEADERS,
   buildProxiedAudioUrl,
   extractTargetStreamUrl,
+  isAllowedStreamTarget,
   createAudioProxyServer
 };
