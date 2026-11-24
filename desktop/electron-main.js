@@ -65,6 +65,15 @@ app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 app.commandLine.appendSwitch('disable-quic');
 app.commandLine.appendSwitch('disable-http2-grease');
 
+// Ignore certificate errors for enterprise corporate WiFi / proxies performing SSL MITM inspection
+app.commandLine.appendSwitch('ignore-certificate-errors');
+
+app.on('certificate-error', (event, webContents, url, error, certificate, callback) => {
+  // Gracefully allow connections through corporate WiFi firewalls and enterprise proxies
+  event.preventDefault();
+  callback(true);
+});
+
 // Catch unhandled exceptions and promise rejections gracefully so they never spawn modal error dialogs
 process.on('uncaughtException', (err) => {
   console.warn('[Main Process] Handled uncaughtException:', err && err.message ? err.message : err);
@@ -158,7 +167,7 @@ function resolveYtDlpStream(videoId) {
       const cookieArgs = getCookieArgs();
       execFile(
         getYtDlpBin(),
-        [...cookieArgs, '--print', '%(duration)s', '--print', '%(view_count)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
+        [...cookieArgs, '--no-check-certificate', '--prefer-insecure', '--print', '%(duration)s', '--print', '%(view_count)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
         { timeout: 9000 },
         (error, stdout) => {
           if (error || !stdout) {
@@ -296,6 +305,7 @@ function postInnerTube(endpoint, payload, ua = null, hl = null) {
       if (!req) {
         req = https.request(url, {
           method: 'POST',
+          rejectUnauthorized: false,
           headers: {
             'Content-Type': 'application/json',
             'User-Agent': ua || defaultUa,
@@ -852,6 +862,7 @@ function resolveJioSaavnStream(title, artist) {
     const url = `https://www.jiosaavn.com/api.php?__call=search.getResults&_format=json&n=5&p=1&q=${encoded}&_marker=0&ctx=android`;
 
     const req = https.get(url, {
+      rejectUnauthorized: false,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
       }
@@ -3519,8 +3530,8 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
     }
   }
 
-  // 3. Fallback to JioSaavn ONLY if no videoId was specified AND candidate strictly matches official artist
-  if (!vid && !isVideo && title && artist && !isVerified) {
+  // 3. Fallback to alternative audio provider (JioSaavn) if YouTube streams failed (e.g. office WiFi / corporate firewall blocking YouTube)
+  if (!isVideo && title && artist && !isVerified) {
     try {
       const saavnStream = await resolveJioSaavnStream(title, artist);
       if (saavnStream && saavnStream.url) {
