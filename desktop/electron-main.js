@@ -75,13 +75,21 @@ try {
   console.warn('System CA store unavailable:', err.message);
 }
 
+// Release builds have no visible console, so failures are also kept in a log file users can send in.
+function logMainError(kind, err) {
+  const detail = err && err.stack ? err.stack : String(err);
+  console.warn(`[Main Process] ${kind}:`, detail);
+  try {
+    const logFile = path.join(app.getPath('logs'), 'main.log');
+    fs.mkdirSync(path.dirname(logFile), { recursive: true });
+    if (fs.existsSync(logFile) && fs.statSync(logFile).size > 1024 * 1024) fs.renameSync(logFile, `${logFile}.1`);
+    fs.appendFileSync(logFile, `${new Date().toISOString()} ${kind}\n${detail}\n\n`);
+  } catch (_) {}
+}
+
 // Catch unhandled exceptions and promise rejections gracefully so they never spawn modal error dialogs
-process.on('uncaughtException', (err) => {
-  console.warn('[Main Process] Handled uncaughtException:', err && err.message ? err.message : err);
-});
-process.on('unhandledRejection', (reason) => {
-  console.warn('[Main Process] Handled unhandledRejection:', reason && reason.message ? reason.message : reason);
-});
+process.on('uncaughtException', (err) => logMainError('uncaughtException', err));
+process.on('unhandledRejection', (reason) => logMainError('unhandledRejection', reason));
 
 // Guarantee single-instance execution (prevent duplicate processes, zombie audio, and LevelDB collisions)
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
@@ -2393,6 +2401,17 @@ function createWindow() {
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (/^https:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
+  });
+
+  // A dead renderer leaves an empty window, so record why and reload it. A renderer that dies again
+  // within a minute is crashing on load, and reloading it would only loop.
+  let lastRendererCrashAt = 0;
+  win.webContents.on('render-process-gone', (_event, details) => {
+    logMainError('renderProcessGone', `reason=${details.reason} exitCode=${details.exitCode}`);
+    const now = Date.now();
+    const crashLoop = now - lastRendererCrashAt < 60 * 1000;
+    lastRendererCrashAt = now;
+    if (details.reason !== 'clean-exit' && !crashLoop && !win.isDestroyed()) win.reload();
   });
 
   win.loadFile(path.join(__dirname, 'src/index.html'));
@@ -4951,12 +4970,8 @@ app.whenReady().then(() => {
           responseHeaders['Access-Control-Allow-Origin'] = ['*'];
           return callback({ cancel: false, responseHeaders });
         }
-        delete responseHeaders['x-frame-options'];
-        delete responseHeaders['X-Frame-Options'];
-        delete responseHeaders['content-security-policy'];
-        delete responseHeaders['Content-Security-Policy'];
-        delete responseHeaders['content-security-policy-report-only'];
-        delete responseHeaders['Content-Security-Policy-Report-Only'];
+        // YouTube's own CSP and X-Frame-Options stay intact: /embed documents send neither
+        // frame-ancestors nor X-Frame-Options, so they frame without stripping anything.
         responseHeaders['Access-Control-Allow-Origin'] = ['*'];
         responseHeaders['Access-Control-Allow-Methods'] = ['GET, HEAD, OPTIONS'];
         responseHeaders['Access-Control-Allow-Headers'] = ['*'];
