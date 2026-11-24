@@ -525,6 +525,17 @@ const localAudioProxy = http.createServer((req, res) => {
       if (cRange) respHeaders['Content-Range'] = Array.isArray(cRange) ? cRange[0] : cRange;
       if (cLength) respHeaders['Content-Length'] = Array.isArray(cLength) ? cLength[0] : cLength;
 
+      if (upRes.statusCode === 403 || upRes.statusCode >= 500) {
+        console.warn(`localAudioProxy upstream returned HTTP ${upRes.statusCode}`);
+        if (streamCache) {
+          for (const [k, v] of streamCache.entries()) {
+            if (v?.data?.rawUrl === target || v?.data?.url?.includes(encodeURIComponent(target))) {
+              streamCache.delete(k);
+            }
+          }
+        }
+      }
+
       res.writeHead(upRes.statusCode || 200, respHeaders);
       if (typeof upRes.pipe === 'function') {
         upRes.pipe(res);
@@ -1738,6 +1749,23 @@ async function resolveInnerTubeStream(videoId) {
                      formats[0];
       const rawUrl = chosen.url;
       if (!rawUrl) return null;
+
+      // Stream Pre-flight Check: ensure stream URL is playable (returns 200/206).
+      // On Cloudflare WARP or certain VPN egress IPs, YouTube blocks unauthenticated iOS streams with HTTP 403.
+      try {
+        const testRes = await fetch(rawUrl, {
+          method: 'HEAD',
+          headers: { 'User-Agent': IOS_UA },
+          signal: AbortSignal.timeout(1200)
+        });
+        if (testRes.status !== 200 && testRes.status !== 206) {
+          console.warn(`InnerTube stream returned HTTP ${testRes.status} (falling back to yt-dlp)`);
+          return null;
+        }
+      } catch (err) {
+        console.warn('InnerTube stream pre-flight notice:', err?.message || err);
+        return null;
+      }
 
       const streamUrl = (localProxyPort > 0 && rawUrl)
         ? `http://127.0.0.1:${localProxyPort}/stream?url=${encodeURIComponent(rawUrl)}`
@@ -3471,7 +3499,7 @@ ipcMain.handle('resolve-direct-video', async (event, videoId) => {
   return await resolveYtDlpVideoStream(videoId);
 });
 
-ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, isVideo }) => {
+ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, isVideo, forceRefresh }) => {
   // 0. Check if user verified a stream for this track (Nuclear Stream Verification)
   const verified = getVerifiedStream(title, artist);
   let isVerified = false;
@@ -3482,7 +3510,10 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
   }
 
   const cacheKey = (vid ? `vid_${vid}` : `${artist} - ${title}`).toLowerCase().trim();
-  const cached = streamCache.get(cacheKey);
+  if (forceRefresh) {
+    streamCache.delete(cacheKey);
+  }
+  const cached = forceRefresh ? null : streamCache.get(cacheKey);
   if (cached && cached.expireAt > Date.now()) {
     // If cache key is for a videoId, but contains a JioSaavn fallback, purge it immediately
     if (vid && cached.data?.provider?.includes('JioSaavn')) {

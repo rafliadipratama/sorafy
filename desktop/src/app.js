@@ -2381,10 +2381,29 @@ class SoraFyDesktopApp {
       }
     });
 
-    element.addEventListener("error", () => {
+    element.addEventListener("error", async () => {
       if (this.activeDeck === deckName) {
         console.warn("Audio element error on src:", element.src, element.error);
         const cur = this.tracks ? this.tracks[this.currentTrackIndex] : null;
+        if (cur && !cur._retryFreshStream && window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function') {
+          cur._retryFreshStream = true;
+          try {
+            const fresh = await window.electronAPI.resolveFullStream({
+              title: cur.title,
+              artist: cur.artist,
+              videoId: cur.video_id,
+              isVideo: !!cur.is_video,
+              forceRefresh: true
+            });
+            if (fresh && fresh.url && fresh.url !== element.src) {
+              cur.stream_url = fresh.url;
+              element.src = fresh.url;
+              element.load();
+              await element.play();
+              return;
+            }
+          } catch (_) {}
+        }
         if (cur && cur.fallback_url && element.src !== cur.fallback_url) {
           console.log("Switching to fallback preview stream:", cur.fallback_url);
           element.src = cur.fallback_url;
@@ -9927,9 +9946,35 @@ class SoraFyDesktopApp {
           if (loadId !== this._currentLoadId || playbackDone) return;
           console.warn("Audio autoplay initial play() notice:", err);
 
-          // If the audio element has a hard error, try fallback stream URL if available
+          // If the audio element has a hard error, try fresh stream resolution or fallback stream URL
           if (this.audio && this.audio.error) {
             cleanupPlaybackListeners();
+            const curTrack = this.tracks ? this.tracks[this.currentTrackIndex] : null;
+            if (curTrack && !curTrack._retryFreshStream && window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function') {
+              curTrack._retryFreshStream = true;
+              try {
+                const fresh = await window.electronAPI.resolveFullStream({
+                  title: curTrack.title,
+                  artist: curTrack.artist,
+                  videoId: curTrack.video_id,
+                  isVideo: !!curTrack.is_video,
+                  forceRefresh: true
+                });
+                if (fresh && fresh.url) {
+                  curTrack.stream_url = fresh.url;
+                  this.audio.src = fresh.url;
+                  this.audio.load();
+                  await this.audio.play();
+                  if (loadId !== this._currentLoadId) return;
+                  playbackDone = true;
+                  this.isPlaying = true;
+                  this.showPlayerBuffering(false);
+                  this.updatePlayPauseIcon();
+                  setTimeout(() => this.preloadNextTrack(), 1000);
+                  return;
+                }
+              } catch (_) {}
+            }
             if (track.fallback_url && track.fallback_url !== track.stream_url) {
               try {
                 this.audio.src = track.fallback_url;
