@@ -15,7 +15,7 @@ const {
   isPathInsideDir,
   SUPPORTED_EXTENSIONS
 } = require('./src/modules/local-interceptor');
-const { isAllowedStreamTarget } = require('./src/modules/audio-proxy');
+const { isAllowedStreamTarget, preflightStream } = require('./src/modules/audio-proxy');
 const { normalizeAudioQuality, pickAudioFormat } = require('./src/modules/audio-format');
 const { installVerifiedBinary } = require('./src/modules/yt-dlp-installer');
 try {
@@ -1776,22 +1776,8 @@ async function resolveInnerTubeStream(videoId) {
     if (chosen) {
       const rawUrl = chosen.url;
 
-      // Stream Pre-flight Check: ensure stream URL is playable (returns 200/206).
-      // On Cloudflare WARP or certain VPN egress IPs, YouTube blocks unauthenticated iOS streams with HTTP 403.
-      try {
-        const testRes = await fetch(rawUrl, {
-          method: 'HEAD',
-          headers: { 'User-Agent': IOS_UA },
-          signal: AbortSignal.timeout(1200)
-        });
-        if (testRes.status !== 200 && testRes.status !== 206) {
-          console.warn(`InnerTube stream returned HTTP ${testRes.status} (falling back to yt-dlp)`);
-          return null;
-        }
-      } catch (err) {
-        console.warn('InnerTube stream pre-flight notice:', err?.message || err);
-        return null;
-      }
+      // A failed pre-flight falls through to yt-dlp, then JioSaavn.
+      if (!(await preflightStream(rawUrl, IOS_UA))) return null;
 
       const streamUrl = (localProxyPort > 0 && rawUrl)
         ? `http://127.0.0.1:${localProxyPort}/stream?url=${encodeURIComponent(rawUrl)}`

@@ -57,6 +57,36 @@ function isAllowedStreamTarget(target) {
   }
 }
 
+// Long enough for a slow or VPN link to answer a HEAD, short enough that a
+// firewalled googlevideo host still hands over to yt-dlp and JioSaavn quickly.
+const STREAM_PREFLIGHT_TIMEOUT_MS = 2500;
+
+/**
+ * Check that a stream URL answers before handing it to the player.
+ * YouTube rejects unauthenticated iOS streams on some egress IPs (e.g. Cloudflare WARP) with 403.
+ * A timeout counts as a failure on purpose: networks that block YouTube hang here,
+ * and the caller relies on that to move to another provider.
+ * @param {string} url - Upstream stream URL
+ * @param {string} userAgent - Must match the client the URL was issued to
+ * @param {typeof fetch} [fetchImpl] - Injected for tests
+ * @returns {Promise<boolean>} Whether the stream is playable
+ */
+async function preflightStream(url, userAgent, fetchImpl = fetch) {
+  try {
+    const res = await fetchImpl(url, {
+      method: 'HEAD',
+      headers: { 'User-Agent': userAgent },
+      signal: AbortSignal.timeout(STREAM_PREFLIGHT_TIMEOUT_MS)
+    });
+    if (res.status === 200 || res.status === 206) return true;
+    console.warn(`Stream pre-flight returned HTTP ${res.status}`);
+    return false;
+  } catch (err) {
+    console.warn('Stream pre-flight notice:', err?.message || err);
+    return false;
+  }
+}
+
 /**
  * Create a lightweight reference / test HTTP server following audio proxy contracts
  * @returns {http.Server}
@@ -98,5 +128,7 @@ module.exports = {
   buildProxiedAudioUrl,
   extractTargetStreamUrl,
   isAllowedStreamTarget,
+  STREAM_PREFLIGHT_TIMEOUT_MS,
+  preflightStream,
   createAudioProxyServer
 };

@@ -9661,6 +9661,9 @@ class SoraFyDesktopApp {
     this._endOfTrackHandled = false;
     this._isUserPaused = false;
     this.isNextTrackPreloaded = false;
+    // Each playback attempt gets its own chance to re-resolve: a URL that expired
+    // while paused, or on an earlier play, must not disqualify the track for good.
+    delete track._retryFreshStream;
 
     // Immediately stop previous audio and abort its stream buffer to avoid race conditions or sound bleeding
     if (this.audio) {
@@ -9949,32 +9952,15 @@ class SoraFyDesktopApp {
           // If the audio element has a hard error, try fresh stream resolution or fallback stream URL
           if (this.audio && this.audio.error) {
             cleanupPlaybackListeners();
-            const curTrack = this.tracks ? this.tracks[this.currentTrackIndex] : null;
-            if (curTrack && !curTrack._retryFreshStream && window.electronAPI && typeof window.electronAPI.resolveFullStream === 'function') {
-              curTrack._retryFreshStream = true;
-              try {
-                const fresh = await window.electronAPI.resolveFullStream({
-                  title: curTrack.title,
-                  artist: curTrack.artist,
-                  videoId: curTrack.video_id,
-                  isVideo: !!curTrack.is_video,
-                  forceRefresh: true
-                });
-                if (fresh && fresh.url) {
-                  curTrack.stream_url = fresh.url;
-                  this.audio.src = fresh.url;
-                  this.audio.load();
-                  await this.audio.play();
-                  if (loadId !== this._currentLoadId) return;
-                  playbackDone = true;
-                  this.isPlaying = true;
-                  this.showPlayerBuffering(false);
-                  this.updatePlayPauseIcon();
-                  setTimeout(() => this.preloadNextTrack(), 1000);
-                  return;
-                }
-              } catch (_) {}
+            if (await this.playWithFreshStream(track, loadId, startPosition)) {
+              playbackDone = true;
+              this.isPlaying = true;
+              this.showPlayerBuffering(false);
+              this.updatePlayPauseIcon();
+              setTimeout(() => this.preloadNextTrack(), 1000);
+              return;
             }
+            if (loadId !== this._currentLoadId) return;
             if (track.fallback_url && track.fallback_url !== track.stream_url) {
               try {
                 this.audio.src = track.fallback_url;
@@ -10036,9 +10022,19 @@ class SoraFyDesktopApp {
             }
 
             // Generous fallback timeout (10 seconds) for slow networks before giving up
-            bufferTimeoutId = setTimeout(() => {
+            bufferTimeoutId = setTimeout(async () => {
               cleanupPlaybackListeners();
               if (loadId === this._currentLoadId && this.audio && this.audio.paused && !playbackDone) {
+                // A stalled URL is often a dead one; one fresh resolve is cheaper than a failed track.
+                if (await this.playWithFreshStream(track, loadId, startPosition)) {
+                  playbackDone = true;
+                  this.isPlaying = true;
+                  this.showPlayerBuffering(false);
+                  this.updatePlayPauseIcon();
+                  setTimeout(() => this.preloadNextTrack(), 1000);
+                  return;
+                }
+                if (loadId !== this._currentLoadId) return;
                 this.isPlaying = false;
                 this.showPlayerBuffering(false);
                 this.updatePlayPauseIcon();
@@ -12342,6 +12338,41 @@ class SoraFyDesktopApp {
     const format = { codec };
     if (full.bitrate) format.bitrate_kbps = Math.round(full.bitrate / 1000);
     return format;
+  }
+
+  /**
+   * Re-resolve a track's stream and play it, once per playback attempt.
+   * Caller handles UI state so this can serve both the hard-error and stall paths.
+   * @param {object} track - The track whose URL failed
+   * @param {number} loadId - Guards against a newer loadTrack having superseded this one
+   * @param {number} startPosition - Seconds to resume from
+   * @returns {Promise<boolean>} Whether playback started
+   */
+  async playWithFreshStream(track, loadId, startPosition = 0) {
+    if (!track || track._retryFreshStream) return false;
+    if (!window.electronAPI || typeof window.electronAPI.resolveFullStream !== 'function') return false;
+    track._retryFreshStream = true;
+    try {
+      const fresh = await window.electronAPI.resolveFullStream({
+        title: track.title,
+        artist: track.artist,
+        videoId: track.video_id,
+        isVideo: !!track.is_video,
+        forceRefresh: true
+      });
+      if (loadId !== this._currentLoadId) return false;
+      if (!fresh || !fresh.url) return false;
+      track.stream_url = fresh.url;
+      this.audio.src = fresh.url;
+      this.audio.load();
+      if (startPosition > 0) {
+        this.audio.currentTime = startPosition;
+      }
+      await this.audio.play();
+      return loadId === this._currentLoadId;
+    } catch (_) {
+      return false;
+    }
   }
 
   renderStatsForNerds() {

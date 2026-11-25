@@ -6,8 +6,37 @@ const {
   extractTargetStreamUrl,
   isAllowedStreamTarget,
   AUDIO_PROXY_CORS_HEADERS,
+  STREAM_PREFLIGHT_TIMEOUT_MS,
+  preflightStream,
   createAudioProxyServer
 } = require('../src/modules/audio-proxy');
+
+test('preflightStream accepts the statuses a playable stream returns', async () => {
+  const seen = [];
+  const fetchImpl = async (url, opts) => {
+    seen.push({ url, method: opts.method, ua: opts.headers['User-Agent'] });
+    return { status: 206 };
+  };
+  assert.equal(await preflightStream('https://x/stream', 'TestUA', fetchImpl), true);
+  assert.deepEqual(seen, [{ url: 'https://x/stream', method: 'HEAD', ua: 'TestUA' }]);
+  assert.equal(await preflightStream('https://x/stream', 'TestUA', async () => ({ status: 200 })), true);
+});
+
+test('preflightStream rejects a stream the egress IP is blocked from', async () => {
+  assert.equal(await preflightStream('https://x/stream', 'TestUA', async () => ({ status: 403 })), false);
+  assert.equal(await preflightStream('https://x/stream', 'TestUA', async () => ({ status: 500 })), false);
+});
+
+test('preflightStream treats a network failure as unplayable so the caller falls back', async () => {
+  const failing = async () => { throw new Error('ETIMEDOUT'); };
+  assert.equal(await preflightStream('https://x/stream', 'TestUA', failing), false);
+});
+
+test('preflightStream allows a slow link time to answer', async () => {
+  // 1200ms cut off VPN and mobile links that were about to succeed.
+  assert.ok(STREAM_PREFLIGHT_TIMEOUT_MS >= 2000, 'timeout must tolerate a slow round trip');
+  assert.ok(STREAM_PREFLIGHT_TIMEOUT_MS <= 3000, 'timeout must not delay the fallback chain');
+});
 
 test('isAllowedStreamTarget accepts only HTTPS googlevideo.com stream hosts', () => {
   assert.equal(isAllowedStreamTarget('https://rr1---sn-xxx.googlevideo.com/videoplayback?id=abc'), true);
