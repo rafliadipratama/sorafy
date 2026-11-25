@@ -2041,6 +2041,7 @@ class SoraFyDesktopApp {
     this.closeSettingsModalBtn = document.getElementById("closeSettingsModalBtn");
     this.settingsTabBar = document.getElementById("settingsTabBar");
     this.settingAudioQuality = document.getElementById("settingAudioQuality");
+    this.settingDownloadFormat = document.getElementById("settingDownloadFormat");
     this.settingVolumeNorm = document.getElementById("settingVolumeNorm");
     this.settingCrossfade = document.getElementById("settingCrossfade");
     this.settingCrossfadeLabel = document.getElementById("settingCrossfadeLabel");
@@ -3036,6 +3037,7 @@ class SoraFyDesktopApp {
       discordShowYouTubeButton: true,
       discordShowSorafyButton: true,
       audioQuality: 'high',
+      downloadFormat: 'mp3',
       volumeNormalization: false,
       crossfadeDuration: 0,
       repeatMode: 0,
@@ -3076,6 +3078,9 @@ class SoraFyDesktopApp {
       const legacyQuality = { auto: 'high', lossless: 'max' };
       const savedQuality = legacyQuality[this.appSettings.audioQuality] || this.appSettings.audioQuality;
       this.settingAudioQuality.value = ['saver', 'high', 'max'].includes(savedQuality) ? savedQuality : 'high';
+    }
+    if (this.settingDownloadFormat) {
+      this.settingDownloadFormat.value = this.appSettings.downloadFormat === 'original' ? 'original' : 'mp3';
     }
     if (this.settingVolumeNorm) {
       this.settingVolumeNorm.checked = !!this.appSettings.volumeNormalization;
@@ -3280,6 +3285,14 @@ class SoraFyDesktopApp {
         this.appSettings.audioQuality = e.target.value;
         persistSettings();
         this.showToast(this.currentLanguage === 'id' ? `Kualitas audio: ${e.target.options[e.target.selectedIndex].text}` : `Audio quality: ${e.target.options[e.target.selectedIndex].text}`);
+      });
+    }
+
+    if (this.settingDownloadFormat) {
+      this.settingDownloadFormat.addEventListener("change", (e) => {
+        this.appSettings.downloadFormat = e.target.value;
+        persistSettings();
+        this.showToast(this.currentLanguage === 'id' ? `Format download: ${e.target.options[e.target.selectedIndex].text}` : `Download format: ${e.target.options[e.target.selectedIndex].text}`);
       });
     }
 

@@ -15,7 +15,9 @@ const {
   isPathInsideDir,
   SUPPORTED_EXTENSIONS
 } = require('./src/modules/local-interceptor');
-const { isAllowedStreamTarget, preflightStream } = require('./src/modules/audio-proxy');
+const { isAllowedStreamTarget, preflightStream, resolveByteRange } = require('./src/modules/audio-proxy');
+const { downloadStreamToFile } = require('./src/modules/stream-download');
+const { buildDownloadArgs, resolveDownloadedPath } = require('./src/modules/download-format');
 const { normalizeAudioQuality, pickAudioFormat } = require('./src/modules/audio-format');
 const { installVerifiedBinary } = require('./src/modules/yt-dlp-installer');
 try {
@@ -449,12 +451,26 @@ const localAudioProxy = http.createServer((req, res) => {
       };
       const contentType = mimeTypes[ext] || 'audio/mpeg';
 
-      if (range) {
-        const parts = range.replace(/bytes=/, "").split("-");
-        const start = parseInt(parts[0], 10);
-        const end = parts[1] ? parseInt(parts[1], 10) : total - 1;
+      const byteRange = resolveByteRange(range, total);
+      if (byteRange && byteRange.unsatisfiable) {
+        res.writeHead(416, {
+          'Content-Range': `bytes */${total}`,
+          'Access-Control-Allow-Origin': '*'
+        });
+        return res.end();
+      }
+
+      // A file removed or locked after statSync fails here, outside the try block.
+      const failRead = () => {
+        if (!res.headersSent) res.writeHead(500, { 'Access-Control-Allow-Origin': '*' });
+        res.end();
+      };
+
+      if (byteRange) {
+        const { start, end } = byteRange;
         const chunksize = (end - start) + 1;
         const fileStream = fs.createReadStream(rawPath, { start, end });
+        fileStream.on('error', failRead);
         res.writeHead(206, {
           'Content-Range': `bytes ${start}-${end}/${total}`,
           'Accept-Ranges': 'bytes',
@@ -470,7 +486,7 @@ const localAudioProxy = http.createServer((req, res) => {
           'Accept-Ranges': 'bytes',
           'Access-Control-Allow-Origin': '*'
         });
-        fs.createReadStream(rawPath).pipe(res);
+        fs.createReadStream(rawPath).on('error', failRead).pipe(res);
       }
       return;
     } catch (e) {
@@ -1821,6 +1837,7 @@ const DEFAULT_SETTINGS = {
   discordShowYouTubeButton: true,
   discordShowSorafyButton: true,
   audioQuality: 'high',
+  downloadFormat: 'mp3',
   volumeNormalization: false,
   crossfadeDuration: 0,
   cacheQuotaMb: 2048,
@@ -4340,47 +4357,34 @@ async function downloadSingleTrack(track) {
   return new Promise((resolve) => {
     execFile(
       getYtDlpBin(),
-      [
-        '-x',
-        '--audio-format', 'mp3',
-        '--audio-quality', '0',
-        '--no-playlist',
-        '--embed-metadata',
-        '-o', outPattern,
-        videoUrl
-      ],
+      buildDownloadArgs(loadAppSettings().downloadFormat, outPattern, videoUrl),
       { timeout: 60000 },
-      (err) => {
-        if (!err) {
-          const finalFile = path.join(downloadDir, `${baseFilename}.mp3`);
+      (err, stdout) => {
+        // The extension depends on the source codec, so trust only what yt-dlp wrote.
+        const finalFile = err ? null : resolveDownloadedPath(stdout);
+        if (finalFile && fs.existsSync(finalFile)) {
           return resolve({
             success: true,
             filePath: finalFile,
-            filename: `${baseFilename}.mp3`
+            filename: path.basename(finalFile)
           });
         }
 
-        // Fallback: Pipe direct audio stream if yt-dlp conversion fails
-        resolveYtDlpStream(vid).then(stream => {
-          if (!stream || !stream.url) {
+        // Fallback: Pipe direct audio stream if yt-dlp conversion fails.
+        // Any rejection here must still resolve, or a batch worker waits forever.
+        resolveYtDlpStream(vid).then(async (stream) => {
+          // rawUrl, not url: the latter points at the loopback proxy, which only serves the renderer.
+          const sourceUrl = stream && (stream.rawUrl || stream.url);
+          if (!sourceUrl) {
             return resolve({ success: false, error: err ? err.message : 'Failed to download audio.' });
           }
 
-          const fallbackPath = path.join(downloadDir, `${baseFilename}.opus`);
-          const fileStream = fs.createWriteStream(fallbackPath);
-          const req = https.get(stream.url, {
-            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' }
-          }, res => {
-            res.pipe(fileStream);
-            fileStream.on('finish', () => {
-              fileStream.close();
-              resolve({ success: true, filePath: fallbackPath, filename: `${baseFilename}.opus` });
-            });
-          });
-          req.on('error', (e) => {
-            try { fs.unlinkSync(fallbackPath); } catch (_) {}
-            resolve({ success: false, error: e.message });
-          });
+          const ext = stream.mimeType === 'audio/webm' ? 'webm' : 'm4a';
+          const filename = `${baseFilename}.${ext}`;
+          const result = await downloadStreamToFile(sourceUrl, path.join(downloadDir, filename));
+          resolve(result.success ? { ...result, filename } : result);
+        }).catch((e) => {
+          resolve({ success: false, error: e?.message || 'Failed to download audio.' });
         });
       }
     );

@@ -57,6 +57,45 @@ function isAllowedStreamTarget(target) {
   }
 }
 
+/**
+ * Resolve a Range header against a known file size.
+ * The player seeks by sending these, so an unsatisfiable range must come back as
+ * 416 with the real size rather than a read error the element reports as a
+ * network failure. Returns null when the client wants the whole file.
+ * @param {string|undefined} header - Raw Range request header
+ * @param {number} total - File size in bytes
+ * @returns {{start: number, end: number}|{unsatisfiable: true}|null}
+ */
+function resolveByteRange(header, total) {
+  if (!header || typeof header !== 'string') return null;
+
+  const match = /^bytes=(\d*)-(\d*)$/.exec(header.trim());
+  if (!match) return { unsatisfiable: true };
+
+  const [, rawStart, rawEnd] = match;
+  if (rawStart === '' && rawEnd === '') return { unsatisfiable: true };
+  if (total === 0) return { unsatisfiable: true };
+
+  let start;
+  let end;
+  if (rawStart === '') {
+    // Suffix range: the last N bytes, clamped to a file shorter than N.
+    const suffixLength = parseInt(rawEnd, 10);
+    if (suffixLength === 0) return { unsatisfiable: true };
+    start = Math.max(0, total - suffixLength);
+    end = total - 1;
+  } else {
+    start = parseInt(rawStart, 10);
+    if (start >= total) return { unsatisfiable: true };
+    // An open-ended or oversized end is clamped: a file can shrink after the
+    // player has cached its old size.
+    end = rawEnd === '' ? total - 1 : Math.min(parseInt(rawEnd, 10), total - 1);
+    if (end < start) return { unsatisfiable: true };
+  }
+
+  return { start, end };
+}
+
 // Long enough for a slow or VPN link to answer a HEAD, short enough that a
 // firewalled googlevideo host still hands over to yt-dlp and JioSaavn quickly.
 const STREAM_PREFLIGHT_TIMEOUT_MS = 2500;
@@ -128,6 +167,7 @@ module.exports = {
   buildProxiedAudioUrl,
   extractTargetStreamUrl,
   isAllowedStreamTarget,
+  resolveByteRange,
   STREAM_PREFLIGHT_TIMEOUT_MS,
   preflightStream,
   createAudioProxyServer

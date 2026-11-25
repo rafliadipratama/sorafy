@@ -6,10 +6,55 @@ const {
   extractTargetStreamUrl,
   isAllowedStreamTarget,
   AUDIO_PROXY_CORS_HEADERS,
+  resolveByteRange,
   STREAM_PREFLIGHT_TIMEOUT_MS,
   preflightStream,
   createAudioProxyServer
 } = require('../src/modules/audio-proxy');
+
+const UNSATISFIABLE = { unsatisfiable: true };
+
+test('resolveByteRange serves the whole file when no range is asked for', () => {
+  assert.equal(resolveByteRange(undefined, 1000), null);
+  assert.equal(resolveByteRange('', 1000), null);
+});
+
+test('resolveByteRange reads the ranges a seeking player sends', () => {
+  assert.deepEqual(resolveByteRange('bytes=0-', 1000), { start: 0, end: 999 });
+  assert.deepEqual(resolveByteRange('bytes=500-', 1000), { start: 500, end: 999 });
+  assert.deepEqual(resolveByteRange('bytes=100-199', 1000), { start: 100, end: 199 });
+  assert.deepEqual(resolveByteRange('bytes=999-999', 1000), { start: 999, end: 999 });
+});
+
+test('resolveByteRange supports suffix ranges for the tail of a file', () => {
+  assert.deepEqual(resolveByteRange('bytes=-200', 1000), { start: 800, end: 999 });
+  // Asking for more than exists returns the whole file, not an error.
+  assert.deepEqual(resolveByteRange('bytes=-5000', 1000), { start: 0, end: 999 });
+});
+
+test('resolveByteRange clamps an end past the file instead of overstating Content-Length', () => {
+  assert.deepEqual(resolveByteRange('bytes=0-999999999', 1000), { start: 0, end: 999 });
+});
+
+test('resolveByteRange rejects a start the file no longer reaches', () => {
+  // A player that cached a larger size seeks past the end of a smaller file.
+  assert.deepEqual(resolveByteRange('bytes=1000-', 1000), UNSATISFIABLE);
+  assert.deepEqual(resolveByteRange('bytes=5000-6000', 1000), UNSATISFIABLE);
+});
+
+test('resolveByteRange rejects malformed and inverted ranges', () => {
+  assert.deepEqual(resolveByteRange('bytes=abc-', 1000), UNSATISFIABLE);
+  assert.deepEqual(resolveByteRange('bytes=-', 1000), UNSATISFIABLE);
+  assert.deepEqual(resolveByteRange('bytes=-0', 1000), UNSATISFIABLE);
+  assert.deepEqual(resolveByteRange('bytes=500-100', 1000), UNSATISFIABLE);
+  assert.deepEqual(resolveByteRange('items=0-10', 1000), UNSATISFIABLE);
+  // Multiple ranges are not served; refusing beats silently returning only the first.
+  assert.deepEqual(resolveByteRange('bytes=0-1,5-6', 1000), UNSATISFIABLE);
+});
+
+test('resolveByteRange has nothing to serve from an empty file', () => {
+  assert.deepEqual(resolveByteRange('bytes=0-', 0), UNSATISFIABLE);
+});
 
 test('preflightStream accepts the statuses a playable stream returns', async () => {
   const seen = [];
