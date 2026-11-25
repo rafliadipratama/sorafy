@@ -3071,7 +3071,12 @@ class SoraFyDesktopApp {
     if (this.settingLanguage) {
       this.settingLanguage.value = initialLang;
     }
-    if (this.settingAudioQuality) this.settingAudioQuality.value = this.appSettings.audioQuality || 'high';
+    if (this.settingAudioQuality) {
+      // Builds before the setting worked stored 'auto'/'lossless'; keep those users on an option that exists.
+      const legacyQuality = { auto: 'high', lossless: 'max' };
+      const savedQuality = legacyQuality[this.appSettings.audioQuality] || this.appSettings.audioQuality;
+      this.settingAudioQuality.value = ['saver', 'high', 'max'].includes(savedQuality) ? savedQuality : 'high';
+    }
     if (this.settingVolumeNorm) {
       this.settingVolumeNorm.checked = !!this.appSettings.volumeNormalization;
       this.setVolumeNormalization(!!this.appSettings.volumeNormalization);
@@ -9707,7 +9712,7 @@ class SoraFyDesktopApp {
     this.playerArtwork.src = track.artwork_url;
     this.updateVerificationBadge(track);
     if (this.playerBadge) {
-      this.playerBadge.textContent = track.audio_format?.codec || "Opus HD";
+      this.playerBadge.textContent = track.audio_format?.codec || "";
     }
     if (this.playerSourceTag) {
       this.playerSourceTag.textContent = "";
@@ -9750,11 +9755,11 @@ class SoraFyDesktopApp {
           track.raw_path = localResult.path;
           track.is_local = true;
           track.is_full_stream = true;
-          track.audio_format = track.audio_format || {};
-          track.audio_format.codec = "Offline HD";
-          track.audio_format.bitrate_kbps = 320;
-          if (this.playerBadge) this.playerBadge.textContent = "Offline HD";
-          if (this.screenPlayerBadge) this.screenPlayerBadge.textContent = "Offline HD";
+          track.size_bytes = localResult.sizeBytes || track.size_bytes;
+          const localCodec = (localResult.path.split(".").pop() || "").toUpperCase() || "Offline";
+          track.audio_format = { codec: localCodec };
+          if (this.playerBadge) this.playerBadge.textContent = localCodec;
+          if (this.screenPlayerBadge) this.screenPlayerBadge.textContent = localCodec;
         }
       } catch (err) {
         console.warn("Local audio interceptor notice:", err);
@@ -9792,13 +9797,7 @@ class SoraFyDesktopApp {
             const activeDurEl = document.querySelector('.track-row.active .track-row-duration, .ytm-song-item.active .ytm-song-duration');
             if (activeDurEl) activeDurEl.textContent = this.formatTime(full.duration);
           }
-          let codecName = full.provider || (full.mimeType?.includes("mp4") ? "AAC 320k" : "Opus HD");
-          if (codecName.includes("yt-dlp") || codecName.includes("YouTube Direct")) {
-            codecName = "Opus HD";
-          }
-          track.audio_format = track.audio_format || {};
-          track.audio_format.codec = codecName;
-          track.audio_format.bitrate_kbps = Math.round((full.bitrate || 320000) / 1000);
+          track.audio_format = this.audioFormatFromStream(full);
           if (this.playerBadge) this.playerBadge.textContent = track.audio_format.codec;
           if (this.screenPlayerBadge) this.screenPlayerBadge.textContent = track.audio_format.codec;
 
@@ -10100,13 +10099,7 @@ class SoraFyDesktopApp {
           if (full.videoId) nextTrack.video_id = full.videoId;
           if (full.duration) nextTrack.duration_secs = full.duration;
 
-          let codecName = full.provider || (full.mimeType?.includes("mp4") ? "AAC 320k" : "Opus HD");
-          if (codecName.includes("yt-dlp") || codecName.includes("YouTube Direct")) {
-            codecName = "Opus HD";
-          }
-          nextTrack.audio_format = nextTrack.audio_format || {};
-          nextTrack.audio_format.codec = codecName;
-          nextTrack.audio_format.bitrate_kbps = Math.round((full.bitrate || 320000) / 1000);
+          nextTrack.audio_format = this.audioFormatFromStream(full);
 
           this.warmupAudioBuffer(full.url);
         }
@@ -12265,11 +12258,7 @@ class SoraFyDesktopApp {
       this.screenPlayerArtwork.src = track.artwork_url || this.DEFAULT_TRACK_ART;
     }
     if (this.screenPlayerBadge) {
-      let bText = track.audio_format?.codec || "Opus HD";
-      if (bText.includes("yt-dlp") || bText.includes("YouTube Direct")) {
-        bText = "Opus HD";
-      }
-      this.screenPlayerBadge.textContent = bText;
+      this.screenPlayerBadge.textContent = track.audio_format?.codec || "";
     }
 
     if (this.screenPlayerLikeBtn) {
@@ -12343,6 +12332,18 @@ class SoraFyDesktopApp {
     }
   }
 
+  /**
+   * Describe a resolved stream using only what the resolver reported.
+   * @param {{provider?: string, mimeType?: string, bitrate?: number}} full
+   * @returns {{codec: string, bitrate_kbps?: number}}
+   */
+  audioFormatFromStream(full) {
+    const codec = full.provider || (full.mimeType?.includes("mp4") ? "AAC" : "Opus");
+    const format = { codec };
+    if (full.bitrate) format.bitrate_kbps = Math.round(full.bitrate / 1000);
+    return format;
+  }
+
   renderStatsForNerds() {
     if (!this.statsNerdsGrid) return;
     const track = this.tracks[this.currentTrackIndex];
@@ -12351,12 +12352,18 @@ class SoraFyDesktopApp {
       return;
     }
 
-    let codec = track.audio_format?.codec || (track.stream_url?.includes(".mp4") ? "AAC (mp4a)" : "Opus (webm)");
-    if (codec.includes("yt-dlp") || codec.includes("YouTube Direct")) {
-      codec = "Opus (itag 251)";
+    const codec = track.audio_format?.codec || "Unknown";
+    // The element decodes into the AudioContext, so this is the rate actually heard, not the file's own.
+    const sampleRate = this.audioCtx
+      ? `${this.audioCtx.sampleRate.toLocaleString("en-US")} Hz (output)`
+      : "Unknown";
+    const mediaDuration = this.audio?.duration;
+    let bitrate = "Unknown";
+    if (track.audio_format?.bitrate_kbps) {
+      bitrate = `${track.audio_format.bitrate_kbps} kbps`;
+    } else if (track.size_bytes && Number.isFinite(mediaDuration) && mediaDuration > 0) {
+      bitrate = `~${Math.round((track.size_bytes * 8) / mediaDuration / 1000)} kbps (average)`;
     }
-    let sampleRate = "48,000 Hz · Stereo (2 ch)";
-    let bitrate = track.audio_format?.bitrate ? `${Math.round(track.audio_format.bitrate / 1000)} kbps` : "160 kbps (VBR)";
 
     let bufSecs = "0.0s";
     if (this.audio && this.audio.buffered && this.audio.buffered.length > 0) {

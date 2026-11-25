@@ -16,6 +16,7 @@ const {
   SUPPORTED_EXTENSIONS
 } = require('./src/modules/local-interceptor');
 const { isAllowedStreamTarget } = require('./src/modules/audio-proxy');
+const { normalizeAudioQuality, pickAudioFormat } = require('./src/modules/audio-format');
 const { installVerifiedBinary } = require('./src/modules/yt-dlp-installer');
 try {
   const candidateEnvPaths = [
@@ -174,30 +175,24 @@ function resolveYtDlpStream(videoId) {
     if (!videoId) return resolve(null);
     try {
       const cookieArgs = getCookieArgs();
+      // "worstaudio" lands on an HLS manifest, so saver caps bitrate on best audio instead.
+      const formatSelector = normalizeAudioQuality(loadAppSettings().audioQuality) === 'saver' ? 'ba[abr<100]/ba/b' : 'ba/b';
       execFile(
         getYtDlpBin(),
-        [...cookieArgs, '--print', '%(duration)s', '--print', '%(view_count)s', '-g', '-f', 'ba/b', `https://www.youtube.com/watch?v=${videoId}`],
+        [...cookieArgs, '--print', '%(duration)s', '--print', '%(view_count)s', '--print', '%(abr)s', '--print', '%(acodec)s', '-g', '-f', formatSelector, `https://www.youtube.com/watch?v=${videoId}`],
         { timeout: 9000 },
         (error, stdout) => {
           if (error || !stdout) {
             return resolve(null);
           }
+          // --print emits one line per field, in the order requested, then -g prints the URL.
           const lines = stdout.trim().split('\n').map(l => l.trim()).filter(Boolean);
-          let streamUrl = null;
-          let duration = 0;
-          let viewCount = 0;
-          for (const line of lines) {
-            if (line.startsWith('http')) {
-              streamUrl = line;
-            } else if (/^\d+$/.test(line)) {
-              const n = parseInt(line, 10);
-              if (duration === 0) {
-                duration = n;
-              } else {
-                viewCount = n;
-              }
-            }
-          }
+          const [rawDuration, rawViewCount, rawAbr, rawCodec] = lines;
+          const streamUrl = lines.find(l => l.startsWith('http')) || null;
+          const duration = parseInt(rawDuration, 10) || 0;
+          const viewCount = parseInt(rawViewCount, 10) || 0;
+          const abrKbps = Math.round(parseFloat(rawAbr)) || 0;
+          const isOpus = (rawCodec || '').toLowerCase().startsWith('opus');
           if (streamUrl) {
             const proxiedUrl = (localProxyPort > 0 && streamUrl)
               ? `http://127.0.0.1:${localProxyPort}/stream?url=${encodeURIComponent(streamUrl)}`
@@ -206,9 +201,9 @@ function resolveYtDlpStream(videoId) {
               url: proxiedUrl,
               rawUrl: streamUrl,
               videoId: videoId,
-              bitrate: 160000,
-              mimeType: 'audio/webm',
-              provider: 'Opus HD',
+              bitrate: abrKbps ? abrKbps * 1000 : 160000,
+              mimeType: isOpus ? 'audio/webm' : 'audio/mp4',
+              provider: abrKbps ? `${isOpus ? 'Opus' : 'AAC'} ${abrKbps}k` : 'Opus',
               duration: duration,
               viewCount: viewCount ? String(viewCount) : '0',
               isFull: true
@@ -591,6 +586,29 @@ try {
 
 const streamCache = new Map();
 
+/**
+ * Build the cache key for one track at one quality.
+ * The quality is part of the key because a stream resolved for one quality is
+ * not the stream another quality asks for.
+ * @param {string} quality - Normalized audio quality
+ * @param {string} subject - Either vid_<id> or "<artist> - <title>"
+ * @returns {string}
+ */
+function streamCacheKey(quality, subject) {
+  return `${quality}|${subject.toLowerCase().trim()}`;
+}
+
+/**
+ * Drop a track's cached streams across every quality.
+ * @param {string} subject - Either vid_<id> or "<artist> - <title>"
+ */
+function forgetCachedStream(subject) {
+  const suffix = `|${subject.toLowerCase().trim()}`;
+  for (const key of streamCache.keys()) {
+    if (key.endsWith(suffix)) streamCache.delete(key);
+  }
+}
+
 function loadStreamCache() {
   try {
     if (fs.existsSync(cacheFile)) {
@@ -598,8 +616,10 @@ function loadStreamCache() {
       const parsed = JSON.parse(raw);
       const now = Date.now();
       for (const [k, v] of Object.entries(parsed)) {
+        // Entries written before keys carried a quality cannot say which one they hold.
+        if (!k.includes('|')) continue;
         // Drop legacy/corrupted cache entries (e.g. JioSaavn cover cached under a YouTube video ID)
-        if (k.startsWith('vid_') && v?.data?.provider?.includes('JioSaavn')) {
+        if (k.includes('|vid_') && v?.data?.provider?.includes('JioSaavn')) {
           continue;
         }
         if (v && v.expireAt > now) {
@@ -1033,7 +1053,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song', lang = nu
                       artwork_url: sArt || `https://i.ytimg.com/vi/${sVid}/hqdefault.jpg`,
                       stream_url: '',
                       source_label: 'SoraFy Stream',
-                      audio_format: { codec: 'Opus HD', bitrate_kbps: 160, is_lossless: false }
+                      audio_format: { codec: 'Opus', is_lossless: false }
                     });
                   }
                 }
@@ -1098,7 +1118,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song', lang = nu
                       stream_url: '',
                       is_video: filterType === 'video',
                       source_label: 'Hasil Teratas',
-                      audio_format: { codec: 'Opus HD', bitrate_kbps: 160, is_lossless: false }
+                      audio_format: { codec: 'Opus', is_lossless: false }
                     });
                   }
                 }
@@ -1268,7 +1288,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song', lang = nu
                       is_explicit: isExplicitVid,
                       video_badge: videoBadge,
                       source_label: 'Video Musik',
-                      audio_format: { codec: 'Opus HD', bitrate_kbps: 160, is_lossless: false }
+                      audio_format: { codec: 'Opus', is_lossless: false }
                     });
                   }
                 } else {
@@ -1297,7 +1317,7 @@ async function searchYouTubeMusicInnerTube(query, filterType = 'song', lang = nu
                       is_official: isOfficial,
                       is_explicit: isExplicitSong,
                       source_label: 'SoraFy Stream',
-                      audio_format: { codec: 'Opus HD', bitrate_kbps: 160, is_lossless: false }
+                      audio_format: { codec: 'Opus', is_lossless: false }
                     });
                   }
                 }
@@ -1525,7 +1545,7 @@ async function browseYouTubeInnerTube(browseId, hl = null, gl = null) {
                     is_video: false,
                     is_explicit: isExplicitSong,
                     source_label: 'SoraFy Stream',
-                    audio_format: { codec: 'Opus HD', bitrate_kbps: 160, is_lossless: false }
+                    audio_format: { codec: 'Opus', is_lossless: false }
                   });
                 }
               }
@@ -1751,15 +1771,10 @@ async function resolveInnerTubeStream(videoId) {
   if (!json) return null;
 
   try {
-    const formats = json.streamingData?.adaptiveFormats?.filter(f => f.mimeType?.includes("audio"));
-    if (formats && formats.length > 0) {
-      // Prioritize highest quality audio format: Opus HD 160k (itag 251) -> AAC 130k (itag 140) -> highest bitrate format
-      const chosen = formats.find(f => f.itag === 251 && f.url) ||
-                     formats.find(f => f.itag === 140 && f.url) ||
-                     formats.filter(f => f.url).sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0))[0] ||
-                     formats[0];
+    const formats = json.streamingData?.adaptiveFormats;
+    const chosen = pickAudioFormat(formats, loadAppSettings().audioQuality);
+    if (chosen) {
       const rawUrl = chosen.url;
-      if (!rawUrl) return null;
 
       // Stream Pre-flight Check: ensure stream URL is playable (returns 200/206).
       // On Cloudflare WARP or certain VPN egress IPs, YouTube blocks unauthenticated iOS streams with HTTP 403.
@@ -1781,14 +1796,16 @@ async function resolveInnerTubeStream(videoId) {
       const streamUrl = (localProxyPort > 0 && rawUrl)
         ? `http://127.0.0.1:${localProxyPort}/stream?url=${encodeURIComponent(rawUrl)}`
         : rawUrl;
-      const isOpus = chosen.mimeType?.includes("opus");
+      const isOpus = chosen.mimeType.includes("opus");
+      const kbps = Math.round((chosen.bitrate || 0) / 1000);
       return {
         url: streamUrl,
         rawUrl: rawUrl,
         videoId: videoId,
         bitrate: chosen.bitrate || (isOpus ? 160000 : 130000),
-        mimeType: chosen.mimeType || (isOpus ? 'audio/webm' : 'audio/mp4'),
-        provider: isOpus ? 'Opus HD' : 'AAC 320k',
+        mimeType: chosen.mimeType,
+        // The label reports the rendition actually chosen, not a fixed marketing string.
+        provider: kbps ? `${isOpus ? 'Opus' : 'AAC'} ${kbps}k` : (isOpus ? 'Opus' : 'AAC'),
         duration: parseInt(json.videoDetails?.lengthSeconds, 10) || 0,
         viewCount: json.videoDetails?.viewCount || '0',
         isFull: true
@@ -3542,7 +3559,7 @@ ipcMain.handle('resolve-full-stream', async (event, { title, artist, videoId, is
     isVerified = true;
   }
 
-  const cacheKey = (vid ? `vid_${vid}` : `${artist} - ${title}`).toLowerCase().trim();
+  const cacheKey = streamCacheKey(normalizeAudioQuality(loadAppSettings().audioQuality), vid ? `vid_${vid}` : `${artist} - ${title}`);
   if (forceRefresh) {
     streamCache.delete(cacheKey);
   }
@@ -3616,16 +3633,14 @@ ipcMain.handle('get-verified-stream', (event, { title, artist }) => {
 
 ipcMain.handle('verify-stream-candidate', async (event, { title, artist, candidateId, metadata }) => {
   const success = setVerifiedStream(title, artist, candidateId, metadata);
-  const cacheKey = (candidateId ? `vid_${candidateId}` : `${artist} - ${title}`).toLowerCase().trim();
-  streamCache.delete(cacheKey);
-  streamCache.delete(`${(artist || '').toLowerCase().trim()} - ${(title || '').toLowerCase().trim()}`);
+  if (candidateId) forgetCachedStream(`vid_${candidateId}`);
+  forgetCachedStream(`${artist || ''} - ${title || ''}`);
   return { success, verified: getVerifiedStream(title, artist) };
 });
 
 ipcMain.handle('unverify-stream', async (event, { title, artist }) => {
   const success = removeVerifiedStream(title, artist);
-  const cacheKey = `${(artist || '').toLowerCase().trim()} - ${(title || '').toLowerCase().trim()}`;
-  streamCache.delete(cacheKey);
+  forgetCachedStream(`${artist || ''} - ${title || ''}`);
   return { success };
 });
 
@@ -4403,10 +4418,13 @@ ipcMain.handle('check-local-audio-exists', async (event, track) => {
     const url = (localProxyPort > 0)
       ? `http://127.0.0.1:${localProxyPort}/local-file?path=${encodeURIComponent(fullPath)}`
       : `file://${fullPath}`;
+    let sizeBytes = 0;
+    try { sizeBytes = fs.statSync(fullPath).size; } catch (_) {}
     return {
       exists: true,
       path: fullPath,
-      url: url
+      url: url,
+      sizeBytes
     };
   }
 
@@ -4541,9 +4559,9 @@ ipcMain.handle('get-downloaded-tracks', async () => {
           filename: f,
           is_local: true,
           is_full_stream: true,
+          // Bitrate is left unset: Stats for Nerds derives it from size and duration once playing.
           audio_format: {
-            codec: ext.replace('.', '').toUpperCase(),
-            bitrate_kbps: 320
+            codec: ext.replace('.', '').toUpperCase()
           },
           duration_secs: 0,
           size_bytes: stat.size,

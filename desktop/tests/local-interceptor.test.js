@@ -299,7 +299,9 @@ test('SoraFyDesktopApp.prototype.loadTrack prefers local offline audio over remo
     expect(mockTrack.stream_url).toBe('http://127.0.0.1:3721/local-file?path=%2Fhome%2Fuser%2FMusic%2FSoraFy%2FRadiohead%20-%20Let%20Down.mp3');
     expect(mockTrack.raw_path).toBe('/home/user/Music/SoraFy/Radiohead - Let Down.mp3');
     expect(loadedAudio.src).toBe(mockTrack.stream_url);
-    expect(mockApp.playerBadge.textContent).toBe('Offline HD');
+    // The badge names the file's real container rather than claiming a quality it cannot know.
+    expect(mockApp.playerBadge.textContent).toBe('MP3');
+    expect(mockTrack.audio_format.bitrate_kbps).toBe(undefined);
   } finally {
     global.window = originalWindow;
     global.document = originalDocument;
