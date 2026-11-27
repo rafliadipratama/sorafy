@@ -9,14 +9,17 @@ interface Props {
 
 const {
   title = "SoraFy — Free Open-Source Music Player & Spotify Alternative (Zero Ads)",
-  description = "SoraFy is a free, open-source high-fidelity music streaming app without ads or tracking. Search any song, sync real-time lyrics, import playlists, and control playback from your phone and terminal.",
+  description = "SoraFy is a free, open-source high-fidelity music streaming app without ads or tracking. Search any song, sync real-time lyrics, import playlists, and download tracks for offline listening.",
   lang = "en"
 } = Astro.props;
 
 const siteUrl = "https://rafliadipratama.github.io";
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const canonicalUrl = lang === 'id' ? `${siteUrl}${base}/id` : `${siteUrl}${base}`;
-const ogImageUrl = `${siteUrl}${base}/assets/logo_monogram.png`;
+// Trailing slashes match the sitemap and the URLs GitHub Pages redirects to.
+const homeUrl = `${siteUrl}${base}/`;
+const idUrl = `${siteUrl}${base}/id/`;
+const canonicalUrl = lang === 'id' ? idUrl : homeUrl;
+const ogImageUrl = `${siteUrl}${base}/og-image.png`;
 
 const schemaData = {
   "@context": "https://schema.org",
@@ -43,9 +46,9 @@ const schemaData = {
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonicalUrl} />
-  <link rel="alternate" hreflang="en" href={`${siteUrl}${base}`} />
-  <link rel="alternate" hreflang="id" href={`${siteUrl}${base}/id`} />
-  <link rel="alternate" hreflang="x-default" href={`${siteUrl}${base}`} />
+  <link rel="alternate" hreflang="en" href={homeUrl} />
+  <link rel="alternate" hreflang="id" href={idUrl} />
+  <link rel="alternate" hreflang="x-default" href={homeUrl} />
 
   <link rel="icon" href={`${base}/favicon.png`} type="image/png" />
   <link rel="apple-touch-icon" href={`${base}/favicon.png`} />
@@ -56,6 +59,11 @@ const schemaData = {
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
   <meta property="og:image" content={ogImageUrl} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="SoraFy logo with the tagline: free, open source, no ads" />
+  <meta property="og:site_name" content="SoraFy" />
+  <meta property="og:locale" content={lang === 'id' ? 'id_ID' : 'en_US'} />
 
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image" />

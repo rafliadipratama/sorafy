@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { DocumentDownload, Copy, TickCircle, ShieldTick } from 'iconsax-react';
+import { DocumentDownload, Copy, TickCircle, ShieldTick, InfoCircle } from 'iconsax-react';
 import {
   OfficialAppleIcon,
   OfficialWindowsIcon,
@@ -30,16 +30,19 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
     setPlatform(detectPlatform());
   }, []);
 
+  // Recipes live in packaging/, but none is published to its registry yet.
+  // Listed without copyable commands so nobody runs one that fails with "not found".
   const packageManagers = [
-    { id: 'brew', name: 'Homebrew', icon: OfficialHomebrewIcon, cmd: 'brew install --cask sorafy' },
-    { id: 'winget', name: 'winget', icon: OfficialWindowsIcon, cmd: 'winget install SoraFy' },
-    { id: 'flathub', name: 'Flathub', icon: OfficialFlathubIcon, cmd: 'flatpak install flathub org.sorafy.SoraFy' },
-    { id: 'snap', name: 'Snapcraft', icon: OfficialSnapcraftIcon, cmd: 'sudo snap install sorafy' },
-    { id: 'aur', name: 'AUR', icon: OfficialArchIcon, cmd: 'yay -S sorafy-bin' },
+    { id: 'brew', name: 'Homebrew', icon: OfficialHomebrewIcon },
+    { id: 'winget', name: 'winget', icon: OfficialWindowsIcon },
+    { id: 'flathub', name: 'Flathub', icon: OfficialFlathubIcon },
+    { id: 'snap', name: 'Snapcraft', icon: OfficialSnapcraftIcon },
+    { id: 'aur', name: 'AUR', icon: OfficialArchIcon },
   ];
 
+  const appImage = PLATFORMS.linux.packages[0].filename;
   const macCmd = 'sudo xattr -r -d com.apple.quarantine /Applications/SoraFy.app';
-  const linuxCmd = 'chmod +x SoraFy-2.1.0.AppImage && ./SoraFy-2.1.0.AppImage';
+  const linuxCmd = `chmod +x ${appImage} && ./${appImage}`;
 
   const copyToClipboard = (text: string, id: string) => {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -58,6 +61,7 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
     macos: OfficialAppleIcon,
     linux: OfficialLinuxIcon,
     android: OfficialAndroidIcon,
+    ios: OfficialAppleIcon,
   }[platform];
 
   return (
@@ -96,12 +100,13 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
               {lang === 'id' ? 'Pilih OS lain:' : 'Other OS:'}
             </span>
             <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-end flex-1">
-              {(['windows', 'macos', 'linux', 'android'] as PlatformId[]).map((pid) => {
+              {(['windows', 'macos', 'linux', 'android', 'ios'] as PlatformId[]).map((pid) => {
                 const Icon = {
                   windows: OfficialWindowsIcon,
                   macos: OfficialAppleIcon,
                   linux: OfficialLinuxIcon,
                   android: OfficialAndroidIcon,
+                  ios: OfficialAppleIcon,
                 }[pid];
                 const isActive = platform === pid;
                 return (
@@ -128,11 +133,11 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
         <div className="mt-4 pt-3.5 border-t border-subtle text-neutral-400 text-[11px] leading-relaxed">
           {platform === 'windows' && (
             <div className="flex items-center gap-2 bg-canvas border border-subtle/80 px-3 py-2 rounded-lg text-neutral-300">
-              <ShieldTick size={16} variant="Linear" className="text-[#00E599] shrink-0" />
+              <InfoCircle size={16} variant="Linear" className="text-[#00E599] shrink-0" />
               <span>
                 {lang === 'id'
-                  ? 'Bebas malware & virus. Jika muncul layar SmartScreen, klik "More info" → "Run anyway".'
-                  : 'Verified malware-free. If SmartScreen appears, click "More info" → "Run anyway".'}
+                  ? 'Installer belum bertanda tangan kode, jadi SmartScreen akan muncul: klik "More info" → "Run anyway".'
+                  : 'The installer is not code-signed, so SmartScreen will appear: click "More info" → "Run anyway".'}
               </span>
             </div>
           )}
@@ -199,37 +204,23 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
 
         {/* Package Manager Repositories Section */}
         <p className="mt-4 text-center text-xs font-medium text-neutral-400">
-          {lang === 'id' ? 'Atau pasang dari repositori paket terminal:' : 'Or install from package repository:'}
+          {lang === 'id' ? 'Segera hadir di repositori paket:' : 'Coming soon to package repositories:'}
         </p>
 
-        <div className="mt-2.5 flex flex-wrap justify-center gap-2">
+        <ul className="mt-2.5 flex flex-wrap justify-center gap-2">
           {packageManagers.map((pm) => {
             const IconComponent = pm.icon;
             return (
-              <div
+              <li
                 key={pm.id}
-                className="inline-flex items-center bg-canvas border border-subtle rounded-md text-xs font-semibold overflow-hidden hover:border-medium transition-colors"
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-canvas border border-subtle rounded-md text-xs font-semibold text-neutral-500"
               >
-                <span className="px-2.5 py-1 text-neutral-300 bg-surface flex items-center gap-1.5">
-                  <IconComponent className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
-                  <span>{pm.name}</span>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => copyToClipboard(pm.cmd, pm.id)}
-                  className="px-2 py-1 text-neutral-400 hover:text-[#00E599] hover:bg-surface-elevated border-l border-subtle transition-colors"
-                  title={`Copy: ${pm.cmd}`}
-                >
-                  {copiedKey === pm.id ? (
-                    <TickCircle size={14} variant="Bold" className="text-[#00E599]" />
-                  ) : (
-                    <Copy size={14} variant="Linear" />
-                  )}
-                </button>
-              </div>
+                <IconComponent className="w-3.5 h-3.5 shrink-0" />
+                <span>{pm.name}</span>
+              </li>
             );
           })}
-        </div>
+        </ul>
 
         {/* All downloads & SHA-256 Checksums Link */}
         <a
@@ -237,8 +228,8 @@ export default function HeroDownloadsBox({ lang = 'en' }: Props) {
           className="mt-4 block text-center text-xs font-semibold text-[#00E599] hover:underline"
         >
           {lang === 'id'
-            ? 'Semua paket (.deb, .zip, .dmg), checksum SHA-256 & info rilis →'
-            : 'All packages (.deb, .zip, .dmg), SHA-256 checksums & release notes →'}
+            ? 'Semua paket (.deb, .rpm, .apk, .ipa), checksum SHA-256 & info rilis →'
+            : 'All packages (.deb, .rpm, .apk, .ipa), SHA-256 checksums & release notes →'}
         </a>
       </div>
 

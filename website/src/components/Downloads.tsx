@@ -11,6 +11,7 @@ import {
   detectPlatform,
   type PlatformId,
   RELEASE_BASE_URL,
+  CHECKSUMS_URL,
   CURRENT_VERSION,
 } from '../data/downloads';
 
@@ -161,7 +162,7 @@ export default function Downloads({
                     <div className="mt-4 pt-3 border-t border-subtle flex flex-col gap-1.5 text-[11px] font-mono-code text-neutral-400">
                       <div className="flex items-center justify-between">
                         <span>Version:</span>
-                        <span className="text-white font-bold">{CURRENT_VERSION}</span>
+                        <span className="text-white font-bold">{pkg.version ?? CURRENT_VERSION}</span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span>Target:</span>
@@ -228,25 +229,35 @@ export default function Downloads({
               <ShieldTick size={24} variant="Bold" className="text-[#00E599] shrink-0" />
               <div>
                 <p className="font-bold text-white">
-                  {lang === 'id' ? '100% Open Source & Bebas Malware' : '100% Open Source & Verified Malware-Free'}
+                  {lang === 'id' ? '100% Open Source & Build Dapat Diaudit' : '100% Open Source & Auditable Builds'}
                 </p>
                 <p className="text-[11px] text-neutral-400">
                   {lang === 'id'
-                    ? 'Dibuat otomatis oleh CI/CD GitHub Actions publik tanpa campur tangan kode tersembunyi.'
-                    : 'Compiled automatically in public GitHub Actions without hidden binaries or trackers.'}
+                    ? 'Dibuat otomatis oleh CI/CD GitHub Actions publik; cocokkan checksum SHA-256 di bawah dengan berkas yang Anda unduh.'
+                    : 'Compiled automatically in public GitHub Actions. Match the SHA-256 checksum below against the file you downloaded.'}
                 </p>
               </div>
             </div>
 
-            <a
-              href={RELEASE_BASE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00E599] hover:underline shrink-0"
-            >
-              <span>{lang === 'id' ? 'Lihat Semua Rilis di GitHub' : 'View All GitHub Releases'}</span>
-              <ExportSquare size={14} variant="Linear" />
-            </a>
+            <div className="flex flex-col sm:items-end gap-1.5 shrink-0">
+              <a
+                href={RELEASE_BASE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#00E599] hover:underline"
+              >
+                <span>{lang === 'id' ? 'Lihat Semua Rilis di GitHub' : 'View All GitHub Releases'}</span>
+                <ExportSquare size={14} variant="Linear" />
+              </a>
+              <a
+                href={CHECKSUMS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-neutral-400 hover:text-[#00E599] hover:underline"
+              >
+                {lang === 'id' ? 'Daftar lengkap SHA-256 (sha256sums.txt)' : 'Full SHA-256 list (sha256sums.txt)'}
+              </a>
+            </div>
           </div>
         </div>
       </div>

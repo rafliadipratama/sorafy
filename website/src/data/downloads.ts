@@ -8,6 +8,8 @@ export interface DownloadPackage {
   downloadUrl: string;
   size: string;
   arch: string;
+  // Set only when a package lags behind CURRENT_VERSION.
+  version?: string;
   badge?: {
     en: string;
     id: string;
@@ -30,8 +32,17 @@ export interface PlatformConfig {
   packages: DownloadPackage[];
 }
 
+// Sizes and checksums are copied from the release's sha256sums.txt and asset list.
+// Update them together with the version, or the site advertises files that do not match.
 export const CURRENT_VERSION = '2.1.2';
 export const RELEASE_BASE_URL = 'https://github.com/rafliadipratama/sorafy/releases/latest';
+export const CHECKSUMS_URL = `${RELEASE_BASE_URL}/download/sha256sums.txt`;
+
+const v = CURRENT_VERSION;
+const asset = (filename: string) => `${RELEASE_BASE_URL}/download/${filename}`;
+
+// The iOS build stopped being published after v2.0.0, so it links to that release directly.
+const IOS_VERSION = '2.0.0';
 
 export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
   windows: {
@@ -39,45 +50,27 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'Windows',
     primaryPackageId: 'win-setup',
     ctaSubtext: {
-      en: 'v2.1.2 • Windows 10 / 11 (64-bit) • Direct Download',
-      id: 'v2.1.2 • Windows 10 / 11 (64-bit) • Unduh Langsung'
+      en: `v${v} • Windows 10 / 11 (64-bit) • Direct Download`,
+      id: `v${v} • Windows 10 / 11 (64-bit) • Unduh Langsung`
     },
     packages: [
       {
         id: 'win-setup',
         name: 'SoraFy for Windows (.exe)',
-        filename: 'SoraFy.Setup.2.1.2.exe',
+        filename: `SoraFy.Setup.${v}.exe`,
         format: '.exe',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy.Setup.2.1.2.exe',
-        size: '~85 MB',
+        downloadUrl: asset(`SoraFy.Setup.${v}.exe`),
+        size: '131 MB',
         arch: 'Windows 10 / 11 (64-bit)',
         badge: {
           en: 'Recommended',
           id: 'Disarankan'
         },
         desc: {
-          en: 'Standard Windows installer with desktop shortcuts, auto-updater, and start menu integration.',
-          id: 'Installer resmi Windows lengkap dengan integrasi Start Menu, shortcut desktop, dan pembaruan otomatis.'
+          en: 'Standard Windows installer with a desktop shortcut and Start Menu entry.',
+          id: 'Installer resmi Windows lengkap dengan shortcut desktop dan entri Start Menu.'
         },
-        sha256: '9a3b7c8e1d2f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b'
-      },
-      {
-        id: 'win-portable',
-        name: 'Windows Portable (.zip)',
-        filename: 'SoraFy-2.1.2-win.zip',
-        format: '.zip',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.2-win.zip',
-        size: '~92 MB',
-        arch: 'Standalone Portable (x64)',
-        badge: {
-          en: 'Portable',
-          id: 'Portabel'
-        },
-        desc: {
-          en: 'No installation required. Extract anywhere and launch immediately from flash drives or external disks.',
-          id: 'Tanpa proses instalasi. Cukup ekstrak di flashdisk atau folder lokal dan langsung jalankan.'
-        },
-        sha256: '4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a'
+        sha256: '1263da63a683111290963ae46aef7a16b3ce6588f7e49404e3ab16308e791e61'
       }
     ]
   },
@@ -86,18 +79,18 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'Linux',
     primaryPackageId: 'linux-appimage',
     ctaSubtext: {
-      en: 'v2.1.2 • Universal Linux (x86_64) • Direct Download',
-      id: 'v2.1.2 • Universal Linux (x86_64) • Unduh Langsung'
+      en: `v${v} • Universal Linux (x86_64) • Direct Download`,
+      id: `v${v} • Universal Linux (x86_64) • Unduh Langsung`
     },
     packages: [
       {
         id: 'linux-appimage',
         name: 'Universal AppImage Package',
-        filename: 'SoraFy-2.1.2.AppImage',
+        filename: `SoraFy-${v}.AppImage`,
         format: '.AppImage',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.2.AppImage',
-        size: '~88 MB',
-        arch: 'glibc 2.31+ (x86_64)',
+        downloadUrl: asset(`SoraFy-${v}.AppImage`),
+        size: '161 MB',
+        arch: 'x86_64',
         badge: {
           en: 'Universal',
           id: 'Universal'
@@ -106,16 +99,16 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
           en: 'Self-contained executable for Ubuntu, Fedora, Arch, Debian, openSUSE, and any standard Linux distro.',
           id: 'Aplikasi portabel mandiri untuk Ubuntu, Fedora, Arch, Debian, openSUSE, dan semua distro Linux modern.'
         },
-        sha256: '2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d'
+        sha256: '0997560b407f593b508c24c8d8d1f8d5097e7cfccd62d6b98be9245cc6f573af'
       },
       {
         id: 'linux-deb',
         name: 'Debian / Ubuntu Package (.deb)',
-        filename: 'sorafy_2.1.2_amd64.deb',
+        filename: `sorafy_${v}_amd64.deb`,
         format: '.deb',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/sorafy_2.1.2_amd64.deb',
-        size: '~78 MB',
-        arch: 'APT / dpkg compatible',
+        downloadUrl: asset(`sorafy_${v}_amd64.deb`),
+        size: '136 MB',
+        arch: 'APT / dpkg (amd64)',
         badge: {
           en: 'Debian / Ubuntu',
           id: 'Debian / Ubuntu'
@@ -124,7 +117,25 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
           en: 'Native package for Debian, Ubuntu, Linux Mint, and Pop!_OS with system package manager integration.',
           id: 'Paket installer native untuk Debian, Ubuntu, Linux Mint, dan Pop!_OS dengan manajemen sistem apt.'
         },
-        sha256: '7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c'
+        sha256: '3b236fb3ec94f2dfe4b7b5bcb5a3330f7cd06366606fde279a6abc72834bdc3e'
+      },
+      {
+        id: 'linux-rpm',
+        name: 'Fedora / openSUSE Package (.rpm)',
+        filename: `sorafy-${v}.x86_64.rpm`,
+        format: '.rpm',
+        downloadUrl: asset(`sorafy-${v}.x86_64.rpm`),
+        size: '125 MB',
+        arch: 'DNF / Zypper (x86_64)',
+        badge: {
+          en: 'Fedora / openSUSE',
+          id: 'Fedora / openSUSE'
+        },
+        desc: {
+          en: 'Native package for Fedora, RHEL-based distros, and openSUSE, installed through the system package manager.',
+          id: 'Paket installer native untuk Fedora, distro berbasis RHEL, dan openSUSE melalui package manager sistem.'
+        },
+        sha256: '4509006ac78fd65ee656380084b2ec095313f942599fd8110bb1cda7056350a6'
       }
     ]
   },
@@ -133,45 +144,27 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'macOS',
     primaryPackageId: 'mac-arm',
     ctaSubtext: {
-      en: 'v2.1.2 • Apple Silicon M1-M4 & Intel • Direct Download',
-      id: 'v2.1.2 • Apple Silicon M1-M4 & Intel • Unduh Langsung'
+      en: `v${v} • Apple Silicon (M1 and later) • Direct Download`,
+      id: `v${v} • Apple Silicon (M1 ke atas) • Unduh Langsung`
     },
     packages: [
       {
         id: 'mac-arm',
-        name: 'macOS (Apple Silicon M1-M4)',
-        filename: 'SoraFy-2.1.2-arm64.dmg',
+        name: 'macOS (Apple Silicon)',
+        filename: `SoraFy-${v}-arm64.dmg`,
         format: '.dmg',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.2-arm64.dmg',
-        size: '~90 MB',
-        arch: 'Native Apple Silicon ARM64',
+        downloadUrl: asset(`SoraFy-${v}-arm64.dmg`),
+        size: '161 MB',
+        arch: 'Apple Silicon ARM64',
         badge: {
           en: 'Apple Silicon',
           id: 'Apple Silicon'
         },
         desc: {
-          en: 'Native ARM64 DMG bundle optimized for Apple Silicon MacBooks, Mac mini, and Mac Studio (macOS 12.0+).',
-          id: 'Bundle DMG ARM64 yang dioptimalkan untuk MacBook M1-M4, Mac mini, dan Mac Studio (macOS 12.0+).'
+          en: 'Native ARM64 DMG for Apple Silicon MacBooks, Mac mini, iMac, and Mac Studio. Intel Macs are not supported by this build.',
+          id: 'Bundle DMG ARM64 native untuk MacBook, Mac mini, iMac, dan Mac Studio Apple Silicon. Mac Intel belum didukung oleh build ini.'
         },
-        sha256: '5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e'
-      },
-      {
-        id: 'mac-intel',
-        name: 'macOS Intel (.dmg)',
-        filename: 'SoraFy-2.1.2.dmg',
-        format: '.dmg',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-2.1.2.dmg',
-        size: '~92 MB',
-        arch: 'Intel x86_64 (macOS 11.0+)',
-        badge: {
-          en: 'Intel Mac',
-          id: 'Intel Mac'
-        },
-        desc: {
-          en: 'Standard x86_64 DMG package for Intel-powered Apple Mac computers.',
-          id: 'Paket DMG x86_64 standar untuk komputer Apple Mac generasi prosesor Intel.'
-        },
-        sha256: '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b'
+        sha256: '98fce54a84c0ee5012ddb6b33bfe918d6687e37cd26c151bab6159ce890e86e4'
       }
     ]
   },
@@ -180,8 +173,8 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'Android',
     primaryPackageId: 'android-apk',
     ctaSubtext: {
-      en: 'v2.1.2 • Android 8.0+ (ARM64) • Direct APK',
-      id: 'v2.1.2 • Android 8.0+ (ARM64) • APK Langsung'
+      en: `v${v} • Android 7.0+ (ARM64) • Direct APK`,
+      id: `v${v} • Android 7.0+ (ARM64) • APK Langsung`
     },
     packages: [
       {
@@ -189,18 +182,36 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
         name: 'SoraFy for Android (.apk)',
         filename: 'app-release.apk',
         format: '.apk',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/app-release.apk',
-        size: '~18 MB',
-        arch: 'arm64-v8a • Android 8.0 Oreo+',
+        downloadUrl: asset('app-release.apk'),
+        size: '4.5 MB',
+        arch: 'arm64-v8a • Android 7.0+',
         badge: {
-          en: 'Native APK',
-          id: 'APK Asli'
+          en: 'Recommended',
+          id: 'Disarankan'
         },
         desc: {
-          en: 'Built with Jetpack Compose Material 3 and Media3 notification controls for smartphones and tablets.',
-          id: 'Dibuat dengan native Jetpack Compose Material 3 dan kontrol media notifikasi background.'
+          en: 'Built for the 64-bit ARM processors in nearly every phone and tablet sold since 2017.',
+          id: 'Dibuat untuk prosesor ARM 64-bit yang dipakai hampir semua ponsel dan tablet sejak 2017.'
         },
-        sha256: '3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f'
+        sha256: 'dbe8ad459ab0d02498b44e68e2a9b488e0864bb0f6da6a5ac0302c4e8350c51d'
+      },
+      {
+        id: 'android-universal',
+        name: 'Universal APK (all devices)',
+        filename: 'app-universal-release.apk',
+        format: '.apk',
+        downloadUrl: asset('app-universal-release.apk'),
+        size: '4.5 MB',
+        arch: 'arm64 • armv7 • x86 • x86_64',
+        badge: {
+          en: 'Universal',
+          id: 'Universal'
+        },
+        desc: {
+          en: 'Runs on older 32-bit phones, Chromebooks, and emulators. Pick this one if the standard APK will not install.',
+          id: 'Berjalan di ponsel 32-bit lama, Chromebook, dan emulator. Pilih ini bila APK standar gagal dipasang.'
+        },
+        sha256: '78be4ff27350a436676655c89b908d8439e43da9bca5772a0c274e01abda9760'
       }
     ]
   },
@@ -209,8 +220,8 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
     name: 'iOS',
     primaryPackageId: 'ios-ipa',
     ctaSubtext: {
-      en: 'v2.1.2 • iOS 16.0+ (ARM64) • SideStore & TrollStore IPA',
-      id: 'v2.1.2 • iOS 16.0+ (ARM64) • IPA untuk SideStore & TrollStore'
+      en: `v${IOS_VERSION} beta • iOS 16.0+ (ARM64) • SideStore & TrollStore IPA`,
+      id: `v${IOS_VERSION} beta • iOS 16.0+ (ARM64) • IPA untuk SideStore & TrollStore`
     },
     packages: [
       {
@@ -218,16 +229,17 @@ export const PLATFORMS: Record<PlatformId, PlatformConfig> = {
         name: 'SoraFy for iOS (.ipa)',
         filename: 'SoraFy-iOS.ipa',
         format: '.ipa',
-        downloadUrl: 'https://github.com/rafliadipratama/sorafy/releases/latest/download/SoraFy-iOS.ipa',
-        size: '~210 KB',
+        downloadUrl: `https://github.com/rafliadipratama/sorafy/releases/download/v${IOS_VERSION}/SoraFy-iOS.ipa`,
+        size: '205 KB',
         arch: 'arm64 • iOS 16.0+',
+        version: IOS_VERSION,
         badge: {
-          en: 'Sideload IPA',
-          id: 'Sideload IPA'
+          en: 'Beta',
+          id: 'Beta'
         },
         desc: {
-          en: 'Native Swift/SwiftUI app with background audio, lock screen controls, and synced lyrics. Install via SideStore, Sideloadly, or TrollStore.',
-          id: 'Aplikasi native Swift/SwiftUI lengkap dengan background audio, kontrol lock screen, dan lirik sinkron. Pasang via SideStore, Sideloadly, atau TrollStore.'
+          en: `Older v${IOS_VERSION} build, unsigned, for sideloading with SideStore, Sideloadly, or TrollStore. It does not include the fixes in v${v}.`,
+          id: `Build lama v${IOS_VERSION} tanpa tanda tangan, untuk sideload via SideStore, Sideloadly, atau TrollStore. Belum memuat perbaikan di v${v}.`
         }
       }
     ]
